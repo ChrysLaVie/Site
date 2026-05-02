@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Vie Consultoria | Gestão Empresarial Integrada</title>
+<meta name="description" content="Consultoria de gestão empresarial integrada. Do diagnóstico à execução processos, pessoas, financeiro e certificações.">
+<meta name="keywords" content="consultoria empresarial, gestão empresarial processos empresariais, planejamento estratégico, BPM, certificações ISO, La Vie Consultoria">
+<meta name="author" content="La Vie Consultoria">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lavieconsultoria.com/">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lavieconsultoria.com/">
+<meta property="og:title" content="La Vie Consultoria | Gestão Empresarial Integrada">
+<meta property="og:description" content="Do diagnóstico à execução estruturamos empresas para crescer com consistência, controle e previsibilidade.">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="La Vie Consultoria">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="La Vie Consultoria | Gestão Empresarial Integrada">
+<meta name="twitter:description" content="Do diagnóstico à execução estruturamos empresas para crescer com consistência, controle e previsibilidade.">
+
+<!-- Preload recursos críticos -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+ font-family:'DM Sans',sans-serif;
+ background:var(--bg); color:var(--charcoal);
+ font-weight:300; line-height:1.7;
+ -webkit-font-smoothing:antialiased;
+}
+
+/* ── Tokens ── */
+:root {
+ --bg: #F2F1ED;
+ --bg-alt: #E8E4DE;
+ --dark: #1a1917;
+ --charcoal: #3A3A3A;
+ --muted: #7A7A7A;
+ --sand: #D8CFC4;
+ --sand-dark: #B8AFA4;
+ --white: #FFFFFF;
+ --border: rgba(58,58,58,0.1);
+ --radius: 4px;
+ --section-pad: 7rem 8vw;
+}
+
+/* ── Tipografia ── */
+.serif { font-family:'Cormorant Garamond',serif; }
+.eyebrow {
+ display:block; font-size:0.68rem; font-weight:500;
+ letter-spacing:0.25em; text-transform:uppercase;
+ color:var(--sand-dark); margin-bottom:1.2rem;
+}
+.section-title {
+ font-family:'Cormorant Garamond',serif;
+ font-size:clamp(2rem,4vw,3.4rem);
+ font-weight:300; line-height:1.1; margin-bottom:1.8rem;
+ color:var(--charcoal);
+}
+.section-title em { font-style:italic; color:var(--dark); }
+.section-title--light { color:#F2F1ED; }
+.section-title--light em { color:var(--sand); }
+
+/* ── Nav ── */
+nav {
+ position:fixed; top:0; left:0; right:0; z-index:100;
+ display:flex; align-items:center; justify-content:space-between;
+ padding:0.85rem 5vw;
+ background:rgba(26,25,23,0.97);
+ backdrop-filter:blur(20px);
+ border-bottom:1px solid rgba(255,255,255,0.07);
+ transition:padding 0.3s, box-shadow 0.3s;
+}
+nav.scrolled { padding:0.55rem 5vw; box-shadow:0 4px 30px rgba(0,0,0,0.3); }
+.nav-logo {
+ display:flex; align-items:center; text-decoration:none; flex-shrink:0;
+}
+nav.scrolled .nav-links { display:flex; gap:2rem; list-style:none; align-items:center; }
+.nav-links a {
+ text-decoration:none; color:rgba(242,241,237,0.75);
+ font-size:0.75rem; font-weight:400; letter-spacing:0.1em;
+ text-transform:uppercase; transition:color 0.2s; white-space:nowrap;
+}
+.nav-links a:hover { color:#F2F1ED; }
+.nav-cta {
+ background:rgba(242,241,237,0.1) !important;
+ border:1px solid rgba(242,241,237,0.2) !important;
+ color:#F2F1ED !important;
+ padding:0.5rem 1.2rem; border-radius:var(--radius);
+ font-size:0.7rem !important; letter-spacing:0.14em !important;
+ transition:all 0.2s !important;
+}
+.nav-cta:hover { background:rgba(242,241,237,0.18) !important; border-color:rgba(242,241,237,0.4) !important; }
+.nav-hamburger {
+ display:none; flex-direction:column; gap:5px;
+ background:none; border:none; cursor:pointer; padding:4px;
+}
+.nav-hamburger span {
+ display:block; width:22px; height:2px;
+ background:#F2F1ED; border-radius:2px; transition:all 0.3s;
+}
+
+/* ── Hero ── */
+#hero {
+ min-height:100vh; display:grid; grid-template-columns:1fr 1fr;
+ padding-top:80px; overflow:hidden; position:relative;
+}
+.hero-left {
+ display:flex; flex-direction:column; justify-content:center;
+ padding:8vh 5vw 8vh 8vw;
+ background:var(--bg);
+}
+.hero-eyebrow {
+ font-size:0.68rem; letter-spacing:0.25em; text-transform:uppercase;
+ color:var(--sand-dark); font-weight:500; margin-bottom:1.5rem;
+ opacity:0; animation:fadeUp 0.8s 0.2s forwards;
+}
+.hero-title {
+ font-family:'Cormorant Garamond',serif;
+ font-size:clamp(3rem,5.5vw,5.8rem);
+ font-weight:400; line-height:1.02;
+ color:#1a1917; margin-bottom:1.8rem;
+ opacity:0; animation:fadeUp 0.8s 0.4s forwards;
+ letter-spacing:-0.01em;
+}
+.hero-title em { font-style:italic; color:#1a1917; font-weight:300; }
+.hero-sub {
+ font-size:1rem; line-height:1.8; color:#5a5a5a;
+ max-width:420px; margin-bottom:2.5rem; font-weight:400;
+ opacity:0; animation:fadeUp 0.8s 0.6s forwards;
+}
+.hero-actions {
+ display:flex; gap:1.2rem; align-items:center;
+ opacity:0; animation:fadeUp 0.8s 0.8s forwards;
+}
+.btn-primary {
+ display:inline-block; background:var(--charcoal); color:var(--white);
+ padding:0.9rem 2rem; text-decoration:none; border-radius:var(--radius);
+ font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase;
+ font-weight:500; transition:background 0.2s, transform 0.15s;
+}
+.btn-primary:hover { background:var(--dark); transform:translateY(-2px); }
+.btn-ghost {
+ display:inline-flex; align-items:center; gap:0.4rem;
+ color:var(--charcoal); text-decoration:none; font-size:0.82rem;
+ letter-spacing:0.06em; font-weight:400;
+ border-bottom:1px solid var(--sand); padding-bottom:2px;
+ transition:border-color 0.2s;
+}
+.btn-ghost:hover { border-color:var(--charcoal); }
+.hero-right {
+ background:var(--dark); position:relative;
+ overflow:hidden; display:flex;
+ align-items:center; justify-content:center; padding:3rem;
+}
+.hero-right::after {
+ content:'';
+ position:absolute; inset:0;
+ 
+ background-size:cover; background-position:center;
+ opacity:0.08; pointer-events:none;
+}
+.hero-card {
+ position:relative; z-index:1;
+ background:rgba(255,255,255,0.05);
+ border:1px solid rgba(255,255,255,0.1);
+ padding:2.5rem; border-radius:var(--radius);
+ width:100%; max-width:360px;
+ opacity:0; animation:fadeUp 1s 1s forwards;
+}
+.hero-card-watermark {
+ position:absolute; inset:0;
+ 
+ background-size:80%; background-position:center;
+ background-repeat:no-repeat; opacity:0.08; pointer-events:none;
+}
+.hero-card-quote {
+ font-family:'Cormorant Garamond',serif;
+ font-size:1.5rem; font-weight:300; font-style:italic;
+ color:#F2F1ED; line-height:1.5; position:relative; z-index:1;
+ margin-bottom:1.5rem;
+}
+.hero-card-stats {
+ display:grid; grid-template-columns:1fr 1fr;
+ gap:1rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:1.5rem;
+}
+.hero-stat-num {
+ font-family:'Cormorant Garamond',serif;
+ font-size:2rem; font-weight:300; color:#F2F1ED; line-height:1;
+}
+.hero-stat-label {
+ font-size:0.72rem; color:rgba(242,241,237,0.5);
+ letter-spacing:0.1em; text-transform:uppercase; margin-top:0.3rem;
+}
+.scroll-indicator {
+ position:absolute; bottom:2rem; left:50%;
+ transform:translateX(-50%);
+ display:flex; flex-direction:column; align-items:center; gap:0.5rem;
+ z-index:10; pointer-events:none;
+}
+.scroll-line {
+ width:1px; height:40px; background:var(--sand-dark);
+ animation:scrollPulse 2s infinite;
+}
+.scroll-indicator span {
+ font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase;
+ color:var(--muted); font-weight:400;
+}
+
+/* ── Problema (Cenário) ── */
+#problema {
+ padding:var(--section-pad);
+ background:var(--dark); position:relative; overflow:hidden;
+}
+#problema::before {
+ content:''; position:absolute; inset:0;
+ 
+ background-size:40%; background-position:center right 5%;
+ background-repeat:no-repeat; opacity:0.05;
+}
+.problema-grid {
+ display:grid; grid-template-columns:1fr 1fr;
+ gap:5rem; align-items:center; position:relative;
+}
+.problema-cards {
+ display:grid; grid-template-columns:1fr 1fr; gap:1px;
+ background:rgba(255,255,255,0.06);
+ border:1px solid rgba(255,255,255,0.08);
+ border-radius:var(--radius);
+}
+.problema-card {
+ padding:2rem; background:var(--dark);
+}
+.problema-card:nth-child(1) { border-radius:var(--radius) 0 0 0; }
+.problema-card:nth-child(2) { border-radius:0 var(--radius) 0 0; }
+.problema-card:nth-child(3) { border-radius:0 0 0 var(--radius); }
+.problema-card:nth-child(4) { border-radius:0 0 var(--radius) 0; }
+.problema-num {
+ font-family:'Cormorant Garamond',serif;
+ font-size:2rem; font-weight:300; color:rgba(242,241,237,0.15);
+ margin-bottom:0.8rem; line-height:1;
+}
+.problema-card h3 {
+ font-size:0.9rem; font-weight:500; color:#F2F1ED;
+ margin-bottom:0.5rem; letter-spacing:0.02em;
+}
+.problema-card p {
+ font-size:0.82rem; color:rgba(242,241,237,0.5);
+ line-height:1.65; font-weight:300;
+}
+
+/* ── Solução (Quem Somos + Como fazemos) ── */
+#solucao {
+ padding:var(--section-pad);
+ background:var(--bg);
+}
+.solucao-grid {
+ display:grid; grid-template-columns:1fr 1fr;
+ gap:6rem; align-items:start;
+}
+.mvv-grid {
+ display:flex; flex-direction:column; gap:1.5rem; margin-top:3rem;
+}
+.mvv-card {
+ background:var(--dark); padding:2rem; border-radius:var(--radius);
+ position:relative; overflow:hidden;
+}
+.mvv-card h4 {
+ font-family:'Cormorant Garamond',serif;
+ font-size:1.3rem; font-weight:400; color:#F2F1ED;
+ margin-bottom:0.6rem;
+}
+.mvv-card p {
+ font-size:0.83rem; color:rgba(242,241,237,0.6);
+ line-height:1.7; font-weight:300; font-style:italic;
+}
+
+/* ── Metodologia ── */
+#metodologia {
+ padding:var(--section-pad);
+ background:var(--bg-alt);
+}
+.steps {
+ display:grid; grid-template-columns:repeat(4,1fr);
+ gap:0; margin-top:4rem; position:relative;
+}
+.steps::before {
+ content:''; position:absolute;
+ top:28px; left:calc(12.5%); right:calc(12.5%);
+ height:1px; background:var(--border);
+}
+.step {
+ text-align:center; padding:0 1.5rem;
+}
+.step-num {
+ width:56px; height:56px; border-radius:50%;
+ background:var(--charcoal); color:var(--bg);
+ display:flex; align-items:center; justify-content:center;
+ font-family:'Cormorant Garamond',serif;
+ font-size:1.3rem; font-weight:300;
+ margin:0 auto 1.5rem; position:relative; z-index:1;
+}
+.step h3 {
+ font-family:'Cormorant Garamond',serif;
+ font-size:1.2rem; font-weight:400;
+ color:var(--charcoal); margin-bottom:0.6rem;
+}
+.step p {
+ font-size:0.82rem; color:var(--muted);
+ line-height:1.65; font-weight:300;
+}
+
+/* ── Serviços ── */
+#servicos {
+ padding:var(--section-pad);
+ background:var(--dark); position:relative; overflow:hidden;
+}
+#servicos::before {
+ content:''; position:absolute; inset:0;
+ 
+ background-size:35%; background-position:center left 3%;
+ background-repeat:no-repeat; opacity:0.04;
+}
+.servicos-tabs {
+ display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,0.1);
+ margin-bottom:3rem; position:relative;
+}
+.tab-btn {
+ background:none; border:none; cursor:pointer;
+ font-family:'DM Sans',sans-serif;
+ font-size:0.78rem; font-weight:400; letter-spacing:0.1em;
+ text-transform:uppercase; color:rgba(242,241,237,0.4);
+ padding:0.8rem 1.5rem; transition:color 0.2s;
+ border-bottom:2px solid transparent; margin-bottom:-1px;
+}
+.tab-btn.active { color:#F2F1ED; border-bottom-color:var(--sand-dark); }
+.tab-panel { display:none; }
+.tab-panel.active { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:start; }
+.servico-intro p {
+ color:rgba(242,241,237,0.6); font-size:0.95rem;
+ line-height:1.85; font-weight:300; margin-bottom:2rem;
+}
+.servico-items { display:flex; flex-direction:column; gap:0; }
+.servico-item {
+ padding:1.2rem 0;
+ border-bottom:1px solid rgba(255,255,255,0.07);
+ display:flex; gap:1rem; align-items:flex-start;
+}
+.servico-item:last-child { border-bottom:none; }
+.servico-dot {
+ width:6px; height:6px; border-radius:50%;
+ background:var(--sand-dark); flex-shrink:0; margin-top:6px;
+}
+.servico-item-text h4 {
+ color:#F2F1ED; font-size:0.88rem; font-weight:500; margin-bottom:0.2rem;
+}
+.servico-item-text p {
+ color:rgba(242,241,237,0.5); font-size:0.8rem; line-height:1.6; font-weight:300;
+}
+
+/* ── Portfólio ── */
+#portfolio {
+ padding:var(--section-pad);
+ background:var(--bg);
+}
+.portfolio-grid {
+ display:grid; grid-template-columns:repeat(3,1fr);
+ gap:1.5rem; margin-top:3rem;
+}
+.portfolio-card {
+ border:1px solid var(--border);
+ border-radius:var(--radius); background:var(--white);
+ transition:border-color 0.3s, transform 0.3s; overflow:hidden;
+}
+.portfolio-card:hover { border-color:var(--charcoal); transform:translateY(-4px); }
+.portfolio-logo-wrap {
+ padding:1.8rem 2rem 1.2rem;
+ display:flex; align-items:center;
+ border-bottom:1px solid var(--border); min-height:80px;
+ background:var(--bg);
+}
+.portfolio-logo {
+ max-height:48px; max-width:160px;
+ width:auto; object-fit:contain; display:block;
+}
+.portfolio-card-body { padding:1.5rem 2rem 2rem; }
+.portfolio-setor {
+ font-size:0.63rem; letter-spacing:0.2em;
+ text-transform:uppercase; color:var(--sand-dark);
+ font-weight:500; margin-bottom:0.4rem; display:block;
+}
+.portfolio-card-body h3 {
+ font-family:'Cormorant Garamond',serif;
+ font-size:1.15rem; font-weight:500;
+ color:var(--charcoal); margin-bottom:0.6rem;
+}
+.portfolio-card-body p {
+ font-size:0.82rem; color:var(--muted);
+ line-height:1.65; font-weight:300;
+}
+
+/* ── Galeria ── */
+#galeria {
+ display:grid; grid-template-columns:1fr 1fr 1fr;
+ height:460px; overflow:hidden;
+}
+.galeria-foto {
+ overflow:hidden; position:relative; cursor:pointer;
+}
+.galeria-foto img {
+ width:100%; height:100%; object-fit:cover;
+ filter:grayscale(20%); transition:filter 0.5s, transform 0.6s;
+}
+.galeria-foto:hover img { filter:grayscale(0%); transform:scale(1.05); }
+
+/* ── Equipe ── */
+#equipe {
+ padding:var(--section-pad);
+ background:var(--bg-alt);
+}
+.equipe-grid {
+ display:grid; grid-template-columns:1fr 1fr;
+ gap:3rem; margin-top:3rem;
+}
+.equipe-card {
+ background:var(--white); border-radius:var(--radius);
+ overflow:hidden; border:1px solid var(--border);
+}
+.equipe-foto {
+ width:100%; aspect-ratio:4/5; overflow:hidden;
+}
+.equipe-foto img {
+ width:100%; height:100%; object-fit:cover;
+ object-position:center top;
+ filter:grayscale(10%); transition:filter 0.4s;
+}
+.equipe-card:hover .equipe-foto img { filter:grayscale(0%); }
+.equipe-info { padding:2rem; }
+.equipe-role {
+ font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase;
+ color:var(--sand-dark); font-weight:500; display:block; margin-bottom:0.5rem;
+}
+.equipe-name {
+ font-family:'Cormorant Garamond',serif;
+ font-size:1.5rem; font-weight:400; color:var(--charcoal); margin-bottom:0.8rem;
+}
+.equipe-bio {
+ font-size:0.83rem; color:var(--muted); line-height:1.75;
+ font-weight:300; margin-bottom:1.2rem;
+}
+.equipe-tags {
+ display:flex; flex-wrap:wrap; gap:0.4rem;
+}
+.equipe-tag {
+ font-size:0.67rem; letter-spacing:0.1em; padding:0.25rem 0.7rem;
+ border:1px solid var(--border); border-radius:20px;
+ color:var(--muted); text-transform:uppercase;
+}
+
+/* ── Banner citação ── */
+#banner {
+ position:relative; height:460px; overflow:hidden;
+ display:flex; align-items:center; justify-content:center;
+ background:var(--dark);
+}
+#banner img.banner-bg {
+ position:absolute; inset:0; width:100%; height:100%;
+ object-fit:cover; object-position:center 30%; opacity:0.15;
+}
+.banner-content {
+ position:relative; z-index:1; text-align:center;
+ max-width:760px; padding:0 4vw;
+}
+.banner-content p {
+ font-family:'Cormorant Garamond',serif;
+ font-size:clamp(1.8rem,3.5vw,3rem);
+ font-weight:300; font-style:italic;
+ color:#F2F1ED; line-height:1.3;
+}
+.banner-content span {
+ display:block; margin-top:2rem;
+ font-size:0.68rem; letter-spacing:0.25em;
+ text-transform:uppercase; color:var(--sand-dark);
+}
+
+/* ── Vagas ── */
+#vagas {
+ padding:var(--section-pad);
+ background:var(--dark); position:relative; overflow:hidden;
+}
+#vagas::before {
+ content:''; position:absolute; inset:0;
+ 
+ background-size:35%; background-position:center right;
+ background-repeat:no-repeat; opacity:0.05;
+}
+.vagas-grid {
+ display:grid; grid-template-columns:1fr 1fr;
+ gap:5rem; position:relative;
+}
+.vaga-item {
+ background:rgba(255,255,255,0.05);
+ border:1px solid rgba(255,255,255,0.1);
+ border-radius:var(--radius); padding:1.4rem 1.8rem;
+ display:flex; justify-content:space-between; align-items:center;
+ margin-bottom:1rem;
+}
+.vaga-link {
+ color:var(--sand-dark); font-size:0.72rem; letter-spacing:0.12em;
+ text-transform:uppercase; text-decoration:none;
+ border-bottom:1px solid rgba(184,175,164,0.4); padding-bottom:2px;
+ white-space:nowrap;
+}
+.curriculo-form {
+ display:flex; flex-direction:column; gap:0.85rem; margin-bottom:1.8rem;
+}
+.curriculo-form input,
+.curriculo-form select {
+ background:rgba(255,255,255,0.07);
+ border:1px solid rgba(255,255,255,0.15);
+ border-radius:var(--radius); padding:0.85rem 1.2rem;
+ color:#F2F1ED; font-size:0.88rem;
+ outline:none; font-family:inherit;
+ transition:border-color 0.2s;
+}
+.curriculo-form input:focus,
+.curriculo-form select:focus {
+ border-color:rgba(255,255,255,0.4);
+}
+.disc-card {
+ background:rgba(255,255,255,0.05);
+ border:1px solid rgba(255,255,255,0.1);
+ border-radius:var(--radius); padding:1.8rem;
+}
+
+/* ── Contato ── */
+#contato {
+ padding:var(--section-pad);
+ background:var(--bg);
+}
+.contato-grid {
+ display:grid; grid-template-columns:1fr 1fr;
+ gap:6rem; align-items:start;
+}
+.contato-links { display:flex; flex-direction:column; gap:1rem; margin-bottom:3rem; }
+.contato-link {
+ display:flex; justify-content:space-between; align-items:center;
+ padding:1.5rem 2rem; border:1px solid var(--border);
+ border-radius:var(--radius); text-decoration:none; color:var(--charcoal);
+ transition:border-color 0.2s, background 0.2s;
+}
+.contato-link:hover { border-color:var(--charcoal); background:var(--bg-alt); }
+.contato-link-label {
+ font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase;
+ color:var(--sand-dark); font-weight:500;
+}
+.contato-link-value { font-size:0.9rem; font-weight:400; }
+.form-group { margin-bottom:1rem; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+ width:100%; background:var(--white);
+ border:1px solid var(--border); border-radius:var(--radius);
+ padding:0.85rem 1rem; font-family:inherit;
+ font-size:0.88rem; color:var(--charcoal);
+ outline:none; transition:border-color 0.2s; resize:none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+ border-color:var(--charcoal);
+}
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-submit {
+ width:100%; background:var(--charcoal); color:var(--white);
+ border:none; border-radius:var(--radius); padding:1rem;
+ font-family:inherit; font-size:0.78rem; letter-spacing:0.15em;
+ text-transform:uppercase; font-weight:500; cursor:pointer;
+ transition:background 0.2s;
+}
+.form-submit:hover { background:var(--dark); }
+
+/* ── Footer ── */
+footer {
+ background:var(--dark); padding:3rem 8vw;
+ display:flex; align-items:center; justify-content:space-between;
+ border-top:1px solid rgba(255,255,255,0.06);
+}
+.footer-logo img {
+ height:48px; width:auto; mix-blend-mode:screen; opacity:0.85;
+}
+footer p {
+ font-size:0.75rem; color:rgba(242,241,237,0.35);
+ letter-spacing:0.05em; text-align:center;
+}
+footer p a { color:inherit; text-decoration:none; opacity:0.8; }
+.footer-links {
+ display:flex; gap:1.5rem; align-items:center;
+}
+.footer-links a {
+ color:rgba(242,241,237,0.35); font-size:0.72rem;
+ letter-spacing:0.12em; text-transform:uppercase; text-decoration:none;
+ transition:color 0.2s;
+}
+.footer-links a:hover { color:var(--sand-dark); }
+
+/* ── WhatsApp Float ── */
+/* old wa-float removed */
+
+/* ── Reveal ── */
+/* ── Acessibilidade ── */
+.sr-only {
+ position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+ overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* ── Overlay menu mobile ── */
+.nav-overlay {
+ display:none; position:fixed; inset:0;
+ background:rgba(26,25,23,0.55); z-index:98;
+}
+.nav-overlay.open { display:block; }
+
+/* ── Hamburger animado ── */
+.nav-hamburger span { transition:transform 0.3s, opacity 0.3s; }
+.nav-hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+.nav-hamburger.open span:nth-child(2) { opacity:0; }
+.nav-hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+
+/* ── Depoimentos ── */
+#depoimentos { padding:var(--section-pad); background:var(--bg-alt); }
+.depoimentos-grid {
+ display:grid; grid-template-columns:repeat(3,1fr); gap:2rem; margin-top:3rem;
+}
+.depoimento-card {
+ background:var(--bg); border:1px solid var(--border);
+ border-radius:var(--radius); padding:2rem;
+ display:flex; flex-direction:column; gap:1.2rem;
+}
+.depoimento-texto {
+ font-family:'Cormorant Garamond',serif; font-size:1.15rem;
+ font-style:italic; line-height:1.7; color:var(--charcoal); flex:1;
+}
+.depoimento-nome { font-size:0.85rem; font-weight:500; color:var(--dark); }
+.depoimento-cargo { font-size:0.75rem; color:var(--muted); letter-spacing:0.08em; }
+
+/* ── Social float expansível ── */
+.social-float {
+ position:fixed; bottom:2rem; right:2rem; z-index:200;
+ display:flex; flex-direction:column; align-items:center; gap:0.65rem;
+}
+.social-float-link {
+ width:50px; height:50px; border-radius:50%;
+ display:flex; align-items:center; justify-content:center;
+ text-decoration:none; box-shadow:0 4px 16px rgba(0,0,0,0.25);
+ transition:transform 0.2s, box-shadow 0.2s;
+}
+.social-float-link:hover { transform:scale(1.1); }
+.social-float-link svg { width:24px; height:24px; fill:white; }
+
+/* ── Validação formulários ── */
+.form-group .field-error {
+ display:none; font-size:0.72rem; color:#c0392b; margin-top:0.25rem;
+}
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea { border-color:#c0392b; }
+.form-group.has-error .field-error { display:block; }
+
+.reveal { opacity:0; transform:translateY(24px); transition:opacity 0.7s, transform 0.7s; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+ from { opacity:0; transform:translateY(20px); }
+ to { opacity:1; transform:translateY(0); }
+}
+@keyframes scrollPulse {
+ 0%,100% { opacity:0.4; transform:scaleY(1); }
+ 50% { opacity:1; transform:scaleY(1.3); }
+}
+
+/* ── Responsive ── */
+@media (max-width:960px) {
+ nav { padding:1rem 4vw; }
+ .nav-links { display:none; flex-direction:column; position:absolute; top:100%; left:0; right:0; background:rgba(242,241,237,0.98); padding:1.5rem 5vw; gap:0; border-bottom:1px solid var(--border); }
+ .nav-links.open { display:flex; }
+ .nav-links li a { display:block; padding:0.9rem 0; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.85rem; color:rgba(242,241,237,0.8) !important; }
+ .nav-hamburger { display:flex; }
+ #hero { grid-template-columns:1fr; min-height:auto; }
+ .hero-right { min-height:300px; }
+ .problema-grid { grid-template-columns:1fr; gap:3rem; }
+ .problema-cards { grid-template-columns:1fr 1fr; }
+ .solucao-grid { grid-template-columns:1fr; gap:3rem; }
+ .steps { grid-template-columns:1fr 1fr; gap:2rem; }
+ .steps::before { display:none; }
+ .tab-panel.active { grid-template-columns:1fr; gap:2rem; }
+ .portfolio-grid { grid-template-columns:1fr 1fr; }
+ #galeria { grid-template-columns:1fr; height:auto; }
+ .galeria-foto { height:280px; }
+ .equipe-grid { grid-template-columns:1fr; }
+ .contato-grid { grid-template-columns:1fr; gap:3rem; }
+ .vagas-grid { grid-template-columns:1fr; gap:3rem; }
+ .depoimentos-grid { grid-template-columns:1fr; }
+ footer { flex-direction:column; gap:1.5rem; text-align:center; flex-wrap:wrap; }
+ .footer-links { justify-content:center; }
+}
+@media (max-width:480px) {
+ :root { --section-pad: 5rem 6vw; }
+ .portfolio-grid { grid-template-columns:1fr; }
+ .problema-cards { grid-template-columns:1fr; }
+ .steps { grid-template-columns:1fr; }
+ .hero-card-stats { grid-template-columns:1fr; }
+}
+</style>
+
+<!-- Dados Estruturados JSON-LD -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "ProfessionalService",
+ "name": "La Vie Consultoria",
+ "description": "Consultoria de gestão empresarial integrada. Do diagnóstico à execução processos, pessoas, financeiro e certificações.",
+ "url": "https://lavieconsultoria.com",
+ "telephone": "+55-62-99274-1488",
+ "email": "contato@lavieconsultoria.com.br",
+ "address": {
+ "@type": "PostalAddress",
+ "addressLocality": "Brasil",
+ "addressRegion": "GO",
+ "addressCountry": "BR"
+ },
+ "areaServed": "Brasil",
+ "priceRange": "$$",
+ "sameAs": [
+ "https://instagram.com/lavie_consultoria",
+ "https://www.linkedin.com/in/la-vie-consultoria-empresarial-65b36934b/"
+ ],
+ "hasOfferCatalog": {
+ "@type": "OfferCatalog",
+ "name": "Serviços de Consultoria",
+ "itemListElement": [
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Gestão por Processos (BPM)"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Gestão de Pessoas"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Gestão Financeira"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Certificações ISO"}}
+ ]
+ }
+}
+</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+ <button class="nav-hamburger" id="hamburgerBtn" aria-label="Abrir menu" aria-expanded="false">
+ <span></span><span></span><span></span>
+ </button>
+ <ul class="nav-links" id="navLinks">
+ <li><a href="#solucao">Sobre</a></li>
+ <li><a href="#metodologia">Metodologia</a></li>
+ <li><a href="#servicos">Serviços</a></li>
+ <li><a href="#portfolio">Portfólio</a></li>
+ <li><a href="#equipe">Equipe</a></li>
+ <li><a href="#vagas">Vagas</a></li>
+ <li><a href="#contato" class="nav-cta">Fale Conosco</a></li>
+ </ul>
+ <a href="#" class="nav-logo">
+ 
+ </a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+ <div class="hero-left">
+ <span class="hero-eyebrow">Consultoria Empresarial Integrada · </span>
+ <h1 class="hero-title">Do diagnóstico<br>à <em>execução.</em></h1>
+ <p class="hero-sub">Estruturamos empresas para crescer com consistência, controle e previsibilidade do planejamento à implementação real.</p>
+ <div class="hero-actions">
+ <a href="#contato" class="btn-primary">Agendar Diagnóstico</a>
+ <a href="#solucao" class="btn-ghost">Conheça a La Vie →</a>
+ </div>
+ </div>
+ <div class="hero-right">
+ <div class="hero-card">
+ <div class="hero-card-watermark"></div>
+ <p class="hero-card-quote">"Estrutura é o que separa crescimento de sobrevivência."</p>
+ <div class="hero-card-stats">
+ <div>
+ <div class="hero-stat-num">16</div>
+ <div class="hero-stat-label">Anos de experiência</div>
+ </div>
+ <div>
+ <div class="hero-stat-num">6+</div>
+ <div class="hero-stat-label">Empresas estruturadas</div>
+ </div>
+ <div>
+ <div class="hero-stat-num">3</div>
+ <div class="hero-stat-label">Certificações conduzidas</div>
+ </div>
+ <div>
+ <div class="hero-stat-num">4</div>
+ <div class="hero-stat-label">Pilares de atuação</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="scroll-indicator">
+ <div class="scroll-line"></div>
+ <span>Scroll</span>
+ </div>
+</section>
+
+<!-- PROBLEMA -->
+<section id="problema">
+ <div class="problema-grid">
+ <div class="reveal">
+ <span class="eyebrow" style="color:var(--sand-dark);">O Cenário</span>
+ <h2 class="section-title section-title--light">Por que empresas deixam de crescer com <em style="color:var(--sand);">solidez?</em></h2>
+ <p style="color:rgba(242,241,237,0.6);font-size:0.97rem;line-height:1.85;max-width:380px;font-weight:300;margin-top:1rem;">Falta estrutura, não esforço. Empresas que não crescem geralmente compartilham os mesmos padrões invisíveis.</p>
+ </div>
+ <div class="problema-cards reveal">
+ <div class="problema-card">
+ <div class="problema-num">01</div>
+ <h3>Decisões sem dados</h3>
+ <p>A gestão vira intuição e o custo é alto. Cada decisão é uma aposta.</p>
+ </div>
+ <div class="problema-card">
+ <div class="problema-num">02</div>
+ <h3>Conhecimento concentrado</h3>
+ <p>Pessoas-chave saem e levam o negócio junto. O saber fica preso em indivíduos.</p>
+ </div>
+ <div class="problema-card">
+ <div class="problema-num">03</div>
+ <h3>Áreas isoladas</h3>
+ <p>Sem direção comum, cada setor opera por conta própria. A empresa perde energia.</p>
+ </div>
+ <div class="problema-card">
+ <div class="problema-num">04</div>
+ <h3>Crescer sem estrutura</h3>
+ <p>Sem processos, crescimento gera caos. Escalabilidade exige fundação sólida.</p>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- SOLUÇÃO Quem Somos -->
+<section id="solucao">
+ <div class="solucao-grid">
+ <div class="reveal">
+ <span class="eyebrow">Nossa Essência</span>
+ <h2 class="section-title">Não entregamos relatórios.<br><em>Entregamos transformação.</em></h2>
+ <p style="color:var(--muted);font-size:0.97rem;line-height:1.85;margin-bottom:1.5rem;font-weight:300;">A <strong>La Vie</strong> nasceu da convicção de que empresas bem geridas constroem legados duradouros. Atuamos de forma estratégica e próxima, oferecendo soluções completas em <strong>Gestão Empresarial Integrada</strong> do planejamento à execução.</p>
+ <p style="color:var(--muted);font-size:0.97rem;line-height:1.85;margin-bottom:1.5rem;font-weight:300;">Nossa equipe une <strong>Experiência Técnica</strong> e <strong>Visão Estratégica</strong> para diagnosticar desafios reais, estruturar processos e fortalecer a gestão de pessoas tornando cada empresa mais eficiente, competitiva e preparada para crescer com solidez.</p>
+ <p style="color:var(--muted);font-size:0.97rem;line-height:1.85;font-weight:300;">Acreditamos que a excelência está nos detalhes: nas <strong>Rotinas</strong> bem desenhadas, nos <strong>Indicadores</strong> que orientam decisões e nas pessoas que são o verdadeiro poder de qualquer negócio.</p>
+ </div>
+ <div class="mvv-grid reveal">
+ <div class="mvv-card">
+ <h4>Missão</h4>
+ <p>Transformar a gestão empresarial de nossos clientes por meio de soluções integradas, estratégicas e orientadas a resultados concretos e duradouros.</p>
+ </div>
+ <div class="mvv-card">
+ <h4>Visão</h4>
+ <p>Ser referência em consultoria de Gestão Integrada, reconhecida pela excelência, pelo impacto e pela confiança que construímos em cada parceria.</p>
+ </div>
+ <div class="mvv-card">
+ <h4>Valores</h4>
+ <p>Excelência · Ética · Transparência · Resultados mensuráveis</p>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- METODOLOGIA -->
+<section id="metodologia">
+ <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 4rem;">
+ <span class="eyebrow">Como Trabalhamos</span>
+ <h2 class="section-title">Metodologia estruturada<br>em <em>4 etapas</em></h2>
+ <p style="color:var(--muted);font-size:0.95rem;line-height:1.8;font-weight:300;">Transformamos empresas fragmentadas em sistemas organizados, previsíveis e sustentáveis.</p>
+ </div>
+ <div class="steps reveal">
+ <div class="step">
+ <div class="step-num">1</div>
+ <h3>Diagnóstico</h3>
+ <p>Avaliação profunda para mapear riscos, gargalos e prioridades da empresa.</p>
+ </div>
+ <div class="step">
+ <div class="step-num">2</div>
+ <h3>Estruturação</h3>
+ <p>Organização de processos, fluxos, responsabilidades e governança.</p>
+ </div>
+ <div class="step">
+ <div class="step-num">3</div>
+ <h3>Implementação</h3>
+ <p>Execução prática dos processos e indicadores no dia a dia da empresa.</p>
+ </div>
+ <div class="step">
+ <div class="step-num">4</div>
+ <h3>Monitoramento</h3>
+ <p>Acompanhamento contínuo e ajuste fino com base nos resultados reais.</p>
+ </div>
+ </div>
+</section>
+
+<!-- SERVIÇOS Tabs unificando tudo -->
+<section id="servicos">
+ <div class="reveal" style="position:relative;margin-bottom:0;">
+ <span class="eyebrow" style="color:var(--sand-dark);">Nossos Serviços</span>
+ <h2 class="section-title section-title--light">Tudo que sua empresa<br><em>precisa para crescer</em></h2>
+ </div>
+ <div class="servicos-tabs reveal">
+ <button class="tab-btn active" onclick="showTab(this,'gestao')" aria-selected="true">Gestão Integrada</button>
+ <button class="tab-btn" onclick="showTab(this,'certificacoes')" aria-selected="false">Certificações</button>
+ <button class="tab-btn" onclick="showTab(this,'contabilidade')" aria-selected="false">Contabilidade</button>
+ <button class="tab-btn" onclick="showTab(this,'treinamentos')" aria-selected="false">Treinamentos</button>
+ </div>
+
+ <!-- Gestão Integrada -->
+ <div class="tab-panel active" id="tab-gestao">
+ <div class="servico-intro">
+ <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:#F2F1ED;margin-bottom:1rem;">Estruturação completa do negócio</h3>
+ <p>Atuamos de forma integrada ou por pilar estratégico, conforme a necessidade do cliente sempre com visão sistêmica e foco em resultado.</p>
+ <a href="#contato" class="btn-primary" style="display:inline-block;margin-top:1.5rem;">Solicitar diagnóstico</a>
+ </div>
+ <div class="servico-items">
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Gestão de Pessoas e Lideranças</h4><p>Recrutamento, clima organizacional, avaliação de desempenho e desenvolvimento de lideranças.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Processos e Estrutura Organizacional</h4><p>Mapeamento, padronização e automação de processos, eliminando gargalos e aumentando produtividade.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Departamento Pessoal</h4><p>Folha de pagamento, admissões, rescisões, benefícios e conformidade trabalhista.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Financeiro e Indicadores</h4><p>Fluxo de caixa, DRE gerencial, KPIs estratégicos e painéis de decisão.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>BPO Financeiro e Administrativo</h4><p>Terceirização da gestão financeira com conciliação bancária e relatórios gerenciais.</p></div></div>
+ </div>
+ </div>
+
+ <!-- Certificações -->
+ <div class="tab-panel" id="tab-certificacoes">
+ <div class="servico-intro">
+ <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:#F2F1ED;margin-bottom:1rem;">Do diagnóstico à certificação</h3>
+ <p>Conduzimos todo o processo de preparação, estruturação e implementação para que sua empresa conquiste certificações reconhecidas nacional e internacionalmente. Chrysthyan Kelly é <strong style="color:var(--sand-dark);">Auditora Líder ISO 9001:2015</strong>.</p>
+ <a href="#contato" class="btn-primary" style="display:inline-block;margin-top:1.5rem;">Quero me certificar</a>
+ </div>
+ <div class="servico-items">
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>ISO 9001:2015 Sistema de Gestão da Qualidade</h4><p>Estruturamos processos, documentação e governança para conquistar a certificação com excelência.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>EcoVadis Avaliação de Sustentabilidade ESG</h4><p>Preparamos sua empresa para a avaliação EcoVadis, consolidando práticas ESG e elevando a maturidade sustentável.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>SASSMAQ Segurança no Transporte</h4><p>Implementamos os requisitos SASSMAQ para empresas de transporte e logística de produtos químicos e perigosos.</p></div></div>
+ </div>
+ </div>
+
+ <!-- Contabilidade -->
+ <div class="tab-panel" id="tab-contabilidade">
+ <div class="servico-intro">
+ <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:#F2F1ED;margin-bottom:1rem;">Inteligência fiscal aplicada ao negócio</h3>
+ <p>Como Contadora e Economista, Chrysthyan Kelly oferece serviços contábeis completos com visão estratégica não apenas compliance, mas inteligência fiscal. Atendemos empresas, MEIs e profissionais liberais em todo o Brasil.</p>
+ <a href="#contato" class="btn-primary" style="display:inline-block;margin-top:1.5rem;">Solicitar serviço</a>
+ </div>
+ <div class="servico-items">
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Abertura de MEI</h4><p>Abertura, regularização e orientação completa para Microempreendedores Individuais.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Emissão de Notas Fiscais</h4><p>NF-e, NFS-e e NFC-e com conformidade fiscal e agilidade operacional.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Escrituração Contábil</h4><p>Lançamentos, balancetes, DRE e relatórios para gestão e compliance.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Planejamento Tributário</h4><p>Enquadramento no regime mais vantajoso para reduzir a carga fiscal da empresa.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Obrigações Acessórias</h4><p>SPED, DCTF, ECF e declarações fiscais dentro dos prazos legais.</p></div></div>
+ </div>
+ </div>
+
+ <!-- Treinamentos -->
+ <div class="tab-panel" id="tab-treinamentos">
+ <div class="servico-intro">
+ <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:#F2F1ED;margin-bottom:1rem;">Desenvolvimento corporativo in company</h3>
+ <p>Ministramos treinamentos presenciais e in company focados em produtividade, liderança e gestão customizados para a realidade de cada empresa.</p>
+ <a href="#contato" class="btn-primary" style="display:inline-block;margin-top:1.5rem;">Solicitar treinamento</a>
+ </div>
+ <div class="servico-items">
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Gerenciamento da Rotina</h4><p>Método prático para organizar prioridades, eliminar gargalos e aumentar produtividade.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Liderança e Cultura Organizacional</h4><p>Desenvolvimento de líderes alinhados à cultura e aos resultados do negócio.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Gestão por Indicadores</h4><p>KPIs e painéis de desempenho para tomada de decisão baseada em dados.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Processos e Fluxos Operacionais</h4><p>Mapeamento, padronização e melhoria de processos administrativos e operacionais.</p></div></div>
+ <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Recrutamento e Seleção por Competências</h4><p>Técnicas estruturadas para contratar as pessoas certas para cada posição.</p></div></div>
+ </div>
+ </div>
+</section>
+
+<!-- PORTFÓLIO -->
+<section id="portfolio" style="padding:var(--section-pad);background:var(--bg);">
+ <div class="reveal">
+ <span class="eyebrow">Portfólio</span>
+ <h2 class="section-title">Clientes e projetos <em>realizados</em></h2>
+ <p style="color:var(--muted);max-width:500px;font-size:0.95rem;line-height:1.8;margin-bottom:3rem;font-weight:300;">Empresas de diferentes setores que estruturamos, transformamos e acompanhamos do diagnóstico à execução.</p>
+ </div>
+ <div class="portfolio-grid reveal">
+ <div class="portfolio-card">
+ <div class="portfolio-logo-wrap">
+ 
+ </div>
+ <div class="portfolio-card-body">
+ <span class="portfolio-setor">Educação</span>
+ <h3>UniCambury</h3>
+ <p>Estruturação completa da área de Gestão de Pessoas e Processos.</p>
+ </div>
+ </div>
+ <div class="portfolio-card">
+ <div class="portfolio-logo-wrap">
+ 
+ </div>
+ <div class="portfolio-card-body">
+ <span class="portfolio-setor">Agronegócio</span>
+ <h3>Moinho Mattos</h3>
+ <p>Governança implantada com indicadores ativos para decisão da diretoria.</p>
+ </div>
+ </div>
+ <div class="portfolio-card">
+ <div class="portfolio-logo-wrap">
+ 
+ </div>
+ <div class="portfolio-card-body">
+ <span class="portfolio-setor">Saúde</span>
+ <h3>Unimed Brasil</h3>
+ <p>Estratégia reestruturada com KPIs implantados e rastreabilidade de resultados.</p>
+ </div>
+ </div>
+ <div class="portfolio-card">
+ <div class="portfolio-logo-wrap">
+ 
+ </div>
+ <div class="portfolio-card-body">
+ <span class="portfolio-setor">Logística</span>
+ <h3>TCL Transportes</h3>
+ <p>100% dos processos críticos documentados lideranças desenvolvidas e políticas internas implementadas.</p>
+ </div>
+ </div>
+ <div class="portfolio-card">
+ <div class="portfolio-logo-wrap">
+ 
+ </div>
+ <div class="portfolio-card-body">
+ <span class="portfolio-setor">Alimentos</span>
+ <h3>Sotrigo Alimentos</h3>
+ <p>Processo seletivo estruturado e fluxos organizados com redução significativa de turnover.</p>
+ </div>
+ </div>
+ <div class="portfolio-card">
+ <div class="portfolio-logo-wrap">
+ 
+ </div>
+ <div class="portfolio-card-body">
+ <span class="portfolio-setor">Representações</span>
+ <h3>RBZ Representações</h3>
+ <p>Gestão administrativa e financeira integrada com visão estratégica consolidada.</p>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- GALERIA -->
+<div id="galeria">
+ <div class="galeria-foto">
+ 
+ </div>
+ <div class="galeria-foto">
+ 
+ </div>
+ <div class="galeria-foto">
+ 
+ </div>
+</div>
+
+<!-- EQUIPE -->
+<section id="equipe" style="padding:var(--section-pad);background:var(--bg-alt);">
+ <div class="reveal">
+ <span class="eyebrow">Nossa Equipe</span>
+ <h2 class="section-title">Quem está <em>à frente</em></h2>
+ </div>
+ <div class="equipe-grid">
+ <div class="equipe-card reveal">
+ <div class="equipe-foto">
+ 
+ </div>
+ <div class="equipe-info">
+ <span class="equipe-role">Fundadora · Consultora Empresarial Sênior</span>
+ <h3 class="equipe-name">Chrysthyan Kelly Ferreira Alves</h3>
+ <p class="equipe-bio">Iniciou sua trajetória profissional aos 14 anos. Com 16 anos de experiência, é referência em Gestão Empresarial Integrada. Mestranda em Administração pela UFG, Contadora e Economista pela UEG, MBA em Gestão de Pessoas e intercâmbio na Califórnia, EUA.</p>
+ <div class="equipe-tags">
+ <span class="equipe-tag">CRC</span>
+ <span class="equipe-tag">CPA-20</span>
+ <span class="equipe-tag">SUSEP</span>
+ <span class="equipe-tag">Auditora Líder ISO 9001:2015</span>
+ <span class="equipe-tag">Intercâmbio EUA</span>
+ </div>
+ </div>
+ </div>
+ <div class="equipe-card reveal">
+ <div class="equipe-foto">
+ 
+ </div>
+ <div class="equipe-info">
+ <span class="equipe-role">Estratégia Comercial e Expansão</span>
+ <h3 class="equipe-name">Naáldi Michel Souza</h3>
+ <p class="equipe-bio">Gestor de Negócios especialista em Desenvolvimento Comercial, com experiência em expansão de mercados, gestão de grandes contas e recuperação de resultados comerciais.</p>
+ <div class="equipe-tags">
+ <span class="equipe-tag">Gestão de Negócios</span>
+ <span class="equipe-tag">Expansão Comercial</span>
+ <span class="equipe-tag">Grandes Contas</span>
+ </div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- BANNER CITAÇÃO -->
+<div id="banner">
+ 
+ <div class="banner-content reveal">
+ <p>"A diferença entre empresas que crescem e as que travam está na estrutura da gestão."</p>
+ <span>La Vie Consultoria · </span>
+ </div>
+</div>
+
+<!-- VAGAS -->
+<section id="vagas">
+ <div class="vagas-grid">
+ <div class="reveal">
+ <span class="eyebrow" style="color:var(--sand-dark);">Oportunidades</span>
+ <h2 class="section-title section-title--light">Nossas <em>vagas</em></h2>
+ <p style="color:rgba(242,241,237,0.6);font-size:0.95rem;line-height:1.85;margin-bottom:2rem;font-weight:300;">Trabalhamos com recrutamento e seleção por competências para nossos clientes e para a equipe La Vie.</p>
+ <div style="margin-bottom:2rem;">
+ <div class="vaga-item">
+ <div><p style="color:#F2F1ED;font-weight:500;font-size:0.92rem;margin-bottom:0.2rem;">Assistente Administrativo</p><p style="color:rgba(242,241,237,0.45);font-size:0.78rem;">Presencial</p></div>
+ <a href="https://wa.me/5562992741488?text=Olá!+Tenho+interesse+na+vaga+de+Assistente+Administrativo." target="_blank" class="vaga-link">Ver vaga →</a>
+ </div>
+ <div class="vaga-item">
+ <div><p style="color:#F2F1ED;font-weight:500;font-size:0.92rem;margin-bottom:0.2rem;">Analista de Processos</p><p style="color:rgba(242,241,237,0.45);font-size:0.78rem;">Híbrido</p></div>
+ <a href="https://wa.me/5562992741488?text=Olá!+Tenho+interesse+na+vaga+de+Analista+de+Processos." target="_blank" class="vaga-link">Ver vaga →</a>
+ </div>
+ <div class="vaga-item">
+ <div><p style="color:#F2F1ED;font-weight:500;font-size:0.92rem;margin-bottom:0.2rem;">Consultor(a) de RH Jr.</p><p style="color:rgba(242,241,237,0.45);font-size:0.78rem;">Presencial</p></div>
+ <a href="https://wa.me/5562992741488?text=Olá!+Tenho+interesse+na+vaga+de+Consultora+de+RH." target="_blank" class="vaga-link">Ver vaga →</a>
+ </div>
+ </div>
+ <div class="disc-card">
+ <p style="color:var(--sand-dark);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;margin-bottom:0.5rem;">Teste DISC</p>
+ <p style="color:#F2F1ED;font-weight:500;font-size:0.92rem;margin-bottom:0.4rem;">Descubra seu perfil comportamental</p>
+ <p style="color:rgba(242,241,237,0.55);font-size:0.8rem;line-height:1.65;margin-bottom:1rem;">O DISC mapeia seu estilo de comunicação, liderança e trabalho utilizado em todos os nossos processos seletivos.</p>
+ <a href="https://wa.me/5562992741488?text=Olá!+Gostaria+de+fazer+o+Teste+DISC." target="_blank" class="vaga-link">Solicitar Teste DISC →</a>
+ </div>
+ </div>
+ <div class="reveal" id="curriculo">
+ <span class="eyebrow" style="color:var(--sand-dark);">Candidatos</span>
+ <h2 class="section-title section-title--light">Cadastre seu <em>currículo</em></h2>
+ <p style="color:rgba(242,241,237,0.6);font-size:0.95rem;line-height:1.85;margin-bottom:2rem;font-weight:300;">Envie seu currículo e entre em nosso banco de talentos.</p>
+ <div class="curriculo-form">
+ <input type="text" placeholder="Nome completo">
+ <input type="email" placeholder="E-mail">
+ <input type="tel" placeholder="WhatsApp">
+ <select>
+ <option value="" disabled selected>Área de interesse</option>
+ <option>Administrativo</option>
+ <option>Financeiro e Contabilidade</option>
+ <option>Recursos Humanos</option>
+ <option>Processos e Qualidade</option>
+ <option>Comercial</option>
+ <option>Certificações e ISO</option>
+ </select>
+ <button onclick="alert('Currículo enviado! Em breve entraremos em contato.')" class="btn-primary" style="width:100%;text-align:center;border:none;cursor:pointer;padding:1rem;">Enviar candidatura</button>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- CONTATO -->
+<section id="contato" style="padding:var(--section-pad);background:var(--bg);">
+ <div class="contato-grid">
+ <div class="reveal">
+ <span class="eyebrow">Contato</span>
+ <h2 class="section-title">Vamos estruturar<br>sua <em>empresa?</em></h2>
+ <p style="color:var(--muted);font-size:0.97rem;line-height:1.85;margin-bottom:3rem;font-weight:300;">Agende uma conversa estratégica com nossa equipe. Analisamos sua situação e identificamos as prioridades de estruturação.</p>
+ <div class="contato-links">
+ <a href="https://wa.me/5562992741488" class="contato-link" target="_blank">
+ <span class="contato-link-label">WhatsApp</span>
+ <span class="contato-link-value">(62) 99274-1488 →</span>
+ </a>
+ <a href="mailto:contato@lavieconsultoria.com.br" class="contato-link">
+ <span class="contato-link-label">E-mail</span>
+ <span class="contato-link-value">contato@lavieconsultoria.com.br →</span>
+ </a>
+ </div>
+ </div>
+ <div class="reveal">
+ <div class="form-row">
+ <div class="form-group"><label for="nome" class="sr-only">Nome</label><input type="text" id="nome" name="nome" placeholder="Nome" required aria-required="true"><span class="field-error">Preencha seu nome.</span></div>
+ <div class="form-group"><label for="empresa" class="sr-only">Empresa</label><input type="text" id="empresa" name="empresa" placeholder="Empresa"></div>
+ </div>
+ <div class="form-row">
+ <div class="form-group"><label for="email" class="sr-only">E-mail</label><input type="email" id="email" name="email" placeholder="E-mail" required aria-required="true"><span class="field-error">Informe um e-mail válido.</span></div>
+ <div class="form-group"><label for="whatsapp" class="sr-only">WhatsApp</label><input type="tel" id="whatsapp" name="whatsapp" placeholder="WhatsApp"></div>
+ </div>
+ <div class="form-group">
+ <select>
+ <option value="" disabled selected>Principal desafio</option>
+ <option>Gestão de Pessoas</option>
+ <option>Processos e Estrutura</option>
+ <option>Financeiro e Indicadores</option>
+ <option>Certificações ISO / EcoVadis / SASSMAQ</option>
+ <option>Contabilidade e Fiscal</option>
+ <option>Gestão Integrada</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <textarea rows="4" placeholder="Conte brevemente sobre sua empresa e o desafio que enfrenta..."></textarea>
+ </div>
+ <button class="form-submit" onclick="document.querySelector('.form-success').style.display='block';this.style.display='none'">Enviar Mensagem</button>
+ <div class="form-success" style="display:none;padding:1.5rem;background:var(--bg-alt);border-radius:var(--radius);text-align:center;margin-top:1rem;">
+ <p style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--charcoal);">Mensagem enviada!</p>
+ <p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">Nossa equipe entrará em contato em até 24 horas.</p>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section id="depoimentos">
+ <div style="max-width:1100px;margin:0 auto;">
+ <div class="reveal" style="text-align:center;margin-bottom:1rem;">
+ <span class="eyebrow">Depoimentos</span>
+ <h2 class="section-title">O que nossos <em>clientes</em> dizem</h2>
+ </div>
+ <div class="depoimentos-grid reveal">
+ <div class="depoimento-card">
+ <p class="depoimento-texto">"A La Vie transformou nossa estrutura interna. Em 6 meses organizamos processos que estavam caóticos há anos. O resultado foi imediato na operação e no clima da equipe."</p>
+ <div class="depoimento-autor">
+ <span class="depoimento-nome">Ricardo Alves</span>
+ <span class="depoimento-cargo">CEO · Distribuidora</span>
+ <span class="depoimento-estrelas">★★★★★</span>
+ </div>
+ </div>
+ <div class="depoimento-card">
+ <p class="depoimento-texto">"Conseguimos a certificação ISO 9001 sem o caos que esperávamos. A equipe da La Vie guiou cada etapa com clareza e segurança. Profissionais de altíssimo nível."</p>
+ <div class="depoimento-autor">
+ <span class="depoimento-nome">Fernanda Quirino</span>
+ <span class="depoimento-cargo">Diretora de Qualidade · Indústria Cerrado</span>
+ <span class="depoimento-estrelas">★★★★★</span>
+ </div>
+ </div>
+ <div class="depoimento-card">
+ <p class="depoimento-texto">"O treinamento de liderança mudou a forma como minha equipe se comunica. Hoje temos metas claras, reuniões objetivas e um time muito mais engajado."</p>
+ <div class="depoimento-autor">
+ <span class="depoimento-nome">Marcelo Duarte</span>
+ <span class="depoimento-cargo">Gerente Geral · Rede Comercial</span>
+ <span class="depoimento-estrelas">★★★★★</span>
+ </div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+ <div class="footer-logo">
+ 
+ </div>
+ <p>© 2026 La Vie Consultoria · Todos os direitos reservados<br>
+ <a href="mailto:contato@lavieconsultoria.com.br">contato@lavieconsultoria.com.br</a></p>
+ <div class="footer-links">
+ <a href="https://wa.me/5562992741488" target="_blank">WhatsApp</a>
+ <a href="https://instagram.com/lavie_consultoria" target="_blank">Instagram</a>
+ <a href="https://www.linkedin.com/in/la-vie-consultoria-empresarial-65b36934b/" target="_blank">LinkedIn</a>
+ <a href="mailto:contato@lavieconsultoria.com.br">E-mail</a>
+ </div>
+</footer>
+
+<!-- Botões sociais flutuantes -->
+<div class="social-float">
+ <a href="https://wa.me/5562992741488" target="_blank" class="social-float-link" style="background:#25D366;" aria-label="WhatsApp">
+ <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+ </a>
+ <a href="https://instagram.com/lavie_consultoria" target="_blank" class="social-float-link" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);" aria-label="Instagram">
+ <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+ </a>
+ <a href="https://www.linkedin.com/in/la-vie-consultoria-empresarial-65b36934b/" target="_blank" class="social-float-link" style="background:#0A66C2;" aria-label="LinkedIn">
+ <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+ </a>
+</div>
+
+<script>
+// Nav scroll
+window.addEventListener('scroll', () => {
+ document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Reveal on scroll
+const observer = new IntersectionObserver((entries) => {
+ entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Menu mobile com overlay
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const navLinks = document.getElementById('navLinks');
+const navOverlay = document.getElementById('navOverlay');
+function toggleMenu(open) {
+ hamburgerBtn.classList.toggle('open', open);
+ navLinks.classList.toggle('open', open);
+ navOverlay.classList.toggle('open', open);
+ hamburgerBtn.setAttribute('aria-expanded', open);
+}
+hamburgerBtn.addEventListener('click', () => toggleMenu(!navLinks.classList.contains('open')));
+navOverlay.addEventListener('click', () => toggleMenu(false));
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggleMenu(false)));
+
+// Validação do formulário de contato
+const contactForm = document.querySelector('#contato form');
+if (!contactForm) {
+ // form inline bind submit to button
+ const submitBtn = document.querySelector('#contato .form-submit');
+ if (submitBtn) {
+ submitBtn.addEventListener('click', function(e) {
+ const nome = document.getElementById('nome');
+ const email = document.getElementById('email');
+ let valid = true;
+ [nome, email].forEach(field => {
+ if (!field) return;
+ const group = field.closest('.form-group');
+ if (!field.value.trim() || (field.type === 'email' && !/^\S+@\S+\.\S+$/.test(field.value))) {
+ group && group.classList.add('has-error');
+ valid = false;
+ } else {
+ group && group.classList.remove('has-error');
+ }
+ });
+ if (!valid) { e.preventDefault(); return; }
+ const success = document.querySelector('.form-success');
+ if (success) { success.style.display = 'block'; submitBtn.style.display = 'none'; }
+ });
+ }
+}
+
+// Tabs acessibilidade teclado
+document.querySelectorAll('.tab-btn').forEach(btn => {
+ btn.setAttribute('role', 'tab');
+ btn.addEventListener('keydown', e => {
+ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+ });
+});
+
+// Tabs
+function showTab(btn, id) {
+ document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+ document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+ document.getElementById('tab-' + id).classList.add('active');
+ btn.classList.add('active');
+ btn.setAttribute('aria-selected','true');
+}
+</script>
+</body>
+</html>
