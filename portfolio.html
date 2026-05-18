@@ -3,26 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chrysthyan Kelly Ferreira Alves Portfólio Profissional</title>
+<title>Chrysthyan Kelly · Executiva Sênior | Gestão Financeira, Processos e Pessoas · Goiânia</title>
+<meta name="description" content="Executiva sênior com 16 anos de resultado em governança financeira, gestão de processos ISO 9001 e desenvolvimento de lideranças. Perfil de Interim Management disponível para posições de Diretoria e Gerência Sênior em Goiânia/GO.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Chrysthyan Kelly · Gestão Financeira, Processos e Pessoas">
+<meta property="og:description" content="Especialista em unir Eficiência Financeira, Processos ISO 9001 e Capital Humano para escala de negócios. 16 anos de experiência. Goiânia/GO.">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Chrysthyan Kelly · Executiva Sênior | Gestão Financeira, Processos e Pessoas">
+<meta name="twitter:description" content="Especialista em Gestão Financeira, Processos ISO 9001 e Pessoas. 16 anos · CPA-20 · Auditora ISO 9001 · Mestranda UFG.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ── CORES REAIS LA VIE (do print) ── */
 :root {
-  --bg:      #edeae4;
-  --bg2:     #e5e1da;
-  --white:   #ffffff;
-  --ink:     #1a1a1a;
-  --mid:     #4a4742;
-  --light:   #6b6560;
-  --border:  #d4cfc8;
+  --bg:      #f0ece4;
+  --bg2:     #e6e1d8;
+  --white:   #faf8f5;
+  --ink:     #141410;
+  --mid:     #3d3a35;
+  --light:   #6b6357;
+  --border:  #ccc7be;
+  --gold:    #b08a3e;
   --serif:   "Cormorant Garamond", Georgia, serif;
   --sans:    "Inter", system-ui, sans-serif;
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { font-family:var(--sans); background:var(--bg); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased; }
+body { font-family:var(--sans); background:var(--bg); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
 
 /* ── NAV (preto como La Vie) ── */
 nav {
@@ -34,28 +44,134 @@ nav {
 .nav-logo {
   font-family:var(--serif); font-size:17px; font-weight:400;
   color:white; text-decoration:none; letter-spacing:0.5px;
+  transition:color .3s ease;
 }
-.nav-links { display:flex; gap:32px; list-style:none; }
+.nav-logo:hover { color:var(--gold); }
+.nav-links { display:flex; gap:24px; list-style:none; }
 .nav-links a {
-  font-size:11px; font-weight:500; letter-spacing:2px; text-transform:uppercase;
-  color:rgba(255,255,255,0.65); text-decoration:none; transition:color .2s;
+  font-size:10px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase;
+  color:rgba(255,255,255,0.65); text-decoration:none; transition:color .3s ease;
+  position:relative; padding-bottom:3px;
 }
-.nav-links a:hover { color:white; }
+.nav-links a::after {
+  content:""; position:absolute; bottom:0; left:0; right:0; height:1px;
+  background:var(--gold); transform:scaleX(0); transform-origin:left;
+  transition:transform .3s ease;
+}
+.nav-links a:hover::after { transform:scaleX(1); }
+.nav-links a:hover { color:var(--gold); }
 .nav-btn {
   font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase;
   color:var(--ink); background:white; text-decoration:none;
-  padding:9px 22px; transition:opacity .2s;
+  padding:9px 22px; transition:background .3s ease, color .3s ease, transform .3s ease; white-space:nowrap;
 }
-.nav-btn:hover { opacity:0.85; }
+.nav-btn:hover { background:var(--gold); color:white; opacity:1; transform:translateY(-1px); }
+
+/* hamburger */
+.nav-hamburger {
+  display:none; flex-direction:column; gap:5px; cursor:pointer;
+  background:none; border:none; padding:4px;
+}
+.nav-hamburger span {
+  display:block; width:22px; height:1.5px; background:white; transition:all .3s;
+}
+.nav-mobile {
+  display:none; position:fixed; top:56px; left:0; right:0;
+  background:var(--ink); padding:20px 28px 28px; z-index:99;
+  flex-direction:column; gap:0; list-style:none;
+  border-top:1px solid rgba(255,255,255,0.08);
+}
+.nav-mobile.open { display:flex; }
+.nav-mobile a {
+  font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase;
+  color:rgba(255,255,255,0.65); text-decoration:none; padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06); display:block;
+}
+.nav-mobile a:hover { color:var(--gold); }
 
 /* ── CONTAINER ── */
-.container { max-width:1160px; margin:0 auto; padding:0 52px; }
-section { padding:100px 0; }
+.container { max-width:1160px; margin:0 auto; padding:0 52px; box-sizing:border-box; width:100%; }
+section { padding:120px 0; }
 
-/* ── EYEBROW ── */
+/* ── HERO TAGS & CONTACTS ── */
+.hero-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:40px; }
+.htag {
+  font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+  color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.25);
+  padding:5px 12px; transition:border-color .3s ease, color .3s ease;
+}
+.htag:hover { border-color:var(--gold); color:var(--gold); }
+.hero-contacts { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.hc {
+  display:flex; align-items:center; gap:10px;
+  font-size:13px; color:rgba(255,255,255,0.75); font-weight:300;
+}
+.hc strong { color:white; font-weight:500; }
+.hc a { color:rgba(255,255,255,0.75); text-decoration:none; transition:color .3s ease; }
+.hc a:hover { color:white; }
+.hc-dot { width:3px; height:3px; border-radius:50%; background:var(--gold); flex-shrink:0; }
+
+/* ── DEPOIMENTOS VERTICAIS ── */
+.dep-scroll-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 56px;
+  max-width: 860px;
+}
+.dep-card-v {
+  border-left: 3px solid var(--gold);
+  padding-left: 36px;
+  position: relative;
+}
+.dep-card-inner { display: flex; flex-direction: column; gap: 20px; }
+.dep-q {
+  font-family: var(--serif);
+  font-size: 80px;
+  line-height: 0.7;
+  color: var(--gold);
+  opacity: 0.35;
+  display: block;
+  margin-bottom: -8px;
+}
+.dep-txt {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-style: italic;
+  line-height: 1.85;
+  color: rgba(255,255,255,0.78);
+  font-weight: 300;
+}
+.dep-sep {
+  width: 40px;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.5;
+}
+.dep-name-v {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.3px;
+}
+.dep-role-v {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--gold);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+.dep-author { display: flex; flex-direction: column; }
+@media (max-width: 768px) {
+  .dep-scroll-wrap { max-width: 100%; }
+  .dep-card-v { padding-left: 24px; }
+  .dep-txt { font-size: 16px; }
+}
 .eyebrow {
   font-size:11px; font-weight:500; letter-spacing:3px; text-transform:uppercase;
-  color:var(--light); margin-bottom:18px;
+  color:var(--gold, #b08a3e); margin-bottom:18px;
 }
 
 /* ── TÍTULOS ── */
@@ -66,9 +182,9 @@ h2.title {
   color:var(--ink); letter-spacing:-0.5px;
   margin-bottom:52px;
 }
-h2.title em { font-style:italic; }
+h2.title em { font-style:italic; color:var(--gold, #b08a3e); }
 h2.title.white { color:white; }
-h2.title.white em { color:white; }
+h2.title.white em { color:rgba(255,220,150,0.85); }
 
 /* ═══════════════════════════
    HERO preto, foto à direita
@@ -129,36 +245,50 @@ h2.title.white em { color:white; }
 }
 .hero-name {
   font-family:var(--serif);
-  font-size:clamp(44px,5.8vw,80px); font-weight:300;
-  line-height:1.04; letter-spacing:-2px;
-  color:white; margin-bottom:8px;
+  font-size:clamp(36px,4.6vw,62px); font-weight:300;
+  line-height:1.08; letter-spacing:-1.5px;
+  color:white; margin-bottom:20px;
 }
-.hero-name .italic { font-style:italic; display:block; color:rgba(255,255,255,0.75); }
+.hero-name .italic { font-style:italic; display:block; color:rgba(255,255,255,0.92); }
 .hero-role {
-  font-size:11px; font-weight:400; letter-spacing:2px; text-transform:uppercase;
-  color:rgba(255,255,255,0.3); margin-bottom:32px; line-height:2;
+  font-family:var(--serif); font-size:28px; font-weight:400; letter-spacing:0.3px;
+  color:white; margin-bottom:20px; line-height:1.3; opacity:0.95;
 }
 .hero-bio {
-  font-size:15px; color:rgba(255,255,255,0.55);
-  line-height:1.85; max-width:440px; font-weight:300; margin-bottom:36px;
+  font-size:19px; color:rgba(255,255,255,0.80);
+  line-height:1.65; max-width:480px; font-weight:300; margin-bottom:36px;
+  font-style:italic; font-family:var(--serif);
 }
 .hero-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:40px; }
+.hero-ctas { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:28px; align-items:center; }
+.hero-cta-primary {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--gold); color:var(--ink); text-decoration:none;
+  font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+  padding:13px 26px;
+  transition:background .3s ease, transform .3s ease, box-shadow .3s ease;
+}
+.hero-cta-primary:hover { background:#c89a4a; transform:translateY(-2px); box-shadow:0 6px 20px rgba(176,138,62,0.35); }
+.hero-cta-secondary {
+  display:inline-flex; align-items:center; gap:8px;
+  color:rgba(255,255,255,0.65); text-decoration:none;
+  font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase;
+  border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:2px;
+  transition:color .3s ease, border-color .3s ease, transform .3s ease;
+}
+.hero-cta-secondary:hover { color:white; border-color:var(--gold); transform:translateX(2px); }
+/* WhatsApp variant */
+.hero-cta-whatsapp {
+  border-bottom:1px solid rgba(37,211,102,0.4);
+  color:rgba(255,255,255,0.65);
+}
+.hero-cta-whatsapp:hover { color:#25d366; border-color:#25d366; transform:translateX(2px); }
 .htag {
   font-size:10px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase;
   color:rgba(255,255,255,0.55);
   border:1px solid rgba(255,255,255,0.18);
   padding:5px 12px;
 }
-.hero-contacts { display:flex; flex-direction:column; gap:10px; }
-.hc {
-  display:flex; align-items:center; gap:10px;
-  font-size:13px; color:rgba(255,255,255,0.4);
-}
-.hc strong { color:rgba(255,255,255,0.8); font-weight:400; }
-.hc a { color:rgba(255,255,255,0.55); text-decoration:none; transition:color .2s; }
-.hc a:hover { color:white; }
-.hc-dot { width:3px; height:3px; border-radius:50%; background:rgba(255,255,255,0.3); flex-shrink:0; }
-
 /* ═══════════════════════════
    SOBRE
 ═══════════════════════════ */
@@ -173,7 +303,7 @@ h2.title.white em { color:white; }
 .sk-name { font-size:12px; color:var(--mid); }
 .sk-pct { font-size:11px; color:var(--light); font-family:var(--serif); }
 .sk-bar { height:1px; background:var(--border); }
-.sk-fill { height:100%; background:var(--ink); }
+.sk-fill { height:100%; background:var(--gold, #b08a3e); }
 
 /* ═══════════════════════════
    EXPERIÊNCIA
@@ -186,12 +316,12 @@ h2.title.white em { color:white; }
 .exp-item::before {
   content:""; position:absolute; left:-5px; top:7px;
   width:9px; height:9px; border-radius:50%;
-  background:var(--ink); border:2px solid var(--bg2);
-  box-shadow:0 0 0 1px var(--ink);
+  background:var(--gold, #b08a3e); border:2px solid var(--bg2);
+  box-shadow:0 0 0 1px var(--gold, #b08a3e);
 }
 .exp-period { font-size:11px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--light); margin-bottom:5px; }
 .exp-role { font-family:var(--serif); font-size:22px; font-weight:400; color:var(--ink); margin-bottom:3px; }
-.exp-co { font-size:13px; font-weight:500; color:var(--mid); margin-bottom:9px; }
+.exp-co { font-size:13px; font-weight:500; color:var(--gold, #b08a3e); margin-bottom:9px; }
 .exp-desc { font-size:14px; color:var(--light); line-height:1.75; max-width:640px; }
 
 /* ═══════════════════════════
@@ -202,9 +332,9 @@ h2.title.white em { color:white; }
 .edu-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
 .edu-card {
   background:var(--bg2); padding:32px 26px;
-  border-top:2px solid transparent; transition:border-color .3s, transform .3s;
+  border-top:2px solid transparent; transition:border-color .3s ease, transform .3s ease;
 }
-.edu-card:hover { border-color:var(--ink); transform:translateY(-3px); }
+.edu-card:hover { border-color:var(--gold, #b08a3e); transform:translateY(-4px); }
 .edu-per { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--light); margin-bottom:12px; font-weight:500; }
 .edu-deg { font-family:var(--serif); font-size:17px; font-weight:400; color:var(--ink); margin-bottom:8px; line-height:1.35; }
 .edu-inst { font-size:12px; color:var(--light); }
@@ -276,9 +406,9 @@ h2.title.white em { color:white; }
 .case-nums { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-bottom:60px; }
 .cnum {
   background:var(--bg2); padding:32px 24px; text-align:center;
-  border-bottom:2px solid var(--ink);
+  border-bottom:2px solid var(--gold, #b08a3e);
 }
-.cnum-n { font-family:var(--serif); font-size:52px; font-weight:300; color:var(--ink); line-height:1; display:block; margin-bottom:8px; }
+.cnum-n { font-family:var(--serif); font-size:52px; font-weight:300; color:var(--gold, #b08a3e); line-height:1; display:block; margin-bottom:8px; }
 .cnum-l { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--light); font-weight:500; }
 .del-title {
   font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--light);
@@ -290,7 +420,7 @@ h2.title.white em { color:white; }
   background:var(--bg2); padding:22px 26px;
   border-left:2px solid var(--border); transition:border-color .3s;
 }
-.del:hover { border-color:var(--ink); }
+.del:hover { border-color:var(--gold, #b08a3e); }
 .del-tag { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--light); margin-bottom:5px; font-weight:500; }
 .del-name { font-family:var(--serif); font-size:19px; font-weight:400; color:var(--ink); margin-bottom:5px; line-height:1.3; }
 .del-desc { font-size:13px; color:var(--light); line-height:1.7; font-weight:300; }
@@ -316,9 +446,9 @@ h2.title.white em { color:white; }
 .lang-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
 .lang-card {
   background:var(--bg); padding:36px 28px;
-  border-top:2px solid transparent; transition:border-color .3s, transform .3s;
+  border-top:2px solid transparent; transition:border-color .3s ease, transform .3s ease;
 }
-.lang-card:hover { border-color:var(--ink); transform:translateY(-3px); }
+.lang-card:hover { border-color:var(--gold, #b08a3e); transform:translateY(-4px); }
 .lang-flag { font-size:32px; margin-bottom:12px; }
 .lang-name { font-family:var(--serif); font-size:26px; font-weight:400; color:var(--ink); margin-bottom:5px; }
 .lang-lvl { font-size:11px; color:var(--light); font-weight:500; text-transform:uppercase; letter-spacing:1.5px; }
@@ -326,7 +456,8 @@ h2.title.white em { color:white; }
 /* ═══════════════════════════
    FOOTER
 ═══════════════════════════ */
-footer { background:var(--ink); color:white; padding:100px 0; text-align:center; }
+footer { background:var(--ink); color:white; padding:120px 0; text-align:center; overflow-x:hidden; }
+.cta-sub { font-size:17px; color:rgba(255,255,255,0.55); max-width:640px; margin:0 auto 48px; line-height:1.7; text-align:center; }
 .cta-eyebrow { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:18px; }
 .cta-title {
   font-family:var(--serif); font-size:clamp(34px,4.5vw,60px);
@@ -342,7 +473,28 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
 .cta-lbl { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:8px; font-weight:500; }
 .cta-val { font-size:13px; color:rgba(255,255,255,0.7); font-weight:300; }
 
-/* ── RESPONSIVE ── */
+/* ── EXPERTISE TAGS ── */
+.etag {
+  font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase;
+  color:rgba(255,255,255,0.65); border:1px solid rgba(255,255,255,0.15);
+  padding:7px 16px; transition:border-color .3s ease, color .3s ease; cursor:default;
+}
+.etag:hover { border-color:rgba(255,255,255,0.5); color:white; }
+
+/* ── DEL (deliverables) transition ── */
+.del { background:var(--bg2); padding:22px 26px; border-left:2px solid var(--border); transition:border-color .3s ease; }
+.del:hover { border-color:var(--gold, #b08a3e); }
+
+@media (max-width:600px) {
+  .container { padding:0 20px; }
+  footer .container { padding:0 20px; }
+  .footer-sitemap { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .footer-brand-col { display: none; }
+}
+@media (max-width:768px) {
+  .footer-sitemap { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .footer-brand-col { grid-column: 1 / -1; }
+}
 @media (max-width:960px) {
   #assessments .container > div:first-of-type + div { grid-template-columns:1fr 1fr; }
   #assessments .container > div:nth-of-type(3) { grid-template-columns:1fr 1fr; }
@@ -350,6 +502,7 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
 
   nav { padding:0 24px; }
   .nav-links { display:none; }
+  .nav-hamburger { display:flex; }
   .container { padding:0 28px; }
   section { padding:72px 0; }
   .hero { grid-template-columns:50% 50%; min-height:auto; }
@@ -367,16 +520,157 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   .case-nums { grid-template-columns:1fr 1fr; }
   .cta-boxes { flex-direction:column; align-items:center; }
   .cta-box { width:100%; max-width:340px; }
+  .dep-grid { grid-template-columns:1fr; }
+
+  /* DISC mobile */
+  #disc .disc-barras,
+  #disc .disc-dominante,
+  #disc .recrutest-scores,
+  #disc .recrutest-bottom { display:block !important; }
+  #disc .disc-barras > div,
+  #disc .disc-dominante > div,
+  #disc .recrutest-scores > div,
+  #disc .recrutest-bottom > div { margin-bottom:2px; }
 }
 @media (max-width:600px) {
   .container { padding:0 20px; }
   section { padding:60px 0; }
-  .hero-name { font-size:40px; }
+  .hero { grid-template-columns:1fr; min-height:auto; }
+  .hero-photo { display:none; }
+  .hero-name { font-size:34px; letter-spacing:-1px; }
   .hstat-n { font-size:30px; }
   .edu-grid { grid-template-columns:1fr; }
+  .skills { grid-template-columns:1fr; }
   .gallery { columns:1; }
   .case-nums { grid-template-columns:1fr 1fr; }
 }
+
+.float-btns {
+  position: fixed; bottom: 28px; right: 28px;
+  display: flex; flex-direction: column; gap: 12px; z-index: 200;
+}
+.float-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; position: relative;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.float-btn:hover { transform: scale(1.1); box-shadow: 0 6px 22px rgba(0,0,0,0.38); }
+.float-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+.float-btn.whatsapp { background: #25d366; }
+.float-btn.linkedin  { background: #0a66c2; }
+.float-btn.lattes    { background: #1a6496; }
+.float-btn.pdf-btn   { background: #1a1a1a; border: 1.5px solid rgba(255,255,255,0.15); }
+.float-tip {
+  position: absolute; right: 60px;
+  background: #1a1a1a; color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
+  padding: 5px 11px; white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease; border-radius: 2px;
+}
+.float-btn:hover .float-tip { opacity: 1; }
+
+/* ── CTA CONTEXTUAL ── */
+.cta-inline {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 36px;
+  font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--ink); text-decoration: none;
+  border-bottom: 1px solid var(--ink); padding-bottom: 3px;
+  transition: opacity .3s ease;
+}
+.cta-inline:hover { opacity: 0.6; }
+.cta-inline.white { color: white; border-color: rgba(255,255,255,0.5); }
+.cta-inline.white:hover { opacity: 0.7; }
+
+/* ── DEPOIMENTOS ── */
+.dep-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; }
+.dep-card { background: var(--bg2); padding: 40px 32px; position: relative; }
+.dep-quote {
+  font-family: var(--serif); font-size: 52px; font-weight: 300;
+  color: var(--border); line-height: 1; margin-bottom: 16px; display: block;
+}
+.dep-text {
+  font-size: 14px; color: var(--mid); line-height: 1.8; font-weight: 300;
+  font-style: italic; margin-bottom: 28px;
+}
+.dep-name { font-size: 12px; font-weight: 600; color: var(--ink); letter-spacing: 0.5px; }
+.dep-role { font-size: 11px; color: var(--light); margin-top: 3px; letter-spacing: 0.5px; }
+.dep-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--ink); }
+
+/* mobile coberto no bloco responsivo principal */
+/* ── METODOLOGIA ── */
+.met-grid {
+  display: grid; grid-template-columns: repeat(2,1fr); gap: 2px;
+}
+.met-card {
+  background: var(--bg2); padding: 44px 36px;
+  border-top: 2px solid transparent;
+  transition: border-color .3s ease, transform .3s ease;
+  position: relative;
+}
+.met-card:hover { border-color: var(--gold); transform: translateY(-4px); }
+.met-num {
+  font-family: var(--serif); font-size: 48px; font-weight: 300;
+  color: var(--border); line-height: 1; margin-bottom: 16px; display: block;
+  letter-spacing: -2px;
+}
+.met-icon { margin-bottom: 20px; }
+.met-title {
+  font-family: var(--serif); font-size: 20px; font-weight: 400;
+  color: var(--ink); margin-bottom: 14px; line-height: 1.25;
+}
+.met-desc {
+  font-size: 14px; color: var(--light); line-height: 1.8; font-weight: 300;
+}
+@media (max-width:960px) { .met-grid { grid-template-columns: 1fr; } }
+
+/* ── FOOTER BOTTOM SITEMAP ── */
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 72px; padding-top: 52px;
+  padding-left: 40px; padding-right: 40px;
+}
+.footer-sitemap {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 2fr; gap: 40px;
+  text-align: left; min-width: 0; overflow: hidden;
+}
+.footer-site-col { display: flex; flex-direction: column; gap: 10px; }
+.footer-site-title {
+  font-size: 9px; font-weight: 600; letter-spacing: 2.5px;
+  text-transform: uppercase; color: rgba(255,255,255,0.25);
+  margin-bottom: 6px;
+}
+.footer-site-col a {
+  font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none;
+  transition: color .3s ease; font-weight: 300;
+}
+.footer-site-col a:hover { color: var(--gold); }
+.footer-brand-col { justify-content: flex-end; }
+.footer-brand-name {
+  font-family: var(--serif); font-size: 28px; font-weight: 300;
+  color: white; letter-spacing: -0.5px; line-height: 1.1;
+}
+.footer-brand-sub {
+  font-size: 11px; color: rgba(255,255,255,0.3);
+  font-weight: 400; letter-spacing: 0.5px; margin-top: 6px;
+}
+.footer-copy {
+  font-size: 10px; color: rgba(255,255,255,0.2);
+  letter-spacing: 0.5px; margin-top: 16px;
+}
+@media (max-width:960px) {
+  .footer-sitemap { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .footer-brand-col { grid-column: 1/-1; justify-content: flex-start; }
+}
+@media (max-width:600px) {
+  .footer-sitemap { grid-template-columns: 1fr 1fr; gap: 24px; }
+}
+
+
 </style>
 </head>
 <body>
@@ -385,28 +679,54 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
 <nav>
   <ul class="nav-links">
     <li><a href="#sobre">Perfil</a></li>
-    <li><a href="#expertise">Expertise</a></li>
     <li><a href="#experiencia">Experiência</a></li>
-    <li><a href="#assessments">Assessments</a></li>
     <li><a href="#formacao">Formação</a></li>
-    <li><a href="#disc">DISC</a></li>
-    <li><a href="#docencia">Docência</a></li>
+    <li><a href="#assessments">Assessments</a></li>
+    <li><a href="#depoimentos">Depoimentos</a></li>
     <li><a href="#contato">Contato</a></li>
   </ul>
-  <a class="nav-btn" href="#contato">Fale comigo</a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <button class="nav-hamburger" onclick="document.getElementById('navMobile').classList.toggle('open')" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="nav-btn" href="#contato">Fale comigo</a>
+  </div>
 </nav>
+<ul class="nav-mobile" id="navMobile">
+  <li><a href="#sobre" onclick="document.getElementById('navMobile').classList.remove('open')">Perfil</a></li>
+  <li><a href="#experiencia" onclick="document.getElementById('navMobile').classList.remove('open')">Experiência</a></li>
+  <li><a href="#formacao" onclick="document.getElementById('navMobile').classList.remove('open')">Formação</a></li>
+  <li><a href="#assessments" onclick="document.getElementById('navMobile').classList.remove('open')">Assessments</a></li>
+  <li><a href="#depoimentos" onclick="document.getElementById('navMobile').classList.remove('open')">Depoimentos</a></li>
+  <li><a href="#contato" onclick="document.getElementById('navMobile').classList.remove('open')">Contato</a></li>
+</ul>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-content">
     <div class="hero-eyebrow">Portfólio Profissional &nbsp;·&nbsp; 2026</div>
-    <div style="display:inline-block;margin-bottom:28px;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;">Disponível &nbsp;·&nbsp; Diretoria &nbsp;·&nbsp; Gerência &nbsp;·&nbsp; Docência</div>
+    <div style="display:inline-block;margin-bottom:28px;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;">Diretoria &nbsp;·&nbsp; Gerência &nbsp;·&nbsp; Docência &nbsp;·&nbsp; Consultoria</div>
     <h1 class="hero-name">
-      Chrysthyan Kelly
-      <span class="italic">Ferreira Alves</span>
+      Especialista em unir
+      <span class="italic">Governança, Processos e Pessoas</span>
     </h1>
-    <p class="hero-role">Gestão Financeira &nbsp;·&nbsp; Gestão de Pessoas &nbsp;·&nbsp; Consultoria Empresarial</p>
-    <p class="hero-bio">Profissional multidisciplinar com 16 anos de experiência, sendo 10 como gestora sênior. Formação sólida, visão estratégica e liderança orientada a resultados.</p>
+    <p class="hero-role">Chrysthyan Kelly Ferreira Alves</p>
+    <p class="hero-bio">Executiva sênior com 16 anos de resultado comprovado em estruturação de operações, governança financeira e desenvolvimento de lideranças. Perfil de Interim Management para empresas que precisam escalar com método, reduzir turnover e implantar processos de alta performance.</p>
+    <!-- CTAs dual-público: Recrutador + Empresário -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
+      <div class="hero-ctas">
+        <!-- Botão 1: Recrutador -->
+        <a class="hero-cta-primary" href="curriculo-chrysthyan-kelly.pdf" download title="Para Recrutadores · Baixar e anexar no ATS">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar Currículo (PDF)
+        </a>
+        <!-- Botão 2: Empresário -->
+        <a class="hero-cta-secondary hero-cta-whatsapp" href="https://wa.me/5562992741488?text=Ol%C3%A1%20Chrysthyan%2C%20gostaria%20de%20conversar%20sobre%20oportunidades%20profissionais." target="_blank" rel="noopener" title="Conversar sobre Oportunidades">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Conversar sobre Oportunidades
+        </a>
+      </div>
+    </div>
     <div class="hero-tags">
       <span class="htag">CFC · Contadora</span>
       <span class="htag">CPA-20</span>
@@ -415,11 +735,7 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
       <span class="htag">Mestranda UFG</span>
     </div>
     <div class="hero-contacts">
-      <div class="hc"><span class="hc-dot"></span><strong>(62) 99274-1488</strong>&ensp;WhatsApp</div>
-      <div class="hc"><span class="hc-dot"></span><strong>chrysthyankelly@gmail.com</strong></div>
-      <div class="hc"><span class="hc-dot"></span>Goiânia / GO &nbsp;·&nbsp; disponível para viagens &nbsp;·&nbsp; CNH AB</div>
-      <div class="hc"><span class="hc-dot"></span><a href="https://www.linkedin.com/in/chrysthyan/" target="_blank" rel="noopener">LinkedIn &#8599;</a></div>
-      <div class="hc"><span class="hc-dot"></span><a href="https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=K4678396D7&tokenCaptchar=0cAFcWeA4bfNAJ60ZpdcF9fhHo_ZvtoqNQerxvNQwB8MBrvh6sIgmVfbV6Og0rY51k6yeIUTyrJxOlq6bkj80w8BcCtwQL8u5qiApI9ZK824_sMF7SjZ9hP-rMk8ktpBJE8xQCwymLuuKlXepqAOaDGxZ9fMIJuVtQ-6SSjYL9jjjhXlE-Tnpuc_otxt7oh9oAuyCsI3IgSt-Y_f-4py1fhKyYumOHAVZ_GeTU0gH-XhZyTtxc4WiM8ilLf8E2CQ89V6MxLziBNhx3z0KGPRsg_uuA-grmxHHFMvSccR37npMlt-VMhr03UM0-eYDTqzI-2_0JfrwxUJanqEa9kFTXKErNxhkNWvrZqXMW5rDktlIGlAfkWBxSeRjvnlqEiKnDyQOQHhBmuwKt_CJMz6KCVsgnleqfGKTfr0-6VOvJzvg8jdKjUNR6cGHWKh3OWO8UEtly-CzukxkcohyyOxvQ-NnvwLjtzZiPUkIJDA_hMqAPsQh4PFNicy31SzizOIe69qFLV6owLoteOql28_ZQJ1GFQ4JOJzgIrIak8AfvZfPMA8xkiBC7g9rOKTa06dnU_s2Z5ewyNSx5vk200EReT2ysLTgkQY3MnhYn_E-JGw7hKqH3_T1vtD2Eyv2yu9WpsxGEHyx2wU3aVv5fz87p_ITa-tujEfWZhn-a21vkymd3mMvBdfmY3bdlxvO6fX3FVC9lfS9gaxAC0KWt5PfYHELQF35KKBxh-eNt6gMnqW7lFbJF-nvgnBw08fT8prXdII-XEHiSDNY9qI-2I6sBMy5nb6eG_1-nqQKpVkdq5nnVHq75MjkirOJjIVBmrUYQN62o4xSFB2IY5MWxqZUNrmKuI-YWu8wBfUsAc9FXzBSZDyxnjSibosM510PLL102hr9B04maIodPio8XhCrYoj_d9NZqtcQQQLJpCBP48Sv3m32EcYAfEx_F9KgZlUH7ZyNFXzs1apUiuBXFt_GJ4QlVCkj1jpWNUd12x__O_A47fS4uGs--udoiScGwhSG-Ms-Gst4y4JXO7IIkcPlN4Rhs96__Yyv1dSxbKoMh0owVINm8eOr6NZHNekwXvK-fvpLPBoQT1P6HcimKdlIWCdL2fIZnoAgWlgZyqKLozjNsR2oWWyXI5ud02U5-CaKPCGNcHwVisBzEpG_7wC36Rwb1v6jD2eBSNJvwTpAlUL87-lVIOMus0sueLpTVZF129IY85OiaAlRGZWwFht47E2F63f5psnSVUzo5jrZnOGxHl5bwrS1bY9LpY7fZ8NlOGZEpszMC_GSyE8M5i0j5hEB0mjFACX3WRjvSqBqoCwin4nJg0k0W2bGEUDgJpl2XWjcYA-wLMe6sQcCa2YMpM_8ms7wqtF8BP5oSGIsXxhJVQuNsneYwTaePQwwo4MemSyx8mKQuQjGNddjFlwUuL0e-JifdMCjkE7FzPyRnRirZD3LTgSL_MieuzUBltRzUlYQ9tzM_AcjJ1TC-W9DNQ0HB8UZ4StVkUzDv-deDRFkKfET3e4Udb38GuhOHHeRv0C8NQ4XmnghYSCD7MMoyZvuByrXBcrHBhsTPG55PfoUDCXSMQ8Vv_axGQg6KQjZmVnzqyFfNDDOaTMs3BaDB6h3E7ecd6TELaoJZBcIb7I424dABzaT5Ubnto7XtoJAbk7ns9JnF1aJzmS2kSSm77aRuK0_swBwwyH7Z7V-r6GveTceunxzt6d5u-s5xBH0pBmM4XZQLA27FjkoH9gZ-hI-x84lA3ZhAq8W5UcTQeC2OOTcZu6YVxKdX23B73_nWubGz34Djg-2qPEPGZkiETHQWfwKu5tPWPKIBrmcv84NEySrWnJq5EgbavDMAv0pshdvdgdw_FKyXL7L7LWEMGvmoLQjEf9v-V6zAchhZndk2sMdk1haOK4RHEyhCiVxQ9qVyIfe7EG1v3nFtKUdpI6Ofm3w6iyupu90VSMtZnsrY8pNsvwKnNojFf83LsaCBoB1xKwwvLhdtjwJgyxFb4PMHN_jhgcfNAaRl9Qr-Zy31p2EiFVJ80YhgACOWdiX-g8rqzXq45qLdKvesNj9TYQNPnjfbi79_qsUMg-2HUY2tYXLEr85iLbeOEGk89IAo0TNiFVCQZzjBxlWSwuVJyakhHQ1R2jzQhTZYD6PUjwZwJ3CmUwgr1WKX8l8zaQ8iRFO-X1jTcS7pInvqPOasaI-8z-zB7-iu0Q_mxVNcExeCgnLxTero-3KCDqKyrQ1uQbgJiA0ydtq1" target="_blank" rel="noopener">Currículo Lattes &#8599;</a></div>
+      
     </div>
   </div>
   <div class="hero-photo">
@@ -433,7 +749,6 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </div>
 </section>
 
-<!-- SOBRE -->
 <section class="sobre" id="sobre">
   <div class="container">
     <div class="eyebrow">Perfil</div>
@@ -441,9 +756,43 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
     <div class="sobre-grid">
       </div>
       <div class="sobre-text">
-        <p>Comecei minha trajetória profissional aos 14 anos. Hoje, com 30 anos e 16 anos de atuação, sendo 10 deles como gestora sênior, sou consultora empresarial, gestora financeira e especialista em pessoas.</p>
-        <p>Formação em Ciências Contábeis (UEG), MBA em Gestão de Pessoas por Competências, Indicadores e Coaching (IPOG) e Mestrado em Administração em andamento (UFG). Certificações CPA-20, SUSEP, CFC e Auditora Líder ISO 9001. Vivência internacional em San Diego, Califórnia.</p>
-        <p>Atuo na estruturação de empresas do diagnóstico à execução, com foco em pessoas, processos, financeiro e indicadores estratégicos.</p>
+        <!-- BLOCO 1: Visão de Negócio (atrai o empresário) -->
+        <div style="margin-bottom:36px;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;">Visão de Negócio</div>
+          <p style="font-size:15px;color:var(--mid);line-height:1.85;font-weight:300;">Mais de 16 anos estruturando operações, sendo 10 deles como gestora sênior. Atuo na interface entre estratégia e execução: diagnostico gargalos, estruturo processos, organizo o financeiro e desenvolvo lideranças para que a empresa cresça com segurança e autonomia. Do mapeamento à entrega, com autonomia e método.</p>
+        </div>
+
+        <!-- BLOCO 2: Especialidades Técnicas (atrai o recrutador) -->
+        <div style="margin-bottom:36px;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;">Especialidades Técnicas</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 32px;">
+            <div style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
+              <span style="font-size:13px;color:var(--mid);font-weight:400;">Auditora Líder ISO 9001</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
+              <span style="font-size:13px;color:var(--mid);font-weight:400;">Certificada CPA-20 e SUSEP</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
+              <span style="font-size:13px;color:var(--mid);font-weight:400;">Analista DISC Certificada</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
+              <span style="font-size:13px;color:var(--mid);font-weight:400;">Contadora CFC Registrada</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
+              <span style="font-size:13px;color:var(--mid);font-weight:400;">MBA Gestão de Pessoas · IPOG</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
+              <span style="font-size:13px;color:var(--mid);font-weight:400;">Mestranda em Administração · UFG</span>
+            </div>
+          </div>
+        </div>
+
         <div class="skills">
           <div><div class="sk-head"><span class="sk-name">Gestão Financeira</span><span class="sk-pct">95%</span></div><div class="sk-bar"><div class="sk-fill" style="width:95%"></div></div></div>
           <div><div class="sk-head"><span class="sk-name">Gestão de Pessoas &amp; RH</span><span class="sk-pct">98%</span></div><div class="sk-bar"><div class="sk-fill" style="width:98%"></div></div></div>
@@ -457,9 +806,7 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </div>
 </section>
 
-
-<!-- EXPERTISE -->
-<section id="expertise" style="background:var(--ink);padding:80px 0;">
+<section id="expertise" style="background:var(--ink);padding:120px 0;">
   <div class="container">
     <div class="eyebrow" style="color:rgba(255,255,255,0.35);">Competências</div>
     <h2 class="title white" style="margin-bottom:44px;">Áreas de <em>Expertise</em></h2>
@@ -493,21 +840,12 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
       <span class="etag">Relações Trabalhistas</span>
       <span class="etag">Gestão de Contratos</span>
     </div>
+    <div style="margin-top:44px;">
+      <a href="#contato" class="cta-inline white">Gostou deste perfil? Agende uma conversa &rarr;</a>
+    </div>
   </div>
 </section>
-<style>
-.etag {
-  font-size: 11px; font-weight: 500; letter-spacing: 1px;
-  text-transform: uppercase; color: rgba(255,255,255,0.65);
-  border: 1px solid rgba(255,255,255,0.15);
-  padding: 7px 16px;
-  transition: border-color .2s, color .2s;
-  cursor: default;
-}
-.etag:hover { border-color: rgba(255,255,255,0.5); color: white; }
-</style>
 
-<!-- EXPERIÊNCIA -->
 <section class="exp-sec" id="experiencia">
   <div class="container">
     <div class="eyebrow">Trajetória</div>
@@ -515,15 +853,15 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
     <div class="timeline">
       <div class="exp-item">
         <div class="exp-period">2022 até o momento</div>
-        <div class="exp-role">Consultora Empresarial Sênior</div>
+        <div class="exp-role">Gestão Executiva Sênior · Interim Management</div>
         <div class="exp-co">Consultoria própria · Goiânia/GO</div>
-        <p class="exp-desc">Consultoria de Gestão Empresarial Integrada em Pessoas, Processos, Financeiro e Indicadores Estratégicos. Atuação em empresas de médio e grande porte, incluindo Sotrigo Alimentos. Palestrante em treinamentos corporativos sobre liderança, produtividade e gestão de rotina.</p>
+        <p class="exp-desc">Atuação como executiva sênior em regime de Interim Management para empresas de médio e grande porte. Implantação de OKRs, estruturação de governança financeira (DRE, EBITDA, fluxo de caixa), mapeamento de processos ISO 9001, redução de turnover e desenvolvimento de lideranças internas. Clientes incluem Sotrigo Alimentos e TCL Transportes.</p>
       </div>
       <div class="exp-item">
-        <div class="exp-period">2025 até 2026</div>
-        <div class="exp-role">Gerente Administrativa Financeira</div>
+        <div class="exp-period">2025 até 2026 · Interim Management</div>
+        <div class="exp-role">Diretora Administrativa Financeira (Interim)</div>
         <div class="exp-co">RBZ Representações</div>
-        <p class="exp-desc">Gestão integrada de administrativo, financeiro, contabilidade e compras, liderando equipe de 4 pessoas. Estruturação do orçamento anual, controle de fluxo de caixa, DRE gerencial e apoio estratégico direto à presidência.</p>
+        <p class="exp-desc">Atuação como Interim Manager na implantação da área administrativa e financeira: estruturação de orçamento anual, DRE gerencial, fluxo de caixa e governança de compras. Liderança de equipe de 4 pessoas com reporte direto à presidência.</p>
       </div>
       <div class="exp-item">
         <div class="exp-period">2023 até 2025</div>
@@ -532,10 +870,10 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
         <p class="exp-desc">Liderança de equipe de 9 colaboradores nas áreas de Pessoas, Qualidade, SST, T&amp;D, Marketing e SGQ. Mapeamento e documentação de 100% dos processos operacionais da empresa, com automação da maioria deles. Conquista das certificações EcoVadis e SASMAQ durante a gestão, além da manutenção da ISO 9001. Desenvolvimento de lideranças e implantação de políticas internas do zero.</p>
       </div>
       <div class="exp-item">
-        <div class="exp-period">2023 até 2024</div>
+        <div class="exp-period">2023 até 2024 · concomitante à consultoria</div>
         <div class="exp-role">Fundadora e Proprietária</div>
-        <div class="exp-co">Bistrô e Café próprio</div>
-        <p class="exp-desc">Empreendimento próprio com gestão financeira e de pessoas. Controle de custos, gestão operacional e liderança de equipes no setor de alimentação.</p>
+        <div class="exp-co">La Vie Café Bistrô · Goiânia/GO</div>
+        <p class="exp-desc">Gestão executiva de operação própria: estruturação de CMV (Custo de Mercadoria Vendida), controle de margem, precificação estratégica e liderança de equipes. Experiência aplicada de turnaround operacional e financeiro no setor de alimentação.</p>
       </div>
       <div class="exp-item">
         <div class="exp-period">2019 até 2023</div>
@@ -559,93 +897,6 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </div>
 </section>
 
-
-<!-- ASSESSMENTS -->
-<section id="assessments" style="background:var(--bg);padding:100px 0;">
-  <div class="container">
-    <div class="eyebrow">Assessments Psicométricos</div>
-    <h2 class="title">Perfil validado <em>por evidências</em></h2>
-    <p style="font-size:15px;color:var(--mid);line-height:1.85;font-weight:300;max-width:680px;margin-bottom:60px;">
-      Resultados de bateria de testes psicométricos MindSight, metodologia baseada no modelo Big Five e utilizada por grandes empresas no processo seletivo.
-    </p>
-
-    <!-- MINDMATCH SCORE -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:60px;">
-      <div style="background:var(--ink);padding:40px 28px;text-align:center;grid-column:1;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;">MindMatch Score</div>
-        <div style="font-family:var(--serif);font-size:72px;font-weight:300;color:white;line-height:1;">81</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:8px;">Potencial bruto</div>
-      </div>
-      <div style="background:var(--bg2);padding:40px 28px;text-align:center;border-top:2px solid var(--ink);">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Raciocínio</div>
-        <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;">83,7</div>
-        <div style="font-size:11px;color:var(--light);margin-top:8px;">Média brasileira: 36,9</div>
-      </div>
-      <div style="background:var(--bg2);padding:40px 28px;text-align:center;border-top:2px solid var(--ink);">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Habilidades Sociais</div>
-        <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;">77,2</div>
-        <div style="font-size:11px;color:var(--light);margin-top:8px;">Média brasileira: 44,5</div>
-      </div>
-      <div style="background:var(--bg2);padding:40px 28px;text-align:center;border-top:2px solid var(--ink);">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Motivacional</div>
-        <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;">82,7</div>
-        <div style="font-size:11px;color:var(--light);margin-top:8px;">Média brasileira: 55,4</div>
-      </div>
-    </div>
-
-    <!-- TOP TRAÇOS DE PERFIL -->
-    <div style="margin-bottom:60px;">
-      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--light);margin-bottom:24px;display:flex;align-items:center;gap:14px;">
-        Traços de personalidade em destaque
-        <span style="flex:1;height:1px;background:var(--border);display:block;"></span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;">
-        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
-          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">95,9</div>
-          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Ambição</div>
-          <div style="font-size:11px;color:var(--light);">Busca contínua por excelência e crescimento</div>
-        </div>
-        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
-          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">95,9</div>
-          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Influência</div>
-          <div style="font-size:11px;color:var(--light);">Capacidade de mobilizar e persuadir equipes</div>
-        </div>
-        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
-          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">95,9</div>
-          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Planejamento</div>
-          <div style="font-size:11px;color:var(--light);">Estrutura, organização e excelência no fluxo</div>
-        </div>
-        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
-          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">91,4</div>
-          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Pensamento Conceitual</div>
-          <div style="font-size:11px;color:var(--light);">Formulação de estratégias e visão sistêmica</div>
-        </div>
-        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
-          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">89,2</div>
-          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Sociabilidade</div>
-          <div style="font-size:11px;color:var(--light);">Networking e conexão com stakeholders</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ESTILO DE TRABALHO + COMPORTAMENTO -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:80px;">
-      <div style="background:var(--ink);padding:40px 36px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:16px;">Estilo de Trabalho</div>
-        <div style="font-family:var(--serif);font-size:22px;color:white;margin-bottom:16px;line-height:1.3;">Equilíbrio entre pessoas e resultados</div>
-        <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.75;font-weight:300;">Perfil com forte foco no desenvolvimento de pessoas e alinhamento de equipes, combinado com orientação para clientes e resultados. Equilíbrio entre estrutura e flexibilidade no ambiente de trabalho.</p>
-      </div>
-      <div style="background:var(--bg2);padding:40px 36px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:16px;">Comportamento Situacional</div>
-        <div style="font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:16px;line-height:1.3;">Resolutiva e colaborativa</div>
-        <p style="font-size:13px;color:var(--mid);line-height:1.75;font-weight:300;">Tendência a assumir a resolução de problemas complexos de forma autônoma. Abertura para troca de opiniões, preferência por ambientes de baixo conflito e foco em construção de consenso.</p>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- FORMAÇÃO -->
 <section class="edu-sec" id="formacao">
   <div class="container">
     <div class="eyebrow">Formação</div>
@@ -675,7 +926,6 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </div>
 </section>
 
-<!-- CERTIFICAÇÕES -->
 <section class="certs-sec" id="certificacoes">
   <div class="container">
     <div class="eyebrow">Credenciais</div>
@@ -705,8 +955,126 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </div>
 </section>
 
-<!-- DISC + RECRUTEST -->
-<section style="background:var(--bg);padding:100px 0;" id="disc">
+<section id="docencia" style="background:var(--bg2);padding:120px 0;">
+  <div class="container">
+    <div class="eyebrow">Docência</div>
+    <h2 class="title">Interesse em <em>Ensino Superior</em></h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:0;">
+      <div style="background:var(--bg);padding:36px 32px;border-top:2px solid var(--ink);">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Área 1 · Pessoas</div>
+        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Gestão de Pessoas &amp; Comportamento Organizacional</div>
+        <p style="font-size:14px;color:var(--light);line-height:1.75;">Gestão de Pessoas, Liderança, Cultura Organizacional, Gestão por Competências, Avaliação de Desempenho e Desenvolvimento de Talentos.</p>
+      </div>
+      <div style="background:var(--bg);padding:36px 32px;border-top:2px solid var(--ink);">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Área 2 · Financeiro</div>
+        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Gestão Financeira &amp; Controladoria</div>
+        <p style="font-size:14px;color:var(--light);line-height:1.75;">Finanças Corporativas, Planejamento Orçamentário, DRE Gerencial, Indicadores Financeiros, Gestão de Custos e Controladoria.</p>
+      </div>
+      <div style="background:var(--bg);padding:36px 32px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Área 3 · Processos</div>
+        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Gestão de Processos &amp; Qualidade</div>
+        <p style="font-size:14px;color:var(--light);line-height:1.75;">Mapeamento e Modelagem de Processos, ISO 9001, Gestão da Qualidade, Melhoria Contínua e Indicadores Operacionais.</p>
+      </div>
+      <div style="background:var(--bg);padding:36px 32px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Formação para docência</div>
+        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Qualificação Acadêmica</div>
+        <p style="font-size:14px;color:var(--light);line-height:1.75;">Mestranda em Administração (UFG). MBA em Gestão de Pessoas por Competências e Indicadores (IPOG). Experiência prática de 16 anos nas áreas que leciona.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="assessments" style="background:var(--bg);padding:120px 0;">
+  <div class="container">
+    <div class="eyebrow">Assessments Psicométricos</div>
+    <h2 class="title">Perfil validado <em>por evidências</em></h2>
+    <p style="font-size:15px;color:var(--mid);line-height:1.85;font-weight:300;max-width:680px;margin-bottom:60px;">
+      Resultados de bateria de testes psicométricos MindSight, metodologia baseada no modelo Big Five e utilizada por grandes empresas no processo seletivo.
+    </p>
+
+    <!-- MINDMATCH SCORE -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:60px;">
+      <div style="background:var(--ink);padding:40px 28px;text-align:center;grid-column:1;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;">MindMatch Score</div>
+        <div style="font-family:var(--serif);font-size:72px;font-weight:300;color:white;line-height:1;">81</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:8px;">Potencial bruto</div>
+      </div>
+      <div style="background:var(--bg2);padding:40px 28px;text-align:center;border-top:2px solid var(--ink);">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Raciocínio</div>
+        <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;">78,3</div>
+        <div style="font-size:11px;color:var(--light);margin-top:8px;">Média brasileira: 36,9</div>
+      </div>
+      <div style="background:var(--bg2);padding:40px 28px;text-align:center;border-top:2px solid var(--ink);">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Social</div>
+        <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;">87,0</div>
+        <div style="font-size:11px;color:var(--light);margin-top:8px;">Média brasileira: 44,5</div>
+      </div>
+      <div style="background:var(--bg2);padding:40px 28px;text-align:center;border-top:2px solid var(--ink);">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Motivacional</div>
+        <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;">62,0</div>
+        <div style="font-size:11px;color:var(--light);margin-top:8px;">Média brasileira: 55,4</div>
+      </div>
+    </div>
+
+    <!-- TOP TRAÇOS DE PERFIL -->
+    <div style="margin-bottom:60px;">
+      <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--light);margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+        Traços de personalidade em destaque
+        <span style="flex:1;height:1px;background:var(--border);display:block;"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;">
+        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
+          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">100,0</div>
+          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Influência</div>
+          <div style="font-size:11px;color:var(--light);">Capacidade de mobilizar e persuadir equipes</div>
+        </div>
+        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
+          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">96,6</div>
+          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Planejamento</div>
+          <div style="font-size:11px;color:var(--light);">Estrutura, organização e excelência no fluxo</div>
+        </div>
+        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
+          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">94,1</div>
+          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Sociabilidade</div>
+          <div style="font-size:11px;color:var(--light);">Networking e criação de relacionamentos</div>
+        </div>
+        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
+          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">91,5</div>
+          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Pensamento Conceitual</div>
+          <div style="font-size:11px;color:var(--light);">Formulação de estratégias e visão sistêmica</div>
+        </div>
+        <div style="background:var(--bg2);padding:28px 22px;text-align:center;">
+          <div style="font-family:var(--serif);font-size:36px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">88,4</div>
+          <div style="font-size:11px;font-weight:500;color:var(--ink);margin-bottom:5px;">Ambição</div>
+          <div style="font-size:11px;color:var(--light);">Busca contínua por excelência e crescimento</div>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          
+          <div style="font-size:16px;font-weight:700;color:var(--ink);">94,1</div>
+        </div>
+          
+    </div>
+
+    <!-- ESTILO DE TRABALHO + COMPORTAMENTO -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:80px;">
+      <div style="background:var(--ink);padding:40px 36px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:16px;">Estilo de Trabalho</div>
+        <div style="font-family:var(--serif);font-size:22px;color:white;margin-bottom:16px;line-height:1.3;">Equilíbrio entre pessoas e resultados</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.75;font-weight:300;">Perfil com forte foco no desenvolvimento de pessoas e alinhamento de equipes, combinado com orientação para clientes e resultados. Equilíbrio entre estrutura e flexibilidade no ambiente de trabalho.</p>
+      </div>
+      <div style="background:var(--bg2);padding:40px 36px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:16px;">Comportamento Situacional</div>
+        <div style="font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:16px;line-height:1.3;">Resolutiva e colaborativa</div>
+        <p style="font-size:13px;color:var(--mid);line-height:1.75;font-weight:300;">Tendência a assumir a resolução de problemas complexos de forma autônoma. Abertura para troca de opiniões, preferência por ambientes de baixo conflito e foco em construção de consenso.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section style="background:var(--bg);padding:120px 0;" id="disc">
   <div class="container">
     <div class="eyebrow">Perfil Comportamental</div>
     <h2 class="title">Mapeamento <em>comportamental</em></h2>
@@ -757,20 +1125,25 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
         <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:8px;">Fator Dominante</div>
         <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:white;line-height:1;margin-bottom:4px;">D</div>
         <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:24px;">Dominância</div>
-        <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.8;font-weight:300;margin-bottom:20px;">Perfil orientado a resultados, com alta capacidade de tomar decisoes sob pressao e superar oposicoes para atingir metas. Age com objetividade, assertividade e senso de urgência.</p>
-        <div style="display:flex;flex-direction:column;gap:9px;">
+        <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.8;font-weight:300;margin-bottom:20px;">Perfil orientado a resultados, com alta capacidade de tomar decisões sob pressão e superar oposições para atingir metas. Age com objetividade, assertividade e senso de urgência.</p>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:28px;">
           <div style="display:flex;align-items:baseline;gap:10px;">
             <span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.3);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.5);">Motivacao: poder, forca e resultados concretos</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.5);">Motivação: poder, força e resultados concretos</span>
           </div>
           <div style="display:flex;align-items:baseline;gap:10px;">
             <span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.3);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.5);">Valor para a organizacao: busca incessante por resultado</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.5);">Valor para a organização: busca incessante por resultado</span>
           </div>
           <div style="display:flex;align-items:baseline;gap:10px;">
             <span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.3);flex-shrink:0;display:inline-block;margin-bottom:1px;"></span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.5);">Lideranca por desafio e estimulo a competitividade saudavel</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.5);">Liderança por desafio e estímulo à competitividade saudável</span>
           </div>
+        </div>
+        <!-- LEGENDA INTERPRETATIVA -->
+        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-weight:600;">O que isso significa na prática</div>
+          <p style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.75;font-weight:300;">Perfil Dominante significa: <strong style="color:white;font-weight:500;">foco em resultados, tomada de decisão rápida e liderança pragmática.</strong> Não espera consenso para agir. Define o rumo, mobiliza a equipe e entrega. Para organizações que precisam de liderança sênior com viés executivo e entrega real em ambientes de alta exigência e mudança.</p>
         </div>
       </div>
     </div>
@@ -786,118 +1159,178 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
       <div style="background:var(--ink);padding:36px 28px;text-align:center;">
         <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:14px;">Perfil</div>
         <div style="font-family:var(--serif);font-size:38px;font-weight:300;color:white;line-height:1.1;margin-bottom:8px;">Realizador</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);line-height:1.6;">Autoconfiante e extremamente focado nas tarefas. Assume responsabilidades e aceita as consequencias de suas acoes.</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);line-height:1.6;">Autoconfiante e extremamente focado em entregas. Assume responsabilidades e aceita as consequências das próprias ações.</div>
       </div>
       <div style="background:var(--bg2);padding:36px 28px;text-align:center;border-top:2px solid var(--ink);">
         <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Extrovertido</div>
         <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">69%</div>
-        <div style="font-size:11px;color:var(--light);">Comunicacao direta e presenca marcante em grupos</div>
+        <div style="font-size:11px;color:var(--light);">Comunicação direta e presença marcante</div>
       </div>
       <div style="background:var(--bg2);padding:36px 28px;text-align:center;border-top:2px solid var(--ink);">
         <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Aberto ao Risco</div>
         <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">59%</div>
-        <div style="font-size:11px;color:var(--light);">Disposicao para decisoes em cenarios de incerteza</div>
+        <div style="font-size:11px;color:var(--light);">Disposição para decisões em cenários incertos</div>
       </div>
       <div style="background:var(--bg2);padding:36px 28px;text-align:center;border-top:2px solid var(--ink);">
         <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Orientado a Tarefas</div>
         <div style="font-family:var(--serif);font-size:52px;font-weight:300;color:var(--ink);line-height:1;margin-bottom:8px;">51%</div>
-        <div style="font-size:11px;color:var(--light);">Foco na entrega com padrao de qualidade elevado</div>
+        <div style="font-size:11px;color:var(--light);">Foco na entrega com alto padrão</div>
       </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">
       <div style="background:var(--bg2);padding:32px 36px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;">Valor para Organizacoes</div>
-        <p style="font-size:13px;color:var(--mid);line-height:1.75;font-weight:300;">Define e completa metas como forma de satisfacao pessoal. Busca reconhecimento pela contribuicao e tende a ocupar posicoes de lideranca em qualquer contexto.</p>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;">Valor para Organizações</div>
+        <p style="font-size:13px;color:var(--mid);line-height:1.75;font-weight:300;">Define e completa metas como forma de satisfação pessoal. Busca reconhecimento pela contribuição e tende a ocupar posições de liderança em qualquer contexto.</p>
       </div>
       <div style="background:var(--bg2);padding:32px 36px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;">Reacao sob Pressao</div>
-        <p style="font-size:13px;color:var(--mid);line-height:1.75;font-weight:300;">Tende a absorver as tarefas para garantir que sejam feitas da maneira certa. Altamente comprometida com a qualidade das entregas, mesmo em situacoes de alta demanda.</p>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;">Reação sob Pressão</div>
+        <p style="font-size:13px;color:var(--mid);line-height:1.75;font-weight:300;">Tende a absorver as tarefas para garantir que sejam feitas da maneira certa. Altamente comprometida com a qualidade das entregas, mesmo em situações de alta demanda.</p>
       </div>
     </div>
 
   </div>
 </section>
 
-<!-- CASE SOTRIGO -->
+<section style="background:var(--ink);padding:120px 0;" id="depoimentos">
+  <div class="container">
+    <div class="eyebrow" style="color:rgba(255,255,255,0.35);">Quem trabalhou comigo</div>
+    <h2 class="title white">O que dizem sobre <em>minha entrega</em></h2>
+
+    <div class="dep-scroll-wrap">
+
+      <div class="dep-card-v">
+        <div class="dep-card-inner">
+          <span class="dep-q">&ldquo;</span>
+          <p class="dep-txt">Trabalhei com a Chrys por mais de 2 anos e pude acompanhar de perto a forma séria e dedicada com que ela conduz o trabalho. Sempre comprometida, organizada e responsável, alguém em quem realmente dava para confiar no dia a dia e nas entregas. A atenção aos detalhes e o cuidado com as pessoas faziam muita diferença no ambiente de trabalho. Mesmo nos momentos mais desafiadores, conseguia manter a calma e a boa comunicação. Trabalhar ao lado dela foi uma experiência muito positiva, profissionalmente e pessoalmente. Tenho muita admiração pela profissional que ela é e recomendo seu trabalho com tranquilidade e confiança.</p>
+          <div class="dep-sep"></div>
+          <div class="dep-author">
+            <div class="dep-name-v">Marcelo Pereira</div>
+            <div class="dep-role-v">Supervisor de G&amp;G &middot; TCL Transportes e Logística</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dep-card-v">
+        <div class="dep-card-inner">
+          <span class="dep-q">&ldquo;</span>
+          <p class="dep-txt">Escrevo estas palavras para registrar a minha profunda admiração por você, como profissional, como líder e como ser humano. Você tem o raro dom de extrair o melhor de cada um, entregando resultados muito além do esperado, enquanto mantém os olhos atentos ao lado humano da equipe. Sua habilidade em equilibrar o profissional e o pessoal é uma verdadeira lição de vida. Você sabe separar o CNPJ do CPF como ninguém. Obrigada por não fazer apenas o "feijão com arroz". O seu trabalho tem profundidade e deixa um legado real, daqueles que moldam o futuro e servem de espelho para as próximas gerações. Minha gratidão eterna pela sua mentoria!</p>
+          <div class="dep-sep"></div>
+          <div class="dep-author">
+            <div class="dep-name-v">Wanessa Rezende</div>
+            <div class="dep-role-v">Diretoria &middot; TCL Transportes e Logística</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dep-card-v">
+        <div class="dep-card-inner">
+          <span class="dep-q">&ldquo;</span>
+          <p class="dep-txt">Mais do que uma consultora técnica impecável, a Chrys provou ser uma parceira estratégica inestimável e uma verdadeira catalisadora de mudanças. Desde os primeiros encontros ficou evidente que estávamos diante de uma profissional que domina não apenas os aspectos técnicos, mas também a arte de conduzir processos de mudança dentro das organizações. Ela compreendeu rapidamente a cultura da nossa empresa e calibrou sua atuação com precisão e sensibilidade. Deixamos de enxergar a auditoria como obstáculo e passamos a entendê-la como oportunidade de demonstrar o que a TCL é capaz de entregar. A qualquer organização que busque não apenas certificações, mas uma transformação cultural profunda rumo à qualidade, eu a indico com absoluta convicção. O legado que ela construiu na TCL é permanente.</p>
+          <div class="dep-sep"></div>
+          <div class="dep-author">
+            <div class="dep-name-v">Elessandro Freitas</div>
+            <div class="dep-role-v">Farmacêutico &middot; TCL Transportes e Logística</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.dep-scroll-wrap -->
+  </div>
+</section>
+
+<section id="metodologia" style="background:var(--bg); padding:120px 0;">
+  <div class="container">
+    <div class="eyebrow">Como trabalho</div>
+    <h2 class="title">Minha <em>Metodologia</em></h2>
+    <p style="font-size:15px;color:var(--mid);line-height:1.85;font-weight:300;max-width:640px;margin-bottom:64px;">
+      A combinação de Financeiro + Pessoas na mesma gestão é rara. Essa visão integrada é o que transforma diagnósticos em resultados concretos.
+    </p>
+    <div class="met-grid">
+      <div class="met-card">
+        <div class="met-num">01</div>
+        <div class="met-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+        </div>
+        <h3 class="met-title">Diagnóstico Integrado</h3>
+        <p class="met-desc">Mapeio simultaneamente a saúde financeira e o capital humano da empresa, porque um não funciona sem o outro. Analiso DRE, fluxo de caixa, estrutura de equipe, clima e processos em uma visão única.</p>
+      </div>
+      <div class="met-card">
+        <div class="met-num">02</div>
+        <div class="met-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3 class="met-title">Estruturação e Execução</h3>
+        <p class="met-desc">Com o diagnóstico em mãos, estruturo processos, implanto indicadores e lidero as mudanças junto às equipes. Fico na execução até os resultados aparecerem, não apenas no relatório.</p>
+      </div>
+      <div class="met-card">
+        <div class="met-num">03</div>
+        <div class="met-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3 class="met-title">Monitoramento por Indicadores</h3>
+        <p class="met-desc">Implanto KPIs rastreáveis que tornam a gestão visível e previsível. A empresa passa a ter dados reais para tomar decisões estratégicas com segurança, acompanhando os números junto com a liderança.</p>
+      </div>
+      <div class="met-card">
+        <div class="met-num">04</div>
+        <div class="met-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="met-title">Autonomia da Equipe</h3>
+        <p class="met-desc">Treino lideranças e equipes para operar com independência após minha saída. O objetivo não é criar dependência de consultoria, mas entregar uma empresa que funciona sozinha com excelência.</p>
+      </div>
+    </div>
+    <div style="margin-top:52px;">
+      <a href="#contato" class="cta-inline">Agendar Reunião Executiva / Entrevista &rarr;</a>
+    </div>
+  </div>
+</section>
+
 <section class="case-sec" id="case">
   <div class="container">
     <div class="eyebrow">Resultado em campo</div>
-    <h2 class="title">De caos a sistema:<br>o case <em>Sotrigo Alimentos</em></h2>
-    <p class="case-intro">A Sotrigo chegou sem estrutura formal de RH, sem processos documentados e com recrutamento dependente de uma única pessoa. Em <strong>49 dias corridos</strong>, entregamos um sistema completo, rastreável, operado pela própria equipe.</p>
+    <h2 class="title">Estrutura, método e resultado:<br>o case <em>Sotrigo Alimentos</em></h2>
+    <p class="case-intro">A Sotrigo vivia um momento de forte expansão e precisava escalar sua gestão de pessoas com método e rastreabilidade. Em <strong>49 dias corridos</strong>, a empresa reduziu o tempo de fechamento de vagas para <strong>~4 dias por posição</strong>, eliminou a dependência de uma única pessoa no processo seletivo e ganhou a estrutura documental necessária para avançar em certificações. Resultado: mais velocidade operacional, menos risco e base sólida para crescer.</p>
     <div class="case-nums">
-      <div class="cnum"><span class="cnum-n">49</span><span class="cnum-l">Vagas gerenciadas</span></div>
-      <div class="cnum"><span class="cnum-n">34</span><span class="cnum-l">Vagas solucionadas</span></div>
-      <div class="cnum"><span class="cnum-n">69%</span><span class="cnum-l">Progresso atingido</span></div>
+      <div class="cnum"><span class="cnum-n">49d</span><span class="cnum-l">Prazo de entrega</span></div>
       <div class="cnum"><span class="cnum-n">~4d</span><span class="cnum-l">Por vaga fechada</span></div>
+      <div class="cnum"><span class="cnum-n">100%</span><span class="cnum-l">Processos mapeados</span></div>
+      <div class="cnum"><span class="cnum-n">ISO</span><span class="cnum-l">Base para certificação</span></div>
     </div>
     <div class="del-title">O que foi entregue em 49 dias</div>
     <div class="del-list">
-      <div class="del"><div class="del-tag">SGI</div><div class="del-name">Sistema de Gestão Integrada do zero</div><div class="del-desc">Estrutura, lista mestra, processos e formulários codificados. Base para certificação ISO 9001.</div></div>
-      <div class="del"><div class="del-tag">PO</div><div class="del-name">Primeiro Procedimento Operacional da Sotrigo</div><div class="del-desc">PO.SOT.01 em padrão ISO 9001 com fluxograma, responsabilidades e indicadores.</div></div>
-      <div class="del"><div class="del-tag">SISTEMA EXCLUSIVO</div><div class="del-name">Sistema de R&amp;S desenvolvido para a Sotrigo</div><div class="del-desc">Dashboard rastreável acessível por toda a equipe. Jovem Aprendiz treinado para operar.</div></div>
-      <div class="del"><div class="del-tag">MANUAL</div><div class="del-name">Manual de Funções G&amp;G (MAN.SOT.01)</div><div class="del-desc">5 cargos formalizados com missão, KPIs e relações de trabalho documentados.</div></div>
+      <div class="del"><div class="del-tag">SGI</div><div class="del-name">Implementação de Sistema de Gestão Integrada</div><div class="del-desc">Estruturação de processos, lista mestra e formulários codificados. Base documental para certificação ISO 9001, com redução de retrabalho e rastreabilidade total.</div></div>
+      <div class="del"><div class="del-tag">PO</div><div class="del-name">Sistematização de Procedimentos Operacionais</div><div class="del-desc">PO.SOT.01 em padrão ISO 9001 com fluxograma, responsabilidades e indicadores de desempenho. Operação padronizada e auditável.</div></div>
+      <div class="del"><div class="del-tag">SISTEMA EXCLUSIVO</div><div class="del-name">Implementação de Indicadores de R&amp;S Rastreáveis</div><div class="del-desc">Dashboard exclusivo com métricas de tempo, custo e eficácia por vaga. Equipe treinada para operar com autonomia, eliminando gargalo humano.</div></div>
+      <div class="del"><div class="del-tag">MANUAL</div><div class="del-name">Formalização de Cargos com KPIs e Missão</div><div class="del-desc">5 cargos documentados com missão, indicadores de performance e relações de trabalho. Gestão por resultados desde a contratação.</div></div>
     </div>
     <div class="ba">
       <div class="ba-block ba-before">
-        <div class="ba-lbl">Antes</div>
+        <div class="ba-lbl">Ponto de partida</div>
         <ul class="ba-list">
-          <li>Currículos físicos sem controle</li>
-          <li>Processo dependente de uma única pessoa</li>
-          <li>Sem documentação nem indicadores</li>
-          <li>Sem base para crescer com segurança</li>
+          <li>Gestão de candidatos manual e descentralizada</li>
+          <li>Processo concentrado em poucas pessoas</li>
+          <li>Sem documentação padronizada</li>
+          <li>Necessidade de escalar com segurança</li>
         </ul>
       </div>
       <div class="ba-arrow">&#8594;</div>
       <div class="ba-block ba-after">
-        <div class="ba-lbl white">Depois</div>
+        <div class="ba-lbl white">Resultado</div>
         <ul class="ba-list">
-          <li>Sistema digital rastreável e completo</li>
-          <li>Equipe inteira operando com autonomia</li>
-          <li>Processos documentados e KPIs ativos</li>
-          <li>Base sólida para ISO 9001 e expansão</li>
+          <li><strong style="color:var(--gold);">~4 dias por vaga fechada</strong>: velocidade operacional</li>
+          <li><strong style="color:var(--gold);">Equipe autônoma</strong>: zero dependência de consultor</li>
+          <li><strong style="color:var(--gold);">KPIs e processos ativos</strong>: gestão por indicadores</li>
+          <li><strong style="color:var(--gold);">Base ISO 9001</strong>: estrutura para certificação e expansão</li>
         </ul>
       </div>
     </div>
-  </div>
-</section>
-
-
-
-
-
-
-<!-- DOCÊNCIA -->
-<section id="docencia" style="background:var(--bg2);padding:100px 0;">
-  <div class="container">
-    <div class="eyebrow">Docência</div>
-    <h2 class="title">Interesse em <em>Ensino Superior</em></h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:0;">
-      <div style="background:var(--bg);padding:36px 32px;border-top:2px solid var(--ink);">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Áreas de interesse</div>
-        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Gestão de Pessoas &amp; Comportamento Organizacional</div>
-        <p style="font-size:14px;color:var(--light);line-height:1.75;">Gestão de Pessoas, Liderança, Cultura Organizacional, Gestão por Competências, Avaliação de Desempenho e Desenvolvimento de Talentos.</p>
-      </div>
-      <div style="background:var(--bg);padding:36px 32px;border-top:2px solid var(--ink);">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Áreas de interesse</div>
-        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Gestão Financeira &amp; Controladoria</div>
-        <p style="font-size:14px;color:var(--light);line-height:1.75;">Finanças Corporativas, Planejamento Orçamentário, DRE Gerencial, Indicadores Financeiros, Gestão de Custos e Controladoria.</p>
-      </div>
-      <div style="background:var(--bg);padding:36px 32px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Áreas de interesse</div>
-        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Gestão de Processos &amp; Qualidade</div>
-        <p style="font-size:14px;color:var(--light);line-height:1.75;">Mapeamento e Modelagem de Processos, ISO 9001, Gestão da Qualidade, Melhoria Contínua e Indicadores Operacionais.</p>
-      </div>
-      <div style="background:var(--bg);padding:36px 32px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--light);margin-bottom:12px;font-weight:500;">Formação para docência</div>
-        <div style="font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:14px;line-height:1.3;">Qualificação Acadêmica</div>
-        <p style="font-size:14px;color:var(--light);line-height:1.75;">Mestranda em Administração (UFG). MBA em Gestão de Pessoas por Competências e Indicadores (IPOG). Experiência prática de 16 anos nas áreas que leciona.</p>
-      </div>
+    <div style="margin-top:52px;">
+      <a href="#contato" class="cta-inline">Quero gerar este nível de eficiência na sua operação &rarr;</a>
     </div>
   </div>
 </section>
 
-<!-- GALERIA -->
 <section class="gallery-sec" id="galeria">
   <div class="container">
     <div class="eyebrow">Em ação</div>
@@ -916,11 +1349,18 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </div>
 </section>
 
+
+
+
+
+
+
 <!-- FOOTER -->
 <footer id="contato">
   <div class="container">
     <div class="cta-eyebrow">Contato</div>
-    <h2 class="cta-title">Vamos construir<br><em>algo extraordinário</em><br>juntos?</h2>
+    <h2 class="cta-title">Disponível para posições de<br><em>Diretoria e Gerência Sênior</em></h2>
+    <p class="cta-sub">Disponível para posições de Diretoria, Gerência Sênior e Projetos de Reestruturação Corporativa. Vamos alinhar as necessidades da sua empresa?</p>
     <div class="cta-boxes">
       <a class="cta-box" href="https://wa.me/5562992741488" target="_blank" rel="noopener">
         <div class="cta-lbl">WhatsApp</div><div class="cta-val">(62) 99274-1488</div>
@@ -936,44 +1376,51 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
       </a>
     </div>
   </div>
+
+  <!-- SITEMAP + REDES -->
+  <div class="footer-bottom">
+    <div class="footer-sitemap">
+      <div class="footer-site-col">
+        <div class="footer-site-title">Navegação</div>
+        <a href="#sobre">Perfil</a>
+        <a href="#experiencia">Experiência</a>
+        <a href="#formacao">Formação</a>
+        <a href="#assessments">Assessments</a>
+        <a href="#depoimentos">Depoimentos</a>
+        <a href="#contato">Contato</a>
+      </div>
+      <div class="footer-site-col">
+        <div class="footer-site-title">Mais</div>
+        <a href="#expertise">Competências</a>
+        <a href="#certificacoes">Certificações</a>
+        <a href="#docencia">Docência</a>
+        <a href="#metodologia">Metodologia</a>
+        <a href="#case">Case Sotrigo</a>
+      </div>
+      <div class="footer-site-col">
+        <div class="footer-site-title">Redes</div>
+        <a href="https://www.linkedin.com/in/chrysthyan/" target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a href="https://wa.me/5562992741488" target="_blank" rel="noopener">WhatsApp ↗</a>
+        <a href="https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=K4678396D7" target="_blank" rel="noopener">Lattes ↗</a>
+        <a href="mailto:chrysthyankelly@gmail.com">E-mail ↗</a>
+      </div>
+      <div class="footer-site-col footer-brand-col">
+        <div class="footer-brand-name">Chrysthyan Kelly</div>
+        <div class="footer-brand-sub">Gestão Executiva · Goiânia/GO</div>
+        <div class="footer-copy">&copy; 2026 · Todos os direitos reservados</div>
+      </div>
+    </div>
+  </div>
 </footer>
 
 
-<style>
-.float-btns {
-  position: fixed; bottom: 28px; right: 28px;
-  display: flex; flex-direction: column; gap: 12px; z-index: 200;
-}
-.float-btn {
-  width: 52px; height: 52px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  text-decoration: none; position: relative;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
-  transition: transform .2s, box-shadow .2s;
-}
-.float-btn:hover { transform: scale(1.1); box-shadow: 0 6px 22px rgba(0,0,0,0.38); }
-.float-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
-.float-btn.whatsapp { background: #25d366; }
-.float-btn.linkedin  { background: #0a66c2; }
-.float-btn.lattes    { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12); }
-.float-tip {
-  position: absolute; right: 60px;
-  background: #1a1a1a; color: white;
-  font-family: "Inter", sans-serif;
-  font-size: 11px; font-weight: 500; letter-spacing: 0.5px;
-  padding: 5px 11px; white-space: nowrap;
-  opacity: 0; pointer-events: none;
-  transition: opacity .2s; border-radius: 2px;
-}
-.float-btn:hover .float-tip { opacity: 1; }
-@media (max-width: 600px) {
-  .float-btns { bottom: 18px; right: 16px; gap: 10px; }
-  .float-btn { width: 46px; height: 46px; }
-  .float-tip { display: none; }
-}
-</style>
+
 
 <div class="float-btns">
+  <a class="float-btn pdf-btn" href="curriculo-chrysthyan-kelly.pdf" download title="Baixar PDF">
+    <span class="float-tip">Baixar PDF</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  </a>
   <a class="float-btn whatsapp" href="https://wa.me/5562992741488" target="_blank" rel="noopener">
     <span class="float-tip">WhatsApp</span>
     <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -984,7 +1431,7 @@ footer { background:var(--ink); color:white; padding:100px 0; text-align:center;
   </a>
   <a class="float-btn lattes" href="https://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=K4678396D7" target="_blank" rel="noopener">
     <span class="float-tip">Currículo Lattes</span>
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="50" cy="50" r="50" fill="#1a6496"/><text x="50" y="68" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="62" fill="white">L</text></svg>
   </a>
 </div>
 
