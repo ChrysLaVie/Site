@@ -460,8 +460,8 @@ header {
   <div class="funnel-visual" id="funnel-visual"></div>
   <div class="funil-steps" id="funil-steps"></div>
   <div class="filters-bar" style="margin-top:14px">
-    <input class="filter-input wide" id="cand-search" placeholder="🔍 Buscar candidato..." oninput="renderCandidatos()">
-    <select class="filter-input" id="cand-filter-vaga" onchange="renderCandidatos()"><option value="">Todas as vagas</option></select>
+    <input class="filter-input wide" id="cand-search" placeholder="🔍 Buscar candidato..." oninput="renderFunil();renderCandidatos()">
+    <select class="filter-input" id="cand-filter-vaga" onchange="renderFunil();renderCandidatos()"><option value="">Todas as vagas</option></select>
     <select class="filter-input" id="cand-filter-etapa" onchange="renderCandidatos()"><option value="">Todas as etapas</option></select>
   </div>
   <div class="cand-table-wrap" style="margin-top:16px">
@@ -1010,7 +1010,7 @@ const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',e
 
 // ══ MENSAGENS PADRÃO — La Vie Consultoria ════════════════════════════════════════
 // {nome} e {vaga} são preenchidos automaticamente. [CAMPOS] viram inputs no pop-up.
-const ASSINATURA='Chrysthyan Kelly Ferreira Alves\nLa Vie Consultoria';
+const ASSINATURA='Chrysthyan Kelly Ferreira Alves\nLa Vie Consultoria\n\n🌐 lavieconsultoria.com\n📷 Instagram: @lavie_consultoria\n💼 LinkedIn: linkedin.com/in/lavieconsultoria';
 const MSG_TEMPLATES={
   testeDisc:{nome:'Convite teste DISC (perfil comportamental)',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -1447,10 +1447,14 @@ function verCandVaga(id) { document.getElementById('cand-filter-vaga').value=id;
 // ══ CANDIDATOS ════════════════════════════════════════════════════════════════
 let activeEtapa='';
 function renderFunil() {
-  const cands=getCandsVisiveis(),vagas=getVagasVisiveis(),total=cands.length||1;
+  const todos=getCandsVisiveis(),vagas=getVagasVisiveis();
   const selV=document.getElementById('cand-filter-vaga'),curV=selV.value;
   selV.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}" ${v.id===curV?'selected':''}>${v.titulo}</option>`).join('');
   document.getElementById('cand-filter-etapa').innerHTML='<option value="">Todas as etapas</option>'+[...ETAPAS,{id:'reprovado',label:'Reprovados'}].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
+  const searchEl=document.getElementById('cand-search'),search=searchEl?searchEl.value.toLowerCase():'';
+  const fV=curV;
+  const cands=todos.filter(c=>(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
+  const total=cands.length||1;
   document.getElementById('funnel-visual').innerHTML=ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
   document.getElementById('funil-steps').innerHTML=ETAPAS.concat([{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
