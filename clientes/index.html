@@ -598,7 +598,7 @@ header {
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Entrevista RH</option><option value="entrevista_gestor">Entrevista Gestor</option><option value="vivencia">Vivência</option><option value="aprovacao">Aprovação</option><option value="admissao">Admissão</option><option value="reprovado">Reprovado</option></select></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Observação</label><textarea id="mc-obs" placeholder="Ex.: perfil mais aderente à vaga de Marketing"></textarea></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Observação (anotações sobre o candidato)</label><textarea id="mc-obs" placeholder="Ex.: perfil aderente; confirmar disponibilidade presencial; nota técnica do teste..."></textarea></div>
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1484,18 +1484,21 @@ async function salvarCandidato(){
 }
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
-  document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value='';openModal('modal-mover-cand');renderDocsList();}
+  document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';openModal('modal-mover-cand');renderDocsList();}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
   const novaEtapa=document.getElementById('mc-etapa').value,obs=document.getElementById('mc-obs').value.trim();
   const novaVaga=document.getElementById('mc-vaga').value,vagaAntiga=_cands[idx].vagaId;
+  const etapaAntiga=_cands[idx].etapa;
   const hist=[...(_cands[idx].historico||[])];
   if(novaVaga && novaVaga!==vagaAntiga){
     const vA=getVagas().find(v=>v.id===vagaAntiga),vN=getVagas().find(v=>v.id===novaVaga);
     hist.push({tipo:'vaga',de:vA?vA.titulo:vagaAntiga,para:vN?vN.titulo:novaVaga,data:new Date().toISOString(),obs:obs||'Movido para outra vaga',usuario:getUserName()});
   }
-  hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
-  _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,historico:hist};
+  if(novaEtapa!==etapaAntiga){
+    hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
+  }
+  _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,historico:hist};
   try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
