@@ -1012,6 +1012,42 @@ const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',e
 // {nome} e {vaga} são preenchidos automaticamente. [CAMPOS] viram inputs no pop-up.
 const ASSINATURA='Chrysthyan Kelly Ferreira Alves\nLa Vie Consultoria';
 const MSG_TEMPLATES={
+  testeDisc:{nome:'Convite teste DISC (perfil comportamental)',campos:[],texto:
+`Olá, {nome}! Tudo bem?
+
+Que bom seguir com você no processo seletivo para a vaga de {vaga}. Como próxima etapa, gostaríamos que você realizasse um teste de perfil comportamental (DISC). Ele nos ajuda a conhecer melhor o seu jeito de trabalhar.
+
+Acesse pelo link:
+https://mrcoach.com.br/teste-perfil-comportamental-disc.php
+
+Algumas orientações para o melhor aproveitamento:
+• Reserve cerca de 15 minutos para realizá-lo;
+• Escolha um lugar tranquilo, onde não seja interrompido(a);
+• Não feche o link antes de concluir todo o processo;
+• Não existe certo ou errado — o importante é responder com sinceridade.
+
+Ao finalizar, por favor nos avise para darmos sequência. Qualquer dúvida, estamos à disposição.
+
+Atenciosamente,
+${ASSINATURA}`},
+  testeTriagem:{nome:'Convite formulário de triagem (antes da entrevista)',campos:[],texto:
+`Olá, {nome}! Tudo bem?
+
+Dando sequência ao seu processo seletivo para a vaga de {vaga}, a próxima etapa é o preenchimento do nosso formulário de triagem. Ele reúne algumas questões sobre seu perfil, experiência e conhecimentos técnicos, e nos ajuda a conhecê-lo(a) melhor antes da entrevista on-line.
+
+Acesse pelo link:
+https://forms.gle/PjbYbPkTpioTs2H1A
+
+Algumas orientações:
+• Reserve cerca de 15 minutos para responder com calma;
+• Faça em um lugar tranquilo, onde não seja interrompido(a);
+• Responda a todas as questões e finalize o envio até o fim;
+• Seja sincero(a) nas respostas — é isso que nos permite avaliar o melhor encaixe.
+
+Assim que recebermos suas respostas, daremos sequência ao agendamento da entrevista on-line. Qualquer dúvida, estamos à disposição.
+
+Atenciosamente,
+${ASSINATURA}`},
   inicial:{nome:'Mensagem inicial (recebemos currículo)',campos:[],texto:
 `Olá! Tudo bem?
 
@@ -1608,7 +1644,7 @@ const VAGAS_ROTEIRO = [
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-fin', nome:'Coordenador(a) Financeiro e de Gestão', setor:'Financeiro', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras · Suprimentos' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação das rotinas financeiras e gestão administrativa de áreas estratégicas de uma Instituição de Ensino Superior. Regime PJ, R$ 10.000,00, horário comercial. Posição que assessora a Direção Executiva.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Contábeis, Economia ou correlatas) e sua trajetória em gestão financeira.','Qual sua experiência prévia em gestão administrativa de múltiplas áreas?','Já atuou em Instituição de Ensino Superior? (diferencial relevante)']},
@@ -2232,28 +2268,28 @@ function seedVagas(){
   if(getVagas().length > 0) return;
   const hoje = new Date().toISOString().slice(0,10);
   const vagas = [
-    // ── 6 vagas da OS Cambury Nº 01 (assinada 23/06/2026) · PJ · Presencial · Goiânia ──
-    { id:'cb1', titulo:'Coordenador Financeiro / Gestão', setor:'Financeiro', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial · Goiânia', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
+    // ── 6 vagas da OS Cambury Nº 01 (assinada 23/06/2026) · PJ 100% home office ──
+    { id:'cb1', titulo:'Coordenador Financeiro / Gestão', setor:'Financeiro', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial (Goiânia)', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
-      obs:'Liderança estratégica, gestão eficiente e decisões que impulsionam o crescimento. Gere as rotinas financeiras e administrativas, fluxo de caixa e equilíbrio financeiro, orçamentos/projeções/indicadores, contratos e fornecedores. Atua junto à Diretoria Executiva. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
+      obs:'Coordena as rotinas financeiras da instituição (contabilidade, contas a pagar/receber, cobrança, tesouraria, fluxo de caixa, conciliações e relacionamento com instituições financeiras) e a gestão administrativa de áreas estratégicas: RH/DP, Jurídico, TI, Logística, Patrimônio, Compras e Suprimentos. Renegocia dívidas e contratos; monitora indicadores e elabora relatórios gerenciais; desenvolve processos, controles internos e políticas administrativas; assessora a Direção Executiva nas decisões estratégicas. Diferencial: experiência em Instituições de Ensino Superior e vivência com ERP/sistemas de gestão. Local: Goiânia, presencial. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:00:00Z' },
-    { id:'cb3', titulo:'Coordenador Geral de Ensino', setor:'Ensino', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial · Goiânia', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
+    { id:'cb3', titulo:'Coordenador Geral de Ensino', setor:'Ensino', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Liderança acadêmica que garante qualidade de ensino, conformidade com o MEC e excelência na experiência do estudante. Coordena qualidade de ensino e NAE, atividades acadêmicas dos cursos, coordenadores e corpo docente, ENADE/avaliações, projetos pedagógicos. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:01:00Z' },
-    { id:'cb6', titulo:'Coordenador de Relacionamento e Experiência do Aluno', setor:'Relacionamento / NAE', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial · Goiânia', salario:'R$ 5.000,00 + comissão', honorario:'40% · R$ 2.000', gestor:'Direção Executiva', motivo:'Nova posição',
+    { id:'cb6', titulo:'Coordenador de Relacionamento e Experiência do Aluno', setor:'Relacionamento / NAE', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 5.000,00 + comissão', honorario:'40% · R$ 2.000', gestor:'Direção Executiva', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Conexão que acolhe, desenvolve e fideliza alunos, promovendo experiência acadêmica de excelência e apoiando captação e retenção. Gere relacionamento e experiência do aluno, Secretaria Acadêmica, rematrículas, bolsas/financiamentos, estágios, Ouvidoria e mediação de conflitos; monitora satisfação, retenção e evasão. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:02:00Z' },
-    { id:'cb7', titulo:'Gerente de Marketing', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial · Goiânia', salario:'R$ 6.000,00', honorario:'40% · R$ 2.400', gestor:'Diretoria', motivo:'Nova posição',
+    { id:'cb7', titulo:'Gerente de Marketing', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 6.000,00', honorario:'40% · R$ 2.400', gestor:'Diretoria', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Estratégia, criatividade e performance para fortalecer a marca, gerar demanda e impulsionar resultados. Planeja o plano de marketing, campanhas online/offline, tráfego pago (Google/Meta/LinkedIn Ads), CRM e automações, site institucional e SEO, redes sociais e KPIs. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:03:00Z' },
-    { id:'cb8', titulo:'Social Media', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial · Goiânia', salario:'R$ 3.000,00', honorario:'50% · R$ 1.800', gestor:'Gerência de Marketing', motivo:'Nova posição',
+    { id:'cb8', titulo:'Social Media', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 3.000,00', honorario:'50% · R$ 1.800', gestor:'Gerência de Marketing', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Conteúdo, criatividade e conexão para fortalecer a presença digital e impulsionar a captação de alunos. Planeja calendário editorial, produz conteúdo para Instagram/Facebook/LinkedIn/TikTok/YouTube, cobre eventos, interage com seguidores, acompanha métricas e zela pela identidade visual da marca. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:04:00Z' },
-    { id:'cb2', titulo:'Gerente de Captação de Alunos e Televendas', setor:'Comercial / Captação', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial · Goiânia', salario:'R$ 5.000,00 + comissão', honorario:'40% · R$ 2.000', gestor:'Diretoria', motivo:'Nova posição',
+    { id:'cb2', titulo:'Gerente de Captação de Alunos e Televendas', setor:'Comercial / Captação', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 5.000,00 + comissão', honorario:'40% · R$ 2.000', gestor:'Diretoria', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Liderança estratégica para atrair, converter e fidelizar alunos, com gestão de equipes de televendas e foco em resultados. Lidera captação e televendas, CRM, funil de vendas, captação de novos alunos/transferências/evadidos/segunda graduação, indicadores comerciais, treinamentos e metas. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:05:00Z' }
