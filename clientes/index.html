@@ -103,6 +103,26 @@ header {
 .tag-aprovado { background:var(--green-lt); color:var(--green); }
 .tag-admissao { background:#ECFDF5; color:#065F46; }
 .tag-reprovado{ background:var(--red-lt); color:var(--red); }
+/* ── Agenda / Calendário ── */
+.agenda-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+.agenda-weekdays>div{ text-align:center; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--mid); padding:4px 0; }
+.agenda-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.ag-cell{ min-height:96px; background:#fff; border:1.5px solid var(--bege-lt); border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:4px; transition:border-color .15s; }
+.ag-cell.empty{ background:transparent; border:none; }
+.ag-cell.today{ border-color:var(--charcoal); }
+.ag-cell:hover:not(.empty){ border-color:var(--bege); cursor:pointer; }
+.ag-cell .ag-day{ font-size:12px; font-weight:600; color:var(--mid); }
+.ag-cell.today .ag-day{ color:var(--charcoal); }
+.ag-ev{ font-size:11px; line-height:1.25; background:var(--bege-lt); border-left:3px solid var(--charcoal); border-radius:4px; padding:3px 5px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ag-ev.online{ border-left-color:#2e6b4f; }
+.ag-ev.presencial{ border-left-color:#7A5C2E; }
+.ag-ev.cancelada{ opacity:.5; text-decoration:line-through; }
+.ag-ev.realizada{ opacity:.7; }
+.ag-lista-item{ background:#fff; border:1.5px solid var(--bege-lt); border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:14px; cursor:pointer; }
+.ag-lista-item:hover{ border-color:var(--bege); }
+.ag-lista-date{ text-align:center; min-width:54px; }
+.ag-lista-date .d{ font-size:22px; font-weight:700; font-family:'Playfair Display',serif; }
+.ag-lista-date .m{ font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--mid); }
 
 /* ── FORM ELEMENTS ── */
 .form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-bottom:18px; }
@@ -401,6 +421,7 @@ header {
       <button class="nav-btn active" onclick="goPage('vagas')">Vagas</button>
       <button class="nav-btn" onclick="goPage('candidatos')">Candidatos</button>
       <button class="nav-btn" onclick="goPage('entrevistas')">Entrevistas</button>
+      <button class="nav-btn" onclick="goPage('agenda')">Agenda</button>
       <button class="nav-btn" id="nav-financeiro" onclick="goPage('financeiro')">Financeiro</button>
       <button class="nav-btn" onclick="goPage('painel')">Histórico</button>
     </nav>
@@ -487,6 +508,79 @@ header {
     <div class="eval-card" id="ev-eval"></div>
   </div>
 </div>
+<div id="page-agenda" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title">Agenda</h1>
+      <p class="page-sub" style="margin:0">Entrevistas marcadas · acompanhe os horários e links</p>
+    </div>
+    <button class="btn btn-primary" onclick="abrirAgendaModal()">+ Nova entrevista</button>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 14px;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn btn-ghost btn-sm" onclick="agendaNavMes(-1)">‹ Anterior</button>
+      <div id="agenda-mes-label" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;min-width:200px;text-align:center"></div>
+      <button class="btn btn-ghost btn-sm" onclick="agendaNavMes(1)">Próximo ›</button>
+      <button class="btn btn-ghost btn-sm" onclick="agendaHoje()">Hoje</button>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" id="agenda-view-mes" onclick="agendaSetView('mes')">Mês</button>
+      <button class="btn btn-ghost btn-sm" id="agenda-view-lista" onclick="agendaSetView('lista')">Lista</button>
+    </div>
+  </div>
+
+  <div id="agenda-cal-wrap">
+    <div class="agenda-weekdays">
+      <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+    </div>
+    <div id="agenda-grid" class="agenda-grid"></div>
+  </div>
+  <div id="agenda-lista-wrap" style="display:none"></div>
+</div>
+
+<!-- Modal: agendar/editar entrevista -->
+<div class="modal-bg" id="modal-agenda"><div class="modal" style="max-width:520px;max-height:92vh;overflow:auto">
+  <div class="modal-header"><div class="modal-title" id="ag-titulo">Nova entrevista</div><button class="modal-close" onclick="closeModal('modal-agenda')">✕</button></div>
+  <input type="hidden" id="ag-id">
+  <div class="form-grid">
+    <div class="form-field" style="grid-column:1/-1"><label>Candidato</label><select id="ag-cand" onchange="agPreencheVaga()"></select></div>
+    <div class="form-field"><label>Data</label><input type="date" id="ag-data"></div>
+    <div class="form-field"><label>Etapa / Tipo</label><select id="ag-etapa">
+      <option value="Entrevista RH">Entrevista RH</option>
+      <option value="Entrevista Gestor">Entrevista Gestor</option>
+      <option value="Vivência">Vivência</option>
+      <option value="Devolutiva">Devolutiva</option>
+      <option value="Outro">Outro</option>
+    </select></div>
+    <div class="form-field"><label>Início</label><input type="time" id="ag-ini"></div>
+    <div class="form-field"><label>Fim</label><input type="time" id="ag-fim"></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Modalidade</label><select id="ag-tipo" onchange="agToggleTipo()">
+      <option value="online">Online</option><option value="presencial">Presencial</option>
+    </select></div>
+    <div class="form-field" style="grid-column:1/-1" id="ag-link-wrap"><label>Link da reunião (Meet/Zoom)</label><input type="text" id="ag-link" placeholder="Cole aqui o link que você criou"></div>
+    <div class="form-field" style="grid-column:1/-1;display:none" id="ag-local-wrap"><label>Local</label><input type="text" id="ag-local" placeholder="Endereço / sala"></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Status</label><select id="ag-status">
+      <option value="agendada">Agendada</option><option value="realizada">Realizada</option><option value="cancelada">Cancelada</option>
+    </select></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="ag-obs"></textarea></div>
+  </div>
+  <div id="ag-gcal-wrap" style="display:none;border-top:1px solid var(--bege);margin-top:14px;padding-top:14px">
+    <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:8px">📅 Adicionar ao Google Agenda</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a id="ag-gcal-eu" href="#" target="_blank" class="btn btn-ghost btn-sm">Minha agenda</a>
+      <a id="ag-gcal-cand" href="#" target="_blank" class="btn btn-ghost btn-sm">Versão do candidato</a>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="copiarGcalCandidato()">📋 Copiar link p/ candidato</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:space-between;margin-top:8px">
+    <button class="btn-danger" onclick="excluirAgenda()" id="ag-del-btn" style="display:none">🗑 Excluir</button>
+    <div style="display:flex;gap:10px;margin-left:auto">
+      <button class="btn btn-ghost" onclick="closeModal('modal-agenda')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarAgenda()">Salvar</button>
+    </div>
+  </div>
+</div></div>
 <div id="page-financeiro" class="page">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
     <div><h1 class="page-title">Financeiro</h1><p class="page-sub" style="margin-bottom:20px">Honorários por vaga · pagamento 50% entrada + 50% fechamento</p></div>
@@ -862,6 +956,190 @@ function isAdmin(){ return !currentUser||currentUser.role==='admin'; }
 function getVagasVisiveis()      { if(isAdmin())return _vagas; return _vagas.filter(v=>currentUser.setores.includes(v.setor)); }
 function getCandsVisiveis()      { if(isAdmin())return _cands; const ids=new Set(getVagasVisiveis().map(v=>v.id)); return _cands.filter(c=>ids.has(c.vagaId)); }
 function getEntrevistasVisiveis(){ if(isAdmin())return _entrevistas; return _entrevistas.filter(e=>currentUser.setores.includes(e.setor)); }
+function getAgendaVisivel(){ if(isAdmin())return _agenda; const setores=currentUser.setores||[]; return _agenda.filter(a=>!a.setor||setores.includes(a.setor)); }
+
+// ══ AGENDA ══════════════════════════════════════════════════════════════════
+let _agendaRef = new Date(); _agendaRef.setDate(1);
+let _agendaView = 'mes';
+const AG_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const AG_MES_ABREV=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+
+function agendaNavMes(d){ _agendaRef.setMonth(_agendaRef.getMonth()+d); renderAgenda(); }
+function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); renderAgenda(); }
+function agendaSetView(v){ _agendaView=v; renderAgenda(); }
+
+function renderAgenda(){
+  const mes=_agendaRef.getMonth(), ano=_agendaRef.getFullYear();
+  document.getElementById('agenda-mes-label').textContent=AG_MESES[mes]+' '+ano;
+  const calWrap=document.getElementById('agenda-cal-wrap'), listaWrap=document.getElementById('agenda-lista-wrap');
+  const bMes=document.getElementById('agenda-view-mes'), bLista=document.getElementById('agenda-view-lista');
+  bMes.classList.toggle('btn-primary',_agendaView==='mes'); bMes.classList.toggle('btn-ghost',_agendaView!=='mes');
+  bLista.classList.toggle('btn-primary',_agendaView==='lista'); bLista.classList.toggle('btn-ghost',_agendaView!=='lista');
+
+  if(_agendaView==='lista'){ calWrap.style.display='none'; listaWrap.style.display='block'; renderAgendaLista(); return; }
+  calWrap.style.display='block'; listaWrap.style.display='none';
+
+  const eventos=getAgendaVisivel();
+  const primeiroDia=new Date(ano,mes,1).getDay();
+  const diasNoMes=new Date(ano,mes+1,0).getDate();
+  const hojeStr=new Date().toISOString().slice(0,10);
+  let cells='';
+  for(let i=0;i<primeiroDia;i++) cells+='<div class="ag-cell empty"></div>';
+  for(let dia=1;dia<=diasNoMes;dia++){
+    const dStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const evs=eventos.filter(e=>e.data===dStr).sort((a,b)=>(a.horaIni||'').localeCompare(b.horaIni||''));
+    const isToday=dStr===hojeStr;
+    let evHtml=evs.slice(0,3).map(e=>{
+      const hora=e.horaIni?e.horaIni+' ':'';
+      const cls=e.status==='cancelada'?'cancelada':(e.status==='realizada'?'realizada':'');
+      return `<div class="ag-ev ${e.tipo||'online'} ${cls}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${(e.titulo||'').replace(/"/g,'')}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
+    }).join('');
+    if(evs.length>3) evHtml+=`<div style="font-size:10px;color:var(--mid)">+${evs.length-3} mais</div>`;
+    cells+=`<div class="ag-cell ${isToday?'today':''}" onclick="abrirAgendaModal(null,'${dStr}')"><div class="ag-day">${dia}</div>${evHtml}</div>`;
+  }
+  document.getElementById('agenda-grid').innerHTML=cells;
+}
+
+function renderAgendaLista(){
+  const eventos=getAgendaVisivel().slice().sort((a,b)=>(a.data+(a.horaIni||'')).localeCompare(b.data+(b.horaIni||'')));
+  const hojeStr=new Date().toISOString().slice(0,10);
+  const futuros=eventos.filter(e=>e.data>=hojeStr);
+  const lista=(futuros.length?futuros:eventos);
+  if(!lista.length){ document.getElementById('agenda-lista-wrap').innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhuma entrevista agendada.</p></div>'; return; }
+  document.getElementById('agenda-lista-wrap').innerHTML=lista.map(e=>{
+    const [y,m,d]=e.data.split('-');
+    const horario=e.horaIni?`${e.horaIni}${e.horaFim?'–'+e.horaFim:''}`:'';
+    const linkBtn=e.link?`<a href="${e.link}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">🔗 Entrar</a>`:'';
+    const gcalBtn=`<a href="${gcalLink(e,'interna')}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">📅</a>`;
+    const statusTag=e.status&&e.status!=='agendada'?` · ${e.status}`:'';
+    return `<div class="ag-lista-item" onclick="abrirAgendaModal('${e.id}')">
+      <div class="ag-lista-date"><div class="d">${parseInt(d)}</div><div class="m">${AG_MES_ABREV[parseInt(m)-1]}</div></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600">${escapeHtmlAg(e.candidato||e.titulo||'Entrevista')}</div>
+        <div style="font-size:12px;color:var(--mid)">${escapeHtmlAg(e.titulo||'')}${e.vaga?' · '+escapeHtmlAg(e.vaga):''}</div>
+        <div style="font-size:12px;color:var(--mid)">${horario} · ${e.tipo==='presencial'?'Presencial':'Online'}${statusTag}</div>
+      </div>
+      ${linkBtn}
+      ${gcalBtn}
+    </div>`;
+  }).join('');
+}
+
+function escapeHtmlAg(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Monta link "Adicionar ao Google Agenda" (render). versao: 'interna' (com obs/link) ou 'candidato' (limpa)
+function gcalLink(a, versao){
+  if(!a.data) return '';
+  const dt=a.data.replace(/-/g,'');
+  let start, end;
+  if(a.horaIni){
+    const hi=a.horaIni.replace(':','')+'00';
+    const hf=(a.horaFim||a.horaIni).replace(':','')+'00';
+    start=dt+'T'+hi; end=dt+'T'+hf;
+    if(!a.horaFim){ // sem fim: assume 40 min
+      const d=new Date(`${a.data}T${a.horaIni}:00`); d.setMinutes(d.getMinutes()+40);
+      end=dt+'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
+    }
+  } else { // dia inteiro
+    start=dt; const d=new Date(a.data); d.setDate(d.getDate()+1);
+    end=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  }
+  const vaga=a.vaga?` — ${a.vaga}`:'';
+  const titulo=versao==='candidato'
+    ? `Entrevista UniCambury${vaga}`
+    : `${a.titulo||'Entrevista'} — ${a.candidato||''}${vaga}`;
+  const local=a.tipo==='presencial'?(a.local||''):(a.link||'Online');
+  let det;
+  if(versao==='candidato'){
+    det=`Olá! Esta é a sua entrevista para a vaga${vaga} no processo conduzido pela La Vie Consultoria.`;
+    if(a.tipo!=='presencial'&&a.link) det+=`\n\nLink da reunião: ${a.link}`;
+  } else {
+    det=`Candidato: ${a.candidato||'—'}\nEtapa: ${a.titulo||'—'}`;
+    if(a.link) det+=`\nLink: ${a.link}`;
+    if(a.obs) det+=`\nObs: ${a.obs}`;
+  }
+  const p=new URLSearchParams({action:'TEMPLATE',text:titulo,dates:start+'/'+end,details:det,location:local});
+  return 'https://calendar.google.com/calendar/render?'+p.toString();
+}
+
+function copiarGcalCandidato(){
+  const id=document.getElementById('ag-id').value; const a=_agenda.find(x=>x.id===id); if(!a)return;
+  const link=gcalLink(a,'candidato');
+  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link do candidato copiado!')).catch(()=>prompt('Copie o link:',link));
+}
+
+function abrirAgendaModal(id,dataPre){
+  const sel=document.getElementById('ag-cand');
+  sel.innerHTML='<option value="">— selecione —</option>'+getCandsVisiveis().map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
+  document.getElementById('ag-del-btn').style.display=id?'block':'none';
+  if(id){
+    const a=_agenda.find(x=>x.id===id); if(!a)return;
+    document.getElementById('ag-titulo').textContent='Editar entrevista';
+    document.getElementById('ag-id').value=a.id;
+    document.getElementById('ag-cand').value=a.candidatoId||'';
+    document.getElementById('ag-data').value=a.data||'';
+    document.getElementById('ag-etapa').value=a.titulo||'Entrevista RH';
+    document.getElementById('ag-ini').value=a.horaIni||'';
+    document.getElementById('ag-fim').value=a.horaFim||'';
+    document.getElementById('ag-tipo').value=a.tipo||'online';
+    document.getElementById('ag-link').value=a.link||'';
+    document.getElementById('ag-local').value=a.local||'';
+    document.getElementById('ag-status').value=a.status||'agendada';
+    document.getElementById('ag-obs').value=a.obs||'';
+    const gw=document.getElementById('ag-gcal-wrap'); gw.style.display='block';
+    document.getElementById('ag-gcal-eu').href=gcalLink(a,'interna');
+    document.getElementById('ag-gcal-cand').href=gcalLink(a,'candidato');
+  } else {
+    document.getElementById('ag-titulo').textContent='Nova entrevista';
+    document.getElementById('ag-id').value='';
+    document.getElementById('ag-cand').value='';
+    document.getElementById('ag-data').value=dataPre||new Date().toISOString().slice(0,10);
+    document.getElementById('ag-etapa').value='Entrevista RH';
+    document.getElementById('ag-ini').value=''; document.getElementById('ag-fim').value='';
+    document.getElementById('ag-tipo').value='online';
+    document.getElementById('ag-link').value=''; document.getElementById('ag-local').value='';
+    document.getElementById('ag-status').value='agendada'; document.getElementById('ag-obs').value='';
+    document.getElementById('ag-gcal-wrap').style.display='none';
+  }
+  agToggleTipo();
+  openModal('modal-agenda');
+}
+
+function agToggleTipo(){
+  const tipo=document.getElementById('ag-tipo').value;
+  document.getElementById('ag-link-wrap').style.display=tipo==='online'?'block':'none';
+  document.getElementById('ag-local-wrap').style.display=tipo==='presencial'?'block':'none';
+}
+
+function agPreencheVaga(){ /* vaga é derivada do candidato no salvar */ }
+
+async function salvarAgenda(){
+  const candId=document.getElementById('ag-cand').value;
+  const data=document.getElementById('ag-data').value;
+  if(!data){ alert('Informe a data.'); return; }
+  const etapa=document.getElementById('ag-etapa').value;
+  const cand=_cands.find(c=>c.id===candId);
+  const vaga=cand?getVagas().find(v=>v.id===cand.vagaId):null;
+  const id=document.getElementById('ag-id').value||('ag-'+Date.now());
+  const a={
+    id, titulo:etapa,
+    candidatoId:candId||null, candidato:cand?cand.nome:null,
+    vagaId:cand?cand.vagaId:null, vaga:vaga?vaga.titulo:null, setor:vaga?vaga.setor:null,
+    data, horaIni:document.getElementById('ag-ini').value, horaFim:document.getElementById('ag-fim').value,
+    tipo:document.getElementById('ag-tipo').value, link:document.getElementById('ag-link').value.trim(),
+    local:document.getElementById('ag-local').value.trim(), status:document.getElementById('ag-status').value,
+    obs:document.getElementById('ag-obs').value.trim(), criadoPor:getUserName()
+  };
+  try{ await upsertAgenda(a); _localUpsert(_agenda,a); closeModal('modal-agenda'); renderAgenda(); showToast('✅ Entrevista agendada!'); }
+  catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+
+async function excluirAgenda(){
+  const id=document.getElementById('ag-id').value; if(!id)return;
+  if(!confirm('Excluir esta entrevista da agenda?'))return;
+  try{ await deleteAgenda(id); _agenda=_agenda.filter(x=>x.id!==id); closeModal('modal-agenda'); renderAgenda(); showToast('Entrevista removida'); }
+  catch(e){ alert('Erro: '+e.message); }
+}
 function getRoteirosVisiveis()   { if(isAdmin())return VAGAS_ROTEIRO; return VAGAS_ROTEIRO.filter(r=>currentUser.setores.includes(r.setor)); }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -872,7 +1150,7 @@ function autoEncerramento(status){
 
 
 // ══ CACHE ═════════════════════════════════════════════════════════════════════
-let _vagas = [], _cands = [], _entrevistas = [];
+let _vagas = [], _cands = [], _entrevistas = [], _agenda = [];
 function getVagas()       { return _vagas; }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
@@ -885,6 +1163,8 @@ const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevista
 const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
+const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
+const agendaToDb= a => ({ id:a.id, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
 
 // ══ CRUD ══════════════════════════════════════════════════════════════════════
 // Em DEMO_MODE, persiste localmente (no navegador) para a demonstração ser convincente.
@@ -913,6 +1193,7 @@ async function loadAll() {
     if (v.data) _vagas       = v.data.map(dbToVaga);
     if (c.data) _cands       = c.data.map(dbToCand);
     if (e.data) _entrevistas = e.data.map(dbToEntrev);
+    try { const a = await sb.from('agenda').select('*').order('data',{ascending:true}); if(a.data) _agenda = a.data.map(dbToAgenda); } catch(_){}
     setSyncOk(true);
   } catch(err) { setSyncOk(false); console.error(err); }
 }
@@ -924,6 +1205,8 @@ async function upsertCand(c)   { if(DEMO_MODE){_localUpsert(_cands,c);demoSave()
 async function deleteCand(id)  { if(DEMO_MODE){_cands=_cands.filter(x=>x.id!==id);demoSave();return;} await sb.from('candidatos').delete().eq('id',id); }
 async function upsertEntrev(e) { if(DEMO_MODE){_localUpsert(_entrevistas,e);demoSave();return;} const {error} = await sb.from('entrevistas').upsert(entrevToDb(e)); if(error) throw error; }
 async function deleteEntrev(id){ if(DEMO_MODE){_entrevistas=_entrevistas.filter(x=>x.id!==id);demoSave();return;} await sb.from('entrevistas').delete().eq('id',id); }
+async function upsertAgenda(a){ if(DEMO_MODE){_localUpsert(_agenda,a);demoSave();return;} const {error}=await sb.from('agenda').upsert(agendaToDb(a)); if(error) throw error; }
+async function deleteAgenda(id){ if(DEMO_MODE){_agenda=_agenda.filter(x=>x.id!==id);demoSave();return;} await sb.from('agenda').delete().eq('id',id); }
 
 // ══ REALTIME ══════════════════════════════════════════════════════════════════
 function setupRealtime() {
@@ -932,6 +1215,7 @@ function setupRealtime() {
     .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select('*').order('criado_em',{ascending:false}); if(r.data){_vagas=r.data.map(dbToVaga); refreshPage(); showToast('🔄 Vagas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); showToast('🔄 Candidatos atualizados');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
+    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ const r=await sb.from('agenda').select('*').order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
     .subscribe(s => setSyncOk(s==='SUBSCRIBED'));
 }
 
@@ -948,7 +1232,7 @@ function showToast(msg) {
 
 // ══ NAV ═══════════════════════════════════════════════════════════════════════
 let _page = 'vagas';
-const PAGES = ['dashboard','vagas','candidatos','entrevistas','financeiro','painel'];
+const PAGES = ['dashboard','vagas','candidatos','entrevistas','agenda','financeiro','painel'];
 
 function goPage(name) {
   // Update context labels for gestores
@@ -976,6 +1260,7 @@ function goPage(name) {
   if(name==='vagas')       { renderVagasStats(); renderVagas(); }
   if(name==='candidatos')  { renderFunil(); renderCandidatos(); }
   if(name==='entrevistas') renderRoteiros();
+  if(name==='agenda')      renderAgenda();
   if(name==='financeiro')  renderFinanceiro();
   if(name==='painel')      renderPainel();
   window.scrollTo(0,0);
@@ -985,6 +1270,7 @@ function refreshPage() {
   if(_page==='dashboard')  renderDashboard();
   if(_page==='vagas')      { renderVagasStats(); renderVagas(); }
   if(_page==='candidatos') { renderFunil(); renderCandidatos(); }
+  if(_page==='agenda')     renderAgenda();
   if(_page==='financeiro')  renderFinanceiro();
   if(_page==='painel')     renderPainel();
 }
