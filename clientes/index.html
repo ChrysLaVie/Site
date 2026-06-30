@@ -518,6 +518,14 @@ header {
     <button class="btn btn-primary" onclick="abrirAgendaModal()">+ Nova entrevista</button>
   </div>
 
+  <div style="background:#fff;border:1.5px solid var(--bege-lt);border-radius:12px;padding:14px 16px;margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:240px">
+      <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:4px">🔗 Sala fixa de reunião (preenchida automaticamente em toda entrevista)</label>
+      <input type="text" id="sala-padrao-input" placeholder="Cole aqui o link fixo do seu Meet ou Zoom (uma vez só)" style="width:100%">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="salvarSalaPadrao()">Salvar sala</button>
+  </div>
+
   <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 14px;gap:12px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="btn btn-ghost btn-sm" onclick="agendaNavMes(-1)">‹ Anterior</button>
@@ -559,7 +567,7 @@ header {
     <div class="form-field" style="grid-column:1/-1"><label>Modalidade</label><select id="ag-tipo" onchange="agToggleTipo()">
       <option value="online">Online</option><option value="presencial">Presencial</option>
     </select></div>
-    <div class="form-field" style="grid-column:1/-1" id="ag-link-wrap"><label>Link da reunião (Meet/Zoom)</label><input type="text" id="ag-link" placeholder="Cole aqui o link que você criou"></div>
+    <div class="form-field" style="grid-column:1/-1" id="ag-link-wrap"><label>Link da reunião (Meet/Zoom)</label><input type="text" id="ag-link" placeholder="Já vem com a sala fixa; troque só se precisar de outra"></div>
     <div class="form-field" style="grid-column:1/-1;display:none" id="ag-local-wrap"><label>Local</label><input type="text" id="ag-local" placeholder="Endereço / sala"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Status</label><select id="ag-status">
       <option value="agendada">Agendada</option><option value="realizada">Realizada</option><option value="cancelada">Cancelada</option>
@@ -957,7 +965,7 @@ function isAdmin(){ return !currentUser||currentUser.role==='admin'; }
 function getVagasVisiveis()      { if(isAdmin())return _vagas; return _vagas.filter(v=>currentUser.setores.includes(v.setor)); }
 function getCandsVisiveis()      { if(isAdmin())return _cands; const ids=new Set(getVagasVisiveis().map(v=>v.id)); return _cands.filter(c=>ids.has(c.vagaId)); }
 function getEntrevistasVisiveis(){ if(isAdmin())return _entrevistas; return _entrevistas.filter(e=>currentUser.setores.includes(e.setor)); }
-function getAgendaVisivel(){ if(isAdmin())return _agenda; const setores=currentUser.setores||[]; return _agenda.filter(a=>!a.setor||setores.includes(a.setor)); }
+function getAgendaVisivel(){ const base=_agenda.filter(a=>a.id!=='_config_sala'&&a.tipo!=='config'); if(isAdmin())return base; const setores=currentUser.setores||[]; return base.filter(a=>!a.setor||setores.includes(a.setor)); }
 
 // ══ AGENDA ══════════════════════════════════════════════════════════════════
 let _agendaRef = new Date(); _agendaRef.setDate(1);
@@ -970,6 +978,7 @@ function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); renderAgend
 function agendaSetView(v){ _agendaView=v; renderAgenda(); }
 
 function renderAgenda(){
+  carregarSalaPadrao();
   const mes=_agendaRef.getMonth(), ano=_agendaRef.getFullYear();
   document.getElementById('agenda-mes-label').textContent=AG_MESES[mes]+' '+ano;
   const calWrap=document.getElementById('agenda-cal-wrap'), listaWrap=document.getElementById('agenda-lista-wrap');
@@ -1069,6 +1078,27 @@ function copiarGcalCandidato(){
   navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link do candidato copiado!')).catch(()=>prompt('Copie o link:',link));
 }
 
+// ══ SALA PADRÃO (link fixo de reunião) ══════════════════════════════════════
+let _salaPadrao = '';
+
+async function carregarSalaPadrao(){
+  try{
+    const r = await sb.from('agenda').select('link').eq('id','_config_sala').maybeSingle();
+    _salaPadrao = (r.data && r.data.link) ? r.data.link : '';
+  }catch(_){ _salaPadrao=''; }
+  const inp=document.getElementById('sala-padrao-input');
+  if(inp) inp.value=_salaPadrao;
+}
+
+async function salvarSalaPadrao(){
+  const link=document.getElementById('sala-padrao-input').value.trim();
+  try{
+    await sb.from('agenda').upsert({ id:'_config_sala', titulo:'__config sala padrão__', data:'2000-01-01', tipo:'config', link:link||null, status:'config', atualizado_em:new Date().toISOString() });
+    _salaPadrao=link;
+    showToast(link?'✅ Sala padrão salva!':'Sala padrão removida');
+  }catch(e){ alert('Erro ao salvar a sala padrão: '+e.message); }
+}
+
 function abrirAgendaModal(id,dataPre){
   const sel=document.getElementById('ag-cand');
   sel.innerHTML='<option value="">— selecione —</option>'+getCandsVisiveis().map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
@@ -1098,7 +1128,7 @@ function abrirAgendaModal(id,dataPre){
     document.getElementById('ag-etapa').value='Entrevista RH';
     document.getElementById('ag-ini').value=''; document.getElementById('ag-fim').value='';
     document.getElementById('ag-tipo').value='online';
-    document.getElementById('ag-link').value=''; document.getElementById('ag-local').value='';
+    document.getElementById('ag-link').value=_salaPadrao||''; document.getElementById('ag-local').value='';
     document.getElementById('ag-status').value='agendada'; document.getElementById('ag-obs').value='';
     document.getElementById('ag-gcal-wrap').style.display='none';
   }
