@@ -489,7 +489,10 @@ header {
 <div id="page-candidatos" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
     <div><h1 class="page-title">Candidatos</h1><p class="page-sub">Funil de R&S</p></div>
-    <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-sm" id="btn-recuperar-docs" onclick="recuperarDocumentos()" title="Reconecta documentos que estão no Storage mas sumiram dos cards">🔄 Recuperar documentos</button>
+      <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
+    </div>
   </div>
   <div class="funnel-visual" id="funnel-visual"></div>
   <div class="funil-steps" id="funil-steps"></div>
@@ -1936,6 +1939,56 @@ async function removerDoc(i){
   _cands[idx].documentos=(_cands[idx].documentos||[]).filter((_,j)=>j!==i);
   try{ await upsertCand(_cands[idx]); }catch(e){}
   renderDocsList();
+}
+
+// Reconecta documentos que estão no Storage mas sumiram das referências dos cards.
+// Cada candidato tem uma pasta no bucket com o id dele (ex.: cand-anibal/arquivo.pdf).
+async function recuperarDocumentos(){
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Recuperação indisponível no modo demonstração.'); return; }
+  if(!confirm('Vou varrer o Storage e reconectar os documentos que estão lá mas sumiram dos cards. Isso não apaga nada. Continuar?')) return;
+  const btn=document.getElementById('btn-recuperar-docs');
+  const txtOrig=btn?btn.textContent:''; if(btn){ btn.textContent='🔄 Recuperando...'; btn.disabled=true; }
+  let recuperados=0, candidatosAfetados=0, erros=0;
+  try{
+    for(const c of _cands){
+      try{
+        const {data:files,error}=await sb.storage.from(DOCS_BUCKET).list(c.id,{limit:100});
+        if(error||!files||!files.length) continue;
+        // arquivos reais (ignora subpastas/placeholder)
+        const reais=files.filter(f=>f.name && f.name!=='.emptyFolderPlaceholder');
+        if(!reais.length) continue;
+        const jaTem=new Set((c.documentos||[]).map(d=>d.path));
+        const novos=[];
+        for(const f of reais){
+          const path=c.id+'/'+f.name;
+          if(jaTem.has(path)) continue; // já referenciado, não duplica
+          const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
+          // nome amigável: tira o timestamp do começo (1700000000000_arquivo.pdf -> arquivo.pdf)
+          const nomeLimpo=f.name.replace(/^\d+_/,'');
+          const ext=(f.name.split('.').pop()||'').toLowerCase();
+          const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
+          novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'recuperado' });
+        }
+        if(novos.length){
+          const idx=_cands.findIndex(x=>x.id===c.id);
+          _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
+          await upsertCand(_cands[idx]);
+          recuperados+=novos.length; candidatosAfetados++;
+        }
+      }catch(e){ erros++; console.warn('Falha ao recuperar de',c.id,e); }
+    }
+    renderFunil(); renderCandidatos();
+    // se o modal de um candidato estiver aberto, atualiza a lista dele
+    const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
+    if(recuperados>0){
+      showToast('✅ '+recuperados+' documento(s) reconectado(s) em '+candidatosAfetados+' candidato(s)');
+      alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).'+(erros?' ('+erros+' com aviso, veja o console)':'')+'\n\nAbra um candidato para conferir.');
+    } else {
+      alert('Nenhum documento novo para reconectar. Ou já estavam todos ligados, ou os arquivos no Storage não batem com os ids dos candidatos. ('+erros+' avisos.)');
+    }
+  } finally {
+    if(btn){ btn.textContent=txtOrig; btn.disabled=false; }
+  }
 }
 
 // ══ GERADOR DE ARTE DE DIVULGAÇÃO (Instagram / LinkedIn) ═══════════════════════
