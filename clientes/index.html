@@ -1955,23 +1955,36 @@ async function recuperarDocumentos(){
     const {data:pastas,error:errRaiz}=await sb.storage.from(DOCS_BUCKET).list('',{limit:1000});
     if(errRaiz){ alert('Não consegui listar o Storage: '+errRaiz.message+'\nVerifique se a política de leitura do bucket está ativa.'); if(btn){btn.textContent=txtOrig;btn.disabled=false;} return; }
     diag.push('Pastas/itens na raiz do bucket: '+((pastas||[]).length));
+    diag.push('Exemplos na raiz: '+((pastas||[]).slice(0,8).map(p=>p.name+(p.id?' [arquivo]':' [pasta]')).join(', ')||'(nenhum)'));
     const candById=new Map(_cands.map(c=>[c.id,c]));
+    diag.push('Candidatos na tela: '+_cands.length+' (ex: '+_cands.slice(0,5).map(c=>c.id).join(', ')+')');
+    console.log('[recuperarDocumentos] itens na raiz:', pastas);
+    let amostraDada=false;
 
     for(const p of (pastas||[])){
-      // pasta tem name = id do candidato; arquivos soltos na raiz têm metadata
       const nomePasta=p.name;
       if(!nomePasta || nomePasta==='.emptyFolderPlaceholder') continue;
-      // 2) Lista os arquivos DENTRO da pasta
+      // Se o item da raiz JÁ É um arquivo (tem id/metadata), não é pasta: trata direto
+      const ehArquivoNaRaiz = p.id || (p.metadata && p.metadata.size!=null);
       let files=[];
+      let prefixo=nomePasta;
+      if(ehArquivoNaRaiz){
+        // arquivo solto na raiz: não há como saber o dono pelo id da pasta; ignora
+        diag.push('Item na raiz "'+nomePasta+'" é um arquivo solto (sem pasta de candidato).');
+        continue;
+      }
+      // 2) Lista os arquivos DENTRO da pasta
       try{
         const r=await sb.storage.from(DOCS_BUCKET).list(nomePasta,{limit:200});
-        if(r.error){ erros++; continue; }
-        files=(r.data||[]).filter(f=>f.name && f.name!=='.emptyFolderPlaceholder' && f.id!==null);
+        if(r.error){ erros++; diag.push('Erro ao listar "'+nomePasta+'": '+r.error.message); continue; }
+        files=(r.data||[]).filter(f=>f.name && f.name!=='.emptyFolderPlaceholder');
+        console.log('[recuperarDocumentos] pasta', nomePasta, '->', r.data);
       }catch(e){ erros++; continue; }
+      if(!amostraDada){ diag.push('Conteúdo de "'+nomePasta+'": '+(files.length?files.map(f=>f.name).slice(0,3).join(', '):'(vazio)')); amostraDada=true; }
       if(!files.length) continue;
 
       const c=candById.get(nomePasta);
-      if(!c){ diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não há candidato com esse id na tela.'); continue; }
+      if(!c){ diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não há candidato com id "'+nomePasta+'" na tela.'); continue; }
 
       const jaTem=new Set((c.documentos||[]).map(d=>d.path));
       const novos=[];
@@ -1998,7 +2011,8 @@ async function recuperarDocumentos(){
       showToast('✅ '+recuperados+' documento(s) reconectado(s)');
       alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nAbra um candidato para conferir.');
     } else {
-      alert('Diagnóstico (nada reconectado):\n\n'+diag.join('\n')+'\n\nSe as pastas aparecem mas dizem que não há candidato com esse id, me envie esta mensagem que eu ajusto.');
+      console.log('[recuperarDocumentos] DIAGNÓSTICO COMPLETO:\n'+diag.join('\n'));
+      alert('Diagnóstico (nada reconectado):\n\n'+diag.join('\n')+'\n\n(O diagnóstico completo também foi impresso no Console do navegador: F12 > Console.)');
     }
   } catch(e){
     alert('Erro inesperado: '+e.message);
