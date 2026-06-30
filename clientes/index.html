@@ -732,6 +732,17 @@ header {
   </div>
 </div></div>
 
+<!-- Modal: reconexão manual de documentos órfãos -->
+<div class="modal-bg" id="modal-reconciliar-docs"><div class="modal" style="max-width:620px;max-height:88vh;overflow:auto">
+  <div class="modal-header"><div class="modal-title">🔗 Reconectar documentos manualmente</div><button class="modal-close" onclick="closeModal('modal-reconciliar-docs')">✕</button></div>
+  <p style="font-size:12px;color:var(--mid);margin:0 0 14px">Estas pastas têm documentos no Storage, mas eu não consegui casar com nenhum candidato automaticamente. Escolha o candidato certo e clique em Conectar. Nada é apagado; isso só liga a pasta ao card.</p>
+  <div id="reconciliar-docs-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div id="reconciliar-docs-vazio" style="font-size:12px;color:var(--light);font-style:italic;display:none">Nenhuma pasta pendente. Tudo reconectado!</div>
+  <div style="display:flex;justify-content:flex-end;margin-top:16px">
+    <button class="btn btn-ghost" onclick="closeModal('modal-reconciliar-docs')">Fechar</button>
+  </div>
+</div></div>
+
 <!-- Modal: enviar mensagem (WhatsApp/E-mail) -->
 <div class="modal-bg" id="modal-msg"><div class="modal" style="max-width:460px">
   <div class="modal-header"><div class="modal-title">💬 Enviar mensagem</div><button class="modal-close" onclick="closeModal('modal-msg')">✕</button></div>
@@ -1887,6 +1898,7 @@ async function excluirCandidato(){const id=document.getElementById('mc-id').valu
 
 // ══ DOCUMENTOS DO CANDIDATO (Supabase Storage) ════════════════════════════════
 const DOCS_BUCKET='documentos';
+let _docsOrfaos=[];
 function renderDocsList(){
   const id=document.getElementById('mc-id').value;
   const c=getCands().find(x=>x.id===id);
@@ -1977,6 +1989,7 @@ async function recuperarDocumentos(){
   const txtOrig=btn?btn.textContent:''; if(btn){ btn.textContent='🔄 Recuperando...'; btn.disabled=true; }
   let recuperados=0, candidatosAfetados=0, erros=0;
   const diag=[];
+  const orfaos=[];
   try{
     // 1) Lista as PASTAS na raiz do bucket (cada pasta = id de um candidato)
     const {data:pastas,error:errRaiz}=await sb.storage.from(DOCS_BUCKET).list('',{limit:1000});
@@ -2011,7 +2024,11 @@ async function recuperarDocumentos(){
       if(!files.length) continue;
 
       const c=candById.get(nomePasta) || acharCandidatoPorPasta(nomePasta, files);
-      if(!c){ diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não achei candidato correspondente (nem por id nem por nome).'); continue; }
+      if(!c){
+        diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não achei candidato correspondente (nem por id nem por nome).');
+        orfaos.push({pasta:nomePasta, files});
+        continue;
+      }
 
       const jaTem=new Set((c.documentos||[]).map(d=>d.path));
       const novos=[];
@@ -2034,12 +2051,23 @@ async function recuperarDocumentos(){
 
     renderFunil(); renderCandidatos();
     const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
+    _docsOrfaos = orfaos;
     if(recuperados>0){
       showToast('✅ '+recuperados+' documento(s) reconectado(s)');
+    }
+    if(orfaos.length>0){
+      if(recuperados>0){
+        alert('Reconectei automaticamente '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nSobraram '+orfaos.length+' pasta(s) que não consegui casar pelo nome. Vou abrir uma tela para você reconectar essas manualmente, em poucos cliques.');
+      } else {
+        console.log('[recuperarDocumentos] DIAGNÓSTICO COMPLETO:\n'+diag.join('\n'));
+        alert('Não consegui reconectar nenhuma pasta automaticamente ('+orfaos.length+' pasta(s) com documentos).\n\n(O diagnóstico completo foi impresso no Console do navegador: F12 > Console.)\n\nVou abrir uma tela para você reconectar manualmente, escolhendo o candidato de cada pasta.');
+      }
+      abrirReconciliacaoDocs();
+    } else if(recuperados>0){
       alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nAbra um candidato para conferir.');
     } else {
       console.log('[recuperarDocumentos] DIAGNÓSTICO COMPLETO:\n'+diag.join('\n'));
-      alert('Diagnóstico (nada reconectado):\n\n'+diag.join('\n')+'\n\n(O diagnóstico completo também foi impresso no Console do navegador: F12 > Console.)');
+      alert('Nada para reconectar: todas as pastas do Storage já estão refletidas nos cards.\n\n(Diagnóstico impresso no Console: F12 > Console.)');
     }
   } catch(e){
     alert('Erro inesperado: '+e.message);
@@ -2048,7 +2076,98 @@ async function recuperarDocumentos(){
   }
 }
 
-// ══ GERADOR DE ARTE DE DIVULGAÇÃO (Instagram / LinkedIn) ═══════════════════════
+// ══ RECONEXÃO MANUAL DE DOCUMENTOS (pastas que o casamento automático não achou) ══
+// Acha o melhor palpite de candidato para uma pasta, SEM exigir o score mínimo
+// (usado só para pré-selecionar no dropdown; a Chrys sempre confirma com um clique).
+function _melhorPalpitePasta(nomePasta, files){
+  const basePasta=_slug(nomePasta.replace(/^cand[-_]?/i,'').replace(/[-_]/g,' '));
+  let baseArq='';
+  if(files&&files[0]&&files[0].name){ baseArq=_slug(files[0].name.replace(/^\d+_/,'').replace(/\.[a-z0-9]+$/i,'').replace(/[-_]/g,' ')); }
+  const alvo=(baseArq||basePasta).trim();
+  if(!alvo) return null;
+  const termos=alvo.split(' ').filter(t=>t.length>=3);
+  if(!termos.length) return null;
+  let melhor=null, melhorScore=0;
+  for(const c of _cands){
+    const nomeC=_slug(c.nome);
+    if(!nomeC) continue;
+    let score=0;
+    for(const t of termos){ if(nomeC.includes(t)) score++; }
+    if(score>melhorScore){ melhor=c; melhorScore=score; }
+  }
+  return melhor;
+}
+function abrirReconciliacaoDocs(){
+  renderReconciliacaoDocs();
+  openModal('modal-reconciliar-docs');
+}
+function renderReconciliacaoDocs(){
+  const wrap=document.getElementById('reconciliar-docs-list');
+  const vazio=document.getElementById('reconciliar-docs-vazio');
+  if(!wrap) return;
+  if(!_docsOrfaos.length){
+    wrap.innerHTML='';
+    if(vazio) vazio.style.display='block';
+    return;
+  }
+  if(vazio) vazio.style.display='none';
+  const candsOrdenados=[..._cands].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  wrap.innerHTML=_docsOrfaos.map((o,i)=>{
+    const palpite=_melhorPalpitePasta(o.pasta,o.files);
+    const opts=candsOrdenados.map(c=>`<option value="${c.id}" ${palpite&&palpite.id===c.id?'selected':''}>${(c.nome||'(sem nome)')}</option>`).join('');
+    const nomesArq=o.files.map(f=>f.name.replace(/^\d+_/,'')).join(', ');
+    return `<div style="border:1px solid var(--bege);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:12px;color:var(--mid)"><b>Pasta:</b> ${o.pasta} &nbsp;·&nbsp; <b>Arquivo(s):</b> ${nomesArq}</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="reconc-sel-${i}" class="filter-input" style="flex:1">
+          <option value="">— escolha o candidato —</option>
+          ${opts}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="conectarDocOrfao(${i})">Conectar</button>
+        <button class="btn btn-ghost btn-sm" onclick="ignorarDocOrfao(${i})" title="Não reconectar esta pasta agora">Ignorar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function conectarDocOrfao(i){
+  const o=_docsOrfaos[i]; if(!o) return;
+  const sel=document.getElementById('reconc-sel-'+i);
+  const candId=sel?sel.value:'';
+  if(!candId){ alert('Escolha um candidato antes de conectar.'); return; }
+  const idx=_cands.findIndex(c=>c.id===candId);
+  if(idx<0){ alert('Candidato não encontrado (a lista pode ter mudado). Feche e abra a tela de novo.'); return; }
+  const jaTem=new Set((_cands[idx].documentos||[]).map(d=>d.path));
+  const novos=[];
+  for(const f of o.files){
+    const path=o.pasta+'/'+f.name;
+    if(jaTem.has(path)) continue;
+    const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
+    const nomeLimpo=f.name.replace(/^\d+_/,'');
+    const ext=(f.name.split('.').pop()||'').toLowerCase();
+    const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
+    novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'reconciliado manualmente' });
+  }
+  if(novos.length){
+    _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
+    try{
+      await upsertCand(_cands[idx]);
+      showToast('✅ Documento(s) conectado(s) a '+_cands[idx].nome);
+    }catch(e){ alert('Erro ao salvar: '+e.message); return; }
+  } else {
+    showToast('Esse candidato já tinha esses documentos.');
+  }
+  _docsOrfaos.splice(i,1);
+  renderFunil(); renderCandidatos();
+  const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
+  renderReconciliacaoDocs();
+  if(!_docsOrfaos.length){ alert('Tudo reconectado! Pode fechar esta tela.'); }
+}
+function ignorarDocOrfao(i){
+  _docsOrfaos.splice(i,1);
+  renderReconciliacaoDocs();
+}
+
+
 let _arteVagaId=null;
 function _arteBullets(texto){
   // quebra a obs em frases curtas para virar bullets
@@ -2381,64 +2500,6 @@ async function syncEntrevistasExistentes(){
 }
 
 // ══ DASHBOARD ═════════════════════════════════════════════════════════════════
-
-
-async function syncCandidatoFromEntrevista(entrev){
-  // Determina etapa baseado no resultado
-  let etapa = 'entrevista_rh';
-  if(entrev.resultado === 'approved') etapa = 'aprovacao';
-  if(entrev.resultado === 'reprovado') etapa = 'reprovado';
-
-  // Encontra vaga real pelo vagaId do roteiro ou pelo nome
-  const vagas = getVagas();
-  let vagaId = null;
-  // Tenta achar vaga pelo setor e nome similar
-  const vagaMatch = vagas.find(v =>
-    v.setor === entrev.setor &&
-    (v.status === 'aberta' || v.status === 'encerrada') &&
-    v.titulo.toLowerCase().includes(entrev.vaga.toLowerCase().split('–')[0].trim().toLowerCase().substring(0,10))
-  ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
-  if(vagaMatch) vagaId = vagaMatch.id;
-
-  // Verifica se candidato já existe (pelo nome + CPF ou só nome)
-  const existe = _cands.find(c =>
-    c.nome.toLowerCase() === entrev.nome.toLowerCase() &&
-    (entrev.cpf ? c.cpf === entrev.cpf : true)
-  );
-
-  if(existe){
-    // Atualiza etapa se mudou
-    if(existe.etapa !== etapa && etapa !== 'entrevista_rh'){
-      const hist = [...(existe.historico||[])];
-      hist.push({etapa, data:new Date().toISOString(), obs:`Atualizado automaticamente via entrevista`, usuario:getUserName()});
-      const idx = _cands.findIndex(c=>c.id===existe.id);
-      _cands[idx] = {...existe, etapa, historico:hist};
-      await upsertCand(_cands[idx]);
-    }
-    return;
-  }
-
-  // Cria novo candidato
-  const cand = {
-    id: 'e_'+entrev.id,
-    nome: entrev.nome,
-    cpf: entrev.cpf||'',
-    tel: '',
-    email: '',
-    vagaId,
-    etapa,
-    dataEntrada: new Date().toISOString().slice(0,10),
-    fonte: 'Entrevista guiada',
-    obs: entrev.observacoes||'',
-    historico: [
-      {etapa:'entrevista_rh', data:entrev.data||new Date().toISOString(), obs:'Cadastrado automaticamente via roteiro de entrevista', usuario:entrev.registradoPor||getUserName()},
-      ...(etapa!=='entrevista_rh'?[{etapa, data:new Date().toISOString(), obs:`Resultado: ${etapa==='aprovacao'?'Aprovado':'Reprovado'}`, usuario:getUserName()}]:[])
-    ],
-    criadoPor: entrev.registradoPor||getUserName()
-  };
-  _cands.unshift(cand);
-  await upsertCand(cand);
-}
 
 // Sincroniza entrevistas antigas do Gabriel para o funil (roda uma vez no initApp)
 async function syncEntrevistasExistentes(){
