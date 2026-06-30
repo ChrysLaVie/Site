@@ -320,12 +320,24 @@ header {
 
 /* ── PRINT ── */
 @media print {
-  header,.btn,.nav-btn,.q-check,.done-btn,.save-btn,.print-btn,.action-row { display:none!important; }
-  body { background:#fff; }
-  .sec-body { display:block!important; }
-  .sec-block { border:1px solid #ccc; margin-bottom:8px; }
-  .page { display:block!important; }
-  #page-entrevista ~ * { display:none; }
+  @page { margin: 12mm; }
+  /* Esconde tudo o que não é o roteiro */
+  body * { visibility: hidden !important; }
+  #page-entrevista, #page-entrevista * { visibility: visible !important; }
+  #page-entrevista { position: absolute !important; left: 0; top: 0; width: 100%; display: block !important; }
+  /* Remove elementos de interface dentro do roteiro */
+  #page-entrevista .btn,
+  #page-entrevista .q-check,
+  #page-entrevista .done-btn,
+  #page-entrevista .save-btn,
+  #page-entrevista .print-btn,
+  #page-entrevista .action-row { display: none !important; }
+  /* Garante que tudo do roteiro apareça expandido */
+  #page-entrevista .sec-body { display: block !important; }
+  #page-entrevista .sec-block { border: 1px solid #ccc; margin-bottom: 8px; break-inside: avoid; }
+  /* Esconde toasts, modais, login, header e barras */
+  .toast, .modal-bg, #login-screen, header, nav { display: none !important; }
+  body { background: #fff !important; }
 }
 
 .user-btn{display:flex;align-items:center;gap:12px;background:var(--cream);border:1.5px solid var(--bege);border-radius:10px;padding:12px 16px;cursor:pointer;transition:border-color .2s;width:100%;margin-bottom:8px;font-family:'DM Sans',sans-serif;user-select:none}
@@ -734,6 +746,14 @@ header {
   <div class="modal-header"><div class="modal-title">✓ Aprovar na triagem</div><button class="modal-close" onclick="closeModal('modal-aprov-triagem')">✕</button></div>
   <input type="hidden" id="aprov-tri-id">
   <p style="font-size:13px;color:var(--mid);margin-bottom:14px"><strong id="aprov-tri-nome"></strong> vai avançar para <strong>Entrevista RH</strong>. Qual o tipo de entrevista?</p>
+  <div style="background:var(--bege-lt);border-radius:10px;padding:12px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--mid);margin-bottom:8px">📅 Já agendar na Agenda (opcional)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="form-field" style="flex:1;min-width:120px;margin:0"><label>Data</label><input type="date" id="aprov-tri-data"></div>
+      <div class="form-field" style="width:100px;margin:0"><label>Início</label><input type="time" id="aprov-tri-hora"></div>
+    </div>
+    <div style="font-size:11px;color:var(--mid);margin-top:6px">Se preencher, a entrevista entra na Agenda automaticamente (com a sala fixa).</div>
+  </div>
   <div style="display:flex;flex-direction:column;gap:8px">
     <button class="btn btn-primary" onclick="aprovarTriagemCom('online')">💻 Entrevista online</button>
     <button class="btn btn-primary" onclick="aprovarTriagemCom('presencial')">🏢 Entrevista presencial</button>
@@ -1260,6 +1280,12 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2500);
 }
+// Imprime o roteiro de forma limpa: remove toasts da tela e garante a página ativa
+function imprimirRoteiro(){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  document.querySelectorAll('.modal-bg.open, .modal-bg.active').forEach(m=>m.classList.remove('open','active'));
+  setTimeout(()=>window.print(),50);
+}
 
 // ══ NAV ═══════════════════════════════════════════════════════════════════════
 let _page = 'vagas';
@@ -1602,6 +1628,8 @@ function aprovarCard(id){
     _msgCtx=null;
     document.getElementById('aprov-tri-id').value=id;
     document.getElementById('aprov-tri-nome').textContent=c.nome;
+    document.getElementById('aprov-tri-data').value='';
+    document.getElementById('aprov-tri-hora').value='';
     openModal('modal-aprov-triagem');return;
   }
   const prox=ETAPA_PROXIMA[c.etapa]||c.etapa;
@@ -1612,9 +1640,28 @@ function aprovarCard(id){
 }
 async function aprovarTriagemCom(modo){ // 'online' | 'presencial'
   const id=document.getElementById('aprov-tri-id').value;const c=getCands().find(x=>x.id===id);if(!c)return;
+  const data=document.getElementById('aprov-tri-data').value;
+  const hora=document.getElementById('aprov-tri-hora').value;
   closeModal('modal-aprov-triagem');
   const r=await _setEtapaCand(id,'entrevista_rh','Aprovado na triagem — entrevista '+modo);
-  if(r){showToast('✅ '+c.nome.split(' ')[0]+' → Entrevista RH');abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');}
+  if(r){
+    // se preencheu data, já cria o evento na Agenda (sem retrabalho)
+    if(data){
+      const vaga=getVagas().find(v=>v.id===c.vagaId);
+      const ag={
+        id:'ag-'+Date.now(),
+        titulo:'Entrevista RH', candidatoId:c.id, candidato:c.nome,
+        vagaId:c.vagaId, vaga:vaga?vaga.titulo:null, setor:vaga?vaga.setor:null,
+        data, horaIni:hora||'', horaFim:'',
+        tipo:modo, link:(modo==='online'?(_salaPadrao||''):''), local:'',
+        status:'agendada', obs:'Criada automaticamente ao aprovar na triagem.', criadoPor:getUserName()
+      };
+      try{ await upsertAgenda(ag); _localUpsert(_agenda,ag); showToast('📅 Entrevista agendada na Agenda'); }
+      catch(e){ console.warn('Falha ao criar evento na agenda:',e); }
+    }
+    showToast('✅ '+c.nome.split(' ')[0]+' → Entrevista RH');
+    abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');
+  }
 }
 function reprovarCard(id){
   const c=getCands().find(x=>x.id===id);if(!c)return;
@@ -2124,7 +2171,7 @@ function markDone(si){
 }
 function updateProg(){const tot=curRoteiro.sections.length,done=Object.values(secState).filter(s=>s.done).length;document.getElementById('ev-prog-label').textContent=`${done} de ${tot} seções concluídas`;document.getElementById('ev-prog-fill').style.width=`${done/tot*100}%`;}
 function renderSections(){document.getElementById('ev-sections').innerHTML=curRoteiro.sections.map((sec,si)=>`<div class="sec-block ${si===0?'active':''}" id="sb-${si}"><div class="sec-header" onclick="toggleSec(${si})"><div class="sec-header-l"><div class="sec-num">${si+1}</div><div><div class="sec-name">${sec.name}</div><div class="sec-time">⏱ ${sec.time}</div></div></div><div class="sec-chevron">⌄</div></div><div class="sec-body"><ul class="q-list">${sec.questions.map((q,qi)=>`<li class="q-item"><div class="q-check" id="qc-${si}-${qi}" onclick="toggleCheck(${si},${qi})"></div><div style="flex:1"><div class="q-text" onclick="toggleCheck(${si},${qi})">${q}</div><textarea class="q-note" placeholder="Anotação..." rows="1" oninput="saveNote(${si},${qi},this.value)"></textarea></div></li>`).join('')}</ul><button class="done-btn" id="db-${si}" onclick="markDone(${si})">✓ Marcar seção como concluída</button></div></div>`).join('');}
-function renderEval(){document.getElementById('ev-eval').innerHTML=`<div class="eval-title">Ficha de Avaliação</div><div class="eval-grid">${curRoteiro.avaliacao.map(c=>`<div class="eval-item"><label>${c}</label><div class="stars">${[1,2,3,4,5].map(n=>`<div class="star" id="star-${c.replace(/\s/g,'_')}-${n}" onclick="setStar('${c}',${n})"></div>`).join('')}</div></div>`).join('')}</div><div class="section-label" style="margin-bottom:8px">Resultado Final</div><div class="result-row"><button class="result-btn ap-btn" id="btn-ap" onclick="setResult('approved')">✓ Aprovado(a)</button><button class="result-btn rp-btn" id="btn-rp" onclick="setResult('reprovado')">✗ Reprovado(a)</button></div><div class="obs-field"><label>Observações gerais</label><textarea id="obs-geral" placeholder="Pontos fortes, pontos de atenção..."></textarea></div><div class="action-row"><button class="save-btn" id="save-btn" onclick="salvarEntrevista()">💾 Salvar no histórico</button><button class="print-btn" onclick="window.print()">🖨 Imprimir</button></div>`;}
+function renderEval(){document.getElementById('ev-eval').innerHTML=`<div class="eval-title">Ficha de Avaliação</div><div class="eval-grid">${curRoteiro.avaliacao.map(c=>`<div class="eval-item"><label>${c}</label><div class="stars">${[1,2,3,4,5].map(n=>`<div class="star" id="star-${c.replace(/\s/g,'_')}-${n}" onclick="setStar('${c}',${n})"></div>`).join('')}</div></div>`).join('')}</div><div class="section-label" style="margin-bottom:8px">Resultado Final</div><div class="result-row"><button class="result-btn ap-btn" id="btn-ap" onclick="setResult('approved')">✓ Aprovado(a)</button><button class="result-btn rp-btn" id="btn-rp" onclick="setResult('reprovado')">✗ Reprovado(a)</button></div><div class="obs-field"><label>Observações gerais</label><textarea id="obs-geral" placeholder="Pontos fortes, pontos de atenção..."></textarea></div><div class="action-row"><button class="save-btn" id="save-btn" onclick="salvarEntrevista()">💾 Salvar no histórico</button><button class="print-btn" onclick="imprimirRoteiro()">🖨 Imprimir</button></div>`;}
 function setStar(c,n){evalState[c]=n;const k=c.replace(/\s/g,'_');for(let i=1;i<=5;i++)document.getElementById('star-'+k+'-'+i).classList.toggle('on',i<=n);}
 function setResult(r){resultado=r;document.getElementById('btn-ap').classList.toggle('sel',r==='approved');document.getElementById('btn-rp').classList.toggle('sel',r==='reprovado');}
 async function salvarEntrevista(){
