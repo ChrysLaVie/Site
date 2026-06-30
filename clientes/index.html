@@ -1949,43 +1949,59 @@ async function recuperarDocumentos(){
   const btn=document.getElementById('btn-recuperar-docs');
   const txtOrig=btn?btn.textContent:''; if(btn){ btn.textContent='🔄 Recuperando...'; btn.disabled=true; }
   let recuperados=0, candidatosAfetados=0, erros=0;
+  const diag=[];
   try{
-    for(const c of _cands){
+    // 1) Lista as PASTAS na raiz do bucket (cada pasta = id de um candidato)
+    const {data:pastas,error:errRaiz}=await sb.storage.from(DOCS_BUCKET).list('',{limit:1000});
+    if(errRaiz){ alert('Não consegui listar o Storage: '+errRaiz.message+'\nVerifique se a política de leitura do bucket está ativa.'); if(btn){btn.textContent=txtOrig;btn.disabled=false;} return; }
+    diag.push('Pastas/itens na raiz do bucket: '+((pastas||[]).length));
+    const candById=new Map(_cands.map(c=>[c.id,c]));
+
+    for(const p of (pastas||[])){
+      // pasta tem name = id do candidato; arquivos soltos na raiz têm metadata
+      const nomePasta=p.name;
+      if(!nomePasta || nomePasta==='.emptyFolderPlaceholder') continue;
+      // 2) Lista os arquivos DENTRO da pasta
+      let files=[];
       try{
-        const {data:files,error}=await sb.storage.from(DOCS_BUCKET).list(c.id,{limit:100});
-        if(error||!files||!files.length) continue;
-        // arquivos reais (ignora subpastas/placeholder)
-        const reais=files.filter(f=>f.name && f.name!=='.emptyFolderPlaceholder');
-        if(!reais.length) continue;
-        const jaTem=new Set((c.documentos||[]).map(d=>d.path));
-        const novos=[];
-        for(const f of reais){
-          const path=c.id+'/'+f.name;
-          if(jaTem.has(path)) continue; // já referenciado, não duplica
-          const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
-          // nome amigável: tira o timestamp do começo (1700000000000_arquivo.pdf -> arquivo.pdf)
-          const nomeLimpo=f.name.replace(/^\d+_/,'');
-          const ext=(f.name.split('.').pop()||'').toLowerCase();
-          const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
-          novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'recuperado' });
-        }
-        if(novos.length){
-          const idx=_cands.findIndex(x=>x.id===c.id);
-          _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
-          await upsertCand(_cands[idx]);
-          recuperados+=novos.length; candidatosAfetados++;
-        }
-      }catch(e){ erros++; console.warn('Falha ao recuperar de',c.id,e); }
+        const r=await sb.storage.from(DOCS_BUCKET).list(nomePasta,{limit:200});
+        if(r.error){ erros++; continue; }
+        files=(r.data||[]).filter(f=>f.name && f.name!=='.emptyFolderPlaceholder' && f.id!==null);
+      }catch(e){ erros++; continue; }
+      if(!files.length) continue;
+
+      const c=candById.get(nomePasta);
+      if(!c){ diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não há candidato com esse id na tela.'); continue; }
+
+      const jaTem=new Set((c.documentos||[]).map(d=>d.path));
+      const novos=[];
+      for(const f of files){
+        const path=nomePasta+'/'+f.name;
+        if(jaTem.has(path)) continue;
+        const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
+        const nomeLimpo=f.name.replace(/^\d+_/,'');
+        const ext=(f.name.split('.').pop()||'').toLowerCase();
+        const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
+        novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'recuperado' });
+      }
+      if(novos.length){
+        const idx=_cands.findIndex(x=>x.id===c.id);
+        _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
+        try{ await upsertCand(_cands[idx]); recuperados+=novos.length; candidatosAfetados++; }
+        catch(e){ erros++; }
+      }
     }
+
     renderFunil(); renderCandidatos();
-    // se o modal de um candidato estiver aberto, atualiza a lista dele
     const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
     if(recuperados>0){
-      showToast('✅ '+recuperados+' documento(s) reconectado(s) em '+candidatosAfetados+' candidato(s)');
-      alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).'+(erros?' ('+erros+' com aviso, veja o console)':'')+'\n\nAbra um candidato para conferir.');
+      showToast('✅ '+recuperados+' documento(s) reconectado(s)');
+      alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nAbra um candidato para conferir.');
     } else {
-      alert('Nenhum documento novo para reconectar. Ou já estavam todos ligados, ou os arquivos no Storage não batem com os ids dos candidatos. ('+erros+' avisos.)');
+      alert('Diagnóstico (nada reconectado):\n\n'+diag.join('\n')+'\n\nSe as pastas aparecem mas dizem que não há candidato com esse id, me envie esta mensagem que eu ajusto.');
     }
+  } catch(e){
+    alert('Erro inesperado: '+e.message);
   } finally {
     if(btn){ btn.textContent=txtOrig; btn.disabled=false; }
   }
