@@ -1943,6 +1943,33 @@ async function removerDoc(i){
 
 // Reconecta documentos que estão no Storage mas sumiram das referências dos cards.
 // Cada candidato tem uma pasta no bucket com o id dele (ex.: cand-anibal/arquivo.pdf).
+// Tenta achar o candidato dono de uma pasta quando o id não bate,
+// usando o nome (slug da pasta "cand-adriane" -> "adriane"; e nome do arquivo).
+function _slug(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
+function acharCandidatoPorPasta(nomePasta, files){
+  // termos vindos do nome da pasta (tira o prefixo cand-/cand_)
+  const basePasta=_slug(nomePasta.replace(/^cand[-_]?/i,'').replace(/[-_]/g,' '));
+  // termos vindos do primeiro arquivo (tira timestamp e extensão)
+  let baseArq='';
+  if(files&&files[0]&&files[0].name){ baseArq=_slug(files[0].name.replace(/^\d+_/,'').replace(/\.[a-z0-9]+$/i,'').replace(/[-_]/g,' ')); }
+  const alvo=(baseArq||basePasta).trim();
+  if(!alvo) return null;
+  const termos=alvo.split(' ').filter(t=>t.length>=3);
+  if(!termos.length) return null;
+  // candidato cujo nome (slug) contém os termos do arquivo/pasta
+  let melhor=null, melhorScore=0;
+  for(const c of _cands){
+    const nomeC=_slug(c.nome);
+    if(!nomeC) continue;
+    let score=0;
+    for(const t of termos){ if(nomeC.includes(t)) score++; }
+    // exige pelo menos o primeiro nome bater; prioriza quem casa mais termos
+    if(score>melhorScore && score>=1){ melhor=c; melhorScore=score; }
+  }
+  // segurança: só aceita se casar nome+sobrenome (2+ termos) OU o termo for bem específico
+  if(melhor && (melhorScore>=2 || termos.length===1)) return melhor;
+  return null;
+}
 async function recuperarDocumentos(){
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Recuperação indisponível no modo demonstração.'); return; }
   if(!confirm('Vou varrer o Storage e reconectar os documentos que estão lá mas sumiram dos cards. Isso não apaga nada. Continuar?')) return;
@@ -1983,8 +2010,8 @@ async function recuperarDocumentos(){
       if(!amostraDada){ diag.push('Conteúdo de "'+nomePasta+'": '+(files.length?files.map(f=>f.name).slice(0,3).join(', '):'(vazio)')); amostraDada=true; }
       if(!files.length) continue;
 
-      const c=candById.get(nomePasta);
-      if(!c){ diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não há candidato com id "'+nomePasta+'" na tela.'); continue; }
+      const c=candById.get(nomePasta) || acharCandidatoPorPasta(nomePasta, files);
+      if(!c){ diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s) mas não achei candidato correspondente (nem por id nem por nome).'); continue; }
 
       const jaTem=new Set((c.documentos||[]).map(d=>d.path));
       const novos=[];
