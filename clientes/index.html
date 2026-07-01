@@ -2001,6 +2001,7 @@ async function recuperarDocumentos(){
   let recuperados=0, candidatosAfetados=0, erros=0;
   const diag=[];
   const orfaos=[];
+  let contPastasComArquivo=0, contPastasVazias=0, contPastasComErro=0;
   try{
     // 1) Lista as PASTAS na raiz do bucket (cada pasta = id de um candidato)
     const {data:pastas,error:errRaiz}=await sb.storage.from(DOCS_BUCKET).list('',{limit:1000});
@@ -2027,12 +2028,13 @@ async function recuperarDocumentos(){
       // 2) Lista os arquivos DENTRO da pasta
       try{
         const r=await sb.storage.from(DOCS_BUCKET).list(nomePasta,{limit:200});
-        if(r.error){ erros++; diag.push('Erro ao listar "'+nomePasta+'": '+r.error.message); continue; }
+        if(r.error){ erros++; contPastasComErro++; diag.push('Erro ao listar "'+nomePasta+'": '+r.error.message); continue; }
         files=(r.data||[]).filter(f=>f.name && f.name!=='.emptyFolderPlaceholder');
         console.log('[recuperarDocumentos] pasta', nomePasta, '->', r.data);
-      }catch(e){ erros++; continue; }
+      }catch(e){ erros++; contPastasComErro++; diag.push('Exceção ao listar "'+nomePasta+'": '+e.message); continue; }
+      if(files.length) contPastasComArquivo++; else contPastasVazias++;
       if(!amostraDada){ diag.push('Conteúdo de "'+nomePasta+'": '+(files.length?files.map(f=>f.name).slice(0,3).join(', '):'(vazio)')); amostraDada=true; }
-      if(!files.length) continue;
+      if(!files.length){ diag.push('Pasta "'+nomePasta+'" veio VAZIA ao listar (0 arquivos).'); continue; }
 
       const c=candById.get(nomePasta) || acharCandidatoPorPasta(nomePasta, files);
       if(!c){
@@ -2066,6 +2068,10 @@ async function recuperarDocumentos(){
       }
     }
 
+    diag.push('— RESUMO —');
+    diag.push('Pastas com arquivo(s) dentro: '+contPastasComArquivo+' de 41');
+    diag.push('Pastas que vieram vazias ao listar: '+contPastasVazias+' de 41');
+    diag.push('Pastas com erro ao listar: '+contPastasComErro+' de 41');
     renderFunil(); renderCandidatos();
     const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
     _docsOrfaos = orfaos;
@@ -2075,6 +2081,7 @@ async function recuperarDocumentos(){
     if(orfaos.length>0){
       if(recuperados>0){
         alert('Reconectei automaticamente '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nSobraram '+orfaos.length+' pasta(s) que não consegui casar pelo nome. Vou abrir uma tela para você reconectar essas manualmente, em poucos cliques.');
+        mostrarDiagnosticoDocs(diag.join('\n'));
       } else {
         mostrarDiagnosticoDocs(diag.join('\n'));
         alert('Não consegui reconectar nenhuma pasta automaticamente ('+orfaos.length+' pasta(s) com documentos).\n\nAbri uma tela com os detalhes técnicos (dá pra copiar e me mandar se precisar). Também vou abrir a tela para você reconectar manualmente, escolhendo o candidato de cada pasta.');
