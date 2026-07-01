@@ -491,6 +491,7 @@ header {
     <div><h1 class="page-title">Candidatos</h1><p class="page-sub">Funil de R&S</p></div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn btn-ghost btn-sm" id="btn-recuperar-docs" onclick="recuperarDocumentos()" title="Reconecta documentos que estão no Storage mas sumiram dos cards">🔄 Recuperar documentos</button>
+      <button class="btn btn-ghost btn-sm" id="btn-detectar-dups" onclick="detectarDuplicados()" title="Encontra candidatos com o mesmo nome cadastrados mais de uma vez">👥 Candidatos duplicados</button>
       <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
     </div>
   </div>
@@ -729,6 +730,16 @@ header {
   <div style="display:flex;gap:10px;justify-content:space-between">
     <button class="btn-danger" onclick="excluirCandidato()">🗑 Excluir</button>
     <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="closeModal('modal-mover-cand')">Cancelar</button><button class="btn btn-primary" onclick="atualizarCandidato()">Salvar</button></div>
+  </div>
+</div></div>
+
+<!-- Modal: candidatos duplicados (mesclar) -->
+<div class="modal-bg" id="modal-duplicados"><div class="modal" style="max-width:640px;max-height:88vh;overflow:auto">
+  <div class="modal-header"><div class="modal-title">👥 Candidatos duplicados</div><button class="modal-close" onclick="closeModal('modal-duplicados')">✕</button></div>
+  <div id="duplicados-list" style="display:flex;flex-direction:column;gap:12px"></div>
+  <div id="duplicados-vazio" style="font-size:12px;color:var(--light);font-style:italic;display:none">Nenhum duplicado pendente.</div>
+  <div style="display:flex;justify-content:flex-end;margin-top:16px">
+    <button class="btn btn-ghost" onclick="closeModal('modal-duplicados')">Fechar</button>
   </div>
 </div></div>
 
@@ -2101,7 +2112,102 @@ async function recuperarDocumentos(){
   }
 }
 
-// ══ DIAGNÓSTICO DE DOCUMENTOS NA TELA (sem precisar do Console/DevTools) ═══════
+// ══ DETECTAR E MESCLAR CANDIDATOS DUPLICADOS ═══════════════════════════════════
+let _dupGrupos=[];
+function detectarDuplicados(){
+  const grupos=new Map();
+  for(const c of _cands){
+    const chave=_slug(c.nome);
+    if(!chave) continue;
+    if(!grupos.has(chave)) grupos.set(chave,[]);
+    grupos.get(chave).push(c);
+  }
+  _dupGrupos=[...grupos.values()].filter(g=>g.length>1);
+  if(!_dupGrupos.length){
+    alert('Não encontrei candidatos duplicados pelo nome. Tudo certo por aqui!');
+    return;
+  }
+  renderDuplicados();
+  openModal('modal-duplicados');
+}
+function renderDuplicados(){
+  const wrap=document.getElementById('duplicados-list');
+  const vazio=document.getElementById('duplicados-vazio');
+  if(!wrap) return;
+  if(!_dupGrupos.length){
+    wrap.innerHTML='';
+    if(vazio) vazio.style.display='block';
+    return;
+  }
+  if(vazio) vazio.style.display='none';
+  const vagas=getVagas();
+  wrap.innerHTML=_dupGrupos.map((g,gi)=>{
+    const linhas=g.map((c,ci)=>{
+      const vaga=vagas.find(v=>v.id===c.vagaId);
+      const etapaLabel=(typeof ETAPA_LABEL!=='undefined'&&ETAPA_LABEL[c.etapa])||c.etapa;
+      const ndocs=(c.documentos||[]).length;
+      return `<label style="display:flex;gap:10px;align-items:flex-start;padding:8px;border:1px solid var(--bege);border-radius:8px;cursor:pointer">
+        <input type="radio" name="dup-principal-${gi}" value="${ci}" ${ndocs>0&&!linhaJaTemPrincipal(g,ci)?'checked':''} style="margin-top:4px">
+        <div style="font-size:12px;line-height:1.5">
+          <b>${c.nome}</b> <span style="color:var(--light)">(${c.id})</span><br>
+          Vaga: ${vaga?vaga.titulo:'—'} · Etapa: ${etapaLabel}<br>
+          Entrou em: ${c.dataEntrada||'—'} · <b>${ndocs} documento(s)</b>
+        </div>
+      </label>`;
+    }).join('');
+    return `<div style="border:1px solid var(--mid);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
+      <div style="font-size:12px;color:var(--mid)">Escolha qual cadastro é o principal (o outro será mesclado nele e depois apagado). Documentos e histórico dos dois são somados no principal.</div>
+      ${linhas}
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" onclick="ignorarGrupoDuplicado(${gi})">Não são a mesma pessoa</button>
+        <button class="btn btn-primary btn-sm" onclick="mesclarGrupoDuplicado(${gi})">🔗 Mesclar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function linhaJaTemPrincipal(g,ci){
+  // usado só para não marcar duas radios como checked; pré-seleciona quem tem mais documentos
+  const idxMax=g.reduce((best,c,i)=>((c.documentos||[]).length>(g[best].documentos||[]).length?i:best),0);
+  return ci!==idxMax;
+}
+async function mesclarGrupoDuplicado(gi){
+  const g=_dupGrupos[gi]; if(!g) return;
+  const sel=document.querySelector('input[name="dup-principal-'+gi+'"]:checked');
+  if(!sel){ alert('Escolha qual cadastro é o principal antes de mesclar.'); return; }
+  const idxPrincipal=parseInt(sel.value,10);
+  const principal=g[idxPrincipal];
+  const outros=g.filter((_,i)=>i!==idxPrincipal);
+  if(!confirm('Mesclar '+outros.length+' cadastro(s) de "'+principal.nome+'" no cadastro principal e apagar os duplicados? Isso não pode ser desfeito.')) return;
+  try{
+    const jaTem=new Set((principal.documentos||[]).map(d=>d.path));
+    let docsMerged=[...(principal.documentos||[])];
+    let histMerged=[...(principal.historico||[])];
+    for(const o of outros){
+      for(const d of (o.documentos||[])){ if(!jaTem.has(d.path)){ docsMerged.push(d); jaTem.add(d.path); } }
+      for(const h of (o.historico||[])){ histMerged.push(h); }
+    }
+    histMerged.sort((a,b)=>new Date(a.data||0)-new Date(b.data||0));
+    const idxP=_cands.findIndex(c=>c.id===principal.id);
+    _cands[idxP]={..._cands[idxP], documentos:docsMerged, historico:histMerged};
+    await upsertCand(_cands[idxP]);
+    for(const o of outros){
+      await deleteCand(o.id);
+      _cands=_cands.filter(c=>c.id!==o.id);
+    }
+    showToast('✅ Mesclado! "'+principal.nome+'" agora tem '+docsMerged.length+' documento(s).');
+  }catch(e){ alert('Erro ao mesclar: '+e.message); return; }
+  _dupGrupos.splice(gi,1);
+  renderFunil(); renderCandidatos();
+  renderDuplicados();
+  if(!_dupGrupos.length){ alert('Pronto! Não há mais duplicados pendentes.'); closeModal('modal-duplicados'); }
+}
+function ignorarGrupoDuplicado(gi){
+  _dupGrupos.splice(gi,1);
+  renderDuplicados();
+  if(!_dupGrupos.length){ closeModal('modal-duplicados'); }
+}
+
+
 function mostrarDiagnosticoDocs(texto){
   const area=document.getElementById('diag-docs-texto');
   if(area) area.value=texto;
