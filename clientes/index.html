@@ -323,21 +323,25 @@ header {
   @page { margin: 12mm; }
   /* Esconde tudo o que não é o roteiro */
   body * { visibility: hidden !important; }
-  #page-entrevista, #page-entrevista * { visibility: visible !important; }
-  #page-entrevista { position: absolute !important; left: 0; top: 0; width: 100%; display: block !important; }
+  #ev-interview, #ev-interview * { visibility: visible !important; }
+  #ev-interview { position: absolute !important; left: 0; top: 0; width: 100%; height: auto !important; display: block !important; }
+  /* Garante que o restante do app não reserve espaço/páginas extras */
+  #page-entrevistas { position: static !important; height: auto !important; overflow: visible !important; }
+  #ev-home { display: none !important; }
   /* Remove elementos de interface dentro do roteiro */
-  #page-entrevista .btn,
-  #page-entrevista .q-check,
-  #page-entrevista .done-btn,
-  #page-entrevista .save-btn,
-  #page-entrevista .print-btn,
-  #page-entrevista .action-row { display: none !important; }
+  #ev-interview .btn,
+  #ev-interview .q-check,
+  #ev-interview .done-btn,
+  #ev-interview .save-btn,
+  #ev-interview .print-btn,
+  #ev-interview .action-row { display: none !important; }
   /* Garante que tudo do roteiro apareça expandido */
-  #page-entrevista .sec-body { display: block !important; }
-  #page-entrevista .sec-block { border: 1px solid #ccc; margin-bottom: 8px; break-inside: avoid; }
+  #ev-interview .sec-body { display: block !important; }
+  #ev-interview .sec-block { border: 1px solid #ccc; margin-bottom: 8px; break-inside: avoid; }
   /* Esconde toasts, modais, login, header e barras */
   .toast, .modal-bg, #login-screen, header, nav { display: none !important; }
-  body { background: #fff !important; }
+  body { background: #fff !important; height: auto !important; }
+  html, body { overflow: visible !important; }
 }
 
 .user-btn{display:flex;align-items:center;gap:12px;background:var(--cream);border:1.5px solid var(--bege);border-radius:10px;padding:12px 16px;cursor:pointer;transition:border-color .2s;width:100%;margin-bottom:8px;font-family:'DM Sans',sans-serif;user-select:none}
