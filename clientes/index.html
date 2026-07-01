@@ -732,6 +732,17 @@ header {
   </div>
 </div></div>
 
+<!-- Modal: diagnóstico técnico dos documentos, legível na tela (sem precisar do Console) -->
+<div class="modal-bg" id="modal-diag-docs"><div class="modal" style="max-width:600px;max-height:88vh;overflow:auto">
+  <div class="modal-header"><div class="modal-title">🔍 Diagnóstico dos documentos</div><button class="modal-close" onclick="closeModal('modal-diag-docs')">✕</button></div>
+  <p style="font-size:12px;color:var(--mid);margin:0 0 12px">Isto é o relatório técnico do que o sistema encontrou ao procurar os documentos no Storage. Não precisa entender — só clique em "Copiar" e cole aqui na conversa comigo.</p>
+  <textarea id="diag-docs-texto" readonly style="width:100%;min-height:260px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--bege);border-radius:8px;background:#faf8f4"></textarea>
+  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
+    <button class="btn btn-ghost" onclick="closeModal('modal-diag-docs')">Fechar</button>
+    <button class="btn btn-primary" onclick="copiarDiagnosticoDocs()">📋 Copiar</button>
+  </div>
+</div></div>
+
 <!-- Modal: reconexão manual de documentos órfãos -->
 <div class="modal-bg" id="modal-reconciliar-docs"><div class="modal" style="max-width:620px;max-height:88vh;overflow:auto">
   <div class="modal-header"><div class="modal-title">🔗 Reconectar documentos manualmente</div><button class="modal-close" onclick="closeModal('modal-reconciliar-docs')">✕</button></div>
@@ -2059,15 +2070,15 @@ async function recuperarDocumentos(){
       if(recuperados>0){
         alert('Reconectei automaticamente '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nSobraram '+orfaos.length+' pasta(s) que não consegui casar pelo nome. Vou abrir uma tela para você reconectar essas manualmente, em poucos cliques.');
       } else {
-        console.log('[recuperarDocumentos] DIAGNÓSTICO COMPLETO:\n'+diag.join('\n'));
-        alert('Não consegui reconectar nenhuma pasta automaticamente ('+orfaos.length+' pasta(s) com documentos).\n\n(O diagnóstico completo foi impresso no Console do navegador: F12 > Console.)\n\nVou abrir uma tela para você reconectar manualmente, escolhendo o candidato de cada pasta.');
+        mostrarDiagnosticoDocs(diag.join('\n'));
+        alert('Não consegui reconectar nenhuma pasta automaticamente ('+orfaos.length+' pasta(s) com documentos).\n\nAbri uma tela com os detalhes técnicos (dá pra copiar e me mandar se precisar). Também vou abrir a tela para você reconectar manualmente, escolhendo o candidato de cada pasta.');
       }
       abrirReconciliacaoDocs();
     } else if(recuperados>0){
       alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nAbra um candidato para conferir.');
     } else {
-      console.log('[recuperarDocumentos] DIAGNÓSTICO COMPLETO:\n'+diag.join('\n'));
-      alert('Nada para reconectar: todas as pastas do Storage já estão refletidas nos cards.\n\n(Diagnóstico impresso no Console: F12 > Console.)');
+      mostrarDiagnosticoDocs(diag.join('\n'));
+      alert('Nada para reconectar: todas as pastas do Storage já estão refletidas nos cards.\n\nAbri uma tela com os detalhes técnicos — dá pra copiar o texto e me mandar.');
     }
   } catch(e){
     alert('Erro inesperado: '+e.message);
@@ -2076,7 +2087,25 @@ async function recuperarDocumentos(){
   }
 }
 
-// ══ RECONEXÃO MANUAL DE DOCUMENTOS (pastas que o casamento automático não achou) ══
+// ══ DIAGNÓSTICO DE DOCUMENTOS NA TELA (sem precisar do Console/DevTools) ═══════
+function mostrarDiagnosticoDocs(texto){
+  const area=document.getElementById('diag-docs-texto');
+  if(area) area.value=texto;
+  openModal('modal-diag-docs');
+}
+function copiarDiagnosticoDocs(){
+  const area=document.getElementById('diag-docs-texto');
+  if(!area) return;
+  area.select();
+  try{
+    navigator.clipboard.writeText(area.value).then(()=>showToast('✅ Copiado! Agora é só colar.'));
+  }catch(e){
+    document.execCommand('copy');
+    showToast('✅ Copiado! Agora é só colar.');
+  }
+}
+
+
 // Acha o melhor palpite de candidato para uma pasta, SEM exigir o score mínimo
 // (usado só para pré-selecionar no dropdown; a Chrys sempre confirma com um clique).
 function _melhorPalpitePasta(nomePasta, files){
