@@ -334,7 +334,9 @@ header {
   #ev-interview .done-btn,
   #ev-interview .save-btn,
   #ev-interview .print-btn,
-  #ev-interview .action-row { display: none !important; }
+  #ev-interview .action-row,
+  #ev-interview .prog-label,
+  #ev-interview .prog-track { display: none !important; }
   /* Garante que tudo do roteiro apareça expandido */
   #ev-interview .sec-body { display: block !important; }
   #ev-interview .sec-block { border: 1px solid #ccc; margin-bottom: 8px; break-inside: avoid; }
@@ -1249,11 +1251,11 @@ function getEntrevistas() { return _entrevistas; }
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:r.documentos||[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
-const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
+const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, dataEntrevista:r.data_entrevista, idade:r.idade, estadoCivil:r.estado_civil, filhos:r.filhos, mora:r.mora, naturalidade:r.naturalidade, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
-const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
+const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, data_entrevista:e.dataEntrevista||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, filhos:e.filhos||null, mora:e.mora||null, naturalidade:e.naturalidade||null, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
 const agendaToDb= a => ({ id:a.id, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
 
@@ -2408,7 +2410,7 @@ const VAGAS_ROTEIRO = [
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-fin', nome:'Coordenador(a) Financeiro e de Gestão', setor:'Financeiro', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras · Suprimentos' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras · Suprimentos', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação das rotinas financeiras e gestão administrativa de áreas estratégicas de uma Instituição de Ensino Superior. Regime PJ, R$ 10.000,00, horário comercial. Posição que assessora a Direção Executiva.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Contábeis, Economia ou correlatas) e sua trajetória em gestão financeira.','Qual sua experiência prévia em gestão administrativa de múltiplas áreas?','Já atuou em Instituição de Ensino Superior? (diferencial relevante)']},
@@ -2426,7 +2428,7 @@ const VAGAS_ROTEIRO = [
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-cap-alunos', nome:'Gerente de Captação de Alunos', setor:'Comercial / Captação', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 + comissionamento', 'Jornada':'Segunda a sexta, presencial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Consultores comerciais / de captação' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 + comissionamento', 'Jornada':'Segunda a sexta, presencial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Consultores comerciais / de captação', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejamento, execução e acompanhamento das estratégias de prospecção, conversão e matrícula de novos alunos, além da gestão da equipe de consultores comerciais. Regime PJ, R$ 5.000,00 + comissionamento. Jornada de segunda a sexta, presencial.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Marketing, Gestão Comercial ou correlatas) e sua trajetória comercial.','Qual sua experiência com captação de alunos para Instituições de Ensino Superior? (requisito-chave)','Você já atuou em coordenação ou gerência comercial em IES? (diferencial)']},
@@ -2443,7 +2445,7 @@ const VAGAS_ROTEIRO = [
   // 3) COORDENADOR GERAL DE ENSINO  (URGENTE — preencher até 10/07)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-ensino', nome:'Coordenador Geral de Ensino', setor:'Ensino', duracao:'45 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Prazo de início':'Até 10/07 (2º semestre)', 'Sob coordenação':'Qualidade de Ensino · NAE · Coordenadores de curso · Corpo docente' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Prazo de início':'Até 10/07 (2º semestre)', 'Sob coordenação':'Qualidade de Ensino · NAE · Coordenadores de curso · Corpo docente', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação geral das atividades acadêmicas da IES, assegurando qualidade de ensino, conformidade regulatória (MEC), desenvolvimento dos cursos e excelência na experiência do estudante. Regime PJ, R$ 10.000,00. Posição estratégica com início até 10/07. (Antigo cargo de Diretor de Ensino.)']},
       {name:'Formação e Trajetória',time:'5 min',questions:['Conte sobre sua formação (pós-graduação lato sensu em Educação/Gestão Educacional ou correlatas) e sua trajetória em gestão acadêmica.','Qual sua experiência em ensino superior e na gestão de coordenadores de curso e corpo docente?','Possui mestrado/doutorado? (diferencial) Já participou de credenciamento institucional?']},
@@ -2460,7 +2462,7 @@ const VAGAS_ROTEIRO = [
   // 4) COORDENADOR DE RELACIONAMENTO E EXPERIÊNCIA DO ALUNO (NAE)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-nae', nome:'Coordenador de Relacionamento e Experiência do Aluno (NAE)', setor:'Relacionamento / NAE', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 a R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Perfil-alvo':'Secretário(a) geral acadêmico', 'Áreas vinculadas':'Secretaria Acadêmica · Núcleo de Apoio ao Aluno · Ouvidoria' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 a R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Perfil-alvo':'Secretário(a) geral acadêmico', 'Áreas vinculadas':'Secretaria Acadêmica · Núcleo de Apoio ao Aluno · Ouvidoria', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação do Núcleo de Atendimento ao Estudante (NAE), garantindo excelência no atendimento, eficiência na secretaria acadêmica e experiência positiva ao aluno em toda a jornada. Regime PJ, R$ 5.000 a R$ 6.000. Perfil de secretário geral acadêmico.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Pedagogia, Gestão Educacional, Processos Gerenciais ou correlatas).','Qual sua experiência com secretaria acadêmica, gestão de equipes de atendimento ou relacionamento com alunos?','Já atuou em Instituição de Ensino Superior? (diferencial)']},
@@ -2477,7 +2479,7 @@ const VAGAS_ROTEIRO = [
   // 5) GERENTE DE MARKETING
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-ger-mkt', nome:'Gerente de Marketing', setor:'Marketing', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Marketing e Social Media', 'Foco':'Captação, retenção e marca' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Marketing e Social Media', 'Foco':'Captação, retenção e marca', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, coordenar e executar as estratégias de marketing da IES — fortalecendo a marca, ampliando visibilidade e gerando demanda para os processos comerciais (captação e retenção de alunos). Regime PJ, R$ 6.000,00.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Marketing, Publicidade, Administração, Comunicação ou correlatas) e sua trajetória em gestão de marketing.','Qual sua experiência liderando equipes de marketing e fornecedores/agências?','Já trabalhou em Instituição de Ensino Superior, com captação e retenção de alunos? (diferencial)']},
@@ -2494,7 +2496,7 @@ const VAGAS_ROTEIRO = [
   // 6) SOCIAL MEDIA
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-social', nome:'Social Media', setor:'Marketing', duracao:'30 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 3.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Gerência de Marketing', 'Plataformas':'Instagram · Facebook · LinkedIn · TikTok · YouTube' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 3.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Gerência de Marketing', 'Plataformas':'Instagram · Facebook · LinkedIn · TikTok · YouTube', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, produzir e gerenciar conteúdos das redes sociais da IES, fortalecendo a presença digital, ampliando o relacionamento com alunos e prospects e apoiando a captação. Regime PJ, R$ 3.000,00, reporte à Gerência de Marketing.']},
       {name:'Formação e Trajetória',time:'3 min',questions:['Conte sobre sua formação (Marketing, Publicidade, Jornalismo, Comunicação ou correlatas — completa ou em andamento).','Qual sua experiência na gestão de redes sociais corporativas e produção de vídeos?','Já produziu conteúdo no segmento educacional? (diferencial)']},
@@ -2538,7 +2540,7 @@ function abrirRoteiro(id){
   curRoteiro.sections.forEach((_,i)=>{secState[i]={done:false,checks:new Array(curRoteiro.sections[i].questions.length).fill(false),notes:[]};});
   document.getElementById('ev-home').style.display='none';document.getElementById('ev-interview').style.display='block';
   document.getElementById('ev-role').textContent=curRoteiro.nome;document.getElementById('ev-dept').textContent=curRoteiro.setor;document.getElementById('ev-dur').textContent='⏱ '+curRoteiro.duracao;
-  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Nome da Mãe</label><input id="f-mae" placeholder="Nome da mãe"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div>`;
+  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>Data da Entrevista</label><input id="f-data" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="0" placeholder="Ex: 32"></div><div class="cand-field"><label>Estado Civil</label><input id="f-estcivil" placeholder="Solteiro(a), Casado(a)..."></div><div class="cand-field"><label>Filhos</label><input id="f-filhos" placeholder="Ex: 2 (idades 5 e 8)"></div><div class="cand-field"><label>Onde Mora</label><input id="f-mora" placeholder="Bairro / Cidade"></div><div class="cand-field"><label>Naturalidade</label><input id="f-natural" placeholder="Cidade/UF de nascimento"></div><div class="cand-field"><label>Nome da Mãe</label><input id="f-mae" placeholder="Nome da mãe"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div>`;
   document.getElementById('ev-cond-card').innerHTML=`<div class="cond-title">Condições da Vaga</div><div class="cond-grid">${Object.entries(curRoteiro.conditions).map(([k,v])=>`<div class="cond-item"><label>${k}</label><span>${v}</span></div>`).join('')}</div>`;
   renderSections();renderEval();updateProg();window.scrollTo(0,0);
 }
@@ -2560,7 +2562,8 @@ async function salvarEntrevista(){
   const nome=(document.getElementById('f-nome')||{}).value||'';if(!nome.trim()){alert('Preencha o nome do candidato.');return;}
   const stars=Object.values(evalState).map(Number),avg=stars.length?(stars.reduce((a,b)=>a+b,0)/stars.length).toFixed(1):null;
   const cpf=(document.getElementById('f-cpf')||{}).value||'';
-  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,mae:(document.getElementById('f-mae')||{}).value||'',entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,registradoPor:getUserName()};
+  const dataEntrevista=(document.getElementById('f-data')||{}).value||new Date().toISOString().slice(0,10);
+  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,dataEntrevista,idade:(document.getElementById('f-idade')||{}).value||'',estadoCivil:(document.getElementById('f-estcivil')||{}).value||'',filhos:(document.getElementById('f-filhos')||{}).value||'',mora:(document.getElementById('f-mora')||{}).value||'',naturalidade:(document.getElementById('f-natural')||{}).value||'',mae:(document.getElementById('f-mae')||{}).value||'',entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,registradoPor:getUserName()};
   try{
     await upsertEntrev(rec);
     _entrevistas.unshift(rec);
@@ -3257,6 +3260,12 @@ create table if not exists entrevistas (
   id text primary key,
   nome text,
   cpf text,
+  data_entrevista date,
+  idade text,
+  estado_civil text,
+  filhos text,
+  mora text,
+  naturalidade text,
   mae text,
   entrevistador text,
   vaga text,
@@ -3271,6 +3280,15 @@ create table if not exists entrevistas (
   registrado_por text,
   criado_em timestamptz default now()
 );
+
+-- Se a tabela "entrevistas" já existir no seu Supabase (banco em produção),
+-- rode este bloco uma única vez para adicionar as novas colunas sem perder dados:
+alter table entrevistas add column if not exists data_entrevista date;
+alter table entrevistas add column if not exists idade text;
+alter table entrevistas add column if not exists estado_civil text;
+alter table entrevistas add column if not exists filhos text;
+alter table entrevistas add column if not exists mora text;
+alter table entrevistas add column if not exists naturalidade text;
 
 -- Para a demonstração, políticas públicas (ajuste para produção):
 alter table vagas       enable row level security;
