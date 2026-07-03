@@ -169,22 +169,6 @@ header {
 .vaga-meta { font-size:12px; color:var(--mid); display:flex; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
 .vaga-actions { display:flex; gap:8px; margin-top:10px; }
 
-/* ── FUNIL ── */
-.funil-steps {
-  display:flex; gap:0; margin-bottom:28px; overflow-x:auto;
-  background:var(--offwhite); border:1.5px solid var(--bege); border-radius:12px; padding:6px;
-}
-.funil-step {
-  flex:1; min-width:100px; text-align:center; padding:10px 8px;
-  border-radius:8px; cursor:pointer; transition:all .2s; position:relative;
-}
-.funil-step.active { background:var(--charcoal); }
-.funil-step.active .fs-name { color:#F2F1ED; }
-.funil-step.active .fs-count { color:rgba(242,241,237,.7); }
-.funil-step:hover:not(.active) { background:var(--bege-lt); }
-.fs-name  { font-size:11px; font-weight:600; color:var(--charcoal); letter-spacing:.3px; }
-.fs-count { font-size:18px; font-weight:700; font-family:'Playfair Display',serif; color:var(--mid); margin-bottom:2px; }
-
 /* ── CANDIDATOS TABLE ── */
 .cand-table-wrap { background:var(--offwhite); border:1.5px solid var(--bege); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .cand-table { min-width:560px; }
@@ -301,49 +285,48 @@ header {
 .empty-icon { font-size:36px; opacity:.4; margin-bottom:10px; }
 
 /* ── FUNIL PAINEL ── */
-.funnel-visual { display:flex; gap:0; margin-bottom:24px; }
+.funnel-visual { display:flex; gap:0; margin-bottom:24px; overflow-x:auto; }
 .funnel-step {
-  flex:1; text-align:center; padding:14px 8px; background:var(--offwhite);
-  border:1px solid var(--bege); position:relative;
+  flex:1; min-width:78px; text-align:center; padding:9px 4px; background:var(--offwhite);
+  border:1px solid var(--bege); position:relative; cursor:pointer; transition:background .2s;
 }
-.funnel-step:first-child { border-radius:10px 0 0 10px; }
-.funnel-step:last-child  { border-radius:0 10px 10px 0; }
+.funnel-step:first-child { border-radius:8px 0 0 8px; }
+.funnel-step:last-child  { border-radius:0 8px 8px 0; }
 .funnel-step + .funnel-step { border-left:none; }
 .funnel-step::after {
-  content:'›'; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
-  color:var(--light); font-size:18px; z-index:1;
+  content:'›'; position:absolute; right:-6px; top:50%; transform:translateY(-50%);
+  color:var(--light); font-size:14px; z-index:1;
 }
 .funnel-step:last-child::after { display:none; }
-.fs-n { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--charcoal); }
-.fs-l { font-size:10px; color:var(--mid); font-weight:600; letter-spacing:.3px; margin-top:2px; }
-.fs-pct { font-size:10px; color:var(--light); margin-top:2px; }
+.funnel-step:hover:not(.total):not(.active) { background:var(--bege-lt); }
+.fs-n { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--charcoal); line-height:1.1; }
+.fs-l { font-size:8.5px; color:var(--mid); font-weight:600; letter-spacing:.2px; margin-top:2px; line-height:1.2; }
+.fs-pct { font-size:8.5px; color:var(--light); margin-top:1px; }
+.funnel-step.total { background:var(--charcoal); cursor:default; }
+.funnel-step.total .fs-n, .funnel-step.total .fs-l, .funnel-step.total .fs-pct { color:#F2F1ED; }
+.funnel-step.active { background:var(--charcoal); }
+.funnel-step.active .fs-n, .funnel-step.active .fs-l, .funnel-step.active .fs-pct { color:#F2F1ED; }
 
 /* ── PRINT ── */
 @media print {
   @page { margin: 12mm; }
   /* Esconde tudo o que não é o roteiro */
   body * { visibility: hidden !important; }
-  #ev-interview, #ev-interview * { visibility: visible !important; }
-  #ev-interview { position: absolute !important; left: 0; top: 0; width: 100%; height: auto !important; display: block !important; }
-  /* Garante que o restante do app não reserve espaço/páginas extras */
-  #page-entrevistas { position: static !important; height: auto !important; overflow: visible !important; }
-  #ev-home { display: none !important; }
+  #page-entrevista, #page-entrevista * { visibility: visible !important; }
+  #page-entrevista { position: absolute !important; left: 0; top: 0; width: 100%; display: block !important; }
   /* Remove elementos de interface dentro do roteiro */
-  #ev-interview .btn,
-  #ev-interview .q-check,
-  #ev-interview .done-btn,
-  #ev-interview .save-btn,
-  #ev-interview .print-btn,
-  #ev-interview .action-row,
-  #ev-interview .prog-label,
-  #ev-interview .prog-track { display: none !important; }
+  #page-entrevista .btn,
+  #page-entrevista .q-check,
+  #page-entrevista .done-btn,
+  #page-entrevista .save-btn,
+  #page-entrevista .print-btn,
+  #page-entrevista .action-row { display: none !important; }
   /* Garante que tudo do roteiro apareça expandido */
-  #ev-interview .sec-body { display: block !important; }
-  #ev-interview .sec-block { border: 1px solid #ccc; margin-bottom: 8px; break-inside: avoid; }
+  #page-entrevista .sec-body { display: block !important; }
+  #page-entrevista .sec-block { border: 1px solid #ccc; margin-bottom: 8px; break-inside: avoid; }
   /* Esconde toasts, modais, login, header e barras */
   .toast, .modal-bg, #login-screen, header, nav { display: none !important; }
-  body { background: #fff !important; height: auto !important; }
-  html, body { overflow: visible !important; }
+  body { background: #fff !important; }
 }
 
 .user-btn{display:flex;align-items:center;gap:12px;background:var(--cream);border:1.5px solid var(--bege);border-radius:10px;padding:12px 16px;cursor:pointer;transition:border-color .2s;width:100%;margin-bottom:8px;font-family:'DM Sans',sans-serif;user-select:none}
@@ -495,14 +478,9 @@ header {
 <div id="page-candidatos" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
     <div><h1 class="page-title">Candidatos</h1><p class="page-sub">Funil de R&S</p></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-ghost btn-sm" id="btn-recuperar-docs" onclick="recuperarDocumentos()" title="Reconecta documentos que estão no Storage mas sumiram dos cards">🔄 Recuperar documentos</button>
-      <button class="btn btn-ghost btn-sm" id="btn-detectar-dups" onclick="detectarDuplicados()" title="Encontra candidatos com o mesmo nome cadastrados mais de uma vez">👥 Candidatos duplicados</button>
-      <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
-    </div>
+    <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
   </div>
   <div class="funnel-visual" id="funnel-visual"></div>
-  <div class="funil-steps" id="funil-steps"></div>
   <div class="filters-bar" style="margin-top:14px">
     <input class="filter-input wide" id="cand-search" placeholder="🔍 Buscar candidato..." oninput="renderFunil();renderCandidatos()">
     <select class="filter-input" id="cand-filter-vaga" onchange="renderFunil();renderCandidatos()"><option value="">Todas as vagas</option></select>
@@ -736,38 +714,6 @@ header {
   <div style="display:flex;gap:10px;justify-content:space-between">
     <button class="btn-danger" onclick="excluirCandidato()">🗑 Excluir</button>
     <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="closeModal('modal-mover-cand')">Cancelar</button><button class="btn btn-primary" onclick="atualizarCandidato()">Salvar</button></div>
-  </div>
-</div></div>
-
-<!-- Modal: candidatos duplicados (mesclar) -->
-<div class="modal-bg" id="modal-duplicados"><div class="modal" style="max-width:640px;max-height:88vh;overflow:auto">
-  <div class="modal-header"><div class="modal-title">👥 Candidatos duplicados</div><button class="modal-close" onclick="closeModal('modal-duplicados')">✕</button></div>
-  <div id="duplicados-list" style="display:flex;flex-direction:column;gap:12px"></div>
-  <div id="duplicados-vazio" style="font-size:12px;color:var(--light);font-style:italic;display:none">Nenhum duplicado pendente.</div>
-  <div style="display:flex;justify-content:flex-end;margin-top:16px">
-    <button class="btn btn-ghost" onclick="closeModal('modal-duplicados')">Fechar</button>
-  </div>
-</div></div>
-
-<!-- Modal: diagnóstico técnico dos documentos, legível na tela (sem precisar do Console) -->
-<div class="modal-bg" id="modal-diag-docs"><div class="modal" style="max-width:600px;max-height:88vh;overflow:auto">
-  <div class="modal-header"><div class="modal-title">🔍 Diagnóstico dos documentos</div><button class="modal-close" onclick="closeModal('modal-diag-docs')">✕</button></div>
-  <p style="font-size:12px;color:var(--mid);margin:0 0 12px">Isto é o relatório técnico do que o sistema encontrou ao procurar os documentos no Storage. Não precisa entender — só clique em "Copiar" e cole aqui na conversa comigo.</p>
-  <textarea id="diag-docs-texto" readonly style="width:100%;min-height:260px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--bege);border-radius:8px;background:#faf8f4"></textarea>
-  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
-    <button class="btn btn-ghost" onclick="closeModal('modal-diag-docs')">Fechar</button>
-    <button class="btn btn-primary" onclick="copiarDiagnosticoDocs()">📋 Copiar</button>
-  </div>
-</div></div>
-
-<!-- Modal: reconexão manual de documentos órfãos -->
-<div class="modal-bg" id="modal-reconciliar-docs"><div class="modal" style="max-width:620px;max-height:88vh;overflow:auto">
-  <div class="modal-header"><div class="modal-title">🔗 Reconectar documentos manualmente</div><button class="modal-close" onclick="closeModal('modal-reconciliar-docs')">✕</button></div>
-  <p style="font-size:12px;color:var(--mid);margin:0 0 14px">Estas pastas têm documentos no Storage, mas eu não consegui casar com nenhum candidato automaticamente. Escolha o candidato certo e clique em Conectar. Nada é apagado; isso só liga a pasta ao card.</p>
-  <div id="reconciliar-docs-list" style="display:flex;flex-direction:column;gap:10px"></div>
-  <div id="reconciliar-docs-vazio" style="font-size:12px;color:var(--light);font-style:italic;display:none">Nenhuma pasta pendente. Tudo reconectado!</div>
-  <div style="display:flex;justify-content:flex-end;margin-top:16px">
-    <button class="btn btn-ghost" onclick="closeModal('modal-reconciliar-docs')">Fechar</button>
   </div>
 </div></div>
 
@@ -1251,11 +1197,11 @@ function getEntrevistas() { return _entrevistas; }
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:r.documentos||[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
-const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, dataEntrevista:r.data_entrevista, idade:r.idade, estadoCivil:r.estado_civil, filhos:r.filhos, mora:r.mora, naturalidade:r.naturalidade, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
+const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
-const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, data_entrevista:e.dataEntrevista||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, filhos:e.filhos||null, mora:e.mora||null, naturalidade:e.naturalidade||null, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
+const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
 const agendaToDb= a => ({ id:a.id, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
 
@@ -1871,9 +1817,12 @@ function renderFunil() {
   const searchEl=document.getElementById('cand-search'),search=searchEl?searchEl.value.toLowerCase():'';
   const fV=curV;
   const cands=todos.filter(c=>(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
-  const total=cands.length||1;
-  document.getElementById('funnel-visual').innerHTML=ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
-  document.getElementById('funil-steps').innerHTML=ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  const totalReal=cands.length;
+  const total=totalReal||1;
+  const etapasCompletas=ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos',short:'Banco'},{id:'reprovado',label:'Reprovados',short:'Reprov.'}]);
+  document.getElementById('funnel-visual').innerHTML=
+    `<div class="funnel-step total"><div class="fs-n">${totalReal}</div><div class="fs-l">Entrada</div><div class="fs-pct">100%</div></div>`+
+    etapasCompletas.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step ${activeEtapa===e.id?'active':''}" title="${e.label}" onclick="setEtapa('${e.id}')"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
 function renderCandidatos() {
@@ -1926,7 +1875,6 @@ async function excluirCandidato(){const id=document.getElementById('mc-id').valu
 
 // ══ DOCUMENTOS DO CANDIDATO (Supabase Storage) ════════════════════════════════
 const DOCS_BUCKET='documentos';
-let _docsOrfaos=[];
 function renderDocsList(){
   const id=document.getElementById('mc-id').value;
   const c=getCands().find(x=>x.id===id);
@@ -1981,348 +1929,7 @@ async function removerDoc(i){
   renderDocsList();
 }
 
-// Reconecta documentos que estão no Storage mas sumiram das referências dos cards.
-// Cada candidato tem uma pasta no bucket com o id dele (ex.: cand-anibal/arquivo.pdf).
-// Tenta achar o candidato dono de uma pasta quando o id não bate,
-// usando o nome (slug da pasta "cand-adriane" -> "adriane"; e nome do arquivo).
-function _slug(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
-function acharCandidatoPorPasta(nomePasta, files){
-  // termos vindos do nome da pasta (tira o prefixo cand-/cand_)
-  const basePasta=_slug(nomePasta.replace(/^cand[-_]?/i,'').replace(/[-_]/g,' '));
-  // termos vindos do primeiro arquivo (tira timestamp e extensão)
-  let baseArq='';
-  if(files&&files[0]&&files[0].name){ baseArq=_slug(files[0].name.replace(/^\d+_/,'').replace(/\.[a-z0-9]+$/i,'').replace(/[-_]/g,' ')); }
-  const alvo=(baseArq||basePasta).trim();
-  if(!alvo) return null;
-  const termos=alvo.split(' ').filter(t=>t.length>=3);
-  if(!termos.length) return null;
-  // candidato cujo nome (slug) contém os termos do arquivo/pasta
-  let melhor=null, melhorScore=0;
-  for(const c of _cands){
-    const nomeC=_slug(c.nome);
-    if(!nomeC) continue;
-    let score=0;
-    for(const t of termos){ if(nomeC.includes(t)) score++; }
-    // exige pelo menos o primeiro nome bater; prioriza quem casa mais termos
-    if(score>melhorScore && score>=1){ melhor=c; melhorScore=score; }
-  }
-  // segurança: só aceita se casar nome+sobrenome (2+ termos) OU o termo for bem específico
-  if(melhor && (melhorScore>=2 || termos.length===1)) return melhor;
-  return null;
-}
-async function recuperarDocumentos(){
-  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Recuperação indisponível no modo demonstração.'); return; }
-  if(!confirm('Vou varrer o Storage e reconectar os documentos que estão lá mas sumiram dos cards. Isso não apaga nada. Continuar?')) return;
-  const btn=document.getElementById('btn-recuperar-docs');
-  const txtOrig=btn?btn.textContent:''; if(btn){ btn.textContent='🔄 Recuperando...'; btn.disabled=true; }
-  let recuperados=0, candidatosAfetados=0, erros=0;
-  const diag=[];
-  const orfaos=[];
-  let contPastasComArquivo=0, contPastasVazias=0, contPastasComErro=0;
-  try{
-    // 1) Lista as PASTAS na raiz do bucket (cada pasta = id de um candidato)
-    const {data:pastas,error:errRaiz}=await sb.storage.from(DOCS_BUCKET).list('',{limit:1000});
-    if(errRaiz){ alert('Não consegui listar o Storage: '+errRaiz.message+'\nVerifique se a política de leitura do bucket está ativa.'); if(btn){btn.textContent=txtOrig;btn.disabled=false;} return; }
-    diag.push('Pastas/itens na raiz do bucket: '+((pastas||[]).length));
-    diag.push('Exemplos na raiz: '+((pastas||[]).slice(0,8).map(p=>p.name+(p.id?' [arquivo]':' [pasta]')).join(', ')||'(nenhum)'));
-    const candById=new Map(_cands.map(c=>[c.id,c]));
-    diag.push('Candidatos na tela: '+_cands.length+' (ex: '+_cands.slice(0,5).map(c=>c.id).join(', ')+')');
-    console.log('[recuperarDocumentos] itens na raiz:', pastas);
-    let amostraDada=false;
-
-    for(const p of (pastas||[])){
-      const nomePasta=p.name;
-      if(!nomePasta || nomePasta==='.emptyFolderPlaceholder') continue;
-      // Se o item da raiz JÁ É um arquivo (tem id/metadata), não é pasta: trata direto
-      const ehArquivoNaRaiz = p.id || (p.metadata && p.metadata.size!=null);
-      let files=[];
-      let prefixo=nomePasta;
-      if(ehArquivoNaRaiz){
-        // arquivo solto na raiz: não há como saber o dono pelo id da pasta; ignora
-        diag.push('Item na raiz "'+nomePasta+'" é um arquivo solto (sem pasta de candidato).');
-        continue;
-      }
-      // 2) Lista os arquivos DENTRO da pasta
-      try{
-        const r=await sb.storage.from(DOCS_BUCKET).list(nomePasta,{limit:200});
-        if(r.error){ erros++; contPastasComErro++; diag.push('Erro ao listar "'+nomePasta+'": '+r.error.message); continue; }
-        files=(r.data||[]).filter(f=>f.name && f.name!=='.emptyFolderPlaceholder');
-        console.log('[recuperarDocumentos] pasta', nomePasta, '->', r.data);
-      }catch(e){ erros++; contPastasComErro++; diag.push('Exceção ao listar "'+nomePasta+'": '+e.message); continue; }
-      if(files.length) contPastasComArquivo++; else contPastasVazias++;
-      if(!amostraDada){ diag.push('Conteúdo de "'+nomePasta+'": '+(files.length?files.map(f=>f.name).slice(0,3).join(', '):'(vazio)')); amostraDada=true; }
-      if(!files.length){ diag.push('Pasta "'+nomePasta+'" veio VAZIA ao listar (0 arquivos).'); continue; }
-
-      const c=candById.get(nomePasta) || acharCandidatoPorPasta(nomePasta, files);
-      if(!c){
-        diag.push('Pasta "'+nomePasta+'" ('+files.map(f=>f.name).join(', ')+') → NÃO achei candidato correspondente.');
-        orfaos.push({pasta:nomePasta, files});
-        continue;
-      }
-
-      const jaTem=new Set((c.documentos||[]).map(d=>d.path));
-      const novos=[];
-      for(const f of files){
-        const path=nomePasta+'/'+f.name;
-        if(jaTem.has(path)) continue;
-        const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
-        const nomeLimpo=f.name.replace(/^\d+_/,'');
-        const ext=(f.name.split('.').pop()||'').toLowerCase();
-        const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
-        novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'recuperado' });
-      }
-      if(novos.length){
-        const idx=_cands.findIndex(x=>x.id===c.id);
-        _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
-        try{
-          await upsertCand(_cands[idx]);
-          recuperados+=novos.length; candidatosAfetados++;
-          diag.push('Pasta "'+nomePasta+'" → candidato: '+c.nome+' ('+c.id+') — '+novos.length+' documento(s) NOVO(s) anexado(s) agora.');
-        }
-        catch(e){ erros++; diag.push('Pasta "'+nomePasta+'" → candidato: '+c.nome+' ('+c.id+') — achei '+novos.length+' novo(s), mas ERRO ao salvar: '+e.message); }
-      } else {
-        diag.push('Pasta "'+nomePasta+'" → candidato: '+c.nome+' ('+c.id+') — já tinha '+jaTem.size+' documento(s) anexado(s) (nada novo).');
-      }
-    }
-
-    diag.push('— RESUMO —');
-    diag.push('Pastas com arquivo(s) dentro: '+contPastasComArquivo+' de 41');
-    diag.push('Pastas que vieram vazias ao listar: '+contPastasVazias+' de 41');
-    diag.push('Pastas com erro ao listar: '+contPastasComErro+' de 41');
-    renderFunil(); renderCandidatos();
-    const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
-    _docsOrfaos = orfaos;
-    if(recuperados>0){
-      showToast('✅ '+recuperados+' documento(s) reconectado(s)');
-    }
-    if(orfaos.length>0){
-      if(recuperados>0){
-        alert('Reconectei automaticamente '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nSobraram '+orfaos.length+' pasta(s) que não consegui casar pelo nome. Vou abrir uma tela para você reconectar essas manualmente, em poucos cliques.');
-        mostrarDiagnosticoDocs(diag.join('\n'));
-      } else {
-        mostrarDiagnosticoDocs(diag.join('\n'));
-        alert('Não consegui reconectar nenhuma pasta automaticamente ('+orfaos.length+' pasta(s) com documentos).\n\nAbri uma tela com os detalhes técnicos (dá pra copiar e me mandar se precisar). Também vou abrir a tela para você reconectar manualmente, escolhendo o candidato de cada pasta.');
-      }
-      abrirReconciliacaoDocs();
-    } else if(recuperados>0){
-      alert('Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nAbra um candidato para conferir. Também deixei o detalhe completo, pasta por pasta, na telinha de diagnóstico.');
-      mostrarDiagnosticoDocs(diag.join('\n'));
-    } else {
-      alert('Nada para reconectar: todas as pastas do Storage já estão refletidas nos cards.\n\nAbri uma tela com os detalhes técnicos, pasta por pasta — dá pra copiar o texto e me mandar.');
-      mostrarDiagnosticoDocs(diag.join('\n'));
-    }
-  } catch(e){
-    alert('Erro inesperado: '+e.message);
-  } finally {
-    if(btn){ btn.textContent=txtOrig; btn.disabled=false; }
-  }
-}
-
-// ══ DETECTAR E MESCLAR CANDIDATOS DUPLICADOS ═══════════════════════════════════
-let _dupGrupos=[];
-function detectarDuplicados(){
-  const grupos=new Map();
-  for(const c of _cands){
-    const chave=_slug(c.nome);
-    if(!chave) continue;
-    if(!grupos.has(chave)) grupos.set(chave,[]);
-    grupos.get(chave).push(c);
-  }
-  _dupGrupos=[...grupos.values()].filter(g=>g.length>1);
-  if(!_dupGrupos.length){
-    alert('Não encontrei candidatos duplicados pelo nome. Tudo certo por aqui!');
-    return;
-  }
-  renderDuplicados();
-  openModal('modal-duplicados');
-}
-function renderDuplicados(){
-  const wrap=document.getElementById('duplicados-list');
-  const vazio=document.getElementById('duplicados-vazio');
-  if(!wrap) return;
-  if(!_dupGrupos.length){
-    wrap.innerHTML='';
-    if(vazio) vazio.style.display='block';
-    return;
-  }
-  if(vazio) vazio.style.display='none';
-  const vagas=getVagas();
-  wrap.innerHTML=_dupGrupos.map((g,gi)=>{
-    const linhas=g.map((c,ci)=>{
-      const vaga=vagas.find(v=>v.id===c.vagaId);
-      const etapaLabel=(typeof ETAPA_LABEL!=='undefined'&&ETAPA_LABEL[c.etapa])||c.etapa;
-      const ndocs=(c.documentos||[]).length;
-      return `<label style="display:flex;gap:10px;align-items:flex-start;padding:8px;border:1px solid var(--bege);border-radius:8px;cursor:pointer">
-        <input type="radio" name="dup-principal-${gi}" value="${ci}" ${ndocs>0&&!linhaJaTemPrincipal(g,ci)?'checked':''} style="margin-top:4px">
-        <div style="font-size:12px;line-height:1.5">
-          <b>${c.nome}</b> <span style="color:var(--light)">(${c.id})</span><br>
-          Vaga: ${vaga?vaga.titulo:'—'} · Etapa: ${etapaLabel}<br>
-          Entrou em: ${c.dataEntrada||'—'} · <b>${ndocs} documento(s)</b>
-        </div>
-      </label>`;
-    }).join('');
-    return `<div style="border:1px solid var(--mid);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
-      <div style="font-size:12px;color:var(--mid)">Escolha qual cadastro é o principal (o outro será mesclado nele e depois apagado). Documentos e histórico dos dois são somados no principal.</div>
-      ${linhas}
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
-        <button class="btn btn-ghost btn-sm" onclick="ignorarGrupoDuplicado(${gi})">Não são a mesma pessoa</button>
-        <button class="btn btn-primary btn-sm" onclick="mesclarGrupoDuplicado(${gi})">🔗 Mesclar</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-function linhaJaTemPrincipal(g,ci){
-  // usado só para não marcar duas radios como checked; pré-seleciona quem tem mais documentos
-  const idxMax=g.reduce((best,c,i)=>((c.documentos||[]).length>(g[best].documentos||[]).length?i:best),0);
-  return ci!==idxMax;
-}
-async function mesclarGrupoDuplicado(gi){
-  const g=_dupGrupos[gi]; if(!g) return;
-  const sel=document.querySelector('input[name="dup-principal-'+gi+'"]:checked');
-  if(!sel){ alert('Escolha qual cadastro é o principal antes de mesclar.'); return; }
-  const idxPrincipal=parseInt(sel.value,10);
-  const principal=g[idxPrincipal];
-  const outros=g.filter((_,i)=>i!==idxPrincipal);
-  if(!confirm('Mesclar '+outros.length+' cadastro(s) de "'+principal.nome+'" no cadastro principal e apagar os duplicados? Isso não pode ser desfeito.')) return;
-  try{
-    const jaTem=new Set((principal.documentos||[]).map(d=>d.path));
-    let docsMerged=[...(principal.documentos||[])];
-    let histMerged=[...(principal.historico||[])];
-    for(const o of outros){
-      for(const d of (o.documentos||[])){ if(!jaTem.has(d.path)){ docsMerged.push(d); jaTem.add(d.path); } }
-      for(const h of (o.historico||[])){ histMerged.push(h); }
-    }
-    histMerged.sort((a,b)=>new Date(a.data||0)-new Date(b.data||0));
-    const idxP=_cands.findIndex(c=>c.id===principal.id);
-    _cands[idxP]={..._cands[idxP], documentos:docsMerged, historico:histMerged};
-    await upsertCand(_cands[idxP]);
-    for(const o of outros){
-      await deleteCand(o.id);
-      _cands=_cands.filter(c=>c.id!==o.id);
-    }
-    showToast('✅ Mesclado! "'+principal.nome+'" agora tem '+docsMerged.length+' documento(s).');
-  }catch(e){ alert('Erro ao mesclar: '+e.message); return; }
-  _dupGrupos.splice(gi,1);
-  renderFunil(); renderCandidatos();
-  renderDuplicados();
-  if(!_dupGrupos.length){ alert('Pronto! Não há mais duplicados pendentes.'); closeModal('modal-duplicados'); }
-}
-function ignorarGrupoDuplicado(gi){
-  _dupGrupos.splice(gi,1);
-  renderDuplicados();
-  if(!_dupGrupos.length){ closeModal('modal-duplicados'); }
-}
-
-
-function mostrarDiagnosticoDocs(texto){
-  const area=document.getElementById('diag-docs-texto');
-  if(area) area.value=texto;
-  openModal('modal-diag-docs');
-}
-function copiarDiagnosticoDocs(){
-  const area=document.getElementById('diag-docs-texto');
-  if(!area) return;
-  area.select();
-  try{
-    navigator.clipboard.writeText(area.value).then(()=>showToast('✅ Copiado! Agora é só colar.'));
-  }catch(e){
-    document.execCommand('copy');
-    showToast('✅ Copiado! Agora é só colar.');
-  }
-}
-
-
-// Acha o melhor palpite de candidato para uma pasta, SEM exigir o score mínimo
-// (usado só para pré-selecionar no dropdown; a Chrys sempre confirma com um clique).
-function _melhorPalpitePasta(nomePasta, files){
-  const basePasta=_slug(nomePasta.replace(/^cand[-_]?/i,'').replace(/[-_]/g,' '));
-  let baseArq='';
-  if(files&&files[0]&&files[0].name){ baseArq=_slug(files[0].name.replace(/^\d+_/,'').replace(/\.[a-z0-9]+$/i,'').replace(/[-_]/g,' ')); }
-  const alvo=(baseArq||basePasta).trim();
-  if(!alvo) return null;
-  const termos=alvo.split(' ').filter(t=>t.length>=3);
-  if(!termos.length) return null;
-  let melhor=null, melhorScore=0;
-  for(const c of _cands){
-    const nomeC=_slug(c.nome);
-    if(!nomeC) continue;
-    let score=0;
-    for(const t of termos){ if(nomeC.includes(t)) score++; }
-    if(score>melhorScore){ melhor=c; melhorScore=score; }
-  }
-  return melhor;
-}
-function abrirReconciliacaoDocs(){
-  renderReconciliacaoDocs();
-  openModal('modal-reconciliar-docs');
-}
-function renderReconciliacaoDocs(){
-  const wrap=document.getElementById('reconciliar-docs-list');
-  const vazio=document.getElementById('reconciliar-docs-vazio');
-  if(!wrap) return;
-  if(!_docsOrfaos.length){
-    wrap.innerHTML='';
-    if(vazio) vazio.style.display='block';
-    return;
-  }
-  if(vazio) vazio.style.display='none';
-  const candsOrdenados=[..._cands].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
-  wrap.innerHTML=_docsOrfaos.map((o,i)=>{
-    const palpite=_melhorPalpitePasta(o.pasta,o.files);
-    const opts=candsOrdenados.map(c=>`<option value="${c.id}" ${palpite&&palpite.id===c.id?'selected':''}>${(c.nome||'(sem nome)')}</option>`).join('');
-    const nomesArq=o.files.map(f=>f.name.replace(/^\d+_/,'')).join(', ');
-    return `<div style="border:1px solid var(--bege);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px">
-      <div style="font-size:12px;color:var(--mid)"><b>Pasta:</b> ${o.pasta} &nbsp;·&nbsp; <b>Arquivo(s):</b> ${nomesArq}</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="reconc-sel-${i}" class="filter-input" style="flex:1">
-          <option value="">— escolha o candidato —</option>
-          ${opts}
-        </select>
-        <button class="btn btn-primary btn-sm" onclick="conectarDocOrfao(${i})">Conectar</button>
-        <button class="btn btn-ghost btn-sm" onclick="ignorarDocOrfao(${i})" title="Não reconectar esta pasta agora">Ignorar</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-async function conectarDocOrfao(i){
-  const o=_docsOrfaos[i]; if(!o) return;
-  const sel=document.getElementById('reconc-sel-'+i);
-  const candId=sel?sel.value:'';
-  if(!candId){ alert('Escolha um candidato antes de conectar.'); return; }
-  const idx=_cands.findIndex(c=>c.id===candId);
-  if(idx<0){ alert('Candidato não encontrado (a lista pode ter mudado). Feche e abra a tela de novo.'); return; }
-  const jaTem=new Set((_cands[idx].documentos||[]).map(d=>d.path));
-  const novos=[];
-  for(const f of o.files){
-    const path=o.pasta+'/'+f.name;
-    if(jaTem.has(path)) continue;
-    const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
-    const nomeLimpo=f.name.replace(/^\d+_/,'');
-    const ext=(f.name.split('.').pop()||'').toLowerCase();
-    const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
-    novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'reconciliado manualmente' });
-  }
-  if(novos.length){
-    _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
-    try{
-      await upsertCand(_cands[idx]);
-      showToast('✅ Documento(s) conectado(s) a '+_cands[idx].nome);
-    }catch(e){ alert('Erro ao salvar: '+e.message); return; }
-  } else {
-    showToast('Esse candidato já tinha esses documentos.');
-  }
-  _docsOrfaos.splice(i,1);
-  renderFunil(); renderCandidatos();
-  const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
-  renderReconciliacaoDocs();
-  if(!_docsOrfaos.length){ alert('Tudo reconectado! Pode fechar esta tela.'); }
-}
-function ignorarDocOrfao(i){
-  _docsOrfaos.splice(i,1);
-  renderReconciliacaoDocs();
-}
-
-
+// ══ GERADOR DE ARTE DE DIVULGAÇÃO (Instagram / LinkedIn) ═══════════════════════
 let _arteVagaId=null;
 function _arteBullets(texto){
   // quebra a obs em frases curtas para virar bullets
@@ -2410,7 +2017,7 @@ const VAGAS_ROTEIRO = [
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-fin', nome:'Coordenador(a) Financeiro e de Gestão', setor:'Financeiro', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras · Suprimentos', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras · Suprimentos' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação das rotinas financeiras e gestão administrativa de áreas estratégicas de uma Instituição de Ensino Superior. Regime PJ, R$ 10.000,00, horário comercial. Posição que assessora a Direção Executiva.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Contábeis, Economia ou correlatas) e sua trajetória em gestão financeira.','Qual sua experiência prévia em gestão administrativa de múltiplas áreas?','Já atuou em Instituição de Ensino Superior? (diferencial relevante)']},
@@ -2428,7 +2035,7 @@ const VAGAS_ROTEIRO = [
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-cap-alunos', nome:'Gerente de Captação de Alunos', setor:'Comercial / Captação', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 + comissionamento', 'Jornada':'Segunda a sexta, presencial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Consultores comerciais / de captação', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 + comissionamento', 'Jornada':'Segunda a sexta, presencial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Consultores comerciais / de captação' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejamento, execução e acompanhamento das estratégias de prospecção, conversão e matrícula de novos alunos, além da gestão da equipe de consultores comerciais. Regime PJ, R$ 5.000,00 + comissionamento. Jornada de segunda a sexta, presencial.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Marketing, Gestão Comercial ou correlatas) e sua trajetória comercial.','Qual sua experiência com captação de alunos para Instituições de Ensino Superior? (requisito-chave)','Você já atuou em coordenação ou gerência comercial em IES? (diferencial)']},
@@ -2445,7 +2052,7 @@ const VAGAS_ROTEIRO = [
   // 3) COORDENADOR GERAL DE ENSINO  (URGENTE — preencher até 10/07)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-ensino', nome:'Coordenador Geral de Ensino', setor:'Ensino', duracao:'45 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Prazo de início':'Até 10/07 (2º semestre)', 'Sob coordenação':'Qualidade de Ensino · NAE · Coordenadores de curso · Corpo docente', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Prazo de início':'Até 10/07 (2º semestre)', 'Sob coordenação':'Qualidade de Ensino · NAE · Coordenadores de curso · Corpo docente' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação geral das atividades acadêmicas da IES, assegurando qualidade de ensino, conformidade regulatória (MEC), desenvolvimento dos cursos e excelência na experiência do estudante. Regime PJ, R$ 10.000,00. Posição estratégica com início até 10/07. (Antigo cargo de Diretor de Ensino.)']},
       {name:'Formação e Trajetória',time:'5 min',questions:['Conte sobre sua formação (pós-graduação lato sensu em Educação/Gestão Educacional ou correlatas) e sua trajetória em gestão acadêmica.','Qual sua experiência em ensino superior e na gestão de coordenadores de curso e corpo docente?','Possui mestrado/doutorado? (diferencial) Já participou de credenciamento institucional?']},
@@ -2462,7 +2069,7 @@ const VAGAS_ROTEIRO = [
   // 4) COORDENADOR DE RELACIONAMENTO E EXPERIÊNCIA DO ALUNO (NAE)
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-coord-nae', nome:'Coordenador de Relacionamento e Experiência do Aluno (NAE)', setor:'Relacionamento / NAE', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 a R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Perfil-alvo':'Secretário(a) geral acadêmico', 'Áreas vinculadas':'Secretaria Acadêmica · Núcleo de Apoio ao Aluno · Ouvidoria', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 a R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Perfil-alvo':'Secretário(a) geral acadêmico', 'Áreas vinculadas':'Secretaria Acadêmica · Núcleo de Apoio ao Aluno · Ouvidoria' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação do Núcleo de Atendimento ao Estudante (NAE), garantindo excelência no atendimento, eficiência na secretaria acadêmica e experiência positiva ao aluno em toda a jornada. Regime PJ, R$ 5.000 a R$ 6.000. Perfil de secretário geral acadêmico.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Pedagogia, Gestão Educacional, Processos Gerenciais ou correlatas).','Qual sua experiência com secretaria acadêmica, gestão de equipes de atendimento ou relacionamento com alunos?','Já atuou em Instituição de Ensino Superior? (diferencial)']},
@@ -2479,7 +2086,7 @@ const VAGAS_ROTEIRO = [
   // 5) GERENTE DE MARKETING
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-ger-mkt', nome:'Gerente de Marketing', setor:'Marketing', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Marketing e Social Media', 'Foco':'Captação, retenção e marca', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Marketing e Social Media', 'Foco':'Captação, retenção e marca' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, coordenar e executar as estratégias de marketing da IES — fortalecendo a marca, ampliando visibilidade e gerando demanda para os processos comerciais (captação e retenção de alunos). Regime PJ, R$ 6.000,00.']},
       {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Marketing, Publicidade, Administração, Comunicação ou correlatas) e sua trajetória em gestão de marketing.','Qual sua experiência liderando equipes de marketing e fornecedores/agências?','Já trabalhou em Instituição de Ensino Superior, com captação e retenção de alunos? (diferencial)']},
@@ -2496,7 +2103,7 @@ const VAGAS_ROTEIRO = [
   // 6) SOCIAL MEDIA
   // ══════════════════════════════════════════════════════════════════════════
   { id:'cb-social', nome:'Social Media', setor:'Marketing', duracao:'30 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 3.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Gerência de Marketing', 'Plataformas':'Instagram · Facebook · LinkedIn · TikTok · YouTube', 'Diferenciais':'Bônus equivalente a uma 13ª nota fiscal no mês de aniversário (não é 13º salário CLT) · 30 dias de recesso ao completar 1 ano de parceria · Bolsa de estudos: 60% de desconto na entrada, 70% ao completar 1 ano e 80% ao completar 2 anos (exceto cursos de Gastronomia e Odontologia)' },
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 3.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Gerência de Marketing', 'Plataformas':'Instagram · Facebook · LinkedIn · TikTok · YouTube' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, produzir e gerenciar conteúdos das redes sociais da IES, fortalecendo a presença digital, ampliando o relacionamento com alunos e prospects e apoiando a captação. Regime PJ, R$ 3.000,00, reporte à Gerência de Marketing.']},
       {name:'Formação e Trajetória',time:'3 min',questions:['Conte sobre sua formação (Marketing, Publicidade, Jornalismo, Comunicação ou correlatas — completa ou em andamento).','Qual sua experiência na gestão de redes sociais corporativas e produção de vídeos?','Já produziu conteúdo no segmento educacional? (diferencial)']},
@@ -2540,7 +2147,7 @@ function abrirRoteiro(id){
   curRoteiro.sections.forEach((_,i)=>{secState[i]={done:false,checks:new Array(curRoteiro.sections[i].questions.length).fill(false),notes:[]};});
   document.getElementById('ev-home').style.display='none';document.getElementById('ev-interview').style.display='block';
   document.getElementById('ev-role').textContent=curRoteiro.nome;document.getElementById('ev-dept').textContent=curRoteiro.setor;document.getElementById('ev-dur').textContent='⏱ '+curRoteiro.duracao;
-  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>Data da Entrevista</label><input id="f-data" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="0" placeholder="Ex: 32"></div><div class="cand-field"><label>Estado Civil</label><input id="f-estcivil" placeholder="Solteiro(a), Casado(a)..."></div><div class="cand-field"><label>Filhos</label><input id="f-filhos" placeholder="Ex: 2 (idades 5 e 8)"></div><div class="cand-field"><label>Onde Mora</label><input id="f-mora" placeholder="Bairro / Cidade"></div><div class="cand-field"><label>Naturalidade</label><input id="f-natural" placeholder="Cidade/UF de nascimento"></div><div class="cand-field"><label>Nome da Mãe</label><input id="f-mae" placeholder="Nome da mãe"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div>`;
+  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Nome da Mãe</label><input id="f-mae" placeholder="Nome da mãe"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div>`;
   document.getElementById('ev-cond-card').innerHTML=`<div class="cond-title">Condições da Vaga</div><div class="cond-grid">${Object.entries(curRoteiro.conditions).map(([k,v])=>`<div class="cond-item"><label>${k}</label><span>${v}</span></div>`).join('')}</div>`;
   renderSections();renderEval();updateProg();window.scrollTo(0,0);
 }
@@ -2562,8 +2169,7 @@ async function salvarEntrevista(){
   const nome=(document.getElementById('f-nome')||{}).value||'';if(!nome.trim()){alert('Preencha o nome do candidato.');return;}
   const stars=Object.values(evalState).map(Number),avg=stars.length?(stars.reduce((a,b)=>a+b,0)/stars.length).toFixed(1):null;
   const cpf=(document.getElementById('f-cpf')||{}).value||'';
-  const dataEntrevista=(document.getElementById('f-data')||{}).value||new Date().toISOString().slice(0,10);
-  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,dataEntrevista,idade:(document.getElementById('f-idade')||{}).value||'',estadoCivil:(document.getElementById('f-estcivil')||{}).value||'',filhos:(document.getElementById('f-filhos')||{}).value||'',mora:(document.getElementById('f-mora')||{}).value||'',naturalidade:(document.getElementById('f-natural')||{}).value||'',mae:(document.getElementById('f-mae')||{}).value||'',entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,registradoPor:getUserName()};
+  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,mae:(document.getElementById('f-mae')||{}).value||'',entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,registradoPor:getUserName()};
   try{
     await upsertEntrev(rec);
     _entrevistas.unshift(rec);
@@ -2657,6 +2263,64 @@ async function syncEntrevistasExistentes(){
 
 // ══ DASHBOARD ═════════════════════════════════════════════════════════════════
 
+
+async function syncCandidatoFromEntrevista(entrev){
+  // Determina etapa baseado no resultado
+  let etapa = 'entrevista_rh';
+  if(entrev.resultado === 'approved') etapa = 'aprovacao';
+  if(entrev.resultado === 'reprovado') etapa = 'reprovado';
+
+  // Encontra vaga real pelo vagaId do roteiro ou pelo nome
+  const vagas = getVagas();
+  let vagaId = null;
+  // Tenta achar vaga pelo setor e nome similar
+  const vagaMatch = vagas.find(v =>
+    v.setor === entrev.setor &&
+    (v.status === 'aberta' || v.status === 'encerrada') &&
+    v.titulo.toLowerCase().includes(entrev.vaga.toLowerCase().split('–')[0].trim().toLowerCase().substring(0,10))
+  ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
+  if(vagaMatch) vagaId = vagaMatch.id;
+
+  // Verifica se candidato já existe (pelo nome + CPF ou só nome)
+  const existe = _cands.find(c =>
+    c.nome.toLowerCase() === entrev.nome.toLowerCase() &&
+    (entrev.cpf ? c.cpf === entrev.cpf : true)
+  );
+
+  if(existe){
+    // Atualiza etapa se mudou
+    if(existe.etapa !== etapa && etapa !== 'entrevista_rh'){
+      const hist = [...(existe.historico||[])];
+      hist.push({etapa, data:new Date().toISOString(), obs:`Atualizado automaticamente via entrevista`, usuario:getUserName()});
+      const idx = _cands.findIndex(c=>c.id===existe.id);
+      _cands[idx] = {...existe, etapa, historico:hist};
+      await upsertCand(_cands[idx]);
+    }
+    return;
+  }
+
+  // Cria novo candidato
+  const cand = {
+    id: 'e_'+entrev.id,
+    nome: entrev.nome,
+    cpf: entrev.cpf||'',
+    tel: '',
+    email: '',
+    vagaId,
+    etapa,
+    dataEntrada: new Date().toISOString().slice(0,10),
+    fonte: 'Entrevista guiada',
+    obs: entrev.observacoes||'',
+    historico: [
+      {etapa:'entrevista_rh', data:entrev.data||new Date().toISOString(), obs:'Cadastrado automaticamente via roteiro de entrevista', usuario:entrev.registradoPor||getUserName()},
+      ...(etapa!=='entrevista_rh'?[{etapa, data:new Date().toISOString(), obs:`Resultado: ${etapa==='aprovacao'?'Aprovado':'Reprovado'}`, usuario:getUserName()}]:[])
+    ],
+    criadoPor: entrev.registradoPor||getUserName()
+  };
+  _cands.unshift(cand);
+  await upsertCand(cand);
+}
+
 // Sincroniza entrevistas antigas do Gabriel para o funil (roda uma vez no initApp)
 async function syncEntrevistasExistentes(){
   const entrevistas = getEntrevistas();
@@ -2697,12 +2361,14 @@ function renderDashboard(){
   // Canceladas contam como resolvidas no progresso (empresa que cancelou, não culpa do RH)
   const resolvidas=fechadas+canceladas;
   const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
+  const totalCandidatos=getCandsVisiveis().length;
   document.getElementById('dash-kpis').innerHTML=`
     <div class="stat-card"><div class="stat-num">${totalQtd}</div><div class="stat-lbl">Total de Vagas</div></div>
     <div class="stat-card"><div class="stat-num g">${fechadas}</div><div class="stat-lbl">Vagas Fechadas</div></div>
     <div class="stat-card"><div class="stat-num a">${emAberto}</div><div class="stat-lbl">Saldo em Aberto</div></div>
     <div class="stat-card"><div class="stat-num r">${canceladas}</div><div class="stat-lbl">Canceladas</div></div>
-    <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Progresso</div></div>`;
+    <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Progresso</div></div>
+    <div class="stat-card"><div class="stat-num">${totalCandidatos}</div><div class="stat-lbl">Candidatos no Funil</div></div>`;
   setTimeout(()=>document.getElementById('dash-pct-bar').style.width=pct+'%',50);
   document.getElementById('dash-pct-label').textContent=pct+'%';
   document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
@@ -2797,7 +2463,8 @@ function renderDashboard(){
         ${d.aberto>0?`<span style="color:var(--amber)">🔄 Em Aberto: ${d.aberto}</span>`:''}
         ${d.canc>0?`<span style="color:var(--red)">❌ Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
   const tabEl=document.getElementById('dash-tabelas');tabEl.innerHTML='';
-  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),icon=ICON[setor]||'📋',div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${icon} ${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td>${isCan?'❌ Cancelada':isFech?'✅ Concluída':'🔄 Em aberto'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
+  const candsPorVaga=getCandsVisiveis();
+  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),icon=ICON[setor]||'📋',div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${icon} ${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th style="text-align:center">Candidatos</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0,nCand=candsPorVaga.filter(c=>c.vagaId===v.id).length;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td style="text-align:center;font-weight:600;color:var(--charcoal)">${nCand}</td><td>${isCan?'❌ Cancelada':isFech?'✅ Concluída':'🔄 Em aberto'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
 }
 
 // ══ PAINEL ════════════════════════════════════════════════════════════════════
@@ -3260,12 +2927,6 @@ create table if not exists entrevistas (
   id text primary key,
   nome text,
   cpf text,
-  data_entrevista date,
-  idade text,
-  estado_civil text,
-  filhos text,
-  mora text,
-  naturalidade text,
   mae text,
   entrevistador text,
   vaga text,
@@ -3280,15 +2941,6 @@ create table if not exists entrevistas (
   registrado_por text,
   criado_em timestamptz default now()
 );
-
--- Se a tabela "entrevistas" já existir no seu Supabase (banco em produção),
--- rode este bloco uma única vez para adicionar as novas colunas sem perder dados:
-alter table entrevistas add column if not exists data_entrevista date;
-alter table entrevistas add column if not exists idade text;
-alter table entrevistas add column if not exists estado_civil text;
-alter table entrevistas add column if not exists filhos text;
-alter table entrevistas add column if not exists mora text;
-alter table entrevistas add column if not exists naturalidade text;
 
 -- Para a demonstração, políticas públicas (ajuste para produção):
 alter table vagas       enable row level security;
