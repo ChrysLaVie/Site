@@ -647,6 +647,7 @@ header {
     <div class="form-field"><label>Tipo</label><select id="nv-tipo"><option>CLT</option><option>PJ</option><option>Estágio</option><option>Trainee</option><option>Jovem Aprendiz</option></select></div>
     <div class="form-field"><label>Motivo</label><select id="nv-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais de divulgação</label><input id="nv-canais"></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Link do Formulário de Triagem</label><input id="nv-link-form" placeholder="https://forms.gle/..."></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="nv-obs"></textarea></div>
   </div>
   <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-ghost" onclick="closeModal('modal-nova-vaga')">Cancelar</button><button class="btn btn-primary" onclick="salvarVaga()">Salvar Vaga</button></div>
@@ -671,6 +672,7 @@ header {
     <div class="form-field"><label>Salário</label><input id="ev-salario"></div>
     <div class="form-field"><label>Motivo</label><select id="ev-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais</label><input id="ev-canais"></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Link do Formulário de Triagem</label><input id="ev-link-form" placeholder="https://forms.gle/..."></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="ev-obs"></textarea></div>
   </div>
   <div style="display:flex;gap:10px;justify-content:space-between">
@@ -1195,11 +1197,11 @@ function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
+const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, linkFormulario:r.link_formulario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:r.documentos||[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, link_formulario:v.linkFormulario||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
@@ -1240,7 +1242,7 @@ async function loadAll() {
 function _localUpsert(arr,obj){ const i=arr.findIndex(x=>x.id===obj.id); if(i>=0)arr[i]=obj; else arr.unshift(obj); }
 async function upsertVaga(v)   { if(DEMO_MODE){_localUpsert(_vagas,v);demoSave();return;} const {error} = await sb.from('vagas').upsert(vagaToDb(v));   if(error) throw error; }
 async function deleteVaga(id)  { if(DEMO_MODE){_vagas=_vagas.filter(x=>x.id!==id);demoSave();return;} await sb.from('vagas').delete().eq('id',id); }
-async function upsertCand(c)   { if(DEMO_MODE){_localUpsert(_cands,c);demoSave();return;} const {error} = await sb.from('candidatos').upsert(candToDb(c)); if(error) throw error; }
+async function upsertCand(c)   { if(DEMO_MODE){_localUpsert(_cands,c);demoSave();return;} const {error} = await sb.from('candidatos').upsert(candToDb(c), {onConflict:'id'}); if(error) throw error; }
 async function deleteCand(id)  { if(DEMO_MODE){_cands=_cands.filter(x=>x.id!==id);demoSave();return;} await sb.from('candidatos').delete().eq('id',id); }
 async function upsertEntrev(e) { if(DEMO_MODE){_localUpsert(_entrevistas,e);demoSave();return;} const {error} = await sb.from('entrevistas').upsert(entrevToDb(e)); if(error) throw error; }
 async function deleteEntrev(id){ if(DEMO_MODE){_entrevistas=_entrevistas.filter(x=>x.id!==id);demoSave();return;} await sb.from('entrevistas').delete().eq('id',id); }
@@ -1367,7 +1369,7 @@ ${ASSINATURA}`},
 Dando sequência ao seu processo seletivo para a vaga de {vaga}, a próxima etapa é o preenchimento do nosso formulário de triagem. Ele reúne algumas questões sobre seu perfil, experiência e conhecimentos técnicos, e nos ajuda a conhecê-lo(a) melhor antes da entrevista on-line.
 
 Acesse pelo link:
-https://forms.gle/PjbYbPkTpioTs2H1A
+{linkForm}
 
 Algumas orientações:
 • Reserve cerca de 15 minutos para responder com calma;
@@ -1563,12 +1565,16 @@ const MSG_MENU=['inicial','confirmaOnline','confirmaPresencial','reagendar','noS
 // ── Preenche {nome}/{vaga} e abre pop-up para [CAMPOS], depois WhatsApp/e-mail ──
 let _msgCtx=null;
 function _fmtTel(t){return (t||'').replace(/\D/g,'').replace(/^0+/,'').replace(/^(?!55)/,'55');}
-function _aplicaVars(txt,c){const v=getVagas().find(x=>x.id===c.vagaId);return txt.replace(/\{nome\}/g,(c.nome||'').split(' ')[0]).replace(/\{vaga\}/g,v?v.titulo:'');}
+function _aplicaVars(txt,c){const v=getVagas().find(x=>x.id===c.vagaId);return txt.replace(/\{nome\}/g,(c.nome||'').split(' ')[0]).replace(/\{vaga\}/g,v?v.titulo:'').replace(/\{linkForm\}/g,(v&&v.linkFormulario)?v.linkFormulario:'[cadastre o link do formulário na vaga]');}
 function abrirMensagem(candId,tplKey){
   const c=getCands().find(x=>x.id===candId);if(!c){alert('Candidato não encontrado.');return;}
   const tpl=MSG_TEMPLATES[tplKey];if(!tpl)return;
   _msgCtx={candId,tplKey};
+  const v=getVagas().find(x=>x.id===c.vagaId);
   let corpo=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${tpl.nome}</div><div style="font-size:12px;color:var(--mid);margin-bottom:14px">Para: <strong>${c.nome}</strong>${c.tel?` · ${c.tel}`:' · (sem telefone)'}</div>`;
+  if(tplKey==='testeTriagem' && (!v||!v.linkFormulario)){
+    corpo+=`<div style="font-size:12px;background:var(--amber-lt);color:var(--amber);padding:8px 10px;border-radius:8px;margin-bottom:10px">⚠ Esta vaga ainda não tem o link do formulário de triagem cadastrado. Edite a vaga antes de enviar, ou o texto sairá com um aviso no lugar do link.</div>`;
+  }
   if(tpl.campos.length){
     corpo+=`<div style="font-size:12px;color:var(--mid);margin-bottom:8px">Preencha os campos abaixo (eles entram no texto):</div>`;
     corpo+=tpl.campos.map((cp,i)=>`<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}"></div>`).join('');
@@ -1730,13 +1736,13 @@ async function salvarVaga() {
   const dataEl = document.getElementById('nv-data');
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
-  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
+  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),linkFormulario:document.getElementById('nv-link-form').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     const r = await sb.from('vagas').select('*').order('criado_em',{ascending:false});
     if(r.data) _vagas = r.data.map(dbToVaga);
     closeModal('modal-nova-vaga');
-    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
+    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-canais','nv-link-form','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
@@ -1745,8 +1751,8 @@ async function salvarVaga() {
 
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  ['ev-id','ev-titulo','ev-setor','ev-gestor','ev-data','ev-salario','ev-canais','ev-obs'].forEach(f=>document.getElementById(f).value=v[f.replace('ev-','').replace('-','')]||'');
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
+  ['ev-id','ev-titulo','ev-setor','ev-gestor','ev-data','ev-salario','ev-canais','ev-link-form','ev-obs'].forEach(f=>document.getElementById(f).value=v[f.replace('ev-','').replace('-','')]||'');
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-link-form').value=v.linkFormulario||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -1775,6 +1781,7 @@ async function atualizarVaga() {
     status:novoStatus,
     motivo:document.getElementById('ev-motivo').value,
     canais:document.getElementById('ev-canais').value.trim(),
+    linkFormulario:document.getElementById('ev-link-form').value.trim(),
     obs:document.getElementById('ev-obs').value.trim(),
     atualizadoPor:getUserName()
   };
@@ -1842,7 +1849,7 @@ function renderCandidatos() {
       +`<button class="btn btn-ghost btn-sm" onclick="menuMensagens('${c.id}')" title="Enviar mensagem">💬</button>`
       +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
       +`</div>`;
-    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
+    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}${c.obs?`<br><span style="font-size:11px;color:var(--mid)" title="${c.obs.replace(/"/g,'&quot;')}">💬 ${c.obs.length>38?c.obs.slice(0,38)+'…':c.obs}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
   }).join('');
 }
 function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.innerHTML='<option value="">Selecione...</option>'+getVagasVisiveis().filter(v=>v.status==='aberta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('');}
@@ -1869,7 +1876,18 @@ async function atualizarCandidato(){
     hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
   }
   _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,historico:hist};
-  try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
+  try{
+    await upsertCand(_cands[idx]);
+    // Confere se a observação realmente foi gravada no banco (diagnóstico do bug relatado)
+    if(!DEMO_MODE){
+      const chk=await sb.from('candidatos').select('obs').eq('id',id).single();
+      if(chk.data && (chk.data.obs||'')!==(obs||'')){
+        console.warn('Observação divergente após salvar — enviado:',obs,'| no banco:',chk.data.obs);
+        alert('⚠ Atenção: a observação pode não ter sido salva corretamente no banco. Tente salvar novamente. Se persistir, abra o console (F12) e me mande a mensagem que aparecer lá.');
+      }
+    }
+    closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');
+  }catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
 
