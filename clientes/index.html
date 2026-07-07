@@ -317,6 +317,11 @@ header {
 .fs-n { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--charcoal); }
 .fs-l { font-size:10px; color:var(--mid); font-weight:600; letter-spacing:.3px; margin-top:2px; }
 .fs-pct { font-size:10px; color:var(--light); margin-top:2px; }
+.funnel-step.total, .funil-step.total { background:var(--charcoal); }
+.funnel-step.total .fs-n, .funil-step.total .fs-count { color:#F2F1ED; }
+.funnel-step.total .fs-l, .funil-step.total .fs-name  { color:rgba(242,241,237,.6); }
+.funnel-step.total .fs-pct { color:rgba(242,241,237,.4); }
+.funil-step.total:hover { background:#2B2B2B; }
 
 /* ── PRINT ── */
 @media print {
@@ -1844,8 +1849,13 @@ function renderFunil() {
   const fV=curV;
   const cands=todos.filter(c=>(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
   const total=cands.length||1;
-  document.getElementById('funnel-visual').innerHTML=ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
-  document.getElementById('funil-steps').innerHTML=ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  const totalGeral = cands.length;
+  document.getElementById('funnel-visual').innerHTML=
+    `<div class="funnel-step total"><div class="fs-n">${totalGeral}</div><div class="fs-l">Total</div><div class="fs-pct">100%</div></div>`+
+    ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=
+    `<div class="funil-step total ${activeEtapa===''?'active':''}" onclick="setEtapa('')"><div class="fs-count">${totalGeral}</div><div class="fs-name">Total</div></div>`+
+    ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
 function renderCandidatos() {
