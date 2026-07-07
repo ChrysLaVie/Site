@@ -169,6 +169,22 @@ header {
 .vaga-meta { font-size:12px; color:var(--mid); display:flex; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
 .vaga-actions { display:flex; gap:8px; margin-top:10px; }
 
+/* ── FUNIL ── */
+.funil-steps {
+  display:flex; gap:0; margin-bottom:28px; overflow-x:auto;
+  background:var(--offwhite); border:1.5px solid var(--bege); border-radius:12px; padding:6px;
+}
+.funil-step {
+  flex:1; min-width:100px; text-align:center; padding:10px 8px;
+  border-radius:8px; cursor:pointer; transition:all .2s; position:relative;
+}
+.funil-step.active { background:var(--charcoal); }
+.funil-step.active .fs-name { color:#F2F1ED; }
+.funil-step.active .fs-count { color:rgba(242,241,237,.7); }
+.funil-step:hover:not(.active) { background:var(--bege-lt); }
+.fs-name  { font-size:11px; font-weight:600; color:var(--charcoal); letter-spacing:.3px; }
+.fs-count { font-size:18px; font-weight:700; font-family:'Playfair Display',serif; color:var(--mid); margin-bottom:2px; }
+
 /* ── CANDIDATOS TABLE ── */
 .cand-table-wrap { background:var(--offwhite); border:1.5px solid var(--bege); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .cand-table { min-width:560px; }
@@ -285,27 +301,22 @@ header {
 .empty-icon { font-size:36px; opacity:.4; margin-bottom:10px; }
 
 /* ── FUNIL PAINEL ── */
-.funnel-visual { display:flex; gap:0; margin-bottom:24px; overflow-x:auto; }
+.funnel-visual { display:flex; gap:0; margin-bottom:24px; }
 .funnel-step {
-  flex:1; min-width:78px; text-align:center; padding:9px 4px; background:var(--offwhite);
-  border:1px solid var(--bege); position:relative; cursor:pointer; transition:background .2s;
+  flex:1; text-align:center; padding:14px 8px; background:var(--offwhite);
+  border:1px solid var(--bege); position:relative;
 }
-.funnel-step:first-child { border-radius:8px 0 0 8px; }
-.funnel-step:last-child  { border-radius:0 8px 8px 0; }
+.funnel-step:first-child { border-radius:10px 0 0 10px; }
+.funnel-step:last-child  { border-radius:0 10px 10px 0; }
 .funnel-step + .funnel-step { border-left:none; }
 .funnel-step::after {
-  content:'›'; position:absolute; right:-6px; top:50%; transform:translateY(-50%);
-  color:var(--light); font-size:14px; z-index:1;
+  content:'›'; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
+  color:var(--light); font-size:18px; z-index:1;
 }
 .funnel-step:last-child::after { display:none; }
-.funnel-step:hover:not(.total):not(.active) { background:var(--bege-lt); }
-.fs-n { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--charcoal); line-height:1.1; }
-.fs-l { font-size:8.5px; color:var(--mid); font-weight:600; letter-spacing:.2px; margin-top:2px; line-height:1.2; }
-.fs-pct { font-size:8.5px; color:var(--light); margin-top:1px; }
-.funnel-step.total { background:var(--charcoal); cursor:default; }
-.funnel-step.total .fs-n, .funnel-step.total .fs-l, .funnel-step.total .fs-pct { color:#F2F1ED; }
-.funnel-step.active { background:var(--charcoal); }
-.funnel-step.active .fs-n, .funnel-step.active .fs-l, .funnel-step.active .fs-pct { color:#F2F1ED; }
+.fs-n { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--charcoal); }
+.fs-l { font-size:10px; color:var(--mid); font-weight:600; letter-spacing:.3px; margin-top:2px; }
+.fs-pct { font-size:10px; color:var(--light); margin-top:2px; }
 
 /* ── PRINT ── */
 @media print {
@@ -478,9 +489,13 @@ header {
 <div id="page-candidatos" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
     <div><h1 class="page-title">Candidatos</h1><p class="page-sub">Funil de R&S</p></div>
-    <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-sm" id="btn-recuperar-docs" onclick="recuperarDocumentos()" title="Reconecta documentos que estão no Storage mas sumiram dos cards">🔄 Recuperar documentos</button>
+      <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
+    </div>
   </div>
   <div class="funnel-visual" id="funnel-visual"></div>
+  <div class="funil-steps" id="funil-steps"></div>
   <div class="filters-bar" style="margin-top:14px">
     <input class="filter-input wide" id="cand-search" placeholder="🔍 Buscar candidato..." oninput="renderFunil();renderCandidatos()">
     <select class="filter-input" id="cand-filter-vaga" onchange="renderFunil();renderCandidatos()"><option value="">Todas as vagas</option></select>
@@ -647,7 +662,6 @@ header {
     <div class="form-field"><label>Tipo</label><select id="nv-tipo"><option>CLT</option><option>PJ</option><option>Estágio</option><option>Trainee</option><option>Jovem Aprendiz</option></select></div>
     <div class="form-field"><label>Motivo</label><select id="nv-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais de divulgação</label><input id="nv-canais"></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Link do Formulário de Triagem</label><input id="nv-link-form" placeholder="https://forms.gle/..."></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="nv-obs"></textarea></div>
   </div>
   <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-ghost" onclick="closeModal('modal-nova-vaga')">Cancelar</button><button class="btn btn-primary" onclick="salvarVaga()">Salvar Vaga</button></div>
@@ -672,7 +686,6 @@ header {
     <div class="form-field"><label>Salário</label><input id="ev-salario"></div>
     <div class="form-field"><label>Motivo</label><select id="ev-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais</label><input id="ev-canais"></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Link do Formulário de Triagem</label><input id="ev-link-form" placeholder="https://forms.gle/..."></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="ev-obs"></textarea></div>
   </div>
   <div style="display:flex;gap:10px;justify-content:space-between">
@@ -719,7 +732,18 @@ header {
   </div>
 </div></div>
 
+<!-- Modal: reconexão manual de documentos órfãos -->
+<div class="modal-bg" id="modal-reconexao-docs"><div class="modal" style="max-width:560px;max-height:92vh;overflow:auto">
+  <div class="modal-header"><div class="modal-title">🔗 Reconectar documentos manualmente</div><button class="modal-close" onclick="closeModal('modal-reconexao-docs')">✕</button></div>
+  <div style="font-size:12px;color:var(--mid);margin-bottom:12px">Estas pastas têm documentos no Storage mas não foi possível achar o candidato dono automaticamente. Escolha o candidato certo em cada uma e clique em Reconectar.</div>
+  <div id="reconexao-docs-body"></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:8px">
+    <button class="btn btn-ghost" onclick="closeModal('modal-reconexao-docs')">Fechar</button>
+  </div>
+</div></div>
+
 <!-- Modal: enviar mensagem (WhatsApp/E-mail) -->
+
 <div class="modal-bg" id="modal-msg"><div class="modal" style="max-width:460px">
   <div class="modal-header"><div class="modal-title">💬 Enviar mensagem</div><button class="modal-close" onclick="closeModal('modal-msg')">✕</button></div>
   <div id="msg-modal-body"></div>
@@ -1197,11 +1221,11 @@ function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, linkFormulario:r.link_formulario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
+const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:r.documentos||[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, link_formulario:v.linkFormulario||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
@@ -1242,7 +1266,7 @@ async function loadAll() {
 function _localUpsert(arr,obj){ const i=arr.findIndex(x=>x.id===obj.id); if(i>=0)arr[i]=obj; else arr.unshift(obj); }
 async function upsertVaga(v)   { if(DEMO_MODE){_localUpsert(_vagas,v);demoSave();return;} const {error} = await sb.from('vagas').upsert(vagaToDb(v));   if(error) throw error; }
 async function deleteVaga(id)  { if(DEMO_MODE){_vagas=_vagas.filter(x=>x.id!==id);demoSave();return;} await sb.from('vagas').delete().eq('id',id); }
-async function upsertCand(c)   { if(DEMO_MODE){_localUpsert(_cands,c);demoSave();return;} const {error} = await sb.from('candidatos').upsert(candToDb(c), {onConflict:'id'}); if(error) throw error; }
+async function upsertCand(c)   { if(DEMO_MODE){_localUpsert(_cands,c);demoSave();return;} const {error} = await sb.from('candidatos').upsert(candToDb(c)); if(error) throw error; }
 async function deleteCand(id)  { if(DEMO_MODE){_cands=_cands.filter(x=>x.id!==id);demoSave();return;} await sb.from('candidatos').delete().eq('id',id); }
 async function upsertEntrev(e) { if(DEMO_MODE){_localUpsert(_entrevistas,e);demoSave();return;} const {error} = await sb.from('entrevistas').upsert(entrevToDb(e)); if(error) throw error; }
 async function deleteEntrev(id){ if(DEMO_MODE){_entrevistas=_entrevistas.filter(x=>x.id!==id);demoSave();return;} await sb.from('entrevistas').delete().eq('id',id); }
@@ -1369,7 +1393,7 @@ ${ASSINATURA}`},
 Dando sequência ao seu processo seletivo para a vaga de {vaga}, a próxima etapa é o preenchimento do nosso formulário de triagem. Ele reúne algumas questões sobre seu perfil, experiência e conhecimentos técnicos, e nos ajuda a conhecê-lo(a) melhor antes da entrevista on-line.
 
 Acesse pelo link:
-{linkForm}
+https://forms.gle/PjbYbPkTpioTs2H1A
 
 Algumas orientações:
 • Reserve cerca de 15 minutos para responder com calma;
@@ -1560,21 +1584,17 @@ Grata,
 ${ASSINATURA}`}
 };
 // Menu manual (💬) — todas que você dispara sem mudar etapa:
-const MSG_MENU=['inicial','testeDisc','testeTriagem','confirmaOnline','confirmaPresencial','reagendar','noShow','vagaEncerrada'];
+const MSG_MENU=['inicial','confirmaOnline','confirmaPresencial','reagendar','noShow','vagaEncerrada'];
 
 // ── Preenche {nome}/{vaga} e abre pop-up para [CAMPOS], depois WhatsApp/e-mail ──
 let _msgCtx=null;
 function _fmtTel(t){return (t||'').replace(/\D/g,'').replace(/^0+/,'').replace(/^(?!55)/,'55');}
-function _aplicaVars(txt,c){const v=getVagas().find(x=>x.id===c.vagaId);return txt.replace(/\{nome\}/g,(c.nome||'').split(' ')[0]).replace(/\{vaga\}/g,v?v.titulo:'').replace(/\{linkForm\}/g,(v&&v.linkFormulario)?v.linkFormulario:'[cadastre o link do formulário na vaga]');}
+function _aplicaVars(txt,c){const v=getVagas().find(x=>x.id===c.vagaId);return txt.replace(/\{nome\}/g,(c.nome||'').split(' ')[0]).replace(/\{vaga\}/g,v?v.titulo:'');}
 function abrirMensagem(candId,tplKey){
   const c=getCands().find(x=>x.id===candId);if(!c){alert('Candidato não encontrado.');return;}
   const tpl=MSG_TEMPLATES[tplKey];if(!tpl)return;
   _msgCtx={candId,tplKey};
-  const v=getVagas().find(x=>x.id===c.vagaId);
   let corpo=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${tpl.nome}</div><div style="font-size:12px;color:var(--mid);margin-bottom:14px">Para: <strong>${c.nome}</strong>${c.tel?` · ${c.tel}`:' · (sem telefone)'}</div>`;
-  if(tplKey==='testeTriagem' && (!v||!v.linkFormulario)){
-    corpo+=`<div style="font-size:12px;background:var(--amber-lt);color:var(--amber);padding:8px 10px;border-radius:8px;margin-bottom:10px">⚠ Esta vaga ainda não tem o link do formulário de triagem cadastrado. Edite a vaga antes de enviar, ou o texto sairá com um aviso no lugar do link.</div>`;
-  }
   if(tpl.campos.length){
     corpo+=`<div style="font-size:12px;color:var(--mid);margin-bottom:8px">Preencha os campos abaixo (eles entram no texto):</div>`;
     corpo+=tpl.campos.map((cp,i)=>`<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}"></div>`).join('');
@@ -1736,13 +1756,13 @@ async function salvarVaga() {
   const dataEl = document.getElementById('nv-data');
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
-  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),linkFormulario:document.getElementById('nv-link-form').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
+  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     const r = await sb.from('vagas').select('*').order('criado_em',{ascending:false});
     if(r.data) _vagas = r.data.map(dbToVaga);
     closeModal('modal-nova-vaga');
-    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-canais','nv-link-form','nv-obs'].forEach(id=>document.getElementById(id).value='');
+    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
@@ -1751,8 +1771,8 @@ async function salvarVaga() {
 
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  ['ev-id','ev-titulo','ev-setor','ev-gestor','ev-data','ev-salario','ev-canais','ev-link-form','ev-obs'].forEach(f=>document.getElementById(f).value=v[f.replace('ev-','').replace('-','')]||'');
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-link-form').value=v.linkFormulario||'';document.getElementById('ev-obs').value=v.obs||'';
+  ['ev-id','ev-titulo','ev-setor','ev-gestor','ev-data','ev-salario','ev-canais','ev-obs'].forEach(f=>document.getElementById(f).value=v[f.replace('ev-','').replace('-','')]||'');
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -1781,7 +1801,6 @@ async function atualizarVaga() {
     status:novoStatus,
     motivo:document.getElementById('ev-motivo').value,
     canais:document.getElementById('ev-canais').value.trim(),
-    linkFormulario:document.getElementById('ev-link-form').value.trim(),
     obs:document.getElementById('ev-obs').value.trim(),
     atualizadoPor:getUserName()
   };
@@ -1824,12 +1843,9 @@ function renderFunil() {
   const searchEl=document.getElementById('cand-search'),search=searchEl?searchEl.value.toLowerCase():'';
   const fV=curV;
   const cands=todos.filter(c=>(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
-  const totalReal=cands.length;
-  const total=totalReal||1;
-  const etapasCompletas=ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos',short:'Banco'},{id:'reprovado',label:'Reprovados',short:'Reprov.'}]);
-  document.getElementById('funnel-visual').innerHTML=
-    `<div class="funnel-step total"><div class="fs-n">${totalReal}</div><div class="fs-l">Entrada</div><div class="fs-pct">100%</div></div>`+
-    etapasCompletas.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step ${activeEtapa===e.id?'active':''}" title="${e.label}" onclick="setEtapa('${e.id}')"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
+  const total=cands.length||1;
+  document.getElementById('funnel-visual').innerHTML=ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
 function renderCandidatos() {
@@ -1849,7 +1865,7 @@ function renderCandidatos() {
       +`<button class="btn btn-ghost btn-sm" onclick="menuMensagens('${c.id}')" title="Enviar mensagem">💬</button>`
       +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
       +`</div>`;
-    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}${c.obs?`<br><span style="font-size:11px;color:var(--mid)" title="${c.obs.replace(/"/g,'&quot;')}">💬 ${c.obs.length>38?c.obs.slice(0,38)+'…':c.obs}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
+    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
   }).join('');
 }
 function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.innerHTML='<option value="">Selecione...</option>'+getVagasVisiveis().filter(v=>v.status==='aberta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('');}
@@ -1876,18 +1892,7 @@ async function atualizarCandidato(){
     hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
   }
   _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,historico:hist};
-  try{
-    await upsertCand(_cands[idx]);
-    // Confere se a observação realmente foi gravada no banco (diagnóstico do bug relatado)
-    if(!DEMO_MODE){
-      const chk=await sb.from('candidatos').select('obs').eq('id',id).single();
-      if(chk.data && (chk.data.obs||'')!==(obs||'')){
-        console.warn('Observação divergente após salvar — enviado:',obs,'| no banco:',chk.data.obs);
-        alert('⚠ Atenção: a observação pode não ter sido salva corretamente no banco. Tente salvar novamente. Se persistir, abra o console (F12) e me mande a mensagem que aparecer lá.');
-      }
-    }
-    closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');
-  }catch(e){alert('Erro: '+e.message);}
+  try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
 
@@ -1945,6 +1950,182 @@ async function removerDoc(i){
   _cands[idx].documentos=(_cands[idx].documentos||[]).filter((_,j)=>j!==i);
   try{ await upsertCand(_cands[idx]); }catch(e){}
   renderDocsList();
+}
+
+// Reconecta documentos que estão no Storage mas sumiram das referências dos cards.
+// Cada candidato tem uma pasta no bucket com o id dele (ex.: cand-anibal/arquivo.pdf).
+// Tenta achar o candidato dono de uma pasta quando o id não bate,
+// usando o nome (slug da pasta "cand-adriane" -> "adriane"; e nome do arquivo).
+function _slug(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
+// Calcula o melhor candidato possível para uma pasta, sem aplicar o limite de aceite.
+// Usado tanto pelo casamento automático quanto pelo diagnóstico/reconexão manual.
+function _matchCandidato(nomePasta, files){
+  // termos vindos do nome da pasta (tira o prefixo cand-/cand_)
+  const basePasta=_slug(nomePasta.replace(/^cand[-_]?/i,'').replace(/[-_]/g,' '));
+  // termos vindos do primeiro arquivo (tira timestamp e extensão)
+  let baseArq='';
+  if(files&&files[0]&&files[0].name){ baseArq=_slug(files[0].name.replace(/^\d+_/,'').replace(/\.[a-z0-9]+$/i,'').replace(/[-_]/g,' ')); }
+  const alvo=(baseArq||basePasta).trim();
+  const termos=alvo?alvo.split(' ').filter(t=>t.length>=3):[];
+  let melhor=null, melhorScore=0;
+  if(termos.length){
+    for(const c of _cands){
+      const nomeC=_slug(c.nome);
+      if(!nomeC) continue;
+      let score=0;
+      for(const t of termos){ if(nomeC.includes(t)) score++; }
+      if(score>melhorScore){ melhor=c; melhorScore=score; }
+    }
+  }
+  return {termos, melhor, melhorScore};
+}
+function acharCandidatoPorPasta(nomePasta, files){
+  const {termos, melhor, melhorScore}=_matchCandidato(nomePasta, files);
+  if(!termos.length) return null;
+  // segurança: só aceita automaticamente se casar nome+sobrenome (2+ termos) OU o termo for bem específico
+  if(melhor && (melhorScore>=2 || termos.length===1)) return melhor;
+  return null;
+}
+let _orfaosAtuais=[];
+async function recuperarDocumentos(){
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Recuperação indisponível no modo demonstração.'); return; }
+  if(!confirm('Vou varrer o Storage e reconectar os documentos que estão lá mas sumiram dos cards. Isso não apaga nada. Continuar?')) return;
+  const btn=document.getElementById('btn-recuperar-docs');
+  const txtOrig=btn?btn.textContent:''; if(btn){ btn.textContent='🔄 Recuperando...'; btn.disabled=true; }
+  let recuperados=0, candidatosAfetados=0, erros=0;
+  const diag=[];
+  const orfaos=[];
+  try{
+    // 1) Lista as PASTAS na raiz do bucket (cada pasta = id de um candidato)
+    const {data:pastas,error:errRaiz}=await sb.storage.from(DOCS_BUCKET).list('',{limit:1000});
+    if(errRaiz){ alert('Não consegui listar o Storage: '+errRaiz.message+'\nVerifique se a política de leitura do bucket está ativa.'); if(btn){btn.textContent=txtOrig;btn.disabled=false;} return; }
+    diag.push('Pastas/itens na raiz do bucket: '+((pastas||[]).length));
+    diag.push('Exemplos na raiz: '+((pastas||[]).slice(0,8).map(p=>p.name+(p.id?' [arquivo]':' [pasta]')).join(', ')||'(nenhum)'));
+    const candById=new Map(_cands.map(c=>[c.id,c]));
+    diag.push('Candidatos na tela: '+_cands.length+' (ex: '+_cands.slice(0,5).map(c=>c.id).join(', ')+')');
+    console.log('[recuperarDocumentos] itens na raiz:', pastas);
+    let amostraDada=false;
+
+    for(const p of (pastas||[])){
+      const nomePasta=p.name;
+      if(!nomePasta || nomePasta==='.emptyFolderPlaceholder') continue;
+      // Se o item da raiz JÁ É um arquivo (tem id/metadata), não é pasta: trata direto
+      const ehArquivoNaRaiz = p.id || (p.metadata && p.metadata.size!=null);
+      let files=[];
+      let prefixo=nomePasta;
+      if(ehArquivoNaRaiz){
+        // arquivo solto na raiz: não há como saber o dono pelo id da pasta; ignora
+        diag.push('Item na raiz "'+nomePasta+'" é um arquivo solto (sem pasta de candidato).');
+        continue;
+      }
+      // 2) Lista os arquivos DENTRO da pasta
+      try{
+        const r=await sb.storage.from(DOCS_BUCKET).list(nomePasta,{limit:200});
+        if(r.error){ erros++; diag.push('Erro ao listar "'+nomePasta+'": '+r.error.message); continue; }
+        files=(r.data||[]).filter(f=>f.name && f.name!=='.emptyFolderPlaceholder');
+        console.log('[recuperarDocumentos] pasta', nomePasta, '->', r.data);
+      }catch(e){ erros++; continue; }
+      if(!amostraDada){ diag.push('Conteúdo de "'+nomePasta+'": '+(files.length?files.map(f=>f.name).slice(0,3).join(', '):'(vazio)')); amostraDada=true; }
+      if(!files.length) continue;
+
+      const c=candById.get(nomePasta) || acharCandidatoPorPasta(nomePasta, files);
+      if(!c){
+        const info=_matchCandidato(nomePasta, files);
+        diag.push('Pasta "'+nomePasta+'" tem '+files.length+' arquivo(s). Termos buscados: ['+info.termos.join(', ')+']. Melhor candidato encontrado: '+(info.melhor?('"'+info.melhor.nome+'" (score '+info.melhorScore+', precisa 2+)'):'nenhum')+'.');
+        orfaos.push({
+          pasta:nomePasta,
+          files:files.map(f=>({ name:f.name, path:nomePasta+'/'+f.name, tam:(f.metadata&&f.metadata.size)?_fmtTam(f.metadata.size):'', tipo:(f.name.split('.').pop()||'').toLowerCase(), enviadoEm:f.created_at||new Date().toISOString() })),
+          sugestaoId: info.melhor?info.melhor.id:''
+        });
+        continue;
+      }
+
+      const jaTem=new Set((c.documentos||[]).map(d=>d.path));
+      const novos=[];
+      for(const f of files){
+        const path=nomePasta+'/'+f.name;
+        if(jaTem.has(path)) continue;
+        const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
+        const nomeLimpo=f.name.replace(/^\d+_/,'');
+        const ext=(f.name.split('.').pop()||'').toLowerCase();
+        const tam=f.metadata&&f.metadata.size?_fmtTam(f.metadata.size):'';
+        novos.push({ nome:nomeLimpo, path, url:data.publicUrl, tipo:ext, tamanho:tam, enviadoEm:(f.created_at||new Date().toISOString()), enviadoPor:'recuperado' });
+      }
+      if(novos.length){
+        const idx=_cands.findIndex(x=>x.id===c.id);
+        _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
+        try{ await upsertCand(_cands[idx]); recuperados+=novos.length; candidatosAfetados++; }
+        catch(e){ erros++; }
+      }
+    }
+
+    renderFunil(); renderCandidatos();
+    const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value) renderDocsList();
+    console.log('[recuperarDocumentos] DIAGNÓSTICO COMPLETO:\n'+diag.join('\n'));
+    if(recuperados>0){
+      showToast('✅ '+recuperados+' documento(s) reconectado(s)');
+      let msg='Pronto! Reconectei '+recuperados+' documento(s) em '+candidatosAfetados+' candidato(s).\n\nAbra um candidato para conferir.';
+      if(orfaos.length) msg+='\n\nAlém disso, '+orfaos.length+' pasta(s) não foram reconectadas automaticamente. Vou abrir a tela de reconexão manual para você escolher o candidato de cada uma.';
+      alert(msg);
+    } else if(orfaos.length){
+      alert('Não consegui reconectar nenhuma pasta automaticamente ('+orfaos.length+' pasta(s) com documentos sem candidato correspondente por id ou nome).\n\nVou abrir a tela de reconexão manual: escolha o candidato certo de cada pasta.\n\n(O diagnóstico completo também foi impresso no Console do navegador: F12 > Console.)');
+    } else {
+      alert('Nada para reconectar: não encontrei pastas com documentos que já não estejam ligadas a um candidato.');
+    }
+    if(orfaos.length) abrirReconexaoManual(orfaos);
+  } catch(e){
+    alert('Erro inesperado: '+e.message);
+  } finally {
+    if(btn){ btn.textContent=txtOrig; btn.disabled=false; }
+  }
+}
+
+// Abre a tela de reconexão manual: uma linha por pasta órfã, com dropdown de candidatos.
+function abrirReconexaoManual(orfaos){
+  _orfaosAtuais=orfaos;
+  const candsOrdenados=[..._cands].sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  const opcoes=candsOrdenados.map(c=>'<option value="'+c.id+'">'+c.nome+'</option>').join('');
+  const body=document.getElementById('reconexao-docs-body');
+  if(!body) return;
+  body.innerHTML=orfaos.map((o,i)=>
+    '<div class="reconexao-item" id="reconexao-item-'+i+'" style="border:1px solid var(--bege);border-radius:8px;padding:10px 12px;margin-bottom:10px">'
+    +'<div style="font-weight:600;font-size:13px;margin-bottom:3px">📁 '+o.pasta+'</div>'
+    +'<div style="font-size:11px;color:var(--light);margin-bottom:8px">'+o.files.map(f=>f.name).join(', ')+'</div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    +'<select id="reconexao-sel-'+i+'" style="flex:1;min-width:180px;padding:7px;border:1px solid var(--bege);border-radius:6px;font-size:12px;background:#fff">'
+    +'<option value="">Escolher candidato...</option>'+opcoes+'</select>'
+    +'<button class="btn btn-primary btn-sm" onclick="reconectarOrfao('+i+')">Reconectar</button>'
+    +'</div></div>'
+  ).join('');
+  // pré-seleciona a melhor sugestão encontrada (se houver), pra Chrys só conferir e clicar
+  orfaos.forEach((o,i)=>{ if(o.sugestaoId){ const sel=document.getElementById('reconexao-sel-'+i); if(sel) sel.value=o.sugestaoId; } });
+  openModal('modal-reconexao-docs');
+}
+
+// Reconecta manualmente uma pasta órfã ao candidato escolhido no dropdown.
+async function reconectarOrfao(i){
+  const o=_orfaosAtuais[i]; if(!o) return;
+  const sel=document.getElementById('reconexao-sel-'+i);
+  const candId=sel?sel.value:'';
+  if(!candId){ alert('Escolha um candidato antes de clicar em Reconectar.'); return; }
+  const idx=_cands.findIndex(c=>c.id===candId); if(idx<0) return;
+  const jaTem=new Set((_cands[idx].documentos||[]).map(d=>d.path));
+  const novos=[];
+  for(const f of o.files){
+    if(jaTem.has(f.path)) continue;
+    const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(f.path);
+    novos.push({ nome:f.name.replace(/^\d+_/,''), path:f.path, url:data.publicUrl, tipo:f.tipo, tamanho:f.tam, enviadoEm:f.enviadoEm, enviadoPor:'reconectado manualmente' });
+  }
+  if(!novos.length){ alert('Esses documentos já estão anexados a esse candidato.'); return; }
+  _cands[idx].documentos=[...(_cands[idx].documentos||[]),...novos];
+  try{
+    await upsertCand(_cands[idx]);
+    const item=document.getElementById('reconexao-item-'+i);
+    if(item){ item.style.opacity='0.55'; item.innerHTML='<div style="font-size:12px">✅ Reconectado com '+_cands[idx].nome+'</div>'; }
+    renderFunil(); renderCandidatos();
+    const abertoId=document.getElementById('mc-id'); if(abertoId&&abertoId.value===candId) renderDocsList();
+    showToast('✅ Reconectado com '+_cands[idx].nome);
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 
 // ══ GERADOR DE ARTE DE DIVULGAÇÃO (Instagram / LinkedIn) ═══════════════════════
@@ -2282,85 +2463,6 @@ async function syncEntrevistasExistentes(){
 // ══ DASHBOARD ═════════════════════════════════════════════════════════════════
 
 
-async function syncCandidatoFromEntrevista(entrev){
-  // Determina etapa baseado no resultado
-  let etapa = 'entrevista_rh';
-  if(entrev.resultado === 'approved') etapa = 'aprovacao';
-  if(entrev.resultado === 'reprovado') etapa = 'reprovado';
-
-  // Encontra vaga real pelo vagaId do roteiro ou pelo nome
-  const vagas = getVagas();
-  let vagaId = null;
-  // Tenta achar vaga pelo setor e nome similar
-  const vagaMatch = vagas.find(v =>
-    v.setor === entrev.setor &&
-    (v.status === 'aberta' || v.status === 'encerrada') &&
-    v.titulo.toLowerCase().includes(entrev.vaga.toLowerCase().split('–')[0].trim().toLowerCase().substring(0,10))
-  ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
-  if(vagaMatch) vagaId = vagaMatch.id;
-
-  // Verifica se candidato já existe (pelo nome + CPF ou só nome)
-  const existe = _cands.find(c =>
-    c.nome.toLowerCase() === entrev.nome.toLowerCase() &&
-    (entrev.cpf ? c.cpf === entrev.cpf : true)
-  );
-
-  if(existe){
-    // Atualiza etapa se mudou
-    if(existe.etapa !== etapa && etapa !== 'entrevista_rh'){
-      const hist = [...(existe.historico||[])];
-      hist.push({etapa, data:new Date().toISOString(), obs:`Atualizado automaticamente via entrevista`, usuario:getUserName()});
-      const idx = _cands.findIndex(c=>c.id===existe.id);
-      _cands[idx] = {...existe, etapa, historico:hist};
-      await upsertCand(_cands[idx]);
-    }
-    return;
-  }
-
-  // Cria novo candidato
-  const cand = {
-    id: 'e_'+entrev.id,
-    nome: entrev.nome,
-    cpf: entrev.cpf||'',
-    tel: '',
-    email: '',
-    vagaId,
-    etapa,
-    dataEntrada: new Date().toISOString().slice(0,10),
-    fonte: 'Entrevista guiada',
-    obs: entrev.observacoes||'',
-    historico: [
-      {etapa:'entrevista_rh', data:entrev.data||new Date().toISOString(), obs:'Cadastrado automaticamente via roteiro de entrevista', usuario:entrev.registradoPor||getUserName()},
-      ...(etapa!=='entrevista_rh'?[{etapa, data:new Date().toISOString(), obs:`Resultado: ${etapa==='aprovacao'?'Aprovado':'Reprovado'}`, usuario:getUserName()}]:[])
-    ],
-    criadoPor: entrev.registradoPor||getUserName()
-  };
-  _cands.unshift(cand);
-  await upsertCand(cand);
-}
-
-// Sincroniza entrevistas antigas do Gabriel para o funil (roda uma vez no initApp)
-async function syncEntrevistasExistentes(){
-  const entrevistas = getEntrevistas();
-  let criados = 0;
-  for(const entrev of entrevistas){
-    const existe = _cands.find(c => c.nome.toLowerCase() === entrev.nome.toLowerCase());
-    if(!existe){
-      await syncCandidatoFromEntrevista(entrev);
-      criados++;
-    }
-  }
-  if(criados > 0){
-    // Reload candidatos após sync
-    const r = await sb.from('candidatos').select('*').order('criado_em',{ascending:false});
-    if(r.data) _cands = r.data.map(dbToCand);
-    showToast(`✅ ${criados} candidato${criados>1?'s':''} do histórico adicionado${criados>1?'s':''} ao funil!`);
-  }
-}
-
-// ══ DASHBOARD ═════════════════════════════════════════════════════════════════
-
-
 function renderDashboard(){
   const vagas=getVagasVisiveis();
   // Show sector context for gestores
@@ -2379,14 +2481,12 @@ function renderDashboard(){
   // Canceladas contam como resolvidas no progresso (empresa que cancelou, não culpa do RH)
   const resolvidas=fechadas+canceladas;
   const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
-  const totalCandidatos=getCandsVisiveis().length;
   document.getElementById('dash-kpis').innerHTML=`
     <div class="stat-card"><div class="stat-num">${totalQtd}</div><div class="stat-lbl">Total de Vagas</div></div>
     <div class="stat-card"><div class="stat-num g">${fechadas}</div><div class="stat-lbl">Vagas Fechadas</div></div>
     <div class="stat-card"><div class="stat-num a">${emAberto}</div><div class="stat-lbl">Saldo em Aberto</div></div>
     <div class="stat-card"><div class="stat-num r">${canceladas}</div><div class="stat-lbl">Canceladas</div></div>
-    <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Progresso</div></div>
-    <div class="stat-card"><div class="stat-num">${totalCandidatos}</div><div class="stat-lbl">Candidatos no Funil</div></div>`;
+    <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Progresso</div></div>`;
   setTimeout(()=>document.getElementById('dash-pct-bar').style.width=pct+'%',50);
   document.getElementById('dash-pct-label').textContent=pct+'%';
   document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
@@ -2481,8 +2581,7 @@ function renderDashboard(){
         ${d.aberto>0?`<span style="color:var(--amber)">🔄 Em Aberto: ${d.aberto}</span>`:''}
         ${d.canc>0?`<span style="color:var(--red)">❌ Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
   const tabEl=document.getElementById('dash-tabelas');tabEl.innerHTML='';
-  const candsPorVaga=getCandsVisiveis();
-  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),icon=ICON[setor]||'📋',div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${icon} ${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th style="text-align:center">Candidatos</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0,nCand=candsPorVaga.filter(c=>c.vagaId===v.id).length;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td style="text-align:center;font-weight:600;color:var(--charcoal)">${nCand}</td><td>${isCan?'❌ Cancelada':isFech?'✅ Concluída':'🔄 Em aberto'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
+  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),icon=ICON[setor]||'📋',div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${icon} ${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td>${isCan?'❌ Cancelada':isFech?'✅ Concluída':'🔄 Em aberto'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
 }
 
 // ══ PAINEL ════════════════════════════════════════════════════════════════════
