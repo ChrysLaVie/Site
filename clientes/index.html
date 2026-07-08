@@ -1692,14 +1692,19 @@ function menuMensagens(id){
 function parseHonorario(h){ if(!h)return 0; const m=String(h).replace(/\./g,'').match(/R\$\s*([\d]+(?:,\d{2})?)/); return m?parseFloat(m[1].replace(',','.')):0; }
 function renderVagasStats() {
   const v=getVagasVisiveis();
-  const totalHon=v.filter(x=>x.status==='aberta').reduce((s,x)=>s+parseHonorario(x.honorario),0);
+  const abertasIds=new Set(v.filter(x=>x.status==='aberta').map(x=>x.id));
+  // Quanto ainda falta receber (parcelas não pagas) das vagas em aberto — reflete a realidade
+  // do financeiro, e não o valor total do contrato (que já pode ter tido a entrada paga).
+  const totalHon=_pagamentos.length
+    ? _pagamentos.filter(p=>abertasIds.has(p.vagaId) && _statusReal(p)!=='pago').reduce((s,p)=>s+(p.valor||0),0)
+    : v.filter(x=>x.status==='aberta').reduce((s,x)=>s+parseHonorario(x.honorario),0);
   const totalFmt='R$ '+totalHon.toLocaleString('pt-BR',{minimumFractionDigits:0});
   document.getElementById('vagas-stats').innerHTML=`
     <div class="stat-card"><div class="stat-num">${v.length}</div><div class="stat-lbl">Total</div></div>
     <div class="stat-card"><div class="stat-num g">${v.filter(x=>x.status==='aberta').length}</div><div class="stat-lbl">Abertas</div></div>
     <div class="stat-card"><div class="stat-num">${v.filter(x=>x.status==='encerrada').length}</div><div class="stat-lbl">Encerradas</div></div>
     <div class="stat-card"><div class="stat-num">${getCands().length}</div><div class="stat-lbl">Candidatos</div></div>
-    ${isAdmin()?`<div class="stat-card"><div class="stat-num" style="font-size:20px">${totalFmt}</div><div class="stat-lbl">Honorários (abertas)</div></div>`:''}`;
+    ${isAdmin()?`<div class="stat-card"><div class="stat-num" style="font-size:20px">${totalFmt}</div><div class="stat-lbl">A receber (abertas)</div></div>`:''}`;
 }
 
 function renderVagas() {
@@ -1725,8 +1730,8 @@ function renderVagas() {
       </div>
       <div class="vaga-meta">
         ${v.setor?`<span>📂 ${v.setor}</span>`:''}${v.gestor?`<span>👤 ${v.gestor}</span>`:''}
-        ${v.dataAbertura?`<span>📅 ${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:''}
-        ${dias!==null?`<span>⏱ ${dias}d</span>`:''}
+        ${v.dataAbertura?`<span>📅 Abertura: ${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:''}
+        ${v.dataEncerramento?`<span>🏁 Encerramento: ${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:(v.status==='aberta'&&dias!==null?`<span>⏱ ${dias}d em aberto</span>`:'')}
       </div>
       <div class="vaga-meta">
         ${v.salario?`<span>💰 ${v.salario}</span>`:''}${v.qtd?`<span>👥 ${v.qtd} vaga${v.qtd>1?'s':''}</span>`:''}
@@ -2500,6 +2505,12 @@ function _honBase(v){ // valor R$ do honorário a partir do texto "35% · R$ 3.5
 }
 function _fmtBRL(n){ return 'R$ '+ (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function _addDias(dataISO,dias){ const d=new Date((dataISO||new Date().toISOString().slice(0,10))+'T12:00:00'); d.setDate(d.getDate()+dias); return d.toISOString().slice(0,10); }
+// Vencimento da parcela: a de fechamento vence na data real de encerramento da vaga
+// (quando ela já foi fechada). Enquanto a vaga está aberta, usa a estimativa (abertura + diasVenc).
+function _vencParcela(v,def){
+  if(def.n===2 && v.status==='encerrada' && v.dataEncerramento) return v.dataEncerramento;
+  return _addDias(v.dataAbertura,def.diasVenc);
+}
 
 // Persistência (segue o padrão demo/online do resto do sistema)
 function demoLoadPag(){ try{ _pagamentos=JSON.parse(localStorage.getItem('cambury_pag')||'[]'); }catch(e){ _pagamentos=[]; } }
@@ -2524,12 +2535,22 @@ async function sincronizarParcelas(){
     for(const p of remover){ if(!(typeof DEMO_MODE!=='undefined'&&DEMO_MODE)){try{await sb.from('pagamentos').delete().eq('id',p.id);}catch(e){}} }
     _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id));
   }
-  // Corrige pct/valor de parcelas existentes se o honorário ou o % mudou (mantém status/baixa)
+  // Corrige pct/valor/vencimento de parcelas existentes se o honorário, o % ou a data de
+  // encerramento da vaga mudou (mantém status/baixa; nunca mexe em parcela já paga)
   for(const v of vagas){
     const base=_honBase(v);
     for(const def of PARCELAS_DEF){
       const ex=_pagamentos.find(p=>p.id===v.id+'-p'+def.n);
-      if(ex){ const novoValor=+(base*def.pct/100).toFixed(2); if(ex.pct!==def.pct||ex.valor!==novoValor){ ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando; try{await upsertPagamento(ex);}catch(e){} } }
+      if(ex){
+        const novoValor=+(base*def.pct/100).toFixed(2);
+        const novoVenc=_vencParcela(v,def);
+        const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.vencimento!==novoVenc);
+        if(precisaAtualizar){
+          ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando;
+          if(ex.status!=='pago') ex.vencimento=novoVenc;
+          try{await upsertPagamento(ex);}catch(e){}
+        }
+      }
     }
   }
   for(const v of vagas){
@@ -2537,7 +2558,7 @@ async function sincronizarParcelas(){
     for(const def of PARCELAS_DEF){
       const id=v.id+'-p'+def.n;
       if(!_pagamentos.find(p=>p.id===id)){
-        const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_addDias(v.dataAbertura,def.diasVenc), status:'pendente', pagoEm:null, obs:def.quando};
+        const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:'pendente', pagoEm:null, obs:def.quando};
         _pagamentos.push(p);
         try{ await upsertPagamento(p); }catch(e){}
       }
