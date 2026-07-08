@@ -104,6 +104,7 @@ header {
 .tag-admissao { background:#ECFDF5; color:#065F46; }
 .tag-reprovado{ background:var(--red-lt); color:var(--red); }
 .tag-banco{ background:#EAE0C8; color:#7A5C2E; }
+.tag-administrativo{ background:#E3E0F0; color:#4C3D8F; }
 .tag-professores{ background:#DCEEF2; color:#0F5C66; }
 /* ── Agenda / Calendário ── */
 .agenda-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
@@ -719,7 +720,7 @@ header {
   <input type="hidden" id="mc-id">
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Entrevista RH</option><option value="entrevista_gestor">Entrevista Gestor</option><option value="vivencia">Vivência</option><option value="aprovacao">Aprovação</option><option value="admissao">Admissão</option><option value="reprovado">Reprovado</option><option value="banco_talentos">Banco de Talentos</option><option value="banco_talentos_professores">Banco de Talentos (Professores)</option></select></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Entrevista RH</option><option value="entrevista_gestor">Entrevista Gestor</option><option value="vivencia">Vivência</option><option value="aprovacao">Aprovação</option><option value="admissao">Admissão</option><option value="reprovado">Reprovado</option><option value="banco_talentos_financeiro">Banco de Talentos (Financeiro)</option><option value="banco_talentos_administrativo">Banco de Talentos (Administrativo)</option><option value="banco_talentos_professores">Banco de Talentos (Professores)</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observação (anotações sobre o candidato)</label><textarea id="mc-obs" placeholder="Ex.: perfil aderente; confirmar disponibilidade presencial; nota técnica do teste..."></textarea></div>
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
@@ -1352,8 +1353,8 @@ document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', 
 
 // ══ ETAPAS ════════════════════════════════════════════════════════════════════
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Entrevista RH',short:'RH'},{id:'entrevista_gestor',label:'Entrevista Gestor',short:'Gestor'},{id:'vivencia',label:'Vivência',short:'Vivência'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'},{id:'admissao',label:'Admissão',short:'Admissão'}];
-const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos:'banco',banco_talentos_professores:'professores'};
-const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Entrevista RH',entrevista_gestor:'Entrevista Gestor',vivencia:'Vivência',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos:'Banco de Talentos',banco_talentos_professores:'Banco de Talentos (Professores)'};
+const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_financeiro:'banco',banco_talentos_administrativo:'administrativo',banco_talentos_professores:'professores'};
+const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Entrevista RH',entrevista_gestor:'Entrevista Gestor',vivencia:'Vivência',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_financeiro:'Banco de Talentos (Financeiro)',banco_talentos_administrativo:'Banco de Talentos (Administrativo)',banco_talentos_professores:'Banco de Talentos (Professores)'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao','admissao'];
 const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'admissao',admissao:'admissao'};
@@ -1832,7 +1833,7 @@ function renderFunil() {
   const todos=getCandsVisiveis(),vagas=getVagasVisiveis();
   const selV=document.getElementById('cand-filter-vaga'),curV=selV.value;
   selV.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}" ${v.id===curV?'selected':''}>${v.titulo}</option>`).join('');
-  document.getElementById('cand-filter-etapa').innerHTML='<option value="">Todas as etapas</option>'+[...ETAPAS,{id:'banco_talentos',label:'Banco de Talentos'},{id:'banco_talentos_professores',label:'Banco de Talentos (Professores)'},{id:'reprovado',label:'Reprovados'}].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
+  document.getElementById('cand-filter-etapa').innerHTML='<option value="">Todas as etapas</option>'+[...ETAPAS,{id:'banco_talentos_financeiro',label:'Banco de Talentos (Financeiro)'},{id:'banco_talentos_administrativo',label:'Banco de Talentos (Administrativo)'},{id:'banco_talentos_professores',label:'Banco de Talentos (Professores)'},{id:'reprovado',label:'Reprovados'}].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   const searchEl=document.getElementById('cand-search'),search=searchEl?searchEl.value.toLowerCase():'';
   const fV=curV;
   const cands=todos.filter(c=>(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
@@ -1840,7 +1841,7 @@ function renderFunil() {
   const totalCardVisual=`<div class="funnel-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-n">${cands.length}</div><div class="fs-l">Total</div><div class="fs-pct">100%</div></div>`;
   document.getElementById('funnel-visual').innerHTML=totalCardVisual+ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
   const totalCardSteps=`<div class="funil-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-count">${cands.length}</div><div class="fs-name">Total</div></div>`;
-  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat([{id:'banco_talentos',label:'Banco de Talentos'},{id:'banco_talentos_professores',label:'Banco de Talentos (Professores)'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat([{id:'banco_talentos_financeiro',label:'Banco de Talentos (Financeiro)'},{id:'banco_talentos_administrativo',label:'Banco de Talentos (Administrativo)'},{id:'banco_talentos_professores',label:'Banco de Talentos (Professores)'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
 function renderCandidatos() {
@@ -1853,7 +1854,7 @@ function renderCandidatos() {
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
     const nE=entrevistas.filter(e=>e.nome===c.nome&&e.vagaId===c.vagaId).length;
     const dt=c.dataEntrada?new Date(c.dataEntrada+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-    const finalizado=(c.etapa==='reprovado'||c.etapa==='banco_talentos'||c.etapa==='banco_talentos_professores');
+    const finalizado=(c.etapa==='reprovado'||c.etapa==='banco_talentos_financeiro'||c.etapa==='banco_talentos_administrativo'||c.etapa==='banco_talentos_professores');
     const acoes=`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">`
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--green-lt,#e6f4ea);color:var(--green,#1a7f37);border:1px solid var(--green,#1a7f37)" onclick="aprovarCard('${c.id}')" title="Aprovar e avançar">✓ Aprovar</button>`)
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--red-lt);color:var(--red);border:1px solid var(--red)" onclick="reprovarCard('${c.id}')" title="Reprovar e enviar feedback">✗ Reprovar</button>`)
