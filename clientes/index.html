@@ -1846,7 +1846,7 @@ function renderFunil() {
   const totalCardVisual=`<div class="funnel-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-n">${cands.length}</div><div class="fs-l">Total</div><div class="fs-pct">100%</div></div>`;
   document.getElementById('funnel-visual').innerHTML=totalCardVisual+ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
   const totalCardSteps=`<div class="funil-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-count">${cands.length}</div><div class="fs-name">Total</div></div>`;
-  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat([{id:'banco_talentos_administrativo',label:'Banco de Talentos Administrativo'},{id:'banco_talentos_academico',label:'Banco de Talentos Acadêmico'},{id:'banco_talentos_geral',label:'Banco de Talentos Geral'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat([{id:'banco_talentos_administrativo',label:'Banco de Talentos Administrativo'},{id:'banco_talentos_academico',label:'Banco de Talentos Acadêmico'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
 function renderCandidatos() {
@@ -2546,10 +2546,10 @@ async function sincronizarParcelas(){
       if(ex){
         const novoValor=+(base*def.pct/100).toFixed(2);
         const novoVenc=_vencParcela(v,def);
-        const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.vencimento!==novoVenc);
+        const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.status!=='cancelada' && ex.vencimento!==novoVenc);
         if(precisaAtualizar){
           ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando;
-          if(ex.status!=='pago') ex.vencimento=novoVenc;
+          if(ex.status!=='pago' && ex.status!=='cancelada') ex.vencimento=novoVenc;
           try{await upsertPagamento(ex);}catch(e){}
         }
       }
@@ -2570,12 +2570,13 @@ async function sincronizarParcelas(){
 }
 function _statusReal(p){
   if(p.status==='pago') return 'pago';
+  if(p.status==='cancelada') return 'cancelada';
   const hoje=new Date().toISOString().slice(0,10);
   if(p.vencimento && p.vencimento<hoje) return 'atrasado';
   return 'pendente';
 }
-const FIN_TAG={pendente:'tag-rh',pago:'tag-aprovado',atrasado:'tag-reprovado'};
-const FIN_LBL={pendente:'Pendente',pago:'Pago',atrasado:'Atrasado'};
+const FIN_TAG={pendente:'tag-rh',pago:'tag-aprovado',atrasado:'tag-reprovado',cancelada:'tag-closed'};
+const FIN_LBL={pendente:'Pendente',pago:'Pago',atrasado:'Atrasado',cancelada:'Cancelada'};
 
 async function renderFinanceiro(){
   if(!_pagamentos.length){ await loadPagamentos(); }
@@ -2606,6 +2607,8 @@ async function renderFinanceiro(){
     const venc=p.vencimento?new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
     const acao = s==='pago'
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>`
+      : s==='cancelada'
+      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
       : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>`;
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
