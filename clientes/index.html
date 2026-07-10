@@ -1216,7 +1216,7 @@ function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
-const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:r.documentos||[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
+const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
@@ -1904,7 +1904,7 @@ function renderDocsList(){
   const c=getCands().find(x=>x.id===id);
   const list=document.getElementById('mc-docs-list');
   const empty=document.getElementById('mc-docs-empty');
-  const docs=(c&&c.documentos)||[];
+  const docs=Array.isArray(c&&c.documentos)?c.documentos:[];
   if(!docs.length){ list.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
   const icon=t=>{t=(t||'').toLowerCase(); if(t.includes('pdf'))return '📕'; if(t.includes('image')||/\.(png|jpe?g)$/.test(t))return '🖼'; if(t.includes('word')||/\.docx?$/.test(t))return '📘'; return '📄';};
@@ -1934,7 +1934,8 @@ async function anexarDocs(ev){
       if(error)throw error;
       const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
       const doc={nome:f.name, path, url:data.publicUrl, tipo:f.type||f.name.split('.').pop(), tamanho:_fmtTam(f.size), enviadoEm:new Date().toISOString(), enviadoPor:getUserName()};
-      _cands[idx].documentos=[...(_cands[idx].documentos||[]),doc];
+      const docsAtuais=Array.isArray(_cands[idx].documentos)?_cands[idx].documentos:[];
+      _cands[idx].documentos=[...docsAtuais,doc];
     }catch(e){ alert('Erro ao enviar "'+f.name+'": '+e.message); }
   }
   try{ await upsertCand(_cands[idx]); }catch(e){}
@@ -1943,12 +1944,13 @@ async function anexarDocs(ev){
 async function removerDoc(i){
   const id=document.getElementById('mc-id').value;
   const idx=_cands.findIndex(c=>c.id===id); if(idx<0)return;
-  const doc=(_cands[idx].documentos||[])[i]; if(!doc)return;
+  const docsAtuais=Array.isArray(_cands[idx].documentos)?_cands[idx].documentos:[];
+  const doc=docsAtuais[i]; if(!doc)return;
   if(!confirm('Remover "'+doc.nome+'"?'))return;
   if(!(typeof DEMO_MODE!=='undefined' && DEMO_MODE) && doc.path){
     try{ await sb.storage.from(DOCS_BUCKET).remove([doc.path]); }catch(e){}
   }
-  _cands[idx].documentos=(_cands[idx].documentos||[]).filter((_,j)=>j!==i);
+  _cands[idx].documentos=docsAtuais.filter((_,j)=>j!==i);
   try{ await upsertCand(_cands[idx]); }catch(e){}
   renderDocsList();
 }
