@@ -468,6 +468,8 @@ header {
     <div class="prog-track" style="height:10px;margin-bottom:0"><div class="prog-fill" id="dash-pct-bar" style="width:0%"></div></div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--light)"><span id="dash-pct-left"></span><span id="dash-pct-right"></span></div>
   </div>
+  <div class="section-label" style="margin-bottom:8px">🎯 Ações Pendentes</div>
+  <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
   <div class="section-label" style="margin-bottom:8px">⏱ Tempo de Fechamento</div>
   <div id="dash-tempo-kpis" style="margin-bottom:16px"></div>
   <div class="card" style="overflow:auto;margin-bottom:24px">
@@ -2290,6 +2292,68 @@ async function syncEntrevistasExistentes(){
 // ══ DASHBOARD ═════════════════════════════════════════════════════════════════
 
 
+// ══ AÇÕES PENDENTES — central de decisão do dashboard ═══════════════════════
+// Sub-status automático por candidato, calculado a partir da etapa atual do funil
+// (nada de status manual: reflete o que realmente está acontecendo agora).
+const ETAPA_SLA = { triagem:3, entrevista_rh:5, entrevista_gestor:5, vivencia:5, aprovacao:5 };
+const ETAPA_SUBSTATUS = {
+  triagem:            'Aguardando triagem',
+  entrevista_rh:      'Aguardando formulários e testes',
+  entrevista_gestor:  'Aguardando Entrevista La Vie',
+  vivencia:           'Em Entrevista Final com o cliente',
+  aprovacao:          'Dossiê enviado — aguardando contratante finalizar'
+};
+// Quantos dias o candidato está na etapa ATUAL (não desde a entrada no funil)
+function diasNaEtapaAtual(c){
+  const hist=(c.historico||[]).filter(h=>h.etapa===c.etapa);
+  const dataRef = hist.length ? hist[hist.length-1].data : (c.dataEntrada?c.dataEntrada+'T12:00:00':null);
+  if(!dataRef) return 0;
+  return Math.max(0, Math.floor((Date.now()-new Date(dataRef).getTime())/86400000));
+}
+function renderAcoesPendentes(){
+  const el=document.getElementById('dash-acoes-pendentes'); if(!el) return;
+  const vagas=getVagasVisiveis();
+  const cands=getCandsVisiveis().filter(c=>ETAPA_SUBSTATUS[c.etapa]); // só etapas ativas do funil (fora reprovado/banco de talentos)
+  const itens=cands.map(c=>{
+    const vaga=vagas.find(v=>v.id===c.vagaId);
+    if(vaga && vaga.status!=='aberta') return null; // vaga já encerrada/cancelada = não é mais pendência
+    const dias=diasNaEtapaAtual(c);
+    const sla=ETAPA_SLA[c.etapa]||5;
+    const nivel = dias>=sla*2?'r' : dias>=sla?'a' : 'g';
+    let finTxt='';
+    if(vaga){
+      const p=_pagamentos.find(x=>x.vagaId===vaga.id && x.parcela===2);
+      if(p){
+        const s=_statusReal(p);
+        if(s==='atrasado') finTxt='💰 parcela de fechamento atrasada';
+        else if(s==='pendente'){
+          const dv=Math.ceil((new Date(p.vencimento+'T12:00:00').getTime()-Date.now())/86400000);
+          if(dv<=7) finTxt = dv<0 ? '💰 parcela de fechamento atrasada' : `💰 parcela vence em ${dv}d`;
+        }
+      }
+    }
+    return {c,vaga,dias,nivel,sub:ETAPA_SUBSTATUS[c.etapa],finTxt,urgencia:dias-sla};
+  }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
+
+  if(!itens.length){ el.innerHTML='<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento 🎉</div>'; return; }
+
+  const cor={r:'var(--red)',   a:'#B7791F',   g:'var(--green)'};
+  const bg ={r:'var(--red-lt)',a:'#FBF3E4',   g:'var(--green-lt)'};
+
+  el.innerHTML = itens.map(it=>`
+    <div class="card" style="padding:14px 18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;border-left:4px solid ${cor[it.nivel]}" onclick="moverCandidato('${it.c.id}')">
+      <div style="min-width:200px">
+        <strong>${it.c.nome}</strong><br>
+        <span style="font-size:12px;color:var(--mid)">${it.vaga?it.vaga.titulo:'—'}${it.vaga&&it.vaga.gestor?' · '+it.vaga.gestor:''}</span>
+      </div>
+      <div style="flex:1;min-width:180px;font-size:13px">${it.sub}</div>
+      <div style="text-align:right">
+        <span style="background:${bg[it.nivel]};color:${cor[it.nivel]};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${it.dias}d nesta etapa</span>
+        ${it.finTxt?`<div style="font-size:11px;color:var(--mid);margin-top:4px">${it.finTxt}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
 function renderDashboard(){
   const vagas=getVagasVisiveis();
   // Show sector context for gestores
@@ -2318,6 +2382,7 @@ function renderDashboard(){
   document.getElementById('dash-pct-label').textContent=pct+'%';
   document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
   document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
+  renderAcoesPendentes();
   document.getElementById('dash-tempo-kpis').innerHTML='';
   // ── Tempo de fechamento DINÂMICO ──────────────────────────────────────────
   // Calcula dias corridos e dias trabalhados (5 dias úteis/semana) para vagas encerradas
