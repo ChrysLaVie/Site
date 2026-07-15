@@ -576,9 +576,9 @@ header {
     <div class="form-field" style="grid-column:1/-1"><label>Candidato</label><select id="ag-cand" onchange="agPreencheVaga()"></select></div>
     <div class="form-field"><label>Data</label><input type="date" id="ag-data"></div>
     <div class="form-field"><label>Etapa / Tipo</label><select id="ag-etapa">
-      <option value="Entrevista RH">Entrevista RH</option>
-      <option value="Entrevista Gestor">Entrevista Gestor</option>
-      <option value="Vivência">Vivência</option>
+      <option value="Formulários e Testes">Formulários e Testes</option>
+      <option value="Entrevista La Vie">Entrevista La Vie</option>
+      <option value="Entrevista Final">Entrevista Final</option>
       <option value="Devolutiva">Devolutiva</option>
       <option value="Outro">Outro</option>
     </select></div>
@@ -707,7 +707,7 @@ header {
     <div class="form-field"><label>Telefone</label><input id="nc-tel"></div>
     <div class="form-field"><label>E-mail</label><input id="nc-email"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Vaga *</label><select id="nc-vaga"><option value="">Selecione...</option></select></div>
-    <div class="form-field"><label>Etapa</label><select id="nc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Entrevista RH</option><option value="entrevista_gestor">Entrevista Gestor</option><option value="vivencia">Vivência</option><option value="aprovacao">Aprovação</option><option value="admissao">Admissão</option></select></div>
+    <div class="form-field"><label>Etapa</label><select id="nc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option></select></div>
     <div class="form-field"><label>Data entrada</label><input id="nc-data" type="date"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Fonte</label><input id="nc-fonte" placeholder="Ex: LinkedIn, Indicação"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="nc-obs"></textarea></div>
@@ -720,7 +720,7 @@ header {
   <input type="hidden" id="mc-id">
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Entrevista RH</option><option value="entrevista_gestor">Entrevista Gestor</option><option value="vivencia">Vivência</option><option value="aprovacao">Aprovação</option><option value="admissao">Admissão</option><option value="reprovado">Reprovado</option><option value="banco_talentos_administrativo">Banco de Talentos Administrativo</option><option value="banco_talentos_academico">Banco de Talentos Acadêmico</option><option value="banco_talentos_geral">Banco de Talentos Geral</option></select></div>
+    <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option><option value="reprovado">Reprovado</option><option value="banco_talentos_administrativo">Banco de Talentos Administrativo</option><option value="banco_talentos_academico">Banco de Talentos Acadêmico</option><option value="banco_talentos_geral">Banco de Talentos Geral</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observação (anotações sobre o candidato)</label><textarea id="mc-obs" placeholder="Ex.: perfil aderente; confirmar disponibilidade presencial; nota técnica do teste..."></textarea></div>
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
@@ -753,7 +753,7 @@ header {
 <div class="modal-bg" id="modal-aprov-triagem"><div class="modal" style="max-width:420px">
   <div class="modal-header"><div class="modal-title">✓ Aprovar na triagem</div><button class="modal-close" onclick="closeModal('modal-aprov-triagem')">✕</button></div>
   <input type="hidden" id="aprov-tri-id">
-  <p style="font-size:13px;color:var(--mid);margin-bottom:14px"><strong id="aprov-tri-nome"></strong> vai avançar para <strong>Entrevista RH</strong>. Qual o tipo de entrevista?</p>
+  <p style="font-size:13px;color:var(--mid);margin-bottom:14px"><strong id="aprov-tri-nome"></strong> vai avançar para <strong>Formulários e Testes</strong>. Qual o tipo de entrevista?</p>
   <div style="background:var(--bege-lt);border-radius:10px;padding:12px;margin-bottom:14px">
     <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--mid);margin-bottom:8px">📅 Já agendar na Agenda (opcional)</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1137,7 +1137,7 @@ function abrirAgendaModal(id,dataPre){
     document.getElementById('ag-id').value=a.id;
     document.getElementById('ag-cand').value=a.candidatoId||'';
     document.getElementById('ag-data').value=a.data||'';
-    document.getElementById('ag-etapa').value=a.titulo||'Entrevista RH';
+    document.getElementById('ag-etapa').value=a.titulo||'Formulários e Testes';
     document.getElementById('ag-ini').value=a.horaIni||'';
     document.getElementById('ag-fim').value=a.horaFim||'';
     document.getElementById('ag-tipo').value=a.tipo||'online';
@@ -1153,7 +1153,7 @@ function abrirAgendaModal(id,dataPre){
     document.getElementById('ag-id').value='';
     document.getElementById('ag-cand').value='';
     document.getElementById('ag-data').value=dataPre||new Date().toISOString().slice(0,10);
-    document.getElementById('ag-etapa').value='Entrevista RH';
+    document.getElementById('ag-etapa').value='Formulários e Testes';
     document.getElementById('ag-ini').value=''; document.getElementById('ag-fim').value='';
     document.getElementById('ag-tipo').value='online';
     document.getElementById('ag-link').value=_salaPadrao||''; document.getElementById('ag-local').value='';
@@ -1352,12 +1352,12 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
 
 // ══ ETAPAS ════════════════════════════════════════════════════════════════════
-const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Entrevista RH',short:'RH'},{id:'entrevista_gestor',label:'Entrevista Gestor',short:'Gestor'},{id:'vivencia',label:'Vivência',short:'Vivência'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'},{id:'admissao',label:'Admissão',short:'Admissão'}];
-const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral'};
-const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Entrevista RH',entrevista_gestor:'Entrevista Gestor',vivencia:'Vivência',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral'};
+const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
+const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral'};
+const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral'};
 // ordem do funil para avanço
-const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao','admissao'];
-const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'admissao',admissao:'admissao'};
+const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
+const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'aprovacao'};
 
 // ══ MENSAGENS PADRÃO — La Vie Consultoria ════════════════════════════════════════
 // {nome} e {vaga} são preenchidos automaticamente. [CAMPOS] viram inputs no pop-up.
@@ -1658,7 +1658,7 @@ async function aprovarTriagemCom(modo){ // 'online' | 'presencial'
       const vaga=getVagas().find(v=>v.id===c.vagaId);
       const ag={
         id:'ag-'+Date.now(),
-        titulo:'Entrevista RH', candidatoId:c.id, candidato:c.nome,
+        titulo:'Formulários e Testes', candidatoId:c.id, candidato:c.nome,
         vagaId:c.vagaId, vaga:vaga?vaga.titulo:null, setor:vaga?vaga.setor:null,
         data, horaIni:hora||'', horaFim:'',
         tipo:modo, link:(modo==='online'?(_salaPadrao||''):''), local:'',
@@ -1667,7 +1667,7 @@ async function aprovarTriagemCom(modo){ // 'online' | 'presencial'
       try{ await upsertAgenda(ag); _localUpsert(_agenda,ag); showToast('📅 Entrevista agendada na Agenda'); }
       catch(e){ console.warn('Falha ao criar evento na agenda:',e); }
     }
-    showToast('✅ '+c.nome.split(' ')[0]+' → Entrevista RH');
+    showToast('✅ '+c.nome.split(' ')[0]+' → Formulários e Testes');
     abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');
   }
 }
@@ -2380,12 +2380,12 @@ function renderDashboard(){
       subEl.textContent = 'UniCambury · Dados em tempo real';
     }
   }
-  const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
   const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
-  const fechadas=vagas.reduce((s,v)=>s+(v.qtdFechadas||0),0);
-  const emAberto=totalQtd-fechadas-canceladas;
-  // Canceladas contam como resolvidas no progresso (empresa que cancelou, não culpa do RH)
-  const resolvidas=fechadas+canceladas;
+  const totalQtd=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
+  const fechadas=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtdFechadas||0),0);
+  const emAberto=totalQtd-fechadas;
+  // Canceladas ficam fora do cálculo inteiro (não é culpa do RH, mas também não conta como resolvida)
+  const resolvidas=fechadas;
   const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
   document.getElementById('dash-kpis').innerHTML=`
     <div class="stat-card"><div class="stat-num">${totalQtd}</div><div class="stat-lbl">Total de Vagas</div></div>
@@ -2395,8 +2395,8 @@ function renderDashboard(){
     <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Progresso</div></div>`;
   setTimeout(()=>document.getElementById('dash-pct-bar').style.width=pct+'%',50);
   document.getElementById('dash-pct-label').textContent=pct+'%';
-  document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
-  document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
+  document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas de ${totalQtd} válidas`;
+  document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto · ${canceladas} canceladas (fora do cálculo)`;
   document.getElementById('dash-tempo-kpis').innerHTML='';
   // ── Tempo de fechamento DINÂMICO ──────────────────────────────────────────
   // Calcula dias corridos e dias trabalhados (5 dias úteis/semana) para vagas encerradas
