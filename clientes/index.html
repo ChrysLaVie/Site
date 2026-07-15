@@ -1129,7 +1129,7 @@ async function salvarSalaPadrao(){
 
 function abrirAgendaModal(id,dataPre){
   const sel=document.getElementById('ag-cand');
-  sel.innerHTML='<option value="">— selecione —</option>'+getCandsVisiveis().map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
+  sel.innerHTML='<option value="">— selecione —</option>'+getCandsVisiveis().slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'})).map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
   document.getElementById('ag-del-btn').style.display=id?'block':'none';
   if(id){
     const a=_agenda.find(x=>x.id===id); if(!a)return;
@@ -2208,8 +2208,8 @@ async function salvarEntrevista(){
   }catch(e){alert('Erro: '+e.message);}
 }
 
-// Cria/atualiza candidato no funil a partir de uma entrevista
-
+// Normaliza nome pra comparação (ignora acento, espaço duplo, maiúscula/minúscula)
+function normNome(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toLowerCase(); }
 
 async function syncCandidatoFromEntrevista(entrev){
   // Determina etapa baseado no resultado
@@ -2228,9 +2228,9 @@ async function syncCandidatoFromEntrevista(entrev){
   ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
   if(vagaMatch) vagaId = vagaMatch.id;
 
-  // Verifica se candidato já existe (pelo nome + CPF ou só nome)
+  // Verifica se candidato já existe (pelo nome + CPF ou só nome, ignorando acento/espaço/maiúscula)
   const existe = _cands.find(c =>
-    c.nome.toLowerCase() === entrev.nome.toLowerCase() &&
+    normNome(c.nome) === normNome(entrev.nome) &&
     (entrev.cpf ? c.cpf === entrev.cpf : true)
   );
 
@@ -2273,86 +2273,7 @@ async function syncEntrevistasExistentes(){
   const entrevistas = getEntrevistas();
   let criados = 0;
   for(const entrev of entrevistas){
-    const existe = _cands.find(c => c.nome.toLowerCase() === entrev.nome.toLowerCase());
-    if(!existe){
-      await syncCandidatoFromEntrevista(entrev);
-      criados++;
-    }
-  }
-  if(criados > 0){
-    // Reload candidatos após sync
-    const r = await sb.from('candidatos').select('*').order('criado_em',{ascending:false});
-    if(r.data) _cands = r.data.map(dbToCand);
-    showToast(`✅ ${criados} candidato${criados>1?'s':''} do histórico adicionado${criados>1?'s':''} ao funil!`);
-  }
-}
-
-// ══ DASHBOARD ═════════════════════════════════════════════════════════════════
-
-
-async function syncCandidatoFromEntrevista(entrev){
-  // Determina etapa baseado no resultado
-  let etapa = 'entrevista_rh';
-  if(entrev.resultado === 'approved') etapa = 'aprovacao';
-  if(entrev.resultado === 'reprovado') etapa = 'reprovado';
-
-  // Encontra vaga real pelo vagaId do roteiro ou pelo nome
-  const vagas = getVagas();
-  let vagaId = null;
-  // Tenta achar vaga pelo setor e nome similar
-  const vagaMatch = vagas.find(v =>
-    v.setor === entrev.setor &&
-    (v.status === 'aberta' || v.status === 'encerrada') &&
-    v.titulo.toLowerCase().includes(entrev.vaga.toLowerCase().split('–')[0].trim().toLowerCase().substring(0,10))
-  ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
-  if(vagaMatch) vagaId = vagaMatch.id;
-
-  // Verifica se candidato já existe (pelo nome + CPF ou só nome)
-  const existe = _cands.find(c =>
-    c.nome.toLowerCase() === entrev.nome.toLowerCase() &&
-    (entrev.cpf ? c.cpf === entrev.cpf : true)
-  );
-
-  if(existe){
-    // Atualiza etapa se mudou
-    if(existe.etapa !== etapa && etapa !== 'entrevista_rh'){
-      const hist = [...(existe.historico||[])];
-      hist.push({etapa, data:new Date().toISOString(), obs:`Atualizado automaticamente via entrevista`, usuario:getUserName()});
-      const idx = _cands.findIndex(c=>c.id===existe.id);
-      _cands[idx] = {...existe, etapa, historico:hist};
-      await upsertCand(_cands[idx]);
-    }
-    return;
-  }
-
-  // Cria novo candidato
-  const cand = {
-    id: 'e_'+entrev.id,
-    nome: entrev.nome,
-    cpf: entrev.cpf||'',
-    tel: '',
-    email: '',
-    vagaId,
-    etapa,
-    dataEntrada: new Date().toISOString().slice(0,10),
-    fonte: 'Entrevista guiada',
-    obs: entrev.observacoes||'',
-    historico: [
-      {etapa:'entrevista_rh', data:entrev.data||new Date().toISOString(), obs:'Cadastrado automaticamente via roteiro de entrevista', usuario:entrev.registradoPor||getUserName()},
-      ...(etapa!=='entrevista_rh'?[{etapa, data:new Date().toISOString(), obs:`Resultado: ${etapa==='aprovacao'?'Aprovado':'Reprovado'}`, usuario:getUserName()}]:[])
-    ],
-    criadoPor: entrev.registradoPor||getUserName()
-  };
-  _cands.unshift(cand);
-  await upsertCand(cand);
-}
-
-// Sincroniza entrevistas antigas do Gabriel para o funil (roda uma vez no initApp)
-async function syncEntrevistasExistentes(){
-  const entrevistas = getEntrevistas();
-  let criados = 0;
-  for(const entrev of entrevistas){
-    const existe = _cands.find(c => c.nome.toLowerCase() === entrev.nome.toLowerCase());
+    const existe = _cands.find(c => normNome(c.nome) === normNome(entrev.nome));
     if(!existe){
       await syncCandidatoFromEntrevista(entrev);
       criados++;
