@@ -457,7 +457,7 @@ header {
 <div id="page-dashboard" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
     <div><h1 class="page-title">Dashboard R&S</h1><p class="page-sub" id="dash-subtitle">UniCambury · Dados em tempo real</p></div>
-    <div style="font-size:11px;color:var(--light);padding-top:8px">* Progresso excluindo canceladas</div>
+    <div style="font-size:11px;color:var(--light);padding-top:8px">* Canceladas contam como resolvidas (cancelamento do cliente, não do RH)</div>
   </div>
   <div class="stats-row" id="dash-kpis" style="margin-bottom:20px"></div>
   <div class="card" style="margin-bottom:20px;padding:18px 22px">
@@ -2381,11 +2381,11 @@ function renderDashboard(){
     }
   }
   const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
-  const totalQtd=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
+  const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
   const fechadas=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtdFechadas||0),0);
-  const emAberto=totalQtd-fechadas;
-  // Canceladas ficam fora do cálculo inteiro (não é culpa do RH, mas também não conta como resolvida)
-  const resolvidas=fechadas;
+  const emAberto=totalQtd-fechadas-canceladas;
+  // Canceladas contam como resolvidas (foi o cliente quem cancelou, não é falha do RH)
+  const resolvidas=fechadas+canceladas;
   const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
   document.getElementById('dash-kpis').innerHTML=`
     <div class="stat-card"><div class="stat-num">${totalQtd}</div><div class="stat-lbl">Total de Vagas</div></div>
@@ -2395,8 +2395,8 @@ function renderDashboard(){
     <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-lbl">Progresso</div></div>`;
   setTimeout(()=>document.getElementById('dash-pct-bar').style.width=pct+'%',50);
   document.getElementById('dash-pct-label').textContent=pct+'%';
-  document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas de ${totalQtd} válidas`;
-  document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto · ${canceladas} canceladas (fora do cálculo)`;
+  document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
+  document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
   document.getElementById('dash-tempo-kpis').innerHTML='';
   // ── Tempo de fechamento DINÂMICO ──────────────────────────────────────────
   // Calcula dias corridos e dias trabalhados (5 dias úteis/semana) para vagas encerradas
