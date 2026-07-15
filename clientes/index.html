@@ -470,6 +470,21 @@ header {
   </div>
   <div class="section-label" style="margin-bottom:8px">🎯 Ações Pendentes</div>
   <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
+  <div class="section-label" style="margin-bottom:12px">📊 Indicadores de R&S</div>
+  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:24px;align-items:stretch">
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">⏱ Tempo médio por etapa</div>
+      <div id="dash-tempo-etapa"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">🐌 Vagas mais lentas</div>
+      <div id="dash-vagas-lentas"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">🔻 Taxa de conversão do funil</div>
+    <div id="dash-funil-conversao"></div>
+  </div>
   <div class="section-label" style="margin-bottom:8px">⏱ Tempo de Fechamento</div>
   <div id="dash-tempo-kpis" style="margin-bottom:16px"></div>
   <div class="card" style="overflow:auto;margin-bottom:24px">
@@ -753,9 +768,9 @@ header {
 
 <!-- Modal: aprovar na triagem (online/presencial) -->
 <div class="modal-bg" id="modal-aprov-triagem"><div class="modal" style="max-width:420px">
-  <div class="modal-header"><div class="modal-title">✓ Aprovar na triagem</div><button class="modal-close" onclick="closeModal('modal-aprov-triagem')">✕</button></div>
+  <div class="modal-header"><div class="modal-title">✓ Aprovar candidato</div><button class="modal-close" onclick="closeModal('modal-aprov-triagem')">✕</button></div>
   <input type="hidden" id="aprov-tri-id">
-  <p style="font-size:13px;color:var(--mid);margin-bottom:14px"><strong id="aprov-tri-nome"></strong> vai avançar para <strong>Formulários e Testes</strong>. Qual o tipo de entrevista?</p>
+  <p style="font-size:13px;color:var(--mid);margin-bottom:14px"><strong id="aprov-tri-nome"></strong> vai avançar para <strong id="aprov-tri-prox"></strong>. Qual o tipo de entrevista?</p>
   <div style="background:var(--bege-lt);border-radius:10px;padding:12px;margin-bottom:14px">
     <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--mid);margin-bottom:8px">📅 Já agendar na Agenda (opcional)</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -765,8 +780,8 @@ header {
     <div style="font-size:11px;color:var(--mid);margin-top:6px">Se preencher, a entrevista entra na Agenda automaticamente (com a sala fixa).</div>
   </div>
   <div style="display:flex;flex-direction:column;gap:8px">
-    <button class="btn btn-primary" onclick="aprovarTriagemCom('online')">💻 Entrevista online</button>
-    <button class="btn btn-primary" onclick="aprovarTriagemCom('presencial')">🏢 Entrevista presencial</button>
+    <button class="btn btn-primary" onclick="aprovarEtapaCom('online')">💻 Entrevista online</button>
+    <button class="btn btn-primary" onclick="aprovarEtapaCom('presencial')">🏢 Entrevista presencial</button>
     <button class="btn btn-ghost" onclick="closeModal('modal-aprov-triagem')">Cancelar</button>
   </div>
 </div></div>
@@ -1633,44 +1648,56 @@ async function _setEtapaCand(id,novaEtapa,obsTxt){
 }
 function aprovarCard(id){
   const c=getCands().find(x=>x.id===id);if(!c)return;
-  if(c.etapa==='triagem'){
-    // mini-menu: online ou presencial
+  const prox=ETAPA_PROXIMA[c.etapa]||c.etapa;
+  // Etapas cujo próximo passo é uma entrevista de verdade (vale oferecer agendamento)
+  const ETAPAS_COM_AGENDA=['entrevista_rh','entrevista_gestor','vivencia'];
+  if(ETAPAS_COM_AGENDA.includes(prox) && prox!==c.etapa){
     _msgCtx=null;
     document.getElementById('aprov-tri-id').value=id;
     document.getElementById('aprov-tri-nome').textContent=c.nome;
+    document.getElementById('aprov-tri-prox').textContent=ETAPA_LABEL[prox]||prox;
     document.getElementById('aprov-tri-data').value='';
     document.getElementById('aprov-tri-hora').value='';
     openModal('modal-aprov-triagem');return;
   }
-  const prox=ETAPA_PROXIMA[c.etapa]||c.etapa;
-  // mensagem conforme a etapa de origem
-  const tplPorEtapa={entrevista_rh:'feedbackPositivoRH',entrevista_gestor:'conviteGestor',vivencia:'aprovacaoFinal',aprovacao:'aprovacaoFinal',admissao:'encaminhaAdmissao'};
+  // Etapas sem nova entrevista pela frente (ex.: Aprovação) seguem direto, sem agendamento
+  const tplPorEtapa={aprovacao:'aprovacaoFinal'};
   const tpl=tplPorEtapa[c.etapa]||'feedbackPositivoRH';
   _setEtapaCand(id,prox,'Aprovado — avançou para '+(ETAPA_LABEL[prox]||prox)).then(r=>{if(r){showToast('✅ '+c.nome.split(' ')[0]+' → '+(ETAPA_LABEL[prox]||prox));abrirMensagem(id,tpl);}});
 }
-async function aprovarTriagemCom(modo){ // 'online' | 'presencial'
+async function aprovarEtapaCom(modo){ // 'online' | 'presencial' — vale pra Triagem, Formulários e Testes e Entrevista La Vie
   const id=document.getElementById('aprov-tri-id').value;const c=getCands().find(x=>x.id===id);if(!c)return;
   const data=document.getElementById('aprov-tri-data').value;
   const hora=document.getElementById('aprov-tri-hora').value;
+  const origem=c.etapa;
+  const prox=ETAPA_PROXIMA[origem]||origem;
   closeModal('modal-aprov-triagem');
-  const r=await _setEtapaCand(id,'entrevista_rh','Aprovado na triagem — entrevista '+modo);
+  const obs = origem==='triagem' ? ('Aprovado na triagem — entrevista '+modo) : ('Aprovado — avançou para '+(ETAPA_LABEL[prox]||prox)+' ('+modo+')');
+  const r=await _setEtapaCand(id,prox,obs);
   if(r){
     // se preencheu data, já cria o evento na Agenda (sem retrabalho)
     if(data){
       const vaga=getVagas().find(v=>v.id===c.vagaId);
       const ag={
         id:'ag-'+Date.now(),
-        titulo:'Formulários e Testes', candidatoId:c.id, candidato:c.nome,
+        titulo:ETAPA_LABEL[prox]||prox, candidatoId:c.id, candidato:c.nome,
         vagaId:c.vagaId, vaga:vaga?vaga.titulo:null, setor:vaga?vaga.setor:null,
         data, horaIni:hora||'', horaFim:'',
         tipo:modo, link:(modo==='online'?(_salaPadrao||''):''), local:'',
-        status:'agendada', obs:'Criada automaticamente ao aprovar na triagem.', criadoPor:getUserName()
+        status:'agendada', obs:'Criada automaticamente ao aprovar '+(ETAPA_LABEL[origem]||origem)+'.', criadoPor:getUserName()
       };
-      try{ await upsertAgenda(ag); _localUpsert(_agenda,ag); showToast('📅 Entrevista agendada na Agenda'); }
+      try{ await upsertAgenda(ag); _localUpsert(_agenda,ag); showToast('📅 '+(ETAPA_LABEL[prox]||prox)+' agendada na Agenda'); }
       catch(e){ console.warn('Falha ao criar evento na agenda:',e); }
     }
-    showToast('✅ '+c.nome.split(' ')[0]+' → Formulários e Testes');
-    abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');
+    if(origem==='triagem'){
+      showToast('✅ '+c.nome.split(' ')[0]+' → Formulários e Testes');
+      abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');
+    } else {
+      const tplPorEtapa={entrevista_rh:'feedbackPositivoRH',entrevista_gestor:'conviteGestor'};
+      const tpl=tplPorEtapa[origem]||'feedbackPositivoRH';
+      showToast('✅ '+c.nome.split(' ')[0]+' → '+(ETAPA_LABEL[prox]||prox));
+      abrirMensagem(id, tpl);
+    }
   }
 }
 function reprovarCard(id){
@@ -2295,7 +2322,7 @@ async function syncEntrevistasExistentes(){
 // ══ AÇÕES PENDENTES — central de decisão do dashboard ═══════════════════════
 // Sub-status automático por candidato, calculado a partir da etapa atual do funil
 // (nada de status manual: reflete o que realmente está acontecendo agora).
-const ETAPA_SLA = { triagem:3, entrevista_rh:5, entrevista_gestor:5, vivencia:5, aprovacao:5 };
+const ETAPA_SLA = { triagem:3, entrevista_rh:2, entrevista_gestor:2, vivencia:2, aprovacao:1 };
 const ETAPA_SUBSTATUS = {
   triagem:            'Aguardando triagem',
   entrevista_rh:      'Aguardando formulários e testes',
@@ -2354,6 +2381,73 @@ function renderAcoesPendentes(){
     </div>`).join('');
 }
 
+// ══ INDICADORES DE R&S — tempo médio por etapa, conversão do funil, vagas mais lentas ══
+function renderIndicadoresFunil(){
+  const cands=getCandsVisiveis();
+  const vagas=getVagasVisiveis();
+
+  // 1) Tempo médio por etapa (só considera passagens já concluídas, ou seja, com
+  // uma etapa seguinte registrada no histórico — evita distorcer com quem ainda está lá)
+  const soma={}, cont={};
+  ETAPAS.forEach(e=>{soma[e.id]=0;cont[e.id]=0;});
+  cands.forEach(c=>{
+    const hist=(c.historico||[]).filter(h=>h.etapa).slice().sort((a,b)=>new Date(a.data)-new Date(b.data));
+    for(let i=0;i<hist.length-1;i++){
+      const et=hist[i].etapa;
+      if(!soma.hasOwnProperty(et)) continue;
+      const dur=(new Date(hist[i+1].data)-new Date(hist[i].data))/86400000;
+      if(dur>=0){ soma[et]+=dur; cont[et]++; }
+    }
+  });
+  const maiorMedia=Math.max(1,...ETAPAS.map(e=>cont[e.id]?soma[e.id]/cont[e.id]:0));
+  document.getElementById('dash-tempo-etapa').innerHTML = ETAPAS.map(e=>{
+    const media = cont[e.id] ? soma[e.id]/cont[e.id] : null;
+    const sla=ETAPA_SLA[e.id];
+    const pct = media!==null ? Math.min(100, Math.round(media/maiorMedia*100)) : 0;
+    const cor = media===null ? 'var(--bege)' : (media>sla ? 'var(--red)' : 'var(--green)');
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span>${e.label}</span>
+        <span style="color:var(--mid)">${media!==null?media.toFixed(1)+'d (meta '+sla+'d)':'sem dados'}</span>
+      </div>
+      <div style="background:var(--bege-lt);border-radius:6px;height:7px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${cor}"></div></div>
+    </div>`;
+  }).join('');
+
+  // 2) Taxa de conversão do funil — % de candidatos que já passou por cada etapa,
+  // em relação ao total que entrou no funil (Triagem em diante)
+  const visitou = c => new Set((c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa]));
+  const totalFunil = cands.filter(c=>ETAPA_ORDEM.some(e=>visitou(c).has(e))).length;
+  document.getElementById('dash-funil-conversao').innerHTML = totalFunil===0
+    ? '<div style="color:var(--mid);font-size:13px">Sem candidatos no funil ainda.</div>'
+    : ETAPA_ORDEM.map(et=>{
+        const label=ETAPA_LABEL[et]||et;
+        const n=cands.filter(c=>visitou(c).has(et)).length;
+        const pct=Math.round(n/totalFunil*100);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+            <span>${label}</span><span style="color:var(--mid)">${n} de ${totalFunil} · ${pct}%</span>
+          </div>
+          <div style="background:var(--bege-lt);border-radius:6px;height:10px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--charcoal)"></div></div>
+        </div>`;
+      }).join('');
+
+  // 3) Ranking das vagas mais lentas — dias corridos (abertas: até hoje; fechadas: até o fechamento)
+  const hojeMs=Date.now();
+  const lentas = vagas.filter(v=>v.status!=='cancelada' && v.dataAbertura).map(v=>{
+    const fimMs = (v.status==='encerrada' && v.dataEncerramento) ? new Date(v.dataEncerramento+'T12:00:00').getTime() : hojeMs;
+    const dias = Math.floor((fimMs - new Date(v.dataAbertura+'T12:00:00').getTime())/86400000);
+    return {v,dias};
+  }).sort((a,b)=>b.dias-a.dias).slice(0,5);
+  document.getElementById('dash-vagas-lentas').innerHTML = lentas.length===0
+    ? '<div style="color:var(--mid);font-size:13px">Sem vagas suficientes ainda.</div>'
+    : lentas.map((it,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i<lentas.length-1?'border-bottom:1px solid var(--bege-lt)':''}">
+        <div><strong style="font-size:13px">${i+1}. ${it.v.titulo}</strong><br><span style="font-size:11px;color:var(--mid)">${it.v.setor||'—'} · ${it.v.status==='aberta'?'em aberto':'fechada'}</span></div>
+        <span style="font-weight:700;font-size:14px;color:${it.v.status==='aberta'?'var(--red)':'var(--mid)'}">${it.dias}d</span>
+      </div>`).join('');
+}
+
 function renderDashboard(){
   const vagas=getVagasVisiveis();
   // Show sector context for gestores
@@ -2383,6 +2477,7 @@ function renderDashboard(){
   document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
   document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
   renderAcoesPendentes();
+  renderIndicadoresFunil();
   document.getElementById('dash-tempo-kpis').innerHTML='';
   // ── Tempo de fechamento DINÂMICO ──────────────────────────────────────────
   // Calcula dias corridos e dias trabalhados (5 dias úteis/semana) para vagas encerradas
