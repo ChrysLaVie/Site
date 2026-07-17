@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulário da Vaga — Gerente de Captação de Alunos e Televendas — La Vie Consultoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg); color: var(--charcoal);
+  font-weight: 300; line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --bg:        #F2F1ED;
+  --bg-alt:    #E8E4DE;
+  --dark:      #1a1917;
+  --charcoal:  #3A3A3A;
+  --muted:     #7A7A7A;
+  --sand:      #D8CFC4;
+  --sand-dark: #B8AFA4;
+  --white:     #FFFFFF;
+  --border: rgba(58,58,58,0.1);
+  --radius:    4px;
+  --ok: #4A7A42;
+  --ok-bg: #e8ece2;
+  --err: #c0392b;
+  --err-bg: #fbeae7;
+}
+
+.eyebrow { display: block; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.25em; text-transform: uppercase; color: var(--sand-dark); margin-bottom: 1rem; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem,3.4vw,2.6rem); font-weight: 300; line-height: 1.15; margin-bottom: 1rem; color: var(--charcoal); }
+.section-title em { font-style: italic; color: var(--dark); }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 5vw;
+  background: rgba(26,25,23,0.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.nav-logo { display: flex; align-items: center; text-decoration: none; }
+.nav-logo img { height: 48px; width: auto; max-width: 170px; object-fit: contain; }
+.nav-tag { font-family: 'DM Sans', sans-serif; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242,241,237,0.55); }
+.nav-admin-btn {
+  background: rgba(242,241,237,0.1); border: 1px solid rgba(242,241,237,0.2); color: #F2F1ED;
+  font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+  padding: 8px 16px; border-radius: var(--radius); cursor: pointer; transition: all .15s;
+}
+.nav-admin-btn:hover { background: rgba(242,241,237,0.18); border-color: rgba(242,241,237,0.4); }
+
+.admin-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.4rem; flex-wrap: wrap; gap: 1rem; }
+.back-link { font-size: 0.78rem; color: var(--muted); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 1.4rem; font-family: inherit; }
+.back-link:hover { color: var(--charcoal); }
+.admin-row {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1.2rem;
+  padding: 1.3rem 1.6rem; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--white); margin-bottom: 0.7rem; transition: border-color 0.2s;
+}
+.admin-row:hover { border-color: var(--sand-dark); }
+.admin-row-info h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 500; color: var(--charcoal); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.admin-row-info p { font-size: 0.78rem; color: var(--muted); }
+.score-pill { font-family: 'DM Sans', sans-serif; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.6rem; border-radius: 99px; background: var(--bg-alt); color: var(--charcoal); }
+.score-pill.high { background: var(--ok-bg); color: var(--ok); }
+.score-pill.low { background: var(--err-bg); color: var(--err); }
+.admin-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.admin-row-actions button { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.45rem 0.8rem; border-radius: var(--radius); border: none; background: none; cursor: pointer; color: var(--sand-dark); font-family: inherit; transition: color 0.15s; white-space: nowrap; }
+.admin-row-actions button:hover { color: var(--charcoal); }
+.admin-row-actions button.danger:hover { color: var(--err); }
+
+#app { max-width: 720px; margin: 0 auto; padding: 118px 20px 90px; }
+
+.hero { margin-bottom: 2.4rem; }
+.hero p.lead { color: var(--muted); font-size: 0.95rem; line-height: 1.85; font-weight: 300; }
+
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.2rem; margin-bottom: 1.4rem; }
+.card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 500; color: var(--charcoal); margin-bottom: 1rem; }
+.card p.body-text { font-size: 0.92rem; line-height: 1.85; color: var(--charcoal); font-weight: 300; }
+
+.item-list { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+.item-list li { font-size: 0.88rem; color: var(--charcoal); line-height: 1.6; font-weight: 300; display: flex; gap: 0.6rem; }
+.item-list li::before { content: '—'; color: var(--sand-dark); flex-shrink: 0; }
+
+.benefit-list { list-style: none; display: flex; flex-direction: column; gap: 0.9rem; }
+.benefit-list li { font-size: 0.88rem; color: var(--charcoal); line-height: 1.65; font-weight: 300; padding: 0.9rem 1.1rem; background: var(--bg); border-radius: var(--radius); }
+.benefit-list li strong { font-weight: 500; }
+
+.check-block { display: flex; gap: 0.7rem; align-items: flex-start; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.check-block:last-child { border-bottom: none; }
+.check-block input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--charcoal); cursor: pointer; flex-shrink: 0; }
+.check-block label { font-size: 0.88rem; color: var(--charcoal); line-height: 1.6; font-weight: 300; cursor: pointer; }
+.check-block label strong { font-weight: 500; }
+
+.quiz-q { padding: 1.1rem 0; border-bottom: 1px solid var(--border); }
+.quiz-q:last-child { border-bottom: none; }
+.quiz-q-title { font-size: 0.9rem; color: var(--charcoal); font-weight: 500; margin-bottom: 0.7rem; line-height: 1.5; }
+.quiz-opt { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0; cursor: pointer; }
+.quiz-opt input[type=radio] { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--charcoal); cursor: pointer; flex-shrink: 0; }
+.quiz-opt label { font-size: 0.85rem; color: var(--charcoal); font-weight: 300; line-height: 1.5; cursor: pointer; }
+.quiz-num { display: inline-block; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; color: var(--sand-dark); margin-right: 0.4rem; }
+
+.field-label { display: block; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sand-dark); font-weight: 600; margin-bottom: 0.5rem; margin-top: 1.1rem; }
+.field-label:first-of-type { margin-top: 0; }
+.field-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; font-weight: 300; }
+input[type=text], input[type=email], input[type=tel] {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.85rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--charcoal);
+  outline: none; transition: border-color 0.2s;
+}
+input:focus { border-color: var(--charcoal); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.btn-primary {
+  display: inline-block; background: var(--charcoal); color: var(--white);
+  padding: 0.95rem 2.2rem; border: none; border-radius: var(--radius);
+  font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
+  cursor: pointer; transition: background 0.2s, transform 0.15s; width: 100%; font-family: inherit;
+}
+.btn-primary:hover { background: var(--dark); transform: translateY(-2px); }
+.btn-primary:disabled { background: var(--sand-dark); cursor: not-allowed; transform: none; }
+.loading-spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-box { background: var(--err-bg); border-radius: var(--radius); padding: 0.8rem 1rem; font-size: 0.8rem; color: var(--err); margin-top: 1rem; }
+.success-card { text-align: center; padding: 3rem 2rem; }
+.success-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--ok); margin-bottom: 0.8rem; }
+.success-card p { color: var(--muted); font-size: 0.92rem; line-height: 1.7; max-width: 46ch; margin: 0 auto; }
+
+@media (max-width: 600px) {
+  .field-row { grid-template-columns: 1fr; }
+  .card { padding: 1.6rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://lavieconsultoria.com" class="nav-logo"><img src="data:image/png;base64,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" alt="La Vie Consultoria"></a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span class="nav-tag" id="navTag">Etapa 3 de 3 · Formulário da vaga</span>
+    <button class="nav-admin-btn" id="adminBtn">Painel do recrutador</button>
+  </div>
+</nav>
+
+<div id="app"></div>
+
+<script>
+(function(){
+
+const SUPABASE_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
+const ADMIN_PASS = 'lavie2026';
+const VAGA_TITULO_PADRAO = 'Gerente de Captação de Alunos e Televendas';
+
+const QUIZ = [
+  {
+    q: 'Qual a ordem mais correta das etapas de um funil de captação de alunos?',
+    options: [
+      'Matrícula → Lead → Conversão → Agendamento',
+      'Lead → Contato/Qualificação → Agendamento → Conversão/Matrícula',
+      'Conversão → Lead → Matrícula → Agendamento',
+      'Agendamento → Matrícula → Lead → Contato'
+    ],
+    correct: 1
+  },
+  {
+    q: 'Qual desses é um indicador (KPI) comum para medir a eficiência de uma equipe de televendas?',
+    options: [
+      'Taxa de conversão de leads em matrícula',
+      'Número de e-mails corporativos enviados pela equipe',
+      'Quantidade de reuniões internas realizadas',
+      'Tamanho do banco de dados de fornecedores'
+    ],
+    correct: 0
+  },
+  {
+    q: 'Em gestão de CRM, o que significa "nutrição de leads"?',
+    options: [
+      'Aumentar artificialmente o número de leads cadastrados no sistema',
+      'Excluir automaticamente leads que não respondem em 24h',
+      'Enviar conteúdos e interações estratégicas ao longo do tempo até o lead estar pronto para converter',
+      'Migrar leads de um CRM para outro sistema'
+    ],
+    correct: 2
+  },
+  {
+    q: 'No contexto de captação de alunos, o que é um lead "evadido"?',
+    options: [
+      'Um candidato que nunca teve contato com a instituição',
+      'Um ex-aluno que interrompeu o curso e pode ser reconquistado para retomar os estudos',
+      'Um lead duplicado dentro do CRM',
+      'Um aluno aprovado no vestibular que ainda não efetuou o pagamento'
+    ],
+    correct: 1
+  },
+  {
+    q: 'A equipe de televendas está com alto volume de ligações, mas baixa conversão em matrículas. Qual a ação de gestão mais indicada como primeiro passo?',
+    options: [
+      'Demitir imediatamente os vendedores com pior desempenho',
+      'Aumentar a meta diária de ligações da equipe',
+      'Reduzir o número de leads distribuídos para a equipe',
+      'Analisar o funil e o discurso de vendas (script) para identificar o gargalo antes de qualquer outra ação'
+    ],
+    correct: 3
+  }
+];
+
+let db = null;
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
+
+const params = new URLSearchParams(window.location.search);
+const prefill = {
+  nome: params.get('nome') || '',
+  email: params.get('email') || '',
+  vaga: params.get('vaga') || VAGA_TITULO_PADRAO
+};
+
+const app = document.getElementById('app');
+let state = { view: 'form' };
+
+async function saveForm(payload) {
+  if (!db) return { ok:false, err:'Banco não configurado' };
+  try {
+    const { error } = await db.from('forms_gerente_captacao').insert(payload);
+    if (error) return { ok:false, err:error.message };
+    return { ok:true };
+  } catch(e) { return { ok:false, err:e.message }; }
+}
+
+async function loadSubmissions() {
+  if (!db) return [];
+  try {
+    const { data } = await db.from('forms_gerente_captacao').select('*').order('created_at', { ascending:false });
+    return data || [];
+  } catch(e) { return []; }
+}
+
+async function deleteSubmission(id) {
+  if (!db) return;
+  try { await db.from('forms_gerente_captacao').delete().eq('id', id); } catch(e) {}
+}
+
+function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderForm() {
+  app.innerHTML = `
+    <div class="hero">
+      <span class="eyebrow">La Vie Consultoria — Processo Seletivo</span>
+      <h1 class="section-title">Formulário da vaga: <em>${esc(prefill.vaga)}</em></h1>
+      <p class="lead">Leia com atenção as informações abaixo antes de preencher o formulário. Esta é a etapa final do processo seletivo — suas respostas serão analisadas pela nossa equipe.</p>
+    </div>
+
+    <div class="card">
+      <h3>Objetivo da posição</h3>
+      <p class="body-text">Gerenciar a equipe de captação de alunos e televendas, garantindo o alcance das metas comerciais da instituição por meio da gestão de pessoas, acompanhamento dos processos de vendas, desenvolvimento da equipe e monitoramento contínuo dos indicadores de desempenho. Será responsável por assegurar a eficiência das ações de conversão, relacionamento com candidatos e execução das estratégias comerciais definidas pela instituição.</p>
+    </div>
+
+    <div class="card">
+      <h3>Principais atribuições</h3>
+      <ul class="item-list">
+        <li>Gerenciar e desenvolver a equipe de consultores de captação e televendas, promovendo uma cultura de alta performance e foco em resultados</li>
+        <li>Acompanhar diariamente os indicadores individuais de desempenho da equipe, monitorando produtividade, conversão, matrículas e atingimento de metas</li>
+        <li>Operacionalizar as ações voltadas para conversão de Leads, captação via segmentação, captação via transferências, via Evadidos e captação de 2ª graduação</li>
+        <li>Monitorar e gerenciar o funil de vendas, garantindo o adequado acompanhamento dos leads em todas as etapas do processo comercial</li>
+        <li>Desenvolver planos de ação para aumento das taxas de conversão e otimização dos resultados da equipe</li>
+        <li>Garantir a correta utilização dos sistemas de CRM e demais ferramentas de gestão comercial</li>
+        <li>Elaborar relatórios gerenciais de desempenho e apresentar resultados à Coordenação Geral de Comercialização e à Diretoria</li>
+        <li>Trabalhar em conjunto com o departamento de marketing para maximizar a geração, conversão de leads e de remarketing</li>
+        <li>Acompanhar campanhas comerciais, processos seletivos e períodos de matrícula, assegurando o alcance dos objetivos estabelecidos</li>
+        <li>Identificar oportunidades de melhoria nos processos comerciais e implementar ações corretivas quando necessário</li>
+        <li>Promover o engajamento da equipe, fortalecendo o comprometimento com os resultados institucionais</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Requisitos obrigatórios</h3>
+      <ul class="item-list">
+        <li>Ensino superior completo em Administração, Gestão Comercial, Marketing ou áreas correlatas</li>
+        <li>Experiência comprovada em gestão de equipes comerciais</li>
+        <li>Experiência com vendas consultivas, televendas ou captação de alunos</li>
+        <li>Vivência na gestão por indicadores e acompanhamento de metas</li>
+        <li>Conhecimento em CRM, funil de vendas e processos de conversão</li>
+        <li>Habilidade para treinamento, desenvolvimento e acompanhamento de equipes</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Diferenciais</h3>
+      <ul class="item-list">
+        <li>Experiência em Instituições de Ensino Superior</li>
+        <li>Conhecimento de processos de captação e retenção de alunos</li>
+        <li>Experiência em operações de call center comercial ou centrais de relacionamento</li>
+        <li>Vivência com gestão de campanhas de matrículas e processos seletivos</li>
+        <li>Conhecimento em análise de dados comerciais e performance de vendas</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Competências comportamentais</h3>
+      <ul class="item-list">
+        <li>Liderança e gestão de pessoas</li>
+        <li>Forte orientação para resultados</li>
+        <li>Capacidade de motivar e desenvolver equipes</li>
+        <li>Comunicação e negociação</li>
+        <li>Organização e disciplina na gestão de processos</li>
+        <li>Perfil analítico e foco em indicadores</li>
+        <li>Proatividade e capacidade de tomada de decisão</li>
+        <li>Resiliência e habilidade para atuar em ambientes orientados por metas</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Benefícios</h3>
+      <ul class="benefit-list">
+        <li><strong>13º salário:</strong> pago via nota fiscal, no mês subsequente ao mês de aniversário do contrato.</li>
+        <li><strong>Recesso:</strong> ao completar 1 ano de contrato, 30 dias de recesso sem prejuízo do valor da nota fiscal.</li>
+        <li><strong>Bolsa de estudos:</strong> inicia em 60%. Após o 1º ano de contrato, sobe para 70%. Após o 2º ano de contrato, chega a 80% (exceto para os cursos de Odontologia e Gastronomia).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Condições da vaga — ciência e concordância</h3>
+      <div class="check-block">
+        <input type="checkbox" id="c-pj">
+        <label for="c-pj">Estou ciente de que a contratação é no modelo <strong>PJ</strong>.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-remuneracao">
+        <label for="c-remuneracao">Estou ciente de que a remuneração é de <strong>R$ 5.000,00 + comissão sobre resultados</strong>.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-presencial">
+        <label for="c-presencial">Estou ciente de que a vaga é <strong>presencial, em Goiânia/GO</strong>.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-horario">
+        <label for="c-horario">Estou ciente do <strong>horário de funcionamento</strong>: segunda a sexta, das 08h às 18h, e sábados alternados (um sim, um não), das 08h às 12h.</label>
+      </div>
+
+      <label class="field-label">Pretensão salarial (preencha apenas se for diferente do valor informado acima)</label>
+      <input type="text" id="f-pretensao" placeholder="Ex: R$ 6.000,00">
+      <div class="field-hint">Deixe em branco se o valor de R$ 5.000,00 + comissão atende sua expectativa.</div>
+    </div>
+
+    <div class="card">
+      <h3>Perguntas técnicas</h3>
+      <p class="body-text" style="margin-bottom:1.2rem;">Responda com base no que você já sabe hoje sobre gestão comercial e captação de alunos. Não há problema em não saber alguma — respeite sua sinceridade.</p>
+      <div id="quizList"></div>
+    </div>
+
+    <div class="card">
+      <h3>Seus dados</h3>
+      <label class="field-label">Nome completo *</label>
+      <input type="text" id="f-nome" placeholder="Seu nome completo" value="${esc(prefill.nome)}">
+      <div class="field-row">
+        <div>
+          <label class="field-label">E-mail *</label>
+          <input type="email" id="f-email" placeholder="seu@email.com" value="${esc(prefill.email)}">
+        </div>
+        <div>
+          <label class="field-label">WhatsApp *</label>
+          <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000">
+        </div>
+      </div>
+      <div id="formError" style="display:none"></div>
+      <div style="margin-top:1.6rem;">
+        <button class="btn-primary" id="submitBtn" disabled>Enviar formulário</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('quizList').innerHTML = QUIZ.map((item, qi) => `
+    <div class="quiz-q" data-qi="${qi}">
+      <div class="quiz-q-title"><span class="quiz-num">${qi + 1}.</span>${esc(item.q)}</div>
+      ${item.options.map((opt, oi) => `
+        <div class="quiz-opt">
+          <input type="radio" name="quiz-${qi}" id="quiz-${qi}-${oi}" value="${oi}">
+          <label for="quiz-${qi}-${oi}">${esc(opt)}</label>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+
+  const nome = document.getElementById('f-nome');
+  const email = document.getElementById('f-email');
+  const whatsapp = document.getElementById('f-whatsapp');
+  const cPj = document.getElementById('c-pj');
+  const cRem = document.getElementById('c-remuneracao');
+  const cPres = document.getElementById('c-presencial');
+  const cHor = document.getElementById('c-horario');
+  const submitBtn = document.getElementById('submitBtn');
+
+  function check() {
+    const allAnswered = QUIZ.every((_, qi) => document.querySelector(`input[name="quiz-${qi}"]:checked`));
+    submitBtn.disabled = !(
+      nome.value.trim() &&
+      email.value.includes('@') &&
+      whatsapp.value.trim() &&
+      cPj.checked && cRem.checked && cPres.checked && cHor.checked &&
+      allAnswered
+    );
+  }
+  [nome, email, whatsapp, cPj, cRem, cPres, cHor].forEach(el => el.addEventListener('input', check));
+  document.getElementById('quizList').addEventListener('change', check);
+
+  submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
+    document.getElementById('formError').style.display = 'none';
+
+    const answers = QUIZ.map((item, qi) => {
+      const checked = document.querySelector(`input[name="quiz-${qi}"]:checked`);
+      const chosen = checked ? parseInt(checked.value, 10) : null;
+      return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null, correta: chosen === item.correct };
+    });
+    const technicalScore = answers.filter(a => a.correta).length;
+
+    const result = await saveForm({
+      nome: nome.value.trim(),
+      email: email.value.trim(),
+      whatsapp: whatsapp.value.trim(),
+      vaga_titulo: prefill.vaga,
+      pretensao_salarial: document.getElementById('f-pretensao').value.trim() || null,
+      ciente_pj: cPj.checked,
+      ciente_remuneracao: cRem.checked,
+      ciente_presencial: cPres.checked,
+      ciente_horario: cHor.checked,
+      technical_score: technicalScore,
+      technical_answers: answers
+    });
+
+    if (result.ok) {
+      app.innerHTML = `
+        <div class="card success-card">
+          <h2>Formulário recebido ✓</h2>
+          <p>Obrigado, ${esc(nome.value.trim())}. Suas respostas para a vaga de <strong>${esc(prefill.vaga)}</strong> foram recebidas. A equipe da La Vie Consultoria vai analisar seu perfil e entrará em contato pelos dados informados.</p>
+        </div>
+      `;
+    } else {
+      const errBox = document.getElementById('formError');
+      errBox.innerHTML = `<div class="error-box">Erro ao enviar: ${esc(result.err)}. Tente novamente.</div>`;
+      errBox.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Enviar formulário';
+      check();
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════════════════
+async function renderAdmin() {
+  document.getElementById('navTag').textContent = 'Painel do recrutador';
+  app.innerHTML = `<p style="color:var(--muted);">Carregando candidatos...</p>`;
+
+  const subs = await loadSubmissions();
+  if (state.view !== 'admin') return;
+
+  if (subs.length === 0) {
+    app.innerHTML = `
+      <button class="back-link" id="backBtn">← Voltar ao formulário</button>
+      <span class="eyebrow">Painel do recrutador</span>
+      <h1 class="section-title">Respostas do <em>formulário</em></h1>
+      <p style="color:var(--muted);font-size:0.9rem;">Nenhuma resposta recebida ainda.</p>
+    `;
+    document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+    return;
+  }
+
+  app.innerHTML = `
+    <button class="back-link" id="backBtn">← Voltar ao formulário</button>
+    <div class="admin-top">
+      <div>
+        <span class="eyebrow">Painel do recrutador</span>
+        <h1 class="section-title" style="margin-bottom:0;">Respostas do <em>formulário</em></h1>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.4rem;">${subs.length} candidato(s) · Gerente de Captação de Alunos e Televendas</p>
+    <div id="subsList"></div>
+  `;
+
+  document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+
+  document.getElementById('subsList').innerHTML = subs.map(s => {
+    const score = s.technical_score ?? null;
+    const scoreClass = score === null ? '' : (score >= 4 ? 'high' : (score <= 2 ? 'low' : ''));
+    return `
+      <div class="admin-row" data-id="${s.id}">
+        <div class="admin-row-info">
+          <h4>${esc(s.nome)} ${score !== null ? `<span class="score-pill ${scoreClass}">${score}/5 no técnico</span>` : ''}</h4>
+          <p>${esc(s.email)} · ${esc(s.whatsapp) || '—'} · ${new Date(s.created_at).toLocaleDateString('pt-BR')}</p>
+        </div>
+        <div class="admin-row-actions">
+          <button class="pdf-btn" data-id="${s.id}">Baixar PDF</button>
+          <button class="danger del-btn" data-id="${s.id}">Remover</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('.pdf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sub = subs.find(x => x.id === btn.dataset.id);
+      buildSubmissionPDF(sub);
+    });
+  });
+  document.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remover esta resposta permanentemente?')) return;
+      await deleteSubmission(btn.dataset.id);
+      renderAdmin();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PDF — resumo completo pro recrutador
+// ═══════════════════════════════════════════════════════
+function buildSubmissionPDF(s) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 52;
+  let y = 66;
+
+  const INK = [58, 58, 58];
+  const SOFT = [122, 119, 110];
+  const BORDER = [216, 207, 196];
+  const BG = [242, 241, 237];
+  const OK = [74, 122, 66];
+  const ERR = [192, 57, 43];
+
+  function checkPageBreak(next) {
+    if (y + next > 800) { doc.addPage(); y = 60; }
+  }
+
+  doc.setFont('times', 'italic');
+  doc.setFontSize(18);
+  doc.setTextColor(...INK);
+  doc.text('La Vie Consultoria', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...SOFT);
+  doc.text('FORMULÁRIO DA VAGA — RESUMO PARA O RECRUTADOR', M, y + 13);
+  doc.setDrawColor(...BORDER);
+  doc.line(M, y + 24, W - M, y + 24);
+  y += 46;
+
+  doc.setFont('times', 'italic');
+  doc.setFontSize(22);
+  doc.setTextColor(...INK);
+  doc.text(s.nome || '', M, y);
+  y += 16;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...SOFT);
+  doc.text(`${s.email || ''} · ${s.whatsapp || ''} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`, M, y);
+  y += 12;
+  doc.text(`Vaga: ${s.vaga_titulo || ''}`, M, y);
+  y += 26;
+
+  // Ciência das condições
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...INK);
+  doc.text('Condições da vaga', M, y);
+  y += 16;
+  const conds = [
+    ['Contratação PJ', s.ciente_pj],
+    ['Remuneração R$5.000 + comissão', s.ciente_remuneracao],
+    ['Presencial em Goiânia/GO', s.ciente_presencial],
+    ['Horário de funcionamento', s.ciente_horario]
+  ];
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  conds.forEach(([label, val]) => {
+    doc.setTextColor(...(val ? OK : ERR));
+    doc.text(val ? '✓' : '✗', M, y);
+    doc.setTextColor(...INK);
+    doc.text(label, M + 14, y);
+    y += 14;
+  });
+  if (s.pretensao_salarial) {
+    doc.setTextColor(...SOFT);
+    doc.text(`Pretensão salarial informada: ${s.pretensao_salarial}`, M, y);
+    y += 14;
+  }
+  y += 14;
+
+  // Pontuação técnica
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...INK);
+  doc.text(`Questionário técnico — nota: ${s.technical_score ?? '—'} / 5`, M, y);
+  y += 18;
+
+  const answers = Array.isArray(s.technical_answers) ? s.technical_answers : [];
+  answers.forEach((a, i) => {
+    checkPageBreak(46);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...INK);
+    const qLines = doc.splitTextToSize(`${i + 1}. ${a.pergunta}`, W - M * 2);
+    doc.text(qLines, M, y);
+    y += qLines.length * 11 + 3;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...(a.correta ? OK : ERR));
+    const respLines = doc.splitTextToSize(`Resposta: ${a.escolhida || '(não respondida)'} ${a.correta ? '(correta)' : '(incorreta)'}`, W - M * 2 - 10);
+    doc.text(respLines, M + 10, y);
+    y += respLines.length * 11 + 10;
+  });
+
+  doc.setFontSize(8);
+  doc.setTextColor(180, 175, 168);
+  doc.text('La Vie Consultoria · lavieconsultoria.com · Documento de uso interno do processo seletivo.', M, 822);
+
+  doc.save('formulario-' + (s.nome || 'candidato').toLowerCase().replace(/\s+/g, '-') + '.pdf');
+}
+
+// ═══════════════════════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════════════════════
+function render() {
+  if (state.view === 'form') { document.getElementById('navTag').textContent = 'Etapa 3 de 3 · Formulário da vaga'; renderForm(); }
+  else if (state.view === 'admin') renderAdmin();
+}
+
+document.getElementById('adminBtn').addEventListener('click', () => {
+  if (state.view === 'admin') { state.view = 'form'; render(); return; }
+  const pw = prompt('Senha:');
+  if (pw === ADMIN_PASS) { state.view = 'admin'; render(); }
+  else if (pw !== null) alert('Senha incorreta.');
+});
+
+render();
+})();
+</script>
+</body>
+</html>
