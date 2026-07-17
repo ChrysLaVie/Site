@@ -7,7 +7,8 @@
 <title>La Vie · R&S UniCambury</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 
 /* ── RESET & VARS ── */
@@ -69,12 +70,14 @@ header {
 .section-label { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--light); margin-bottom:10px; }
 
 /* ── CARDS ── */
-.card { background:var(--offwhite); border:1.5px solid var(--bege); border-radius:12px; padding:22px; }
+/* Cards "elevados": sem borda pesada, com sombra suave — evita o efeito de
+   "parede de caixinhas" que uma borda sólida repetida em todo card cria. */
+.card { background:var(--offwhite); border:1px solid rgba(216,207,196,0.35); border-radius:12px; padding:22px; box-shadow:0 1px 2px rgba(58,58,58,.04), 0 6px 20px rgba(58,58,58,.05); }
 .card + .card { margin-top:14px; }
 
 /* ── STATS ROW ── */
 .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px; }
-.stat-card { background:var(--offwhite); border:1.5px solid var(--bege); border-radius:12px; padding:18px 14px; text-align:center; overflow:hidden; }
+.stat-card { background:var(--offwhite); border:1px solid rgba(216,207,196,0.35); border-radius:12px; padding:18px 14px; text-align:center; overflow:hidden; box-shadow:0 1px 2px rgba(58,58,58,.04), 0 6px 20px rgba(58,58,58,.05); }
 .stat-num  { font-family:'Playfair Display',serif; font-size:clamp(20px,2.4vw,30px); font-weight:700; line-height:1.05; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .stat-num.g{ color:var(--green); }
 .stat-num.r{ color:var(--red); }
@@ -84,34 +87,35 @@ header {
 /* ── KPI HERO (Dashboard) ── */
 .kpi-hero-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:22px; }
 .kpi-hero {
-  position:relative; background:var(--offwhite); border:1.5px solid var(--bege); border-radius:14px;
+  position:relative; background:var(--offwhite); border:1px solid rgba(216,207,196,0.35); border-radius:14px;
   padding:20px 20px 18px; overflow:hidden; transition:box-shadow .2s, transform .2s;
+  box-shadow:0 1px 2px rgba(58,58,58,.04), 0 6px 20px rgba(58,58,58,.05);
 }
-.kpi-hero:hover { box-shadow:var(--shadow); transform:translateY(-1px); }
+.kpi-hero:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
 .kpi-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--charcoal); }
 .kpi-hero.g::before { background:var(--green); }
 .kpi-hero.r::before { background:var(--red); }
 .kpi-hero.a::before { background:var(--amber); }
-.kpi-hero-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-.kpi-hero-icon {
-  width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
-  font-size:16px; background:var(--bege-lt); flex-shrink:0;
-}
-.kpi-hero.g .kpi-hero-icon { background:var(--green-lt); }
-.kpi-hero.r .kpi-hero-icon { background:var(--red-lt); }
-.kpi-hero.a .kpi-hero-icon { background:var(--amber-lt); }
-.kpi-hero-num { font-family:'Playfair Display',serif; font-size:clamp(26px,3vw,36px); font-weight:700; line-height:1; margin-bottom:7px; white-space:nowrap; }
+.kpi-hero-num { font-family:'Playfair Display',serif; font-size:clamp(28px,3vw,38px); font-weight:700; line-height:1; margin-bottom:8px; margin-top:6px; white-space:nowrap; }
 .kpi-hero-num.g{ color:var(--green); } .kpi-hero-num.r{ color:var(--red); } .kpi-hero-num.a{ color:var(--amber); }
 .kpi-hero-lbl { font-size:10.5px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--mid); }
 .kpi-hero-sub { font-size:11px; color:var(--light); margin-top:5px; }
 
-/* ── MINI STAT (blocos de tempo La Vie x Cliente) ── */
-.mini-stat-row { display:flex; flex-wrap:wrap; gap:10px; }
-.mini-stat { flex:1; min-width:130px; text-align:center; padding:14px 10px; border:1.5px solid var(--bege-lt); border-radius:10px; }
-.mini-stat.hl { border-color:var(--green); background:var(--green-lt); }
-.mini-stat-lbl { font-size:9px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:var(--light); margin-bottom:6px; }
-.mini-stat-val { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; line-height:1; }
-.mini-stat-sub { font-size:10px; color:var(--mid); margin-top:4px; }
+/* ── BANNER LA VIE x CLIENTE (destaque do tempo que é responsabilidade da La Vie) ── */
+.lv-banner { display:grid; grid-template-columns:1fr 1fr; border-radius:14px; overflow:hidden; margin-bottom:22px; box-shadow:var(--shadow-md); }
+.lv-banner-side { padding:22px 24px; }
+.lv-banner-side.lavie { background:var(--charcoal); color:#F2F1ED; }
+.lv-banner-side.cliente { background:var(--offwhite); }
+.lv-banner-lbl { font-size:10.5px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; }
+.lv-banner-side.lavie .lv-banner-lbl { color:rgba(242,241,237,.55); }
+.lv-banner-side.cliente .lv-banner-lbl { color:var(--mid); }
+.lv-banner-num { font-family:'Playfair Display',serif; font-size:clamp(34px,4vw,46px); font-weight:700; line-height:1; margin-bottom:8px; }
+.lv-banner-side.lavie .lv-banner-num { color:#fff; }
+.lv-banner-side.cliente .lv-banner-num { color:var(--amber); }
+.lv-banner-desc { font-size:12px; line-height:1.4; }
+.lv-banner-side.lavie .lv-banner-desc { color:rgba(242,241,237,.75); }
+.lv-banner-side.cliente .lv-banner-desc { color:var(--mid); }
+@media (max-width:640px){ .lv-banner{ grid-template-columns:1fr; } }
 
 /* ── BUTTONS ── */
 .btn { display:inline-flex; align-items:center; gap:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; border-radius:8px; padding:9px 18px; cursor:pointer; border:none; transition:all .18s; }
@@ -493,6 +497,7 @@ header {
     <div style="font-size:11px;color:var(--light);padding-top:8px">* Canceladas contam como resolvidas (cancelamento do cliente, não do RH)</div>
   </div>
   <div class="kpi-hero-row" id="dash-kpis"></div>
+  <div id="dash-lv-banner"></div>
   <div class="card" style="margin-bottom:24px;padding:18px 22px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid)">Progresso Geral</div>
@@ -501,33 +506,72 @@ header {
     <div class="prog-track" style="height:10px;margin-bottom:0"><div class="prog-fill" id="dash-pct-bar" style="width:0%"></div></div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--light)"><span id="dash-pct-left"></span><span id="dash-pct-right"></span></div>
   </div>
-  <div class="section-label" style="margin-bottom:12px">📊 Indicadores de R&S</div>
-  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:24px;align-items:stretch">
-    <div class="card">
-      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">⏱ Tempo médio por etapa</div>
-      <div id="dash-tempo-etapa"></div>
+  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Análise de Candidatos</div>
+  <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-bottom:14px;align-items:stretch">
+    <div class="card chart-card">
+      <div class="chart-card-title">Status das Vagas</div>
+      <div class="chart-card-sub">Panorama rápido de todas as posições do ciclo</div>
+      <div id="dash-status-vagas" style="overflow:auto"></div>
+    </div>
+    <div class="card chart-card">
+      <div class="chart-card-title">Candidatos por Vaga</div>
+      <div class="chart-card-sub">Total avaliado em cada posição, do maior para o menor volume</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr;gap:14px;margin-bottom:24px;align-items:stretch">
+    <div class="card chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+        <div>
+          <div class="chart-card-title">Funil de Conversão</div>
+          <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a aprovação final</div>
+        </div>
+        <div style="text-align:right">
+          <div class="chart-card-headline" id="dash-funil-taxa">—</div>
+          <div class="chart-card-sub" style="margin-bottom:0">conversão total</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px;margin-top:10px"><canvas id="chart-funil"></canvas></div>
+    </div>
+    <div class="card chart-card">
+      <div class="chart-card-title">Destino dos Candidatos</div>
+      <div class="chart-card-sub" id="dash-destino-sub">Para onde foram os candidatos avaliados</div>
+      <div class="chart-wrap" style="height:160px"><canvas id="chart-destino"></canvas></div>
+      <div class="chart-legend" id="dash-destino-legend"></div>
     </div>
     <div class="card">
-      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">🐌 Vagas mais lentas</div>
+      <div class="chart-card-title">Métricas de Tempo</div>
+      <div class="chart-card-sub">Fechamento mais rápido, mais lento e a média do ciclo</div>
+      <div id="dash-metricas-tempo"></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:24px;align-items:stretch">
+    <div class="card chart-card">
+      <div class="chart-card-title">Tempo Médio por Etapa</div>
+      <div class="chart-card-sub">Dias reais em cada etapa comparado à meta de SLA</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="chart-tempo-etapa"></canvas></div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">Vagas mais lentas</div>
       <div id="dash-vagas-lentas"></div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:24px">
-    <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">🔻 Taxa de conversão do funil</div>
-    <div id="dash-funil-conversao"></div>
+  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:2px">Tempo de Fechamento</div>
+  <div style="font-size:11px;color:var(--light);margin-bottom:10px">O resumo geral está em "Métricas de Tempo", mais acima. Cada vaga abaixo separa o que é responsabilidade da La Vie (até o dossiê) do que é decisão do Cliente.</div>
+  <div class="card chart-card" style="margin-bottom:16px">
+    <div class="chart-card-title">Divisão do Tempo por Vaga</div>
+    <div class="chart-card-sub">Dias sob responsabilidade da La Vie (até o dossiê) vs. dias de decisão do Cliente, por posição fechada</div>
+    <div class="chart-wrap" id="dash-divisao-wrap" style="height:220px"><canvas id="chart-divisao-tempo"></canvas></div>
   </div>
-  <div class="section-label" style="margin-bottom:2px">⏱ Tempo de Fechamento</div>
-  <div style="font-size:11px;color:var(--light);margin-bottom:10px">Separado em duas etapas: até a apresentação do dossiê (La Vie) e a decisão final (Cliente)</div>
-  <div id="dash-tempo-kpis" style="margin-bottom:16px"></div>
   <div class="card" style="overflow:auto;margin-bottom:24px">
     <table class="cand-table" style="min-width:700px">
-      <thead><tr><th>Cargo</th><th style="text-align:center">Qtd</th><th>Abertura</th><th>Dossiê Entregue</th><th>Fechamento</th><th style="text-align:center">Dias La Vie</th><th style="text-align:center">Dias Cliente</th><th style="text-align:center">Dias Corridos</th><th style="text-align:center">Dias Trabalhados</th></tr></thead>
+      <thead><tr><th>Cargo</th><th style="text-align:center">Qtd</th><th>Abertura</th><th>Fechamento</th><th>Divisão do Tempo</th><th style="text-align:center">Total</th></tr></thead>
       <tbody id="dash-tempo-tbody"></tbody>
     </table>
   </div>
-  <div class="section-label" style="margin-bottom:8px">🎯 Ações Pendentes</div>
+  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:8px">Ações Pendentes</div>
   <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
-  <div class="section-label" style="margin-bottom:12px">Detalhamento por Setor</div>
+  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Detalhamento por Setor</div>
   <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
   <div class="section-label" style="margin-bottom:12px">Detalhamento das Vagas</div>
   <div id="dash-tabelas"></div>
@@ -734,6 +778,7 @@ header {
     <div class="form-field"><label>Qtd Total</label><input id="ev-qtd" type="number" min="1"></div>
     <div class="form-field"><label>Qtd Fechadas</label><input id="ev-qtd-fech" type="number" min="0"></div>
     <div class="form-field"><label>Data de Encerramento</label><input id="ev-data-enc" type="date"></div>
+    <div class="form-field"><label>Data do Dossiê (manual)</label><input id="ev-data-dossie" type="date"><div style="font-size:10.5px;color:var(--light);margin-top:3px">Preencha só se o mesmo candidato fechou 2 vagas — assim o sistema não fica sem essa data pra calcular La Vie x Cliente</div></div>
     <div class="form-field"><label>Status</label>
       <select id="ev-status" onchange="autoEncerramento(this.value)">
         <option value="aberta">Aberta</option><option value="encerrada">Encerrada</option><option value="cancelada">Cancelada</option>
@@ -911,6 +956,20 @@ function dataDossieVaga(vagaId, cands){
   datas.sort((a,b)=>new Date(a)-new Date(b));
   return datas[0];
 }
+
+// ── Gráficos do Dashboard (Chart.js) ───────────────────────────────────────
+const CH = { charcoal:'#3A3A3A', mid:'#7A7A7A', light:'#A8A8A8', bege:'#D8CFC4', bege_lt:'#EAE7E1', green:'#3A6B4A', red:'#8B3A3A', amber:'#7A5C2E' };
+const CH_FONT = "'DM Sans',sans-serif";
+window._dashCharts = window._dashCharts || {};
+function renderChart(id, config){
+  if(typeof Chart==='undefined') return null;
+  const canvas=document.getElementById(id);
+  if(!canvas) return null;
+  if(window._dashCharts[id]){ window._dashCharts[id].destroy(); }
+  Chart.defaults.font.family = CH_FONT;
+  window._dashCharts[id] = new Chart(canvas.getContext('2d'), config);
+  return window._dashCharts[id];
+}
 const SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
 const DEMO_MODE = SUPABASE_URL.indexOf('COLE_AQUI')===0 || SUPABASE_KEY.indexOf('COLE_AQUI')===0;
@@ -1022,52 +1081,6 @@ function logoutUser(){
 }
 
 function getUserName(){return currentUser?currentUser.nomeCompleto:'Sistema';}
-
-function toggleUserMenu(e){
-  if(e)e.stopPropagation();
-  const m=document.getElementById('user-menu');
-  if(m.style.display==='block'){closeUserMenu();return;}
-  m.style.display='block';
-  document.getElementById('um-nome').textContent=currentUser?currentUser.nomeCompleto:'';
-  document.getElementById('um-cargo').textContent=currentUser?currentUser.cargo:'';
-  document.getElementById('um-admin-btn').style.display=(currentUser&&currentUser.masterAdmin)?'block':'none';
-  setTimeout(()=>document.addEventListener('click',closeUserMenu,{once:true}),50);
-}
-function closeUserMenu(){document.getElementById('user-menu').style.display='none';}
-
-function openAdminPanel(){
-  if(!currentUser||!currentUser.masterAdmin)return;
-  USERS=loadUsers();
-  document.getElementById('admin-users-tbody').innerHTML=Object.entries(USERS).map(([id,u])=>`
-    <tr><td><strong>${u.nomeCompleto}</strong></td><td style="font-size:12px">${u.cargo}</td>
-    <td><span class="tag ${u.role==='admin'?'tag-aprovado':'tag-rh'}">${u.role==='admin'?'Admin':'Gestor'}</span></td>
-    <td style="font-size:11px;color:var(--mid)">${u.setores&&u.setores.length?u.setores.join(', '):'Todos'}</td>
-    <td><span id="pw-${id}" style="font-family:monospace;font-size:11px">••••••</span>
-      <button onclick="togglePw('${id}')" style="background:none;border:none;cursor:pointer;font-size:11px">👁</button>
-      <button onclick="redefinirSenha('${id}')" style="background:none;border:none;cursor:pointer;font-size:11px">✏</button></td>
-    <td>${id!==currentUser.id?`<button class="btn-danger" onclick="excluirUsuario('${id}')">🗑</button>`:'<span style="font-size:11px;color:var(--light)">você</span>'}</td></tr>`).join('');
-  openModal('modal-admin');
-}
-function togglePw(id){const el=document.getElementById('pw-'+id);el.textContent=el.textContent.includes('•')?USERS[id].senha:'••••••';}
-function redefinirSenha(id){const n=prompt(`Nova senha para ${USERS[id].nomeCompleto}:`);if(!n||n.length<4)return;USERS[id].senha=n;saveUsers();openAdminPanel();showToast('✅ Senha redefinida!');}
-function excluirUsuario(id){if(!confirm(`Excluir ${USERS[id].nomeCompleto}?`))return;delete USERS[id];saveUsers();openAdminPanel();showToast('✅ Excluído!');}
-function criarUsuario(){
-  const nome=document.getElementById('nu-nome').value.trim(),cargo=document.getElementById('nu-cargo').value.trim(),senha=document.getElementById('nu-senha').value,role=document.getElementById('nu-role').value,setStr=document.getElementById('nu-setores').value;
-  if(!nome||!senha){alert('Preencha nome e senha.');return;}
-  const id='u'+Date.now().toString().slice(-6);
-  USERS[id]={nome:nome.split(' ')[0],nomeCompleto:nome,iniciais:nome.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(),cargo:cargo||'Cambury',cor:'#5C7A8B',logo:'',senha,role,setores:role==='gestor'?setStr.split(',').map(s=>s.trim()).filter(Boolean):[]};
-  saveUsers();closeModal('modal-novo-usuario');['nu-nome','nu-cargo','nu-senha','nu-setores'].forEach(f=>document.getElementById(f).value='');
-  openAdminPanel();showToast(`✅ Usuário ${nome} criado!`);
-}
-function trocarSenha(){
-  const atual=document.getElementById('ts-atual').value,nova=document.getElementById('ts-nova').value,conf=document.getElementById('ts-confirma').value,err=document.getElementById('ts-erro');
-  if(atual!==USERS[currentUser.id].senha){err.textContent='Senha incorreta.';err.style.display='block';return;}
-  if(nova.length<6){err.textContent='Mínimo 6 caracteres.';err.style.display='block';return;}
-  if(nova!==conf){err.textContent='Senhas não coincidem.';err.style.display='block';return;}
-  USERS[currentUser.id].senha=nova;currentUser.senha=nova;saveUsers();
-  closeModal('modal-trocar-senha');['ts-atual','ts-nova','ts-confirma'].forEach(f=>document.getElementById(f).value='');
-  err.style.display='none';showToast('✅ Senha alterada!');
-}
 
 // ── ACCESS CONTROL ────────────────────────────────────────────────────────────
 function isAdmin(){ return !currentUser||currentUser.role==='admin'; }
@@ -1191,10 +1204,14 @@ function copiarGcalCandidato(){
 let _salaPadrao = '';
 
 async function carregarSalaPadrao(){
-  try{
-    const r = await sb.from('agenda').select('link').eq('id','_config_sala').maybeSingle();
-    _salaPadrao = (r.data && r.data.link) ? r.data.link : '';
-  }catch(_){ _salaPadrao=''; }
+  if(DEMO_MODE){
+    try{ _salaPadrao = localStorage.getItem('cambury_sala_padrao') || ''; }catch(_){ _salaPadrao=''; }
+  } else {
+    try{
+      const r = await sb.from('agenda').select('link').eq('id','_config_sala').maybeSingle();
+      _salaPadrao = (r.data && r.data.link) ? r.data.link : '';
+    }catch(_){ _salaPadrao=''; }
+  }
   const inp=document.getElementById('sala-padrao-input');
   if(inp) inp.value=_salaPadrao;
 }
@@ -1202,7 +1219,8 @@ async function carregarSalaPadrao(){
 async function salvarSalaPadrao(){
   const link=document.getElementById('sala-padrao-input').value.trim();
   try{
-    await sb.from('agenda').upsert({ id:'_config_sala', titulo:'__config sala padrão__', data:'2000-01-01', tipo:'config', link:link||null, status:'config', atualizado_em:new Date().toISOString() });
+    if(DEMO_MODE){ localStorage.setItem('cambury_sala_padrao', link); }
+    else{ await sb.from('agenda').upsert({ id:'_config_sala', titulo:'__config sala padrão__', data:'2000-01-01', tipo:'config', link:link||null, status:'config', atualizado_em:new Date().toISOString() }); }
     _salaPadrao=link;
     showToast(link?'✅ Sala padrão salva!':'Sala padrão removida');
   }catch(e){ alert('Erro ao salvar a sala padrão: '+e.message); }
@@ -1296,11 +1314,11 @@ function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
+const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
@@ -1782,22 +1800,13 @@ function menuMensagens(id){
 }
 
 // ══ VAGAS ═════════════════════════════════════════════════════════════════════
-function parseHonorario(h){ if(!h)return 0; const m=String(h).replace(/\./g,'').match(/R\$\s*([\d]+(?:,\d{2})?)/); return m?parseFloat(m[1].replace(',','.')):0; }
 function renderVagasStats() {
   const v=getVagasVisiveis();
-  const abertasIds=new Set(v.filter(x=>x.status==='aberta').map(x=>x.id));
-  // Quanto ainda falta receber (parcelas não pagas) das vagas em aberto — reflete a realidade
-  // do financeiro, e não o valor total do contrato (que já pode ter tido a entrada paga).
-  const totalHon=_pagamentos.length
-    ? _pagamentos.filter(p=>abertasIds.has(p.vagaId) && _statusReal(p)!=='pago').reduce((s,p)=>s+(p.valor||0),0)
-    : v.filter(x=>x.status==='aberta').reduce((s,x)=>s+parseHonorario(x.honorario),0);
-  const totalFmt='R$ '+totalHon.toLocaleString('pt-BR',{minimumFractionDigits:0});
   document.getElementById('vagas-stats').innerHTML=`
     <div class="stat-card"><div class="stat-num">${v.length}</div><div class="stat-lbl">Total</div></div>
     <div class="stat-card"><div class="stat-num g">${v.filter(x=>x.status==='aberta').length}</div><div class="stat-lbl">Abertas</div></div>
     <div class="stat-card"><div class="stat-num">${v.filter(x=>x.status==='encerrada').length}</div><div class="stat-lbl">Encerradas</div></div>
-    <div class="stat-card"><div class="stat-num">${getCands().length}</div><div class="stat-lbl">Candidatos</div></div>
-    ${isAdmin()?`<div class="stat-card"><div class="stat-num" style="font-size:20px">${totalFmt}</div><div class="stat-lbl">A receber (abertas)</div></div>`:''}`;
+    <div class="stat-card"><div class="stat-num">${getCands().length}</div><div class="stat-lbl">Candidatos</div></div>`;
 }
 
 function renderVagas() {
@@ -1851,8 +1860,7 @@ async function salvarVaga() {
   const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
-    const r = await sb.from('vagas').select('*').order('criado_em',{ascending:false});
-    if(r.data) _vagas = r.data.map(dbToVaga);
+    if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-nova-vaga');
     ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
@@ -1864,7 +1872,7 @@ async function salvarVaga() {
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
   ['ev-id','ev-titulo','ev-setor','ev-gestor','ev-data','ev-salario','ev-canais','ev-obs'].forEach(f=>document.getElementById(f).value=v[f.replace('ev-','').replace('-','')]||'');
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -1889,6 +1897,7 @@ async function atualizarVaga() {
     dataAbertura:document.getElementById('ev-data').value||null,
     qtd:qtdTotal, qtdFechadas:qtdFech,
     dataEncerramento:dataEnc,
+    dataDossieManual:document.getElementById('ev-data-dossie').value||null,
     salario:document.getElementById('ev-salario').value.trim(),
     status:novoStatus,
     motivo:document.getElementById('ev-motivo').value,
@@ -1898,9 +1907,9 @@ async function atualizarVaga() {
   };
   try{
     await upsertVaga(_vagas[idx]);
-    // Recarrega do Supabase para garantir dados atualizados
-    const r = await sb.from('vagas').select('*').order('criado_em',{ascending:false});
-    if(r.data) _vagas = r.data.map(dbToVaga);
+    // Recarrega do Supabase para garantir dados atualizados (em modo demo, os
+    // dados locais já foram atualizados por upsertVaga acima)
+    if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-edit-vaga');
     renderVagasStats();
     renderVagas();
@@ -2255,11 +2264,6 @@ function renderRoteiros(){
 
 
 let curRoteiro=null,secState={},evalState={},resultado=null;
-function renderRoteiros(){
-  const roteiros=getRoteirosVisiveis();const s={};roteiros.forEach(v=>{if(!s[v.setor])s[v.setor]=[];s[v.setor].push(v);});
-  const c=document.getElementById('roteiros-container');c.innerHTML='';
-  Object.entries(s).forEach(([setor,vagas])=>{const w=document.createElement('div');w.style.marginBottom='28px';w.innerHTML=`<div class="section-label" style="margin-bottom:10px">${setor}</div><div class="vagas-grid">${vagas.map(v=>`<div class="vaga-card" onclick="abrirRoteiro('${v.id}')" data-nome="${v.nome.toLowerCase()}"><div class="vaga-name">${v.nome}</div><div class="vaga-meta"><span>⏱ ${v.duracao}</span></div></div>`).join('')}</div>`;c.appendChild(w);});
-}
 function filterRoteiros(){const q=document.getElementById('rot-search').value.toLowerCase();document.querySelectorAll('#roteiros-container .vaga-card').forEach(c=>{c.style.display=c.dataset.nome.includes(q)?'':'none';});}
 function abrirRoteiro(id){
   curRoteiro=VAGAS_ROTEIRO.find(v=>v.id===id);secState={};evalState={};resultado=null;
@@ -2373,9 +2377,8 @@ async function syncEntrevistasExistentes(){
     }
   }
   if(criados > 0){
-    // Reload candidatos após sync
-    const r = await sb.from('candidatos').select('*').order('criado_em',{ascending:false});
-    if(r.data) _cands = r.data.map(dbToCand);
+    // Reload candidatos após sync (em modo demo já está atualizado localmente)
+    if(!DEMO_MODE){ const r = await sb.from('candidatos').select('*').order('criado_em',{ascending:false}); if(r.data) _cands = r.data.map(dbToCand); }
     showToast(`✅ ${criados} candidato${criados>1?'s':''} do histórico adicionado${criados>1?'s':''} ao funil!`);
   }
 }
@@ -2416,17 +2419,17 @@ function renderAcoesPendentes(){
       const p=_pagamentos.find(x=>x.vagaId===vaga.id && x.parcela===2);
       if(p){
         const s=_statusReal(p);
-        if(s==='atrasado') finTxt='💰 parcela de fechamento atrasada';
+        if(s==='atrasado') finTxt='parcela de fechamento atrasada';
         else if(s==='pendente'){
           const dv=Math.ceil((new Date(p.vencimento+'T12:00:00').getTime()-Date.now())/86400000);
-          if(dv<=7) finTxt = dv<0 ? '💰 parcela de fechamento atrasada' : `💰 parcela vence em ${dv}d`;
+          if(dv<=7) finTxt = dv<0 ? 'parcela de fechamento atrasada' : `parcela vence em ${dv}d`;
         }
       }
     }
     return {c,vaga,dias,nivel,sub:ETAPA_SUBSTATUS[c.etapa],finTxt,urgencia:dias-sla};
   }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
 
-  if(!itens.length){ el.innerHTML='<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento 🎉</div>'; return; }
+  if(!itens.length){ el.innerHTML='<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento.</div>'; return; }
 
   const cor={r:'var(--red)',   a:'#B7791F',   g:'var(--green)'};
   const bg ={r:'var(--red-lt)',a:'#FBF3E4',   g:'var(--green-lt)'};
@@ -2445,7 +2448,7 @@ function renderAcoesPendentes(){
     </div>`).join('');
 }
 
-// ══ INDICADORES DE R&S — tempo médio por etapa, conversão do funil, vagas mais lentas ══
+// ══ INDICADORES DE R&S — gráficos reais: tempo por etapa, funil, candidatos por vaga, destino ══
 function renderIndicadoresFunil(){
   const cands=getCandsVisiveis();
   const vagas=getVagasVisiveis();
@@ -2463,40 +2466,88 @@ function renderIndicadoresFunil(){
       if(dur>=0){ soma[et]+=dur; cont[et]++; }
     }
   });
-  const maiorMedia=Math.max(1,...ETAPAS.map(e=>cont[e.id]?soma[e.id]/cont[e.id]:0));
-  document.getElementById('dash-tempo-etapa').innerHTML = ETAPAS.map(e=>{
-    const media = cont[e.id] ? soma[e.id]/cont[e.id] : null;
-    const sla=ETAPA_SLA[e.id];
-    const pct = media!==null ? Math.min(100, Math.round(media/maiorMedia*100)) : 0;
-    const cor = media===null ? 'var(--bege)' : (media>sla ? 'var(--red)' : 'var(--green)');
-    return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-        <span>${e.label}</span>
-        <span style="color:var(--mid)">${media!==null?media.toFixed(1)+'d (meta '+sla+'d)':'sem dados'}</span>
-      </div>
-      <div style="background:var(--bege-lt);border-radius:6px;height:7px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${cor}"></div></div>
-    </div>`;
+  const temposReal = ETAPAS.map(e=>cont[e.id]?+(soma[e.id]/cont[e.id]).toFixed(1):0);
+  const temposMeta = ETAPAS.map(e=>ETAPA_SLA[e.id]);
+  const temposCores = ETAPAS.map((e,i)=> cont[e.id]===0 ? CH.bege : (temposReal[i]>temposMeta[i] ? CH.red : CH.green));
+  renderChart('chart-tempo-etapa', {
+    type:'bar',
+    data:{ labels:ETAPAS.map(e=>e.short), datasets:[
+      { label:'Real (dias)', data:temposReal, backgroundColor:temposCores, borderRadius:5, barThickness:16 },
+      { label:'Meta SLA (dias)', data:temposMeta, backgroundColor:CH.bege_lt, borderRadius:5, barThickness:16 }
+    ]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid } },
+        tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x}d` } } },
+      scales:{ x:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
+                y:{ ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
+    }
+  });
+
+  // 2) Funil de conversão — total avaliado x quantos avançaram em cada etapa
+  const visitou = c => new Set((c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa]));
+  const totalAvaliados = cands.length;
+  const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et])];
+  const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map(et=>cands.filter(c=>visitou(c).has(et)).length)];
+  const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
+  document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '—';
+  const funilCores = funilValores.map((_,i)=> i===0 ? CH.charcoal : i===funilValores.length-1 ? CH.green : CH.mid);
+  renderChart('chart-funil', {
+    type:'bar',
+    data:{ labels:funilLabels, datasets:[{ data:funilValores, backgroundColor:funilCores, borderRadius:6, maxBarThickness:70 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.y} candidato${ctx.parsed.y===1?'':'s'}` } },
+        datalabels:false },
+      scales:{ y:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
+                x:{ ticks:{ color:CH.charcoal, font:{size:11} }, grid:{ display:false } } }
+    }
+  });
+
+  // 3) Candidatos por vaga — total avaliado em cada posição, maior pro menor
+  const porVaga = vagas.map(v=>({ v, n:cands.filter(c=>c.vagaId===v.id).length })).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  const corBarraVaga = i => { // gradiente charcoal → bege conforme a posição no ranking
+    const passos=[CH.charcoal,'#4E4E4E','#666666','#7E7E7E','#969696','#AEAEAE'];
+    return passos[Math.min(i,passos.length-1)];
+  };
+  renderChart('chart-candidatos-vaga', {
+    type:'bar',
+    data:{ labels:porVaga.map(x=>x.v.titulo.split('–')[0].trim()), datasets:[{ data:porVaga.map(x=>x.n), backgroundColor:porVaga.map((_,i)=>corBarraVaga(i)), borderRadius:5, maxBarThickness:26 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.x} candidatos` } } },
+      scales:{ x:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
+                y:{ ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
+    }
+  });
+
+  // 4) Destino dos candidatos — donut com as categorias finais do funil
+  const nAprovados = cands.filter(c=>c.etapa==='aprovacao').length;
+  const nBanco = cands.filter(c=>(c.etapa||'').startsWith('banco_talentos')).length;
+  const nReprovados = cands.filter(c=>c.etapa==='reprovado').length;
+  const nAndamento = cands.length - nAprovados - nBanco - nReprovados;
+  const destino = [
+    { label:'Aprovados / Vagas Fechadas', n:nAprovados, cor:CH.green },
+    { label:'Banco de Talentos', n:nBanco, cor:CH.amber },
+    { label:'Em Andamento', n:nAndamento, cor:CH.charcoal },
+    { label:'Reprovados', n:nReprovados, cor:CH.red }
+  ].filter(d=>d.n>0);
+  const totalDestino = destino.reduce((s,d)=>s+d.n,0);
+  document.getElementById('dash-destino-sub').textContent = totalDestino>0 ? `${totalDestino} candidatos avaliados no total` : 'Sem candidatos avaliados ainda';
+  renderChart('chart-destino', {
+    type:'doughnut',
+    data:{ labels:destino.map(d=>d.label), datasets:[{ data:destino.map(d=>d.n), backgroundColor:destino.map(d=>d.cor), borderWidth:2, borderColor:'#fff' }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>{
+        const pct = totalDestino>0 ? Math.round(ctx.parsed/totalDestino*100) : 0;
+        return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+      } } } }
+    }
+  });
+  document.getElementById('dash-destino-legend').innerHTML = destino.map(d=>{
+    const pct = totalDestino>0 ? Math.round(d.n/totalDestino*100) : 0;
+    return `<div class="chart-legend-item"><span class="chart-legend-dot" style="background:${d.cor}"></span>${d.label} · ${pct}%</div>`;
   }).join('');
 
-  // 2) Taxa de conversão do funil — % de candidatos que já passou por cada etapa,
-  // em relação ao total que entrou no funil (Triagem em diante)
-  const visitou = c => new Set((c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa]));
-  const totalFunil = cands.filter(c=>ETAPA_ORDEM.some(e=>visitou(c).has(e))).length;
-  document.getElementById('dash-funil-conversao').innerHTML = totalFunil===0
-    ? '<div style="color:var(--mid);font-size:13px">Sem candidatos no funil ainda.</div>'
-    : ETAPA_ORDEM.map(et=>{
-        const label=ETAPA_LABEL[et]||et;
-        const n=cands.filter(c=>visitou(c).has(et)).length;
-        const pct=Math.round(n/totalFunil*100);
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-            <span>${label}</span><span style="color:var(--mid)">${n} de ${totalFunil} · ${pct}%</span>
-          </div>
-          <div style="background:var(--bege-lt);border-radius:6px;height:10px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--charcoal)"></div></div>
-        </div>`;
-      }).join('');
-
-  // 3) Ranking das vagas mais lentas — dias corridos (abertas: até hoje; fechadas: até o fechamento)
+  // 5) Ranking das vagas mais lentas — dias corridos (abertas: até hoje; fechadas: até o fechamento)
   const lentas = vagas.filter(v=>v.status!=='cancelada' && v.dataAbertura).map(v=>{
     const dataFim = (v.status==='encerrada' && v.dataEncerramento) ? v.dataEncerramento : null;
     const dias = diasCorridosCalendario(v.dataAbertura, dataFim);
@@ -2540,7 +2591,7 @@ function renderDashboard(){
   const temposDetalhe = vagasEncerradas.map(v=>{
     const corridos = diasCorridosCalendario(v.dataAbertura, v.dataEncerramento);
     const trabalhados = Math.round(corridos*5/7);
-    const dDossie = dataDossieVaga(v.id, candsParaCalc);
+    const dDossie = v.dataDossieManual ? v.dataDossieManual : dataDossieVaga(v.id, candsParaCalc);
     const diasLaVie = dDossie ? diasCorridosCalendario(v.dataAbertura, dDossie) : null;
     const diasCliente = dDossie ? diasCorridosCalendario(dDossie, v.dataEncerramento) : null;
     return {v, corridos, trabalhados, dDossie, diasLaVie, diasCliente};
@@ -2549,20 +2600,57 @@ function renderDashboard(){
   const mediaLaVieC = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.diasLaVie,0)/comDossie.length) : null;
   const mediaClienteC = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.diasCliente,0)/comDossie.length) : null;
 
+  // "Status das Vagas" — panorama rápido de todas as posições (aberta/fechada/
+  // cancelada/em decisão), com o candidato aprovado quando já houver um.
+  const statusVagasEl = document.getElementById('dash-status-vagas');
+  if(statusVagasEl){
+    const linhas = vagas.map(v=>{
+      const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
+      let statusHtml, dias;
+      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='—'; }
+      else if(v.status==='encerrada'){
+        statusHtml='<span style="color:var(--green)">● Fechada</span>';
+        const td=temposDetalhe.find(t=>t.v.id===v.id);
+        dias = td ? td.corridos+'d' : '—';
+      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
+      else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
+      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${aprovado?aprovado.nome:'—'}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
+    });
+    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
+  }
+
   document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi-hero"><div class="kpi-hero-top"><div class="kpi-hero-icon">📋</div></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
-    <div class="kpi-hero g"><div class="kpi-hero-top"><div class="kpi-hero-icon">✅</div></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
-    <div class="kpi-hero a"><div class="kpi-hero-top"><div class="kpi-hero-icon">⏳</div></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
-    <div class="kpi-hero r"><div class="kpi-hero-top"><div class="kpi-hero-icon">🚫</div></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top"><div class="kpi-hero-icon">📈</div></div><div class="kpi-hero-num">${pct}%</div><div class="kpi-hero-lbl">Progresso Geral</div><div class="kpi-hero-sub">${resolvidas} de ${totalQtd} resolvidas</div></div>
-    ${mediaLaVieC!==null?`<div class="kpi-hero g"><div class="kpi-hero-top"><div class="kpi-hero-icon">🚀</div></div><div class="kpi-hero-num g">~${mediaLaVieC}d</div><div class="kpi-hero-lbl">Tempo La Vie</div><div class="kpi-hero-sub">abertura → dossiê apresentado</div></div>`:''}`;
+    <div class="kpi-hero"><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
+    <div class="kpi-hero g"><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
+    <div class="kpi-hero a"><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
+    <div class="kpi-hero r"><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>`;
+
+  // Banner dedicado La Vie x Cliente — separado do grid de KPIs pra ter destaque
+  // próprio (era o que deixava o layout torto: um 6º card sobrando sozinho na linha)
+  const bannerEl = document.getElementById('dash-lv-banner');
+  if(mediaLaVieC!==null){
+    bannerEl.innerHTML = `<div class="lv-banner">
+      <div class="lv-banner-side lavie">
+        <div class="lv-banner-lbl">Tempo La Vie</div>
+        <div class="lv-banner-num">${mediaLaVieC}d</div>
+        <div class="lv-banner-desc">Média da abertura da vaga até a apresentação do dossiê/finalistas ao Mantenedor — ${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''} com dossiê registrado.</div>
+      </div>
+      <div class="lv-banner-side cliente">
+        <div class="lv-banner-lbl">Decisão do Cliente</div>
+        <div class="lv-banner-num">${mediaClienteC}d</div>
+        <div class="lv-banner-desc">Média do dossiê entregue até o fechamento formal da vaga — tempo que depende da decisão da UniCambury, não da La Vie.</div>
+      </div>
+    </div>`;
+  } else {
+    bannerEl.innerHTML = '';
+  }
+
   setTimeout(()=>document.getElementById('dash-pct-bar').style.width=pct+'%',50);
   document.getElementById('dash-pct-label').textContent=pct+'%';
   document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
   document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
   renderAcoesPendentes();
   renderIndicadoresFunil();
-  document.getElementById('dash-tempo-kpis').innerHTML='';
 
   if (temposDetalhe.length > 0) {
     const mediaC = Math.round(temposDetalhe.reduce((s,t)=>s+t.corridos,0)/temposDetalhe.length);
@@ -2570,36 +2658,72 @@ function renderDashboard(){
     const minC = temposDetalhe.reduce((m,x)=>x.corridos<m.corridos?x:m);
     const maxC = temposDetalhe.reduce((m,x)=>x.corridos>m.corridos?x:m);
 
-    document.getElementById('dash-tempo-kpis').innerHTML=`<div class="card" style="padding:16px 20px"><div class="mini-stat-row">
-      <div class="mini-stat"><div class="mini-stat-lbl">Tempo Médio Total</div><div class="mini-stat-val">~${mediaC}d</div><div class="mini-stat-sub">~${mediaT}d úteis · ${temposDetalhe.length} vaga${temposDetalhe.length>1?'s':''}</div></div>
-      ${mediaLaVieC!==null?`<div class="mini-stat hl"><div class="mini-stat-lbl">🚀 Tempo La Vie</div><div class="mini-stat-val" style="color:var(--green)">~${mediaLaVieC}d</div><div class="mini-stat-sub">até apresentar o dossiê</div></div>`:''}
-      ${mediaClienteC!==null?`<div class="mini-stat"><div class="mini-stat-lbl">🤝 Decisão do Cliente</div><div class="mini-stat-val" style="color:var(--amber)">~${mediaClienteC}d</div><div class="mini-stat-sub">dossiê → fechamento</div></div>`:''}
-      <div class="mini-stat"><div class="mini-stat-lbl">🏆 Mais Rápido</div><div class="mini-stat-val" style="color:var(--green)">${minC.corridos}d</div><div class="mini-stat-sub">${minC.v.titulo.split('–')[0].trim()}</div></div>
-      <div class="mini-stat"><div class="mini-stat-lbl">🔴 Mais Longo</div><div class="mini-stat-val" style="color:var(--red)">${maxC.corridos}d</div><div class="mini-stat-sub">${maxC.v.titulo.split('–')[0].trim()}</div></div>
-    </div></div>`;
+    const metricasEl = document.getElementById('dash-metricas-tempo');
+    if(metricasEl){
+      const linha = (dias,texto,cor) => `<div style="padding:9px 0;border-bottom:1px solid var(--bege-lt);font-size:12.5px"><strong style="color:${cor};font-family:'Playfair Display',serif;font-size:15px">${dias}</strong> → ${texto}</div>`;
+      metricasEl.innerHTML = [
+        linha(minC.corridos+'d', `${minC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais rápida)</span>`, 'var(--green)'),
+        linha(maxC.corridos+'d', `${maxC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais lenta)</span>`, 'var(--red)'),
+        linha(mediaC+'d', `Média do ciclo <span style="color:var(--light)">(${mediaT}d úteis)</span>`, 'var(--charcoal)')
+      ].join('');
+    }
 
-    document.getElementById('dash-tempo-tbody').innerHTML = temposDetalhe.map((t,i) => { const v=t.v; return `
+    // Gráfico "Divisão do Tempo por Vaga" — barras horizontais empilhadas
+    // (La Vie x Cliente), só com vagas que têm dossiê registrado no funil.
+    const comSplitChart = temposDetalhe.filter(t=>t.diasLaVie!==null);
+    const divisaoWrap = document.getElementById('dash-divisao-wrap');
+    if(comSplitChart.length>0){
+      if(divisaoWrap) divisaoWrap.style.display='';
+      divisaoWrap.style.height = Math.max(140, comSplitChart.length*38+40)+'px';
+      renderChart('chart-divisao-tempo', {
+        type:'bar',
+        data:{ labels:comSplitChart.map(t=>t.v.titulo.split('–')[0].trim()), datasets:[
+          { label:'La Vie (até o dossiê)', data:comSplitChart.map(t=>t.diasLaVie), backgroundColor:CH.green, borderRadius:4, stack:'s' },
+          { label:'Cliente (decisão)', data:comSplitChart.map(t=>t.diasCliente), backgroundColor:CH.amber, borderRadius:4, stack:'s' }
+        ]},
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid } },
+            tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x}d` } } },
+          scales:{ x:{ stacked:true, beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
+                    y:{ stacked:true, ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
+        }
+      });
+    } else if(divisaoWrap) {
+      divisaoWrap.style.display='none';
+    }
+
+    document.getElementById('dash-tempo-tbody').innerHTML = temposDetalhe.map((t,i) => { const v=t.v;
+      const temSplit = t.diasLaVie!==null && (t.diasLaVie+t.diasCliente)>0;
+      const pctLaVie = temSplit ? Math.round(t.diasLaVie/(t.diasLaVie+t.diasCliente)*100) : (t.diasLaVie!==null?100:0);
+      const divisaoHtml = t.diasLaVie===null
+        ? '<span style="font-size:11px;color:var(--light)">sem dossiê registrado</span>'
+        : `<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--bege-lt);margin-bottom:4px;min-width:110px">
+             <div style="width:${pctLaVie}%;background:var(--green)"></div>
+             <div style="width:${100-pctLaVie}%;background:var(--amber)"></div>
+           </div>
+           <div style="font-size:10.5px;color:var(--mid)">${t.diasLaVie}d La Vie · ${t.diasCliente}d Cliente</div>`;
+      const destaque = t.corridos===minC.corridos&&minC.v.id===v.id ? '<div style="font-size:9.5px;color:var(--green)">mais rápida</div>'
+                      : t.corridos===maxC.corridos&&maxC.v.id===v.id ? '<div style="font-size:9.5px;color:var(--red)">mais lenta</div>' : '';
+      return `
       <tr style="${i%2===0?'':'background:var(--cream)'}">
         <td style="font-size:12px;font-weight:500">${v.titulo} <span style="color:var(--light);font-size:11px">(${v.setor})</span></td>
         <td style="text-align:center;font-size:12px">${v.qtdFechadas||v.qtd||1}</td>
         <td style="font-size:12px;color:var(--mid)">${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</td>
-        <td style="font-size:12px;color:var(--mid)">${t.dDossie?new Date(t.dDossie).toLocaleDateString('pt-BR'):'—'}</td>
         <td style="font-size:12px;color:var(--green)">${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</td>
-        <td style="font-size:12px;font-weight:600;text-align:center;color:var(--green)">${t.diasLaVie!==null?t.diasLaVie+'d':'—'}</td>
-        <td style="font-size:12px;font-weight:500;text-align:center;color:var(--amber)">${t.diasCliente!==null?t.diasCliente+'d':'—'}</td>
-        <td style="font-size:12px;font-weight:500;text-align:center">${t.corridos}d ${t.corridos===minC.corridos&&minC.v.id===v.id?'🏆':t.corridos===maxC.corridos&&maxC.v.id===v.id?'🔴':''}</td>
-        <td style="font-size:12px;font-weight:500;text-align:center">~${t.trabalhados}d</td>
+        <td>${divisaoHtml}</td>
+        <td style="font-size:12px;font-weight:500;text-align:center">${t.corridos}d<div style="font-size:10px;color:var(--light)">${t.trabalhados}d úteis</div>${destaque}</td>
       </tr>`;}).join('');
   } else {
-    // Sem datas de encerramento ainda - mostra aviso
-    document.getElementById('dash-tempo-kpis').innerHTML = `<div class="card" style="padding:20px;text-align:center;color:var(--mid)">
+    const divisaoWrap2 = document.getElementById('dash-divisao-wrap');
+    if(divisaoWrap2) divisaoWrap2.style.display='none';
+    document.getElementById('dash-tempo-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mid);padding:24px">
       <div style="font-size:13px;margin-bottom:6px">Nenhuma vaga com data de encerramento registrada ainda.</div>
-      <div style="font-size:11px">Ao fechar uma vaga, preencha a <strong>Data de Encerramento</strong> no modal de edição para gerar os indicadores automaticamente.</div>
-    </div>`;
-    document.getElementById('dash-tempo-tbody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--light);padding:20px">Sem dados de fechamento ainda</td></tr>';
+      <div style="font-size:11px;color:var(--light)">Ao fechar uma vaga, preencha a <strong>Data de Encerramento</strong> no modal de edição para gerar os indicadores automaticamente.</div>
+    </td></tr>`;
+    const metricasEl2 = document.getElementById('dash-metricas-tempo');
+    if(metricasEl2) metricasEl2.innerHTML = '<div style="color:var(--mid);font-size:12.5px;padding:8px 0">Sem vagas fechadas ainda.</div>';
   }
 
-  const ICON={'Produção':'🏭','Qualidade':'🔬','Logística':'📦','Marketing':'📣','Tecnologia da Informação':'💻','Manutenção':'🔧','Financeiro':'💰'};
   const sm={};vagas.forEach(v=>{
     const s=v.setor||'Outros';
     if(!sm[s])sm[s]={qtd:0,fech:0,aberto:0,canc:0};
@@ -2610,11 +2734,11 @@ function renderDashboard(){
   });
   // Sort setores by total qty descending
   const smSorted=Object.entries(sm).sort((a,b)=>b[1].qtd-a[1].qtd);
-  document.getElementById('dash-setores').innerHTML=smSorted.map(([setor,d])=>{const p=(d.qtd-d.canc)>0?Math.round(d.fech/(d.qtd-d.canc)*100):0,done=d.aberto===0&&d.canc===0,icon=ICON[setor]||'📋';return `<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;min-height:130px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:700;margin-bottom:2px">${icon} ${setor}</div><div style="font-size:11px;color:var(--mid)">Inicial: ${d.qtd} vaga${d.qtd!==1?'s':''}</div></div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:${done?'var(--green)':'var(--charcoal)'}">${p}%</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;margin-bottom:10px"><span style="color:var(--green)">✅ Fechadas: ${d.fech}</span>
-        ${d.aberto>0?`<span style="color:var(--amber)">🔄 Em Aberto: ${d.aberto}</span>`:''}
-        ${d.canc>0?`<span style="color:var(--red)">❌ Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
+  document.getElementById('dash-setores').innerHTML=smSorted.map(([setor,d])=>{const p=(d.qtd-d.canc)>0?Math.round(d.fech/(d.qtd-d.canc)*100):0,done=d.aberto===0&&d.canc===0;return `<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;min-height:130px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:700;margin-bottom:2px">${setor}</div><div style="font-size:11px;color:var(--mid)">Inicial: ${d.qtd} vaga${d.qtd!==1?'s':''}</div></div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:${done?'var(--green)':'var(--charcoal)'}">${p}%</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;margin-bottom:10px"><span style="color:var(--green)">Fechadas: ${d.fech}</span>
+        ${d.aberto>0?`<span style="color:var(--amber)">Em Aberto: ${d.aberto}</span>`:''}
+        ${d.canc>0?`<span style="color:var(--red)">Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
   const tabEl=document.getElementById('dash-tabelas');tabEl.innerHTML='';
-  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),icon=ICON[setor]||'📋',div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${icon} ${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td>${isCan?'❌ Cancelada':isFech?'✅ Concluída':'🔄 Em aberto'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
+  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td>${isCan?'<span style="color:var(--red)">● Cancelada</span>':isFech?'<span style="color:var(--green)">● Concluída</span>':'<span style="color:var(--amber)">● Em aberto</span>'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
 }
 
 // ══ PAINEL ════════════════════════════════════════════════════════════════════
@@ -2654,6 +2778,7 @@ async function upsertPagamento(p){
   const {error}=await sb.from('pagamentos').upsert(row); if(error)throw error;
 }
 // Garante que cada vaga tenha suas 3 parcelas geradas
+const OBS_FECH_CANCELADO = 'Fechamento não devido — vaga cancelada pelo cliente';
 async function sincronizarParcelas(){
   const vagas=getVagas();
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
@@ -2670,15 +2795,30 @@ async function sincronizarParcelas(){
     const base=_honBase(v);
     for(const def of PARCELAS_DEF){
       const ex=_pagamentos.find(p=>p.id===v.id+'-p'+def.n);
-      if(ex){
-        const novoValor=+(base*def.pct/100).toFixed(2);
-        const novoVenc=_vencParcela(v,def);
-        const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.status!=='cancelada' && ex.vencimento!==novoVenc);
-        if(precisaAtualizar){
-          ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando;
-          if(ex.status!=='pago' && ex.status!=='cancelada') ex.vencimento=novoVenc;
+      if(!ex) continue;
+      // Vaga cancelada: o fechamento (parcela 2) nunca é devido — só a entrada já
+      // paga permanece. Cancela a parcela automaticamente se ainda não foi paga.
+      if(v.status==='cancelada' && def.n===2){
+        if(ex.status!=='pago' && ex.status!=='cancelada'){
+          ex.status='cancelada'; ex.obs=OBS_FECH_CANCELADO;
           try{await upsertPagamento(ex);}catch(e){}
         }
+        continue;
+      }
+      // Vaga foi reaberta depois de ter sido cancelada: reverte o cancelamento
+      // automático (só se foi ESTE código que cancelou, nunca mexe em cancelamento manual)
+      if(v.status!=='cancelada' && def.n===2 && ex.status==='cancelada' && ex.obs===OBS_FECH_CANCELADO){
+        ex.status='pendente'; ex.obs=def.quando; ex.vencimento=_vencParcela(v,def);
+        try{await upsertPagamento(ex);}catch(e){}
+        continue;
+      }
+      const novoValor=+(base*def.pct/100).toFixed(2);
+      const novoVenc=_vencParcela(v,def);
+      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.status!=='cancelada' && ex.vencimento!==novoVenc);
+      if(precisaAtualizar){
+        ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando;
+        if(ex.status!=='pago' && ex.status!=='cancelada') ex.vencimento=novoVenc;
+        try{await upsertPagamento(ex);}catch(e){}
       }
     }
   }
@@ -2686,11 +2826,12 @@ async function sincronizarParcelas(){
     const base=_honBase(v);
     for(const def of PARCELAS_DEF){
       const id=v.id+'-p'+def.n;
-      if(!_pagamentos.find(p=>p.id===id)){
-        const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:'pendente', pagoEm:null, obs:def.quando};
-        _pagamentos.push(p);
-        try{ await upsertPagamento(p); }catch(e){}
-      }
+      if(_pagamentos.find(p=>p.id===id)) continue;
+      // Vaga já nasce cancelada (nunca teve parcela 2 gerada ainda): cria direto cancelada
+      const cancelFechamento = v.status==='cancelada' && def.n===2;
+      const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:cancelFechamento?'cancelada':'pendente', pagoEm:null, obs:cancelFechamento?OBS_FECH_CANCELADO:def.quando};
+      _pagamentos.push(p);
+      try{ await upsertPagamento(p); }catch(e){}
     }
   }
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) demoSavePag();
@@ -2712,13 +2853,21 @@ async function renderFinanceiro(){
   const search=(document.getElementById('fin-search')?.value||'').toLowerCase();
   const fStatus=document.getElementById('fin-filter-status')?.value||'';
   // stats
-  let totalPrev=0,totalPago=0,totalPend=0,totalAtr=0;
-  _pagamentos.forEach(p=>{ const s=_statusReal(p); totalPrev+=p.valor; if(s==='pago')totalPago+=p.valor; else if(s==='atrasado')totalAtr+=p.valor; else totalPend+=p.valor; });
+  let totalPrev=0,totalPago=0,totalPend=0,totalAtr=0,totalCancelado=0;
+  _pagamentos.forEach(p=>{
+    const s=_statusReal(p);
+    if(s==='cancelada'){ totalCancelado+=p.valor; return; } // nunca foi devida — não conta em nenhum total
+    totalPrev+=p.valor;
+    if(s==='pago')totalPago+=p.valor;
+    else if(s==='atrasado')totalAtr+=p.valor;
+    else totalPend+=p.valor;
+  });
   document.getElementById('fin-stats').innerHTML=`
     <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPrev)}</div><div class="stat-lbl">Honorários totais</div></div>
     <div class="stat-card"><div class="stat-num g">${_fmtBRL(totalPago)}</div><div class="stat-lbl">Recebido</div></div>
     <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPend)}</div><div class="stat-lbl">A receber</div></div>
-    <div class="stat-card"><div class="stat-num r">${_fmtBRL(totalAtr)}</div><div class="stat-lbl">Atrasado</div></div>`;
+    <div class="stat-card"><div class="stat-num r">${_fmtBRL(totalAtr)}</div><div class="stat-lbl">Atrasado</div></div>
+    ${totalCancelado>0?`<div class="stat-card"><div class="stat-num" style="color:var(--light)">${_fmtBRL(totalCancelado)}</div><div class="stat-lbl">Cancelado (não devido)</div></div>`:''}`;
   // tabela
   const rows=_pagamentos.map(p=>{
     const v=vagas.find(x=>x.id===p.vagaId); if(!v) return null;
@@ -2918,6 +3067,7 @@ function toggleUserMenu(e) {
     setTimeout(()=>document.addEventListener('click', ()=>{ m.style.display='none'; }, {once:true}), 50);
   }
 }
+function closeUserMenu(){ const m=document.getElementById('user-menu'); if(m) m.style.display='none'; }
 
 // ══ ADMIN PANEL ═══════════════════════════════════════════════════════════════
 function openAdminPanel() {
@@ -3052,12 +3202,21 @@ try{
   chave pública (anon) no topo do <script> (bloco "CONFIGURAÇÃO DO BANCO").
 ================================================================================
 
+-- ⚠️ MIGRAÇÃO NECESSÁRIA (banco já existente, como o da UniCambury):
+-- A tabela "vagas" ganhou uma coluna nova (data_dossie_manual). Se seu banco
+-- já existia antes dessa atualização, rode esta linha uma vez no SQL Editor
+-- do Supabase antes de usar o campo "Data do Dossiê (manual)" no sistema:
+--
+--   alter table vagas add column if not exists data_dossie_manual date;
+--
+
 create table if not exists vagas (
   id text primary key,
   titulo text not null,
   setor text,
   data_abertura date,
   data_encerramento date,
+  data_dossie_manual date,
   qtd int default 1,
   qtd_fechadas int default 0,
   status text default 'aberta',
