@@ -5,124 +5,191 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vagas — La Vie Consultoria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root {
-  --bg: #F5F1EA; --surface: #FFFFFF; --ink: #2C2B28; --ink-soft: #7A776E;
-  --border: #E2DBC9; --accent: #9B6B52; --radius: 8px;
-  --shadow: 0 2px 24px rgba(0,0,0,0.07);
+  --bg: #EDE7D8;
+  --surface: #FBF8F1;
+  --ink: #241F1A;
+  --ink-soft: #766F60;
+  --ink-faint: #A69F8C;
+  --line: #D9CFB8;
+  --rust: #A0472A;
+  --rust-deep: #7E381F;
+  --olive: #5F6B4C;
+  --olive-bg: #EAEBDF;
+  --olive-line: #C4CBAE;
+  --radius: 3px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Jost', sans-serif; -webkit-font-smoothing: antialiased; }
+html, body { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: 'Instrument Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+.serif { font-family: 'Fraunces', serif; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
 
-.topbar { display: flex; justify-content: space-between; align-items: center; max-width: 860px; margin: 0 auto; padding: 22px 20px 0; }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
-.brand-mark { height: 38px; width: auto; filter: invert(1) brightness(0.3); }
-.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-.brand-l1 { font-weight: 500; font-size: 13px; letter-spacing: 0.07em; }
-.brand-l2 { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-soft); }
-.admin-btn { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-family: 'Jost', sans-serif; font-size: 12px; padding: 7px 14px; border-radius: 99px; cursor: pointer; transition: all .15s; }
-.admin-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+/* ═══ TOPBAR ═══ */
+.topbar { display: flex; justify-content: space-between; align-items: center; max-width: 1040px; margin: 0 auto; padding: 26px 24px 0; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+.brand-mark { height: 34px; width: auto; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+.brand-l1 { font-family: 'Fraunces', serif; font-style: italic; font-weight: 500; font-size: 16px; }
+.brand-l2 { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); }
+.admin-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); background: none; border: none; border-bottom: 1px solid var(--line); padding: 0 0 3px; cursor: pointer; transition: color .15s, border-color .15s; }
+.admin-link:hover { color: var(--rust); border-color: var(--rust); }
 
-#app { max-width: 860px; margin: 0 auto; padding: 36px 20px 80px; }
+#app { max-width: 1040px; margin: 0 auto; padding: 40px 24px 100px; position: relative; }
 
-/* HERO */
-.page-hero { margin-bottom: 48px; }
-.eyebrow { display: block; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 12px; }
-.page-title { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 500; line-height: 1.15; margin-bottom: 14px; }
-.page-title em { font-style: italic; }
-.page-sub { font-size: 15px; line-height: 1.75; color: var(--ink-soft); font-weight: 300; max-width: 52ch; }
+/* ═══ HERO ═══ */
+.page-hero { margin-bottom: 56px; position: relative; padding-top: 8px; }
+.leaf-accent { position: absolute; top: -18px; right: -6px; width: 130px; height: auto; color: var(--rust); opacity: 0.5; pointer-events: none; }
+.hero-eyebrow { display: flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--rust-deep); margin-bottom: 18px; }
+.hero-eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--rust-deep); display: inline-block; }
+.page-title { font-family: 'Fraunces', serif; font-size: 46px; font-weight: 340; line-height: 1.08; letter-spacing: -0.01em; margin-bottom: 20px; max-width: 14ch; }
+.page-title em { font-style: italic; font-weight: 500; }
+.hero-rule { width: 64px; height: 1px; background: var(--line); margin-bottom: 20px; }
+.page-sub { font-size: 15px; line-height: 1.7; color: var(--ink-soft); font-weight: 400; max-width: 48ch; }
 
-/* VAGAS LIST */
-.vagas-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 48px; }
-.vaga-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; box-shadow: var(--shadow); cursor: pointer; transition: border-color .2s, box-shadow .2s; position: relative; }
-.vaga-card:hover { border-color: var(--accent); box-shadow: 0 4px 32px rgba(0,0,0,0.1); }
-.vaga-card.active { border-color: var(--accent); }
-.vaga-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.vaga-info { flex: 1; }
-.vaga-area { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
-.vaga-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; margin-bottom: 10px; }
-.vaga-meta { display: flex; gap: 16px; flex-wrap: wrap; }
-.vaga-tag { font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 5px; }
-.vaga-arrow { color: var(--ink-soft); font-size: 18px; transition: transform .2s; flex-shrink: 0; margin-top: 4px; }
-.vaga-card.active .vaga-arrow { transform: rotate(90deg); color: var(--accent); }
-.vaga-desc { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
-.vaga-card.active .vaga-desc { display: block; }
-.vaga-desc p { font-size: 14px; line-height: 1.75; color: var(--ink); font-weight: 300; margin-bottom: 14px; }
-.vaga-desc h4 { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 10px; margin-top: 18px; }
-.vaga-desc ul { list-style: none; display: flex; flex-direction: column; gap: 6px; padding: 0; }
-.vaga-desc li { font-size: 14px; color: var(--ink); font-weight: 300; line-height: 1.5; display: flex; gap: 8px; }
-.vaga-desc li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
-.vaga-apply-btn { display: inline-block; margin-top: 20px; background: var(--ink); color: #fff; font-family: 'Jost', sans-serif; font-weight: 600; font-size: 13px; padding: 12px 24px; border-radius: 99px; border: none; cursor: pointer; letter-spacing: 0.03em; transition: background .15s; }
-.vaga-apply-btn:hover { background: #3a3935; }
+/* ═══ LEDGER (lista de vagas / candidaturas) ═══ */
+.ledger { border-top: 1px solid var(--ink); }
+.ledger-row { border-bottom: 1px solid var(--line); padding: 26px 0; display: flex; gap: 22px; align-items: flex-start; cursor: pointer; transition: background .15s; }
+.ledger-row:hover { background: rgba(160,71,42,0.03); }
+.ledger-num { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-faint); padding-top: 4px; width: 46px; flex-shrink: 0; letter-spacing: 0.02em; }
+.ledger-main { flex: 1; min-width: 0; }
+.ledger-tags { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.ledger-area { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rust); }
+.ledger-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+.ledger-meta span { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.04em; color: var(--ink-soft); }
+.ledger-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; line-height: 1.25; }
+.ledger-chevron { font-family: 'Fraunces', serif; font-size: 20px; color: var(--ink-faint); flex-shrink: 0; transition: transform .2s, color .2s; padding-top: 2px; }
+.ledger-row.expanded .ledger-chevron { transform: rotate(90deg); color: var(--rust); }
 
-/* MODAL */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.modal { background: var(--surface); border-radius: var(--radius); padding: 36px; max-width: 540px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 60px rgba(0,0,0,0.2); position: relative; }
-.modal-close { position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--ink-soft); line-height: 1; padding: 4px; }
-.modal-close:hover { color: var(--ink); }
-.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; margin-bottom: 4px; }
-.modal-subtitle { font-size: 13px; color: var(--ink-soft); margin-bottom: 24px; font-weight: 300; }
+.ledger-detail { display: none; margin-top: 22px; padding-top: 22px; border-top: 1px dashed var(--line); }
+.ledger-row.expanded .ledger-detail { display: block; }
+.ledger-detail p.desc { font-size: 14.5px; line-height: 1.8; color: var(--ink); font-weight: 400; margin-bottom: 22px; white-space: pre-line; max-width: 62ch; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.detail-section h4 { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 12px; }
+.detail-section ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.detail-section li { font-size: 13.5px; color: var(--ink); font-weight: 400; line-height: 1.5; display: flex; gap: 9px; }
+.detail-section li::before { content: '—'; color: var(--rust); flex-shrink: 0; }
+.apply-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; background: var(--ink); color: var(--surface); font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 13px 22px; border-radius: var(--radius); border: none; cursor: pointer; transition: background .15s; }
+.apply-btn:hover { background: var(--rust-deep); }
 
-/* FORM */
-.field-label { display: block; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.04em; margin-bottom: 7px; margin-top: 16px; }
+.empty-note { font-size: 14px; color: var(--ink-soft); padding: 30px 0; border-top: 1px solid var(--ink); }
+
+/* ═══ MODAL (ficha) ═══ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(36,31,26,0.55); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+.dossier { background: var(--surface); border-radius: var(--radius); padding: 38px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 12px 50px rgba(36,31,26,0.28); position: relative; margin: auto; border: 1px solid var(--line); }
+.dossier.dossier-wide { max-width: 700px; }
+.dossier::before { content: ''; position: absolute; top: 0; right: 0; width: 0; height: 0; border-style: solid; border-width: 0 34px 34px 0; border-color: transparent var(--rust) transparent transparent; }
+.dossier-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--surface); line-height: 1; padding: 4px; z-index: 2; }
+.dossier-close:hover { opacity: 0.7; }
+.dossier-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rust); margin-bottom: 8px; }
+.dossier-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; margin-bottom: 4px; padding-right: 30px; }
+.dossier-subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-bottom: 28px; letter-spacing: 0.02em; }
+
+.field-label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; margin-top: 20px; }
 .field-label:first-of-type { margin-top: 0; }
+.field-hint { font-size: 11px; color: var(--ink-faint); margin-top: 6px; font-weight: 400; }
 input[type=text], input[type=email], input[type=tel] {
-  width: 100%; font-family: 'Cormorant Garamond', serif; font-size: 16px;
-  padding: 12px 14px; border: 1px solid var(--border); border-radius: 5px;
-  background: var(--bg); color: var(--ink); transition: border-color .15s;
+  width: 100%; font-family: 'Fraunces', serif; font-size: 16px; font-weight: 400;
+  padding: 8px 2px 10px; border: none; border-bottom: 1px solid var(--line); border-radius: 0;
+  background: transparent; color: var(--ink); transition: border-color .15s;
 }
-input:focus { outline: none; border-color: var(--ink-soft); }
-.file-area { border: 1.5px dashed var(--border); border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; transition: border-color .15s; margin-top: 8px; background: var(--bg); }
-.file-area:hover { border-color: var(--ink-soft); }
-.file-area.has-file { border-color: var(--accent); background: #F9F5F0; }
-.file-area input[type=file] { display: none; }
-.file-area-label { font-size: 13px; color: var(--ink-soft); cursor: pointer; }
-.file-area-label strong { color: var(--ink); }
-.file-name { font-size: 13px; color: var(--accent); font-weight: 500; margin-top: 6px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+input:focus { outline: none; border-color: var(--rust); }
+textarea {
+  width: 100%; font-family: 'Instrument Sans', sans-serif; font-size: 13.5px; line-height: 1.65;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--bg); color: var(--ink); transition: border-color .15s; resize: vertical; min-height: 78px;
+}
+textarea:focus { outline: none; border-color: var(--rust); }
+.file-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 10px 2px; cursor: pointer; margin-top: 8px; transition: border-color .15s; }
+.file-row:hover { border-color: var(--ink-soft); }
+.file-row.has-file { border-color: var(--rust); }
+.file-row input[type=file] { display: none; }
+.file-row-label { font-size: 13px; color: var(--ink-soft); cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.file-row-label strong { color: var(--ink); font-weight: 500; }
+.file-name { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--rust); flex-shrink: 0; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
 
-.btn-primary { font-family: 'Jost', sans-serif; font-weight: 600; font-size: 14px; background: var(--ink); color: #fff; border: none; padding: 14px 28px; border-radius: 99px; cursor: pointer; transition: background .15s; width: 100%; margin-top: 20px; letter-spacing: 0.03em; }
-.btn-primary:hover { background: #3a3935; }
-.btn-primary:disabled { background: #C4BFB4; cursor: not-allowed; }
-.loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
+.check-row { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+.check-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--rust); cursor: pointer; }
+.check-row label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.03em; color: var(--ink); cursor: pointer; }
+
+.btn-primary { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; background: var(--ink); color: var(--surface); border: none; padding: 15px 28px; border-radius: var(--radius); cursor: pointer; transition: background .15s; width: 100%; margin-top: 26px; }
+.btn-primary:hover { background: var(--rust-deep); }
+.btn-primary:disabled { background: var(--ink-faint); cursor: not-allowed; }
+.loading-spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(251,248,241,0.4); border-top-color: var(--surface); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.success-box { background: #EEF4EC; border: 1px solid #B8D4B0; border-radius: 6px; padding: 20px; text-align: center; }
-.success-box h3 { font-family: 'Cormorant Garamond', serif; font-size: 20px; margin-bottom: 8px; color: #2D5A27; }
-.success-box p { font-size: 13px; color: #4A7A42; font-weight: 300; line-height: 1.6; }
-.error-box { background: #FDF0EE; border: 1px solid #E8B4A8; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #7A2000; margin-top: 12px; }
+.success-box { background: var(--olive-bg); border: 1px solid var(--olive-line); border-radius: var(--radius); padding: 22px; text-align: center; }
+.success-box h3 { font-family: 'Fraunces', serif; font-size: 21px; font-weight: 500; margin-bottom: 8px; color: var(--olive); }
+.success-box p { font-size: 13px; color: #4A5240; font-weight: 400; line-height: 1.6; }
+.error-box { background: #F7E9E4; border: 1px solid #E0AE9B; border-radius: var(--radius); padding: 12px 16px; font-size: 12.5px; color: var(--rust-deep); margin-top: 14px; }
 
-/* ADMIN */
-.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-.admin-stats { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 28px; }
-.stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; min-width: 120px; }
-.stat-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 500; color: var(--ink); }
-.stat-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-top: 2px; }
-.filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-.filter-btn { font-family: 'Jost', sans-serif; font-size: 12px; padding: 7px 16px; border-radius: 99px; border: 1px solid var(--border); background: none; cursor: pointer; color: var(--ink-soft); transition: all .15s; }
-.filter-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
-.cand-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.cand-info h4 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
-.cand-info p { font-size: 13px; color: var(--ink-soft); font-weight: 300; }
-.cand-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-.cand-tag { font-size: 11px; color: var(--ink-soft); background: var(--bg); padding: 3px 10px; border-radius: 99px; border: 1px solid var(--border); }
-.cand-actions { display: flex; gap: 8px; align-items: flex-start; flex-shrink: 0; }
-.cand-actions a, .cand-actions button { font-family: 'Jost', sans-serif; font-size: 12px; padding: 7px 14px; border-radius: 99px; border: 1px solid var(--border); background: none; cursor: pointer; color: var(--ink); text-decoration: none; transition: all .15s; white-space: nowrap; }
-.cand-actions a:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
-.cand-actions button:hover { border-color: #c0392b; color: #c0392b; }
-.empty-state { text-align: center; padding: 50px 20px; color: var(--ink-soft); font-size: 14px; }
+/* ═══ ADMIN SHELL ═══ */
+.admin-shell { display: flex; gap: 48px; align-items: flex-start; }
+.admin-rail { width: 190px; flex-shrink: 0; position: sticky; top: 40px; }
+.rail-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rust-deep); margin-bottom: 4px; }
+.rail-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; font-style: italic; margin-bottom: 28px; }
+.rail-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 32px; }
+.rail-link { display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.03em; color: var(--ink-soft); background: none; border: none; border-left: 2px solid transparent; padding: 10px 0 10px 14px; cursor: pointer; text-align: left; transition: all .15s; }
+.rail-link:hover { color: var(--ink); }
+.rail-link.active { color: var(--ink); border-left-color: var(--rust); font-weight: 500; }
+.rail-link .count { font-size: 10.5px; color: var(--ink-faint); }
+.rail-link.active .count { color: var(--rust); }
+.rail-back { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 6px; }
+.rail-back:hover { color: var(--rust); }
+.admin-main { flex: 1; min-width: 0; }
 
-.back-btn { font-family: 'Jost', sans-serif; font-size: 13px; color: var(--ink-soft); background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 6px; margin-bottom: 24px; }
-.back-btn:hover { color: var(--ink); }
+.admin-topline { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; flex-wrap: wrap; gap: 14px; }
+.admin-topline h2 { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500; }
+.btn-outline { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; background: none; color: var(--ink); border: 1px solid var(--ink); padding: 10px 18px; border-radius: var(--radius); cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn-outline:hover { background: var(--ink); color: var(--surface); }
 
+.stat-line { display: flex; gap: 22px; flex-wrap: wrap; margin: 20px 0 24px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+.stat-line b { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 500; color: var(--ink); margin-right: 5px; }
+.stat-line b.accent { color: var(--olive); }
+
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.filter-chip { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.03em; padding: 7px 14px; border-radius: 99px; border: 1px solid var(--line); background: none; cursor: pointer; color: var(--ink-soft); transition: all .15s; }
+.filter-chip.active { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+/* linhas de vaga/candidatura no admin — mesmo padrão de ledger, com ações */
+.admin-row { border-bottom: 1px solid var(--line); padding: 20px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.admin-row-info { flex: 1; min-width: 0; }
+.admin-row-info h4 { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-row-info p { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); letter-spacing: 0.02em; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-dot.ativa { background: var(--olive); }
+.status-dot.inativa { background: var(--ink-faint); }
+.status-word { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.status-word.ativa { color: var(--olive); }
+.row-actions { display: flex; gap: 4px; align-items: flex-start; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.row-actions button, .row-actions a { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; text-transform: uppercase; padding: 7px 12px; border-radius: var(--radius); border: 1px solid transparent; background: none; cursor: pointer; color: var(--ink-soft); text-decoration: none; transition: all .15s; white-space: nowrap; }
+.row-actions button:hover, .row-actions a:hover { border-color: var(--line); color: var(--ink); }
+.row-actions button.danger:hover { border-color: var(--rust); color: var(--rust-deep); }
+.cand-new-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rust); display: inline-block; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--ink-soft); font-size: 14px; border-top: 1px solid var(--ink); }
+.empty-state .btn-outline { margin-top: 18px; }
+
+@media (max-width: 760px) {
+  .admin-shell { flex-direction: column; gap: 24px; }
+  .admin-rail { width: 100%; position: static; }
+  .rail-nav { flex-direction: row; gap: 18px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  .rail-link { border-left: none; border-bottom: 2px solid transparent; padding: 0 0 10px; }
+  .rail-link.active { border-left: none; border-bottom-color: var(--rust); }
+}
 @media (max-width: 600px) {
-  .page-title { font-size: 30px; }
-  .vaga-card { padding: 20px; }
-  .modal { padding: 24px 18px; }
-  .field-row { grid-template-columns: 1fr; }
-  .cand-card { flex-direction: column; }
+  .page-title { font-size: 32px; }
+  .leaf-accent { display: none; }
+  .dossier { padding: 28px 22px; }
+  .field-row, .field-row-3, .detail-grid { grid-template-columns: 1fr; gap: 18px; }
+  .ledger-row { gap: 14px; }
+  .ledger-num { width: 30px; font-size: 10px; }
+  .admin-row { flex-direction: column; }
+  .row-actions { justify-content: flex-start; }
 }
 </style>
 </head>
@@ -130,13 +197,13 @@ input:focus { outline: none; border-color: var(--ink-soft); }
 
 <header class="topbar">
   <a href="https://lavieconsultoria.com" class="brand" id="brandLink">
-    <img class="brand-mark" id="logoImg" src="data:image/png;base64,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" alt="La Vie Consultoria">
+    <img class="brand-mark" id="logoImg" src="data:image/png;base64,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" alt="La Vie Consultoria">
     <span class="brand-text">
       <span class="brand-l1">La Vie</span>
       <span class="brand-l2">Banco de Talentos</span>
     </span>
   </a>
-  <button class="admin-btn" id="adminBtn">Painel do recrutador</button>
+  <button class="admin-link" id="adminBtn">Painel do recrutador →</button>
 </header>
 
 <div id="app"></div>
@@ -153,27 +220,71 @@ let db = null;
 try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
 
 // ═══════════════════════════════════════════════════════
-// VAGAS — edite aqui para adicionar/remover vagas
-// ═══════════════════════════════════════════════════════
-let VAGAS = [
-  // Exemplo de estrutura — substitua pelas vagas reais
-// Adicione as vagas aqui quando tiver abertas
-];
-
-// ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-let state = { view: 'vagas', activeVaga: null };
+let state = { view: 'vagas', adminTab: 'vagas' };
+let VAGAS = [];
+let ADMIN_VAGAS = [];
 const app = document.getElementById('app');
 const modalRoot = document.getElementById('modal-root');
 
+const LEAF_SVG = `<svg class="leaf-accent" viewBox="0 0 140 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 116C24 96 34 70 34 46C34 26 26 10 10 2" stroke="currentColor" stroke-width="1"/>
+  <path d="M34 46C50 44 66 34 76 18" stroke="currentColor" stroke-width="1"/>
+  <path d="M28 68C46 68 62 60 74 46" stroke="currentColor" stroke-width="1"/>
+  <path d="M18 92C38 94 56 88 70 74" stroke="currentColor" stroke-width="1"/>
+  <ellipse cx="82" cy="14" rx="10" ry="5" transform="rotate(35 82 14)" stroke="currentColor" stroke-width="1"/>
+  <ellipse cx="80" cy="44" rx="11" ry="5.5" transform="rotate(20 80 44)" stroke="currentColor" stroke-width="1"/>
+  <ellipse cx="76" cy="72" rx="11" ry="5.5" transform="rotate(12 76 72)" stroke="currentColor" stroke-width="1"/>
+</svg>`;
+
+function pad2(n) { return String(n + 1).padStart(2, '0'); }
+
 // ═══════════════════════════════════════════════════════
-// SUPABASE
+// SUPABASE — VAGAS
+// ═══════════════════════════════════════════════════════
+async function loadVagasPublicas() {
+  if (!db) return [];
+  try {
+    const { data } = await db.from('vagas').select('*').eq('ativa', true).order('created_at', { ascending: false });
+    return data || [];
+  } catch(e) { return []; }
+}
+async function loadVagasAdmin() {
+  if (!db) return [];
+  try {
+    const { data } = await db.from('vagas').select('*').order('created_at', { ascending: false });
+    return data || [];
+  } catch(e) { return []; }
+}
+async function saveVaga(payload, id) {
+  if (!db) return { ok: false, err: 'Banco não configurado' };
+  try {
+    if (id) {
+      const { error } = await db.from('vagas').update(payload).eq('id', id);
+      if (error) return { ok: false, err: error.message };
+    } else {
+      const { error } = await db.from('vagas').insert(payload);
+      if (error) return { ok: false, err: error.message };
+    }
+    return { ok: true };
+  } catch(e) { return { ok: false, err: e.message }; }
+}
+async function setVagaAtiva(id, ativa) {
+  if (!db) return;
+  try { await db.from('vagas').update({ ativa }).eq('id', id); } catch(e) {}
+}
+async function deleteVaga(id) {
+  if (!db) return;
+  try { await db.from('vagas').delete().eq('id', id); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// SUPABASE — CANDIDATURAS
 // ═══════════════════════════════════════════════════════
 async function saveCandidatura(data) {
   if (!db) return { ok: false, err: 'Banco não configurado' };
   try {
-    // Upload do currículo
     let cv_url = null;
     if (data.file) {
       const ext = data.file.name.split('.').pop();
@@ -193,7 +304,6 @@ async function saveCandidatura(data) {
     return { ok: true, cv_url };
   } catch(e) { return { ok: false, err: e.message }; }
 }
-
 async function loadCandidaturas(vagaFilter = null) {
   if (!db) return [];
   try {
@@ -203,69 +313,82 @@ async function loadCandidaturas(vagaFilter = null) {
     return data || [];
   } catch(e) { return []; }
 }
-
 async function marcarLida(id) {
   if (!db) return;
   try { await db.from('candidaturas').update({ lida: true }).eq('id', id); } catch(e) {}
 }
-
 async function deleteCandidatura(id) {
   if (!db) return;
   try { await db.from('candidaturas').delete().eq('id', id); } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════
-// RENDER: VAGAS
+// HELPERS
 // ═══════════════════════════════════════════════════════
-function renderVagas() {
+function linesToArray(text) { return (text || '').split('\n').map(s => s.trim()).filter(Boolean); }
+function arrayToLines(arr) { return (arr || []).join('\n'); }
+function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ═══════════════════════════════════════════════════════
+// RENDER: VAGAS (público)
+// ═══════════════════════════════════════════════════════
+async function renderVagas() {
   app.innerHTML = `
     <div class="page-hero">
-      <span class="eyebrow">Banco de Talentos</span>
+      ${LEAF_SVG}
+      <div class="hero-eyebrow">Banco de Talentos — La Vie Consultoria</div>
       <h1 class="page-title">Vagas em <em>aberto</em></h1>
-      <p class="page-sub">A La Vie Consultoria gerencia processos seletivos para empresas de diferentes setores. Confira as oportunidades disponíveis e candidate-se diretamente por aqui.</p>
+      <div class="hero-rule"></div>
+      <p class="page-sub">Gerenciamos processos seletivos para empresas de diferentes setores. Confira as oportunidades disponíveis e candidate-se diretamente por aqui — sem currículo por WhatsApp ou e-mail.</p>
     </div>
-    <div class="vagas-grid" id="vagasGrid">
-      ${VAGAS.length === 0 ? '<p style="color:var(--ink-soft);font-size:14px;">Nenhuma vaga aberta no momento. Cadastre seu currículo no banco de talentos para ser avisado quando surgirem oportunidades.</p>' :
-        VAGAS.map(v => `
-          <div class="vaga-card" data-id="${v.id}">
-            <div class="vaga-top">
-              <div class="vaga-info">
-                <div class="vaga-area">${v.area}</div>
-                <h3 class="vaga-title">${v.title}</h3>
-                <div class="vaga-meta">
-                  <span class="vaga-tag">📍 ${v.local}</span>
-                  <span class="vaga-tag">💼 ${v.tipo}</span>
-                  <span class="vaga-tag">🏢 ${v.modelo}</span>
-                </div>
-              </div>
-              <span class="vaga-arrow">›</span>
-            </div>
-            <div class="vaga-desc">
-              <p>${v.descricao}</p>
-              <h4>Responsabilidades</h4>
-              <ul>${v.responsabilidades.map(r => `<li>${r}</li>`).join('')}</ul>
-              <h4>Requisitos</h4>
-              <ul>${v.requisitos.map(r => `<li>${r}</li>`).join('')}</ul>
-              ${v.diferenciais?.length ? `<h4>Diferenciais</h4><ul>${v.diferenciais.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
-              <button class="vaga-apply-btn" data-id="${v.id}">Candidatar-me a esta vaga →</button>
-            </div>
-          </div>
-        `).join('')}
-    </div>
+    <div id="vagasGrid"><p style="color:var(--ink-soft);font-size:14px;">Carregando vagas...</p></div>
   `;
 
-  document.querySelectorAll('.vaga-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-      if (e.target.classList.contains('vaga-apply-btn')) return;
-      card.classList.toggle('active');
+  VAGAS = await loadVagasPublicas();
+  const grid = document.getElementById('vagasGrid');
+  if (state.view !== 'vagas') return;
+
+  if (VAGAS.length === 0) {
+    grid.innerHTML = '<p class="empty-note">Nenhuma vaga aberta no momento. Cadastre seu currículo no banco de talentos para ser avisado quando surgirem oportunidades.</p>';
+    return;
+  }
+
+  grid.innerHTML = `<div class="ledger">${VAGAS.map((v, i) => `
+      <div class="ledger-row" data-id="${v.id}">
+        <div class="ledger-num mono">LV·${pad2(i)}</div>
+        <div class="ledger-main">
+          <div class="ledger-tags">
+            <span class="ledger-area">${esc(v.area)}</span>
+            <div class="ledger-meta">
+              <span>${esc(v.local)}</span><span>·</span><span>${esc(v.tipo)}</span><span>·</span><span>${esc(v.modelo)}</span>
+            </div>
+          </div>
+          <h3 class="ledger-title">${esc(v.title)}</h3>
+          <div class="ledger-detail">
+            <p class="desc">${esc(v.descricao)}</p>
+            <div class="detail-grid">
+              ${v.responsabilidades?.length ? `<div class="detail-section"><h4>Responsabilidades</h4><ul>${v.responsabilidades.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+              ${v.requisitos?.length ? `<div class="detail-section"><h4>Requisitos</h4><ul>${v.requisitos.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+            </div>
+            ${v.diferenciais?.length ? `<div class="detail-section" style="margin-top:22px;"><h4>Diferenciais</h4><ul>${v.diferenciais.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+            <button class="apply-btn" data-id="${v.id}">Candidatar-me →</button>
+          </div>
+        </div>
+        <div class="ledger-chevron">›</div>
+      </div>
+    `).join('')}</div>`;
+
+  document.querySelectorAll('.ledger-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.classList.contains('apply-btn')) return;
+      row.classList.toggle('expanded');
     });
   });
-
-  document.querySelectorAll('.vaga-apply-btn').forEach(btn => {
+  document.querySelectorAll('.apply-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const vaga = VAGAS.find(v => v.id === btn.dataset.id);
-      openModal(vaga);
+      openApplyModal(vaga);
     });
   });
 }
@@ -273,16 +396,17 @@ function renderVagas() {
 // ═══════════════════════════════════════════════════════
 // MODAL DE CANDIDATURA
 // ═══════════════════════════════════════════════════════
-function openModal(vaga) {
+function openApplyModal(vaga) {
   let selectedFile = null;
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
-      <div class="modal">
-        <button class="modal-close" id="closeModal">×</button>
+      <div class="dossier">
+        <button class="dossier-close" id="closeModal">×</button>
         <div id="modalContent">
-          <h3 class="modal-title">${vaga.title}</h3>
-          <p class="modal-subtitle">${vaga.area} · ${vaga.local} · ${vaga.tipo}</p>
+          <div class="dossier-eyebrow">Ficha de candidatura</div>
+          <h3 class="dossier-title">${esc(vaga.title)}</h3>
+          <p class="dossier-subtitle mono">${esc(vaga.area)} · ${esc(vaga.local)} · ${esc(vaga.tipo)}</p>
 
           <label class="field-label">Nome completo *</label>
           <input type="text" id="m-nome" placeholder="Seu nome completo" autocomplete="name">
@@ -298,13 +422,10 @@ function openModal(vaga) {
             </div>
           </div>
 
-          <label class="field-label" style="margin-top:16px;">Currículo (PDF ou Word) *</label>
-          <div class="file-area" id="fileArea">
+          <label class="field-label" style="margin-top:22px;">Currículo (PDF ou Word) *</label>
+          <div class="file-row" id="fileArea">
             <input type="file" id="m-file" accept=".pdf,.doc,.docx">
-            <label class="file-area-label" for="m-file">
-              📎 <strong>Clique para selecionar</strong> ou arraste seu currículo aqui<br>
-              <span style="font-size:11px;margin-top:4px;display:block;">PDF, DOC ou DOCX · máx. 5MB</span>
-            </label>
+            <label class="file-row-label" for="m-file">📎 <strong>Anexar arquivo</strong> · PDF, DOC ou DOCX, máx. 5MB</label>
             <div class="file-name" id="fileName" style="display:none"></div>
           </div>
 
@@ -326,13 +447,11 @@ function openModal(vaga) {
   function check() {
     submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFile;
   }
-
   nome.addEventListener('input', check);
   email.addEventListener('input', check);
   whatsapp.addEventListener('input', check);
 
-  fileInput.addEventListener('change', () => {
-    const f = fileInput.files[0];
+  function handleFile(f) {
     if (!f) return;
     if (f.size > 5 * 1024 * 1024) { alert('Arquivo muito grande. Máximo 5MB.'); return; }
     selectedFile = f;
@@ -340,22 +459,11 @@ function openModal(vaga) {
     fileName.style.display = 'block';
     fileArea.classList.add('has-file');
     check();
-  });
-
-  // Drag over file area
-  fileArea.addEventListener('dragover', e => { e.preventDefault(); fileArea.style.borderColor = 'var(--accent)'; });
+  }
+  fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+  fileArea.addEventListener('dragover', e => { e.preventDefault(); fileArea.style.borderColor = 'var(--rust)'; });
   fileArea.addEventListener('dragleave', () => fileArea.style.borderColor = '');
-  fileArea.addEventListener('drop', e => {
-    e.preventDefault();
-    const f = e.dataTransfer.files[0];
-    if (!f) return;
-    if (f.size > 5 * 1024 * 1024) { alert('Arquivo muito grande. Máximo 5MB.'); return; }
-    selectedFile = f;
-    fileName.textContent = f.name;
-    fileName.style.display = 'block';
-    fileArea.classList.add('has-file');
-    check();
-  });
+  fileArea.addEventListener('drop', e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
 
   document.getElementById('closeModal').addEventListener('click', closeModal);
   document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
@@ -366,29 +474,131 @@ function openModal(vaga) {
     document.getElementById('formError').style.display = 'none';
 
     const result = await saveCandidatura({
-      nome: nome.value.trim(),
-      email: email.value.trim(),
-      whatsapp: whatsapp.value.trim(),
-      vaga_id: vaga.id,
-      vaga_titulo: vaga.title,
-      file: selectedFile
+      nome: nome.value.trim(), email: email.value.trim(), whatsapp: whatsapp.value.trim(),
+      vaga_id: vaga.id, vaga_titulo: vaga.title, file: selectedFile
     });
 
     if (result.ok) {
       document.getElementById('modalContent').innerHTML = `
         <div class="success-box">
-          <h3>Candidatura recebida! ✓</h3>
-          <p>Sua candidatura para a vaga de <strong>${vaga.title}</strong> foi recebida.<br>
+          <h3>Candidatura recebida</h3>
+          <p>Sua candidatura para a vaga de <strong>${esc(vaga.title)}</strong> foi recebida.<br>
           A La Vie Consultoria entrará em contato caso seu perfil seja selecionado.</p>
         </div>
-        <button class="btn-primary" id="closeSuccess" style="margin-top:16px;background:none;color:var(--ink);border:1px solid var(--border);">Fechar</button>
+        <button class="btn-primary" id="closeSuccess" style="margin-top:16px;background:var(--surface);color:var(--ink);border:1px solid var(--line);">Fechar</button>
       `;
       document.getElementById('closeSuccess').addEventListener('click', closeModal);
     } else {
-      document.getElementById('formError').innerHTML = `<div class="error-box">Erro ao enviar: ${result.err}. Tente novamente.</div>`;
+      document.getElementById('formError').innerHTML = `<div class="error-box">Erro ao enviar: ${esc(result.err)}. Tente novamente.</div>`;
       document.getElementById('formError').style.display = 'block';
       submitBtn.disabled = false;
       submitBtn.innerHTML = 'Enviar candidatura';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL DE VAGA (criar / editar) — ADMIN
+// ═══════════════════════════════════════════════════════
+function openVagaForm(vaga, onSaved) {
+  const isEdit = !!vaga;
+
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="dossier dossier-wide">
+        <button class="dossier-close" id="closeModal">×</button>
+        <div class="dossier-eyebrow">${isEdit ? 'Editar registro' : 'Novo registro'}</div>
+        <h3 class="dossier-title">${isEdit ? 'Editar vaga' : 'Nova vaga'}</h3>
+        <p class="dossier-subtitle mono">${isEdit ? 'Altere os campos e salve.' : 'Preencha os dados que aparecerão no site.'}</p>
+
+        <label class="field-label">Título da vaga *</label>
+        <input type="text" id="v-title" placeholder="Ex: Analista de RH Pleno" value="${esc(vaga?.title)}">
+
+        <div class="field-row-3">
+          <div>
+            <label class="field-label">Área *</label>
+            <input type="text" id="v-area" placeholder="Ex: RH e Pessoas" value="${esc(vaga?.area)}">
+          </div>
+          <div>
+            <label class="field-label">Local *</label>
+            <input type="text" id="v-local" placeholder="Ex: Goiânia, GO" value="${esc(vaga?.local)}">
+          </div>
+          <div>
+            <label class="field-label">Tipo *</label>
+            <input type="text" id="v-tipo" placeholder="Ex: CLT / PJ / Estágio" value="${esc(vaga?.tipo)}">
+          </div>
+        </div>
+
+        <label class="field-label">Modelo de trabalho *</label>
+        <input type="text" id="v-modelo" placeholder="Ex: Presencial / Híbrido / Remoto" value="${esc(vaga?.modelo)}">
+
+        <label class="field-label">Descrição da vaga *</label>
+        <textarea id="v-descricao" placeholder="Um resumo da vaga e do contexto da empresa...">${esc(vaga?.descricao)}</textarea>
+
+        <label class="field-label">Responsabilidades</label>
+        <textarea id="v-responsabilidades" placeholder="Uma responsabilidade por linha">${esc(arrayToLines(vaga?.responsabilidades))}</textarea>
+        <div class="field-hint">Uma por linha — cada linha vira um item da lista no site.</div>
+
+        <label class="field-label">Requisitos</label>
+        <textarea id="v-requisitos" placeholder="Um requisito por linha">${esc(arrayToLines(vaga?.requisitos))}</textarea>
+        <div class="field-hint">Uma por linha.</div>
+
+        <label class="field-label">Diferenciais (opcional)</label>
+        <textarea id="v-diferenciais" placeholder="Um diferencial por linha">${esc(arrayToLines(vaga?.diferenciais))}</textarea>
+        <div class="field-hint">Uma por linha. Deixe em branco se não houver.</div>
+
+        <div class="check-row">
+          <input type="checkbox" id="v-ativa" ${vaga ? (vaga.ativa ? 'checked' : '') : 'checked'}>
+          <label for="v-ativa">Vaga ativa (visível no site)</label>
+        </div>
+
+        <div id="vagaFormError" style="display:none"></div>
+        <button class="btn-primary" id="saveVagaBtn">${isEdit ? 'Salvar alterações' : 'Cadastrar vaga'}</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+  document.getElementById('saveVagaBtn').addEventListener('click', async () => {
+    const title = document.getElementById('v-title').value.trim();
+    const area = document.getElementById('v-area').value.trim();
+    const local = document.getElementById('v-local').value.trim();
+    const tipo = document.getElementById('v-tipo').value.trim();
+    const modelo = document.getElementById('v-modelo').value.trim();
+    const descricao = document.getElementById('v-descricao').value.trim();
+
+    if (!title || !area || !local || !tipo || !modelo || !descricao) {
+      const errBox = document.getElementById('vagaFormError');
+      errBox.innerHTML = '<div class="error-box">Preencha todos os campos obrigatórios (*).</div>';
+      errBox.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('saveVagaBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>Salvando...';
+
+    const payload = {
+      title, area, local, tipo, modelo, descricao,
+      responsabilidades: linesToArray(document.getElementById('v-responsabilidades').value),
+      requisitos: linesToArray(document.getElementById('v-requisitos').value),
+      diferenciais: linesToArray(document.getElementById('v-diferenciais').value),
+      ativa: document.getElementById('v-ativa').checked
+    };
+
+    const result = await saveVaga(payload, vaga?.id);
+
+    if (result.ok) {
+      closeModal();
+      if (onSaved) onSaved();
+    } else {
+      const errBox = document.getElementById('vagaFormError');
+      errBox.innerHTML = `<div class="error-box">Erro ao salvar: ${esc(result.err)}</div>`;
+      errBox.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = isEdit ? 'Salvar alterações' : 'Cadastrar vaga';
     }
   });
 }
@@ -399,91 +609,149 @@ function closeModal() { modalRoot.innerHTML = ''; }
 // RENDER: ADMIN
 // ═══════════════════════════════════════════════════════
 async function renderAdmin() {
-  app.innerHTML = `<div class="empty-state">Carregando candidaturas...</div>`;
+  app.innerHTML = `<div class="empty-state">Carregando painel...</div>`;
 
-  const all = await loadCandidaturas();
+  ADMIN_VAGAS = await loadVagasAdmin();
+  const candidaturas = await loadCandidaturas();
+  if (state.view !== 'admin') return;
 
-  const total = all.length;
-  const naoLidas = all.filter(c => !c.lida).length;
-  const vagaCounts = {};
-  all.forEach(c => { vagaCounts[c.vaga_titulo] = (vagaCounts[c.vaga_titulo] || 0) + 1; });
+  const naoLidas = candidaturas.filter(c => !c.lida).length;
+  let filtroCand = 'todas';
 
-  let filtroAtivo = 'todas';
-
-  function renderList(filter) {
-    const lista = filter === 'todas' ? all :
-                  filter === 'novas' ? all.filter(c => !c.lida) :
-                  all.filter(c => c.vaga_id === filter);
-
-    return lista.length === 0 ? '<div class="empty-state">Nenhuma candidatura encontrada.</div>' :
-      lista.map(c => `
-        <div class="cand-card" data-id="${c.id}">
-          <div class="cand-info">
-            <h4>${c.nome} ${!c.lida ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#6B7A5E;margin-left:8px;vertical-align:middle;"></span>' : ''}</h4>
-            <p>${c.email} · ${c.whatsapp || '—'}</p>
-            <div class="cand-meta">
-              <span class="cand-tag">${c.vaga_titulo}</span>
-              <span class="cand-tag">${new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
-              ${c.lida ? '<span class="cand-tag">✓ Lida</span>' : '<span class="cand-tag" style="border-color:#6B7A5E;color:#6B7A5E;">Nova</span>'}
+  function vagasTabHTML() {
+    return `
+      <div class="admin-topline">
+        <h2>Vagas cadastradas</h2>
+        <button class="btn-outline" id="newVagaBtn">+ Nova vaga</button>
+      </div>
+      ${ADMIN_VAGAS.length === 0 ? `
+        <div class="empty-state">
+          Nenhuma vaga cadastrada ainda.
+          <div><button class="btn-outline" id="newVagaBtnEmpty">+ Cadastrar primeira vaga</button></div>
+        </div>` :
+        `<div class="ledger">${ADMIN_VAGAS.map((v, i) => `
+          <div class="admin-row" data-id="${v.id}">
+            <div class="admin-row-info">
+              <h4><span class="mono" style="font-size:11px;color:var(--ink-faint);">LV·${pad2(i)}</span> ${esc(v.title)} <span class="status-dot ${v.ativa ? 'ativa' : 'inativa'}"></span> <span class="status-word ${v.ativa ? 'ativa' : ''}">${v.ativa ? 'Ativa' : 'Pausada'}</span></h4>
+              <p>${esc(v.area)} · ${esc(v.local)} · ${esc(v.tipo)}</p>
+            </div>
+            <div class="row-actions">
+              <button class="edit-vaga" data-id="${v.id}">Editar</button>
+              <button class="toggle-vaga" data-id="${v.id}" data-ativa="${v.ativa}">${v.ativa ? 'Pausar' : 'Ativar'}</button>
+              <button class="danger del-vaga" data-id="${v.id}">Remover</button>
             </div>
           </div>
-          <div class="cand-actions">
-            ${c.cv_url ? `<a href="${c.cv_url}" target="_blank">Ver currículo</a>` : '<span style="font-size:12px;color:var(--ink-soft);padding:7px 14px;">Sem currículo</span>'}
-            ${!c.lida ? `<button class="mark-read" data-id="${c.id}">Marcar lida</button>` : ''}
-            <button class="del-cand" data-id="${c.id}">Remover</button>
-          </div>
-        </div>
-      `).join('');
+        `).join('')}</div>`}
+    `;
   }
 
-  function draw() {
-    app.innerHTML = `
-      <button class="back-btn" id="backBtn">← Voltar às vagas</button>
-      <div class="admin-header">
-        <div>
-          <span class="eyebrow">Painel do recrutador</span>
-          <h2 style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;">Candidaturas recebidas</h2>
+  function candListHTML(filter) {
+    const lista = filter === 'todas' ? candidaturas :
+                  filter === 'novas' ? candidaturas.filter(c => !c.lida) :
+                  candidaturas.filter(c => c.vaga_id === filter);
+    return lista.length === 0 ? '<div class="empty-state">Nenhuma candidatura encontrada.</div>' :
+      `<div class="ledger">${lista.map(c => `
+        <div class="admin-row" data-id="${c.id}">
+          <div class="admin-row-info">
+            <h4>${esc(c.nome)} ${!c.lida ? '<span class="cand-new-dot"></span>' : ''}</h4>
+            <p>${esc(c.email)} · ${esc(c.whatsapp) || '—'} · ${esc(c.vaga_titulo)} · ${new Date(c.created_at).toLocaleDateString('pt-BR')}</p>
+          </div>
+          <div class="row-actions">
+            ${c.cv_url ? `<a href="${c.cv_url}" target="_blank">Ver currículo</a>` : '<span class="mono" style="font-size:10.5px;color:var(--ink-faint);padding:7px 12px;">Sem currículo</span>'}
+            ${!c.lida ? `<button class="mark-read" data-id="${c.id}">Marcar lida</button>` : ''}
+            <button class="danger del-cand" data-id="${c.id}">Remover</button>
+          </div>
         </div>
-      </div>
-      <div class="admin-stats">
-        <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Total</div></div>
-        <div class="stat-box"><div class="stat-num" style="color:#6B7A5E">${naoLidas}</div><div class="stat-label">Não lidas</div></div>
-        ${Object.entries(vagaCounts).map(([v,n]) => `<div class="stat-box"><div class="stat-num">${n}</div><div class="stat-label" style="font-size:10px;">${v}</div></div>`).join('')}
-      </div>
+      `).join('')}</div>`;
+  }
+
+  function candTabHTML() {
+    return `
+      <div class="admin-topline"><h2>Candidaturas recebidas</h2></div>
+      <div class="stat-line"><span><b>${candidaturas.length}</b>total</span><span><b class="accent">${naoLidas}</b>não lidas</span></div>
       <div class="filter-row">
-        <button class="filter-btn ${filtroAtivo==='todas'?'active':''}" data-filter="todas">Todas</button>
-        <button class="filter-btn ${filtroAtivo==='novas'?'active':''}" data-filter="novas">Não lidas (${naoLidas})</button>
-        ${VAGAS.map(v => `<button class="filter-btn ${filtroAtivo===v.id?'active':''}" data-filter="${v.id}">${v.title}</button>`).join('')}
+        <button class="filter-chip ${filtroCand==='todas'?'active':''}" data-filter="todas">Todas</button>
+        <button class="filter-chip ${filtroCand==='novas'?'active':''}" data-filter="novas">Não lidas (${naoLidas})</button>
+        ${ADMIN_VAGAS.map(v => `<button class="filter-chip ${filtroCand===v.id?'active':''}" data-filter="${v.id}">${esc(v.title)}</button>`).join('')}
       </div>
-      <div id="candList">${renderList(filtroAtivo)}</div>
+      <div id="candList">${candListHTML(filtroCand)}</div>
     `;
+  }
 
-    document.getElementById('backBtn').addEventListener('click', () => { state.view = 'vagas'; render(); });
+  function bindVagasTabEvents() {
+    const openNew = () => openVagaForm(null, () => draw());
+    document.getElementById('newVagaBtn')?.addEventListener('click', openNew);
+    document.getElementById('newVagaBtnEmpty')?.addEventListener('click', openNew);
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.querySelectorAll('.edit-vaga').forEach(btn => {
       btn.addEventListener('click', () => {
-        filtroAtivo = btn.dataset.filter;
-        draw();
+        const vaga = ADMIN_VAGAS.find(v => v.id === btn.dataset.id);
+        openVagaForm(vaga, () => draw());
       });
     });
+    document.querySelectorAll('.toggle-vaga').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await setVagaAtiva(btn.dataset.id, btn.dataset.ativa !== 'true');
+        await draw();
+      });
+    });
+    document.querySelectorAll('.del-vaga').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remover esta vaga permanentemente? As candidaturas já recebidas continuam no histórico.')) return;
+        await deleteVaga(btn.dataset.id);
+        await draw();
+      });
+    });
+  }
 
+  function bindCandTabEvents() {
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+      btn.addEventListener('click', () => { filtroCand = btn.dataset.filter; draw(); });
+    });
     document.querySelectorAll('.mark-read').forEach(btn => {
       btn.addEventListener('click', async () => {
         await marcarLida(btn.dataset.id);
-        const c = all.find(x => x.id === btn.dataset.id);
+        const c = candidaturas.find(x => x.id === btn.dataset.id);
         if (c) c.lida = true;
         draw();
       });
     });
-
     document.querySelectorAll('.del-cand').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (!confirm('Remover esta candidatura?')) return;
         await deleteCandidatura(btn.dataset.id);
-        all.splice(all.findIndex(x => x.id === btn.dataset.id), 1);
+        candidaturas.splice(candidaturas.findIndex(x => x.id === btn.dataset.id), 1);
         draw();
       });
     });
+  }
+
+  async function draw() {
+    ADMIN_VAGAS = await loadVagasAdmin();
+    if (state.view !== 'admin') return;
+
+    app.innerHTML = `
+      <div class="admin-shell">
+        <div class="admin-rail">
+          <div class="rail-eyebrow mono">Painel do</div>
+          <div class="rail-title">recrutador</div>
+          <div class="rail-nav">
+            <button class="rail-link ${state.adminTab==='vagas'?'active':''}" data-tab="vagas"><span>Vagas</span><span class="count mono">${ADMIN_VAGAS.length}</span></button>
+            <button class="rail-link ${state.adminTab==='candidaturas'?'active':''}" data-tab="candidaturas"><span>Candidaturas</span><span class="count mono">${naoLidas || ''}</span></button>
+          </div>
+          <button class="rail-back" id="backBtn">← Voltar ao site</button>
+        </div>
+        <div class="admin-main" id="tabContent">${state.adminTab === 'vagas' ? vagasTabHTML() : candTabHTML()}</div>
+      </div>
+    `;
+
+    document.getElementById('backBtn').addEventListener('click', () => { state.view = 'vagas'; render(); });
+    document.querySelectorAll('.rail-link').forEach(btn => {
+      btn.addEventListener('click', () => { state.adminTab = btn.dataset.tab; draw(); });
+    });
+
+    if (state.adminTab === 'vagas') bindVagasTabEvents();
+    else bindCandTabEvents();
   }
 
   draw();
@@ -500,7 +768,7 @@ function render() {
 document.getElementById('adminBtn').addEventListener('click', () => {
   if (state.view === 'admin') { state.view = 'vagas'; render(); return; }
   const pw = prompt('Senha:');
-  if (pw === ADMIN_PASS) { state.view = 'admin'; render(); }
+  if (pw === ADMIN_PASS) { state.view = 'admin'; state.adminTab = 'vagas'; render(); }
   else if (pw !== null) alert('Senha incorreta.');
 });
 
