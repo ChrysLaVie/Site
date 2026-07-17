@@ -416,10 +416,13 @@ function openApplyModal(vaga) {
     document.getElementById('formError').style.display = 'none';
     const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:vaga.title, file:selectedFile });
     if (result.ok) {
+      const discParams = new URLSearchParams({ nome: nome.value.trim(), email: email.value.trim(), vaga: vaga.title });
+      const discUrl = `https://lavieconsultoria.com/disc/?${discParams.toString()}`;
       document.getElementById('modalContent').innerHTML = `
-        <div class="success-box"><h3>Candidatura recebida</h3><p>Sua candidatura para a vaga de <strong>${esc(vaga.title)}</strong> foi recebida.<br>A La Vie Consultoria entrará em contato caso seu perfil seja selecionado.</p></div>
-        <button class="btn-primary" id="closeSuccess" style="width:100%;margin-top:1rem;background:none;color:var(--charcoal);border:1px solid var(--border);">Fechar</button>`;
-      document.getElementById('closeSuccess').addEventListener('click', closeModal);
+        <div class="success-box"><h3>Candidatura recebida</h3><p>Sua candidatura para a vaga de <strong>${esc(vaga.title)}</strong> foi recebida.<br>Próximo passo: o Teste DISC, parte do nosso processo seletivo.</p></div>
+        <p style="text-align:center;font-size:0.78rem;color:var(--muted);margin-top:1rem;">Você será redirecionado em instantes…</p>
+        <a href="${discUrl}" class="btn-primary" id="goDisc" style="width:100%;margin-top:0.8rem;text-align:center;text-decoration:none;">Continuar para o Teste DISC →</a>`;
+      setTimeout(() => { window.location.href = discUrl; }, 2000);
     } else {
       document.getElementById('formError').innerHTML = `<div class="error-box">Erro ao enviar: ${esc(result.err)}. Tente novamente.</div>`;
       document.getElementById('formError').style.display = 'block';
