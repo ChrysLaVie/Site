@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 html { scroll-behavior:smooth; }
@@ -197,6 +198,17 @@ textarea.ta { min-height:76px; }
   color:var(--sand-dark); text-decoration:none; transition:color 0.15s; font-family:inherit; white-space:nowrap;
 }
 .entry-actions button:hover, .entry-actions a:hover { color:var(--charcoal); }
+
+.cand-row { border:1px solid var(--border); border-radius:var(--radius); background:var(--white); padding:1.3rem 1.6rem; margin-bottom:0.8rem; transition:border-color 0.2s; }
+.cand-row:hover { border-color:var(--sand-dark); }
+.cand-top { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.8rem; }
+.cand-top h4 { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:500; color:var(--charcoal); }
+.cand-top p { font-size:0.78rem; color:var(--muted); margin-top:0.2rem; }
+.cand-stages { display:flex; flex-wrap:wrap; gap:0.6rem; }
+.stage-chip { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.8rem; border-radius:var(--radius); background:var(--bg); font-size:0.75rem; color:var(--muted); }
+.stage-chip.done { background:var(--ok-bg); color:var(--ok); }
+.stage-chip.pending { color:var(--sand-dark); }
+.stage-chip button, .stage-chip a { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; background:none; border:none; color:inherit; text-decoration:underline; cursor:pointer; font-family:inherit; padding:0; }
 .entry-actions button.danger:hover { color:var(--err); }
 .new-dot { width:6px; height:6px; border-radius:50%; background:var(--err); display:inline-block; }
 
@@ -249,6 +261,15 @@ footer p a { color:inherit; text-decoration:none; }
 const SUPABASE_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
 const ADMIN_PASS   = 'lavie2026';
+
+// Resumo compacto dos perfis DISC, usado para gerar o PDF do teste
+// direto no painel (sem depender da página do DISC)
+const DIM = {
+  D: { name: 'Dominância',   color: '#9B6B52', summary: 'Orientado a resultados, direto e decidido. Assume riscos, lidera naturalmente e foca em superar obstáculos com agilidade.' },
+  I: { name: 'Influência',   color: '#B08A3E', summary: 'Comunicativo, entusiasta e com facilidade natural para engajar pessoas. Cria conexões com facilidade e transmite energia positiva.' },
+  S: { name: 'Estabilidade', color: '#6B7A5E', summary: 'Paciente, confiável e cooperativo. Trabalha bem em equipe, valoriza relações duradouras e mantém a consistência nos projetos.' },
+  C: { name: 'Conformidade', color: '#5E6E7D', summary: 'Analítico, detalhista e orientado à qualidade. Segue processos com rigor, toma decisões embasadas em dados e entrega com alto padrão.' }
+};
 
 let db = null;
 try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
@@ -305,6 +326,18 @@ async function loadCandidaturas() {
 }
 async function marcarLida(id) { if (!db) return; try { await db.from('candidaturas').update({ lida:true }).eq('id', id); } catch(e) {} }
 async function deleteCandidatura(id) { if (!db) return; try { await db.from('candidaturas').delete().eq('id', id); } catch(e) {} }
+
+// ── SUPABASE: DISC e FORMULÁRIO (para a aba "Candidatos") ──
+async function loadCandidatosDisc() {
+  if (!db) return [];
+  try { const { data } = await db.from('candidatos_disc').select('*').order('created_at', { ascending:false }); return data || []; }
+  catch(e) { return []; }
+}
+async function loadFormsRespostas() {
+  if (!db) return [];
+  try { const { data } = await db.from('forms_gerente_captacao').select('*').order('created_at', { ascending:false }); return data || []; }
+  catch(e) { return []; }
+}
 
 // ── HELPERS ──
 function linesToArray(text) { return (text || '').split('\n').map(s => s.trim()).filter(Boolean); }
@@ -502,15 +535,163 @@ function openVagaForm(vaga, onSaved) {
 
 function closeModal() { modalRoot.innerHTML = ''; }
 
+// ── PDF: resultado do DISC (regenerado a partir dos dados salvos) ──
+function buildDiscPDFFromRow(row) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 52;
+  let y = 66;
+  const INK = [58,58,58], SOFT = [122,119,110], BORDER = [216,207,196];
+
+  const scores = row.most || {};
+  const primary = row.primary_profile, secondary = row.secondary_profile;
+  const vals = Object.values(scores);
+  const minS = vals.length ? Math.min(...vals) : 0;
+  const maxS = vals.length ? Math.max(...vals) : 0;
+  const range = (maxS - minS) || 1;
+
+  doc.setFont('times', 'italic'); doc.setFontSize(18); doc.setTextColor(...INK);
+  doc.text('La Vie Consultoria', M, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SOFT);
+  doc.text('AVALIAÇÃO COMPORTAMENTAL DISC — RESUMO PARA O RECRUTADOR', M, y + 13);
+  doc.setDrawColor(...BORDER); doc.line(M, y + 24, W - M, y + 24);
+  y += 46;
+
+  doc.setFont('times', 'italic'); doc.setFontSize(22); doc.setTextColor(...INK);
+  doc.text(row.name || '', M, y);
+  y += 16;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...SOFT);
+  doc.text(`${row.email || ''} · ${row.phone || ''} · ${new Date(row.created_at).toLocaleDateString('pt-BR')}`, M, y);
+  y += 28;
+
+  if (primary && DIM[primary]) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
+    doc.text(`Perfil predominante: ${DIM[primary].name} (${primary})`, M, y);
+    y += 16;
+    if (secondary && DIM[secondary]) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...SOFT);
+      doc.text(`Perfil secundário: ${DIM[secondary].name} (${secondary})`, M, y);
+      y += 20;
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...INK);
+    const sumLines = doc.splitTextToSize(DIM[primary].summary, W - M * 2);
+    doc.text(sumLines, M, y);
+    y += sumLines.length * 13 + 20;
+  }
+
+  const barX = M + 120, barW = W - M - barX - 40;
+  ['D','I','S','C'].forEach(d => {
+    const score = scores[d];
+    if (score === undefined) return;
+    const pct = (score - minS) / range;
+    const rgb = DIM[d].color.match(/\w\w/g).map(h => parseInt(h,16));
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...INK);
+    doc.text(DIM[d].name, M, y + 8);
+    doc.setFillColor(238,235,226); doc.roundedRect(barX, y, barW, 9, 2, 2, 'F');
+    doc.setFillColor(...rgb); doc.roundedRect(barX, y, Math.max(barW * pct, 4), 9, 2, 2, 'F');
+    doc.setFontSize(9); doc.setTextColor(...SOFT);
+    doc.text((score > 0 ? '+' : '') + score, barX + barW + 8, y + 8);
+    y += 24;
+  });
+
+  doc.setFontSize(8); doc.setTextColor(180,175,168);
+  doc.text('La Vie Consultoria · lavieconsultoria.com · Documento de uso interno do processo seletivo.', M, 822);
+  doc.save('disc-' + (row.name || 'candidato').toLowerCase().replace(/\s+/g,'-') + '.pdf');
+}
+
+// ── PDF: resposta do formulário da vaga ──
+function buildFormsPDFFromRow(s) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 52;
+  let y = 66;
+  const INK = [58,58,58], SOFT = [122,119,110], BORDER = [216,207,196], OK = [74,122,66], ERR = [192,57,43];
+
+  function pageBreak(next) { if (y + next > 800) { doc.addPage(); y = 60; } }
+
+  doc.setFont('times', 'italic'); doc.setFontSize(18); doc.setTextColor(...INK);
+  doc.text('La Vie Consultoria', M, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SOFT);
+  doc.text('FORMULÁRIO DA VAGA — RESUMO PARA O RECRUTADOR', M, y + 13);
+  doc.setDrawColor(...BORDER); doc.line(M, y + 24, W - M, y + 24);
+  y += 46;
+
+  doc.setFont('times', 'italic'); doc.setFontSize(22); doc.setTextColor(...INK);
+  doc.text(s.nome || '', M, y);
+  y += 16;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...SOFT);
+  doc.text(`${s.email || ''} · ${s.whatsapp || ''} · ${new Date(s.created_at).toLocaleDateString('pt-BR')}`, M, y);
+  y += 12;
+  doc.text(`Vaga: ${s.vaga_titulo || ''}`, M, y);
+  y += 26;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...INK);
+  doc.text('Condições da vaga', M, y); y += 16;
+  [['Contratação PJ', s.ciente_pj], ['Remuneração R$5.000 + comissão', s.ciente_remuneracao], ['Presencial em Goiânia/GO', s.ciente_presencial], ['Horário de funcionamento', s.ciente_horario]].forEach(([label, val]) => {
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+    doc.setTextColor(...(val ? OK : ERR)); doc.text(val ? '✓' : '✗', M, y);
+    doc.setTextColor(...INK); doc.text(label, M + 14, y);
+    y += 14;
+  });
+  if (s.pretensao_salarial) { doc.setTextColor(...SOFT); doc.text(`Pretensão salarial informada: ${s.pretensao_salarial}`, M, y); y += 14; }
+  y += 14;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...INK);
+  doc.text(`Questionário técnico — nota: ${s.technical_score ?? '—'} / 5`, M, y);
+  y += 18;
+
+  (Array.isArray(s.technical_answers) ? s.technical_answers : []).forEach((a, i) => {
+    pageBreak(46);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...INK);
+    const qLines = doc.splitTextToSize(`${i + 1}. ${a.pergunta}`, W - M * 2);
+    doc.text(qLines, M, y); y += qLines.length * 11 + 3;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.setTextColor(...(a.correta ? OK : ERR));
+    const respLines = doc.splitTextToSize(`Resposta: ${a.escolhida || '(não respondida)'} ${a.correta ? '(correta)' : '(incorreta)'}`, W - M * 2 - 10);
+    doc.text(respLines, M + 10, y); y += respLines.length * 11 + 10;
+  });
+
+  doc.setFontSize(8); doc.setTextColor(180,175,168);
+  doc.text('La Vie Consultoria · lavieconsultoria.com · Documento de uso interno do processo seletivo.', M, 822);
+  doc.save('formulario-' + (s.nome || 'candidato').toLowerCase().replace(/\s+/g,'-') + '.pdf');
+}
+
 // ── RENDER: ADMIN ──
 async function renderAdmin() {
   app.innerHTML = `<div class="admin-wrap"><p class="empty-note">Carregando painel...</p></div>`;
   ADMIN_VAGAS = await loadVagasAdmin();
   const candidaturas = await loadCandidaturas();
+  const discRows = await loadCandidatosDisc();
+  const formsRows = await loadFormsRespostas();
   if (state.view !== 'admin') return;
 
   const naoLidas = candidaturas.filter(c => !c.lida).length;
   let filtroCand = 'todas';
+
+  // ── cruzamento por e-mail para a aba "Candidatos" ──
+  function normEmail(e) { return (e || '').trim().toLowerCase(); }
+  const candidatosMap = new Map();
+  candidaturas.forEach(c => {
+    const key = normEmail(c.email);
+    if (!key) return;
+    if (!candidatosMap.has(key)) candidatosMap.set(key, { nome:c.nome, email:c.email, whatsapp:c.whatsapp, vaga_titulo:c.vaga_titulo, created_at:c.created_at, candidatura:c });
+    else candidatosMap.get(key).candidatura = candidatosMap.get(key).candidatura || c;
+  });
+  discRows.forEach(d => {
+    const key = normEmail(d.email);
+    if (!key) return;
+    if (!candidatosMap.has(key)) candidatosMap.set(key, { nome:d.name, email:d.email, whatsapp:d.phone, vaga_titulo:null, created_at:d.created_at, disc:d });
+    else { const c = candidatosMap.get(key); c.disc = d; c.whatsapp = c.whatsapp || d.phone; }
+  });
+  formsRows.forEach(f => {
+    const key = normEmail(f.email);
+    if (!key) return;
+    if (!candidatosMap.has(key)) candidatosMap.set(key, { nome:f.nome, email:f.email, whatsapp:f.whatsapp, vaga_titulo:f.vaga_titulo, created_at:f.created_at, forms:f });
+    else { const c = candidatosMap.get(key); c.forms = f; c.whatsapp = c.whatsapp || f.whatsapp; c.vaga_titulo = c.vaga_titulo || f.vaga_titulo; }
+  });
+  const candidatosUnificados = [...candidatosMap.values()].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
   function vagasTabHTML() {
     return `
@@ -566,6 +747,40 @@ async function renderAdmin() {
     `;
   }
 
+  function unifTabHTML() {
+    if (candidatosUnificados.length === 0) {
+      return `
+        <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Candidatos</h2></div>
+        <p class="empty-note">Nenhum candidato encontrado ainda em nenhuma das etapas.</p>
+      `;
+    }
+    return `
+      <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Candidatos</h2></div>
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1.4rem;">Cruza automaticamente currículo, resultado do DISC e formulário da vaga pelo e-mail informado em cada etapa.</p>
+      ${candidatosUnificados.map((c, idx) => `
+        <div class="cand-row" data-idx="${idx}">
+          <div class="cand-top">
+            <div>
+              <h4>${esc(c.nome)}</h4>
+              <p>${esc(c.email)} · ${esc(c.whatsapp) || '—'} ${c.vaga_titulo ? '· ' + esc(c.vaga_titulo) : ''}</p>
+            </div>
+          </div>
+          <div class="cand-stages">
+            <div class="stage-chip ${c.candidatura ? 'done' : 'pending'}">
+              ${c.candidatura ? (c.candidatura.cv_url ? `📄 Currículo · <a href="${c.candidatura.cv_url}" target="_blank">Ver</a>` : '📄 Candidatura sem currículo') : '📄 Ainda não se candidatou'}
+            </div>
+            <div class="stage-chip ${c.disc ? 'done' : 'pending'}">
+              ${c.disc ? `🧭 DISC: ${DIM[c.disc.primary_profile]?.name || c.disc.primary_profile || '—'} · <button class="pdf-disc-btn" data-idx="${idx}">Baixar PDF</button>` : '🧭 Ainda não fez o DISC'}
+            </div>
+            <div class="stage-chip ${c.forms ? 'done' : 'pending'}">
+              ${c.forms ? `📝 Formulário: ${c.forms.technical_score ?? '—'}/5 · <button class="pdf-forms-btn" data-idx="${idx}">Baixar PDF</button>` : '📝 Ainda não respondeu o formulário'}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }
+
   function bindVagasTabEvents() {
     const openNew = () => openVagaForm(null, () => draw());
     document.getElementById('newVagaBtn')?.addEventListener('click', openNew);
@@ -579,6 +794,10 @@ async function renderAdmin() {
     document.querySelectorAll('.mark-read').forEach(btn => btn.addEventListener('click', async () => { await marcarLida(btn.dataset.id); const c = candidaturas.find(x => x.id === btn.dataset.id); if (c) c.lida = true; draw(); }));
     document.querySelectorAll('.del-cand').forEach(btn => btn.addEventListener('click', async () => { if (!confirm('Remover esta candidatura?')) return; await deleteCandidatura(btn.dataset.id); candidaturas.splice(candidaturas.findIndex(x => x.id === btn.dataset.id), 1); draw(); }));
   }
+  function bindUnifTabEvents() {
+    document.querySelectorAll('.pdf-disc-btn').forEach(btn => btn.addEventListener('click', () => buildDiscPDFFromRow(candidatosUnificados[btn.dataset.idx].disc)));
+    document.querySelectorAll('.pdf-forms-btn').forEach(btn => btn.addEventListener('click', () => buildFormsPDFFromRow(candidatosUnificados[btn.dataset.idx].forms)));
+  }
 
   async function draw() {
     ADMIN_VAGAS = await loadVagasAdmin();
@@ -590,13 +809,16 @@ async function renderAdmin() {
         <div class="admin-tabs">
           <button class="tab-btn2 ${state.adminTab==='vagas'?'active':''}" data-tab="vagas">Vagas (${ADMIN_VAGAS.length})</button>
           <button class="tab-btn2 ${state.adminTab==='candidaturas'?'active':''}" data-tab="candidaturas">Candidaturas ${naoLidas>0?`(${naoLidas} novas)`:''}</button>
+          <button class="tab-btn2 ${state.adminTab==='candidatos'?'active':''}" data-tab="candidatos">Candidatos (${candidatosUnificados.length})</button>
         </div>
-        <div id="tabContent">${state.adminTab === 'vagas' ? vagasTabHTML() : candTabHTML()}</div>
+        <div id="tabContent">${state.adminTab === 'vagas' ? vagasTabHTML() : state.adminTab === 'candidaturas' ? candTabHTML() : unifTabHTML()}</div>
       </div>
     `;
     document.getElementById('backBtn').addEventListener('click', () => { state.view = 'vagas'; render(); });
     document.querySelectorAll('.tab-btn2').forEach(btn => btn.addEventListener('click', () => { state.adminTab = btn.dataset.tab; draw(); }));
-    if (state.adminTab === 'vagas') bindVagasTabEvents(); else bindCandTabEvents();
+    if (state.adminTab === 'vagas') bindVagasTabEvents();
+    else if (state.adminTab === 'candidaturas') bindCandTabEvents();
+    else bindUnifTabEvents();
   }
   draw();
 }
