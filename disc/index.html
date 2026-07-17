@@ -420,6 +420,15 @@ let state = {
 
 const app = document.getElementById('app');
 
+// Parâmetros vindos da página de vagas (após candidatura)
+const urlParams = new URLSearchParams(window.location.search);
+const incoming = {
+  nome: urlParams.get('nome') || '',
+  email: urlParams.get('email') || '',
+  vaga: urlParams.get('vaga') || ''
+};
+const FORMS_URL = 'https://lavieconsultoria.com/vagas/forms-gerente-captacao.html';
+
 // ═══════════════════════════════════════════════════════
 // SUPABASE
 // ═══════════════════════════════════════════════════════
@@ -469,11 +478,11 @@ function renderWelcome() {
         <div class="profile-item"><span class="profile-dot" style="background:#5E6E7D"></span>Conformidade — foco em qualidade</div>
       </div>
       <label class="field-label">Nome completo</label>
-      <input type="text" id="f-name" placeholder="Digite seu nome completo" autocomplete="name">
+      <input type="text" id="f-name" placeholder="Digite seu nome completo" autocomplete="name" value="${incoming.nome.replace(/"/g,'&quot;')}">
       <div class="field-row">
         <div>
           <label class="field-label">E-mail</label>
-          <input type="email" id="f-email" placeholder="seu@email.com" autocomplete="email">
+          <input type="email" id="f-email" placeholder="seu@email.com" autocomplete="email" value="${incoming.email.replace(/"/g,'&quot;')}">
         </div>
         <div>
           <label class="field-label">WhatsApp</label>
@@ -496,6 +505,7 @@ function renderWelcome() {
   }
   name.addEventListener('input', check);
   email.addEventListener('input', check);
+  check();
 
   btn.addEventListener('click', () => {
     state.name = name.value.trim();
@@ -715,18 +725,36 @@ function renderResult() {
         </div>
       </div>
 
-      <div class="confirm-box">✓ Avaliação concluída! Nossa equipe analisará seu perfil e entrará em contato em breve.</div>
-      <p class="saved-note">Os resultados foram salvos para análise da equipe da La Vie.</p>
+      <div class="confirm-box">✓ Avaliação concluída! Próxima etapa: o formulário da vaga.</div>
+      <p class="saved-note" id="redirectNote">Você será redirecionado para o formulário em instantes…</p>
 
       <div class="btn-row">
-        <button class="btn-primary" id="pdfBtn">Baixar PDF</button>
-        <button class="btn-ghost" id="restartBtn">Nova avaliação</button>
+        <button class="btn-ghost" id="pdfBtn">Baixar PDF</button>
+        <button class="btn-primary" id="continueBtn">Continuar para o formulário →</button>
       </div>
+      <p style="text-align:center;margin-top:14px;">
+        <button class="btn-ghost" id="restartBtn" style="border:none;font-size:12px;color:var(--ink-soft);">Fazer nova avaliação</button>
+      </p>
     </div>
   `;
 
-  document.getElementById('pdfBtn').addEventListener('click', () => buildPDF(r));
+  const vagaParam = incoming.vaga || 'Gerente de Captação de Alunos e Televendas';
+  const formsParams = new URLSearchParams({ nome: r.name, email: r.email || '', vaga: vagaParam });
+  const formsUrl = `${FORMS_URL}?${formsParams.toString()}`;
+
+  let redirectTimer = setTimeout(() => { window.location.href = formsUrl; }, 6000);
+
+  document.getElementById('pdfBtn').addEventListener('click', () => {
+    clearTimeout(redirectTimer);
+    document.getElementById('redirectNote').textContent = 'Quando terminar, clique em "Continuar para o formulário".';
+    buildPDF(r);
+  });
+  document.getElementById('continueBtn').addEventListener('click', () => {
+    clearTimeout(redirectTimer);
+    window.location.href = formsUrl;
+  });
   document.getElementById('restartBtn').addEventListener('click', () => {
+    clearTimeout(redirectTimer);
     state = { view:'welcome', name:'', email:'', phone:'', round:0, scores:{D:0,I:0,S:0,C:0}, picks:[] };
     render();
   });
