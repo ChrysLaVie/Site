@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formulário da Vaga — Gerente de Captação de Alunos e Televendas — La Vie Consultoria</title>
+<title>Formulário da Vaga · Gerente de Captação de Alunos e Televendas · La Vie Consultoria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -231,6 +231,7 @@ const params = new URLSearchParams(window.location.search);
 const prefill = {
   nome: params.get('nome') || '',
   email: params.get('email') || '',
+  telefone: params.get('telefone') || '',
   vaga: params.get('vaga') || VAGA_TITULO_PADRAO
 };
 
@@ -264,9 +265,9 @@ function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 function renderForm() {
   app.innerHTML = `
     <div class="hero">
-      <span class="eyebrow">La Vie Consultoria — Processo Seletivo</span>
+      <span class="eyebrow">La Vie Consultoria · Processo Seletivo</span>
       <h1 class="section-title">Formulário da vaga: <em>${esc(prefill.vaga)}</em></h1>
-      <p class="lead">Leia com atenção as informações abaixo antes de preencher o formulário. Esta é a etapa final do processo seletivo — suas respostas serão analisadas pela nossa equipe.</p>
+      <p class="lead">Leia com atenção as informações abaixo antes de preencher o formulário. Esta é a etapa final do processo seletivo. Suas respostas serão analisadas pela nossa equipe.</p>
     </div>
 
     <div class="card">
@@ -279,7 +280,7 @@ function renderForm() {
     </div>
 
     <div class="card">
-      <h3>Condições da vaga — ciência e concordância</h3>
+      <h3>Condições da vaga: ciência e concordância</h3>
       <div class="check-block">
         <input type="checkbox" id="c-pj">
         <label for="c-pj">Estou ciente de que a contratação é no modelo <strong>PJ</strong>.</label>
@@ -300,14 +301,14 @@ function renderForm() {
       <label class="field-label">Observações ou comentários (opcional)</label>
       <textarea id="f-observacoes" rows="3" placeholder="Algo que queira nos contar antes de enviar o formulário..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--charcoal);outline:none;resize:vertical;"></textarea>
 
-      <label class="field-label">Pretensão salarial (opcional — preencha só se for diferente do valor informado acima)</label>
+      <label class="field-label">Pretensão salarial (opcional, preencha só se for diferente do valor informado acima)</label>
       <input type="text" id="f-pretensao" placeholder="Ex: R$ 6.000,00">
       <div class="field-hint">Deixe em branco se o valor de R$ 5.000,00 + comissão atende sua expectativa.</div>
     </div>
 
     <div class="card">
       <h3>Perguntas técnicas</h3>
-      <p class="body-text" style="margin-bottom:1.2rem;">Responda com base no que você já sabe hoje sobre gestão comercial e captação de alunos. Não há problema em não saber alguma — respeite sua sinceridade.</p>
+      <p class="body-text" style="margin-bottom:1.2rem;">Responda com base no que você já sabe hoje sobre gestão comercial e captação de alunos. Não há problema em não saber alguma; respeite sua sinceridade.</p>
       <div id="quizList"></div>
     </div>
 
@@ -322,7 +323,7 @@ function renderForm() {
         </div>
         <div>
           <label class="field-label">WhatsApp *</label>
-          <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000">
+          <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
         </div>
       </div>
       <div id="formError" style="display:none"></div>
@@ -453,7 +454,7 @@ async function renderAdmin() {
       <div class="admin-row" data-id="${s.id}">
         <div class="admin-row-info">
           <h4>${esc(s.nome)} ${score !== null ? `<span class="score-pill ${scoreClass}">${score}/5 no técnico</span>` : ''}</h4>
-          <p>${esc(s.email)} · ${esc(s.whatsapp) || '—'} · ${new Date(s.created_at).toLocaleDateString('pt-BR')}</p>
+          <p>${esc(s.email)} · ${esc(s.whatsapp) || '-'} · ${new Date(s.created_at).toLocaleDateString('pt-BR')}</p>
         </div>
         <div class="admin-row-actions">
           <button class="pdf-btn" data-id="${s.id}">Baixar PDF</button>
@@ -511,16 +512,22 @@ function buildSubmissionPDF(s) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...SOFT);
-  doc.text('FORMULÁRIO DA VAGA — RESUMO PARA O RECRUTADOR', M + 38, y + 13);
+  doc.text('FORMULÁRIO DA VAGA · RESUMO PARA O RECRUTADOR', M + 38, y + 13);
   doc.setDrawColor(...BORDER);
   doc.line(M, y + 24, W - M, y + 24);
   y += 46;
 
   doc.setFont('times', 'italic');
-  doc.setFontSize(22);
   doc.setTextColor(...INK);
+  let fNameSize = 22;
+  doc.setFontSize(fNameSize);
+  const fMaxNameWidth = W - M * 2;
+  while (fNameSize > 13 && doc.getTextWidth(pdfSafe(s.nome)) > fMaxNameWidth) {
+    fNameSize -= 1;
+    doc.setFontSize(fNameSize);
+  }
   doc.text(pdfSafe(s.nome), M, y);
-  y += 16;
+  y += fNameSize * 0.75;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(...SOFT);
@@ -574,7 +581,7 @@ function buildSubmissionPDF(s) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(...INK);
-  doc.text(`Questionário técnico — nota: ${s.technical_score ?? '-'} / 5`, M, y);
+  doc.text(`Questionário técnico: nota ${s.technical_score ?? '-'} / 5`, M, y);
   y += 18;
 
   const answers = Array.isArray(s.technical_answers) ? s.technical_answers : [];
