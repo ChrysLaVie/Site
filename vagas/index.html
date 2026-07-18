@@ -287,10 +287,26 @@ const ADMIN_PASS   = 'lavie2026';
 // Resumo compacto dos perfis DISC, usado para gerar o PDF do teste
 // direto no painel (sem depender da página do DISC)
 const DIM = {
-  D: { name: 'Dominância',   color: '#9B6B52', summary: 'Orientado a resultados, direto e decidido. Assume riscos, lidera naturalmente e foca em superar obstáculos com agilidade.' },
-  I: { name: 'Influência',   color: '#B08A3E', summary: 'Comunicativo, entusiasta e com facilidade natural para engajar pessoas. Cria conexões com facilidade e transmite energia positiva.' },
-  S: { name: 'Estabilidade', color: '#6B7A5E', summary: 'Paciente, confiável e cooperativo. Trabalha bem em equipe, valoriza relações duradouras e mantém a consistência nos projetos.' },
-  C: { name: 'Conformidade', color: '#5E6E7D', summary: 'Analítico, detalhista e orientado à qualidade. Segue processos com rigor, toma decisões embasadas em dados e entrega com alto padrão.' }
+  D: { name: 'Dominância',   color: '#9B6B52', summary: 'Orientado a resultados, direto e decidido. Assume riscos, lidera naturalmente e foca em superar obstáculos com agilidade.',
+    strengths: ['Tomada de decisão rápida e segura', 'Foco total em resultados e metas', 'Liderança natural e assunção de responsabilidades', 'Alta energia para iniciar e conduzir projetos'],
+    challenges: ['Pode ser impaciente com processos detalhados', 'Tendência a decidir antes de ouvir todos', 'Pode parecer insensível ou autoritário', 'Dificuldade em aceitar muitas regras'],
+    motivation: 'Metas desafiadoras, autonomia, reconhecimento por resultados concretos e competição saudável.',
+    ideal_roles: 'Liderança, vendas, gestão de projetos, empreendedorismo, áreas que exigem iniciativa.' },
+  I: { name: 'Influência',   color: '#B08A3E', summary: 'Comunicativo, entusiasta e com facilidade natural para engajar pessoas. Cria conexões com facilidade e transmite energia positiva.',
+    strengths: ['Comunicação clara e envolvente', 'Facilidade para criar e manter relacionamentos', 'Entusiasmo que motiva a equipe', 'Adaptação rápida a mudanças e novidades'],
+    challenges: ['Pode se dispersar com facilidade', 'Dificuldade em manter foco em detalhes', 'Pode evitar feedbacks negativos', 'Tendência a prometer mais do que consegue entregar'],
+    motivation: 'Reconhecimento público, aprovação social, variedade de tarefas e ambientes colaborativos.',
+    ideal_roles: 'Vendas, marketing, comunicação, treinamento, RH, funções com alto contato com pessoas.' },
+  S: { name: 'Estabilidade', color: '#6B7A5E', summary: 'Paciente, confiável e cooperativo. Trabalha bem em equipe, valoriza relações duradouras e mantém a consistência nos projetos.',
+    strengths: ['Confiabilidade e consistência nas entregas', 'Capacidade de manter a calma sob pressão', 'Facilidade para trabalhar em equipe', 'Dedicação e comprometimento de longo prazo'],
+    challenges: ['Resistência a mudanças rápidas', 'Dificuldade em dizer não', 'Pode evitar confrontos necessários', 'Tendência a acumular tarefas sem pedir ajuda'],
+    motivation: 'Ambiente harmonioso, relações de confiança, segurança no trabalho e reconhecimento pela dedicação.',
+    ideal_roles: 'Atendimento, operações, RH, suporte, treinamento, coordenação de equipes.' },
+  C: { name: 'Conformidade', color: '#5E6E7D', summary: 'Analítico, detalhista e orientado à qualidade. Segue processos com rigor, toma decisões embasadas em dados e entrega com alto padrão.',
+    strengths: ['Entregas com alto padrão de qualidade', 'Identificação de erros e riscos com precisão', 'Disciplina para seguir processos e normas', 'Análise aprofundada antes de decidir'],
+    challenges: ['Pode ser perfeccionista em excesso', 'Dificuldade em agir sem informações completas', 'Pode parecer distante ou muito formal', 'Tende a ter dificuldade com ambiguidade'],
+    motivation: 'Padrões elevados, clareza nas regras, reconhecimento pela qualidade e acesso a dados e informações.',
+    ideal_roles: 'Finanças, qualidade, tecnologia, jurídico, auditoria, controle e funções analíticas.' }
 };
 
 let db = null;
@@ -609,7 +625,7 @@ function buildDossiePDF(c) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const M = 52;
-  const INK = [58,58,58], SOFT = [122,119,110], BORDER = [216,207,196];
+  const INK = [58,58,58], SOFT = [122,119,110], BORDER = [216,207,196], OK = [74,122,66], PEND = [180,175,168];
   let y = 66;
 
   doc.setFont('times', 'italic'); doc.setFontSize(20); doc.setTextColor(...INK);
@@ -620,11 +636,53 @@ function buildDossiePDF(c) {
   y += 46;
 
   doc.setFont('times', 'italic'); doc.setTextColor(...INK);
-  const dossieNameSize = fitNameFontSize(doc, c.nome || '', W - M * 2, 24, 14);
+  const dossieNameSize = fitNameFontSize(doc, c.nome || '', W - M * 2, 26, 14);
   doc.setFontSize(dossieNameSize);
-  doc.text(c.nome || '', M, y); y += dossieNameSize * 0.75;
+  doc.text(c.nome || '', M, y); y += dossieNameSize * 0.8;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...SOFT);
-  doc.text(`${c.email || ''} · ${c.whatsapp || ''}${c.vaga_titulo ? ' · ' + c.vaga_titulo : ''}`, M, y);
+  doc.text(pdfSafe(`${c.email || ''} · ${c.whatsapp || ''}${c.vaga_titulo ? ' · ' + c.vaga_titulo : ''}`), M, y);
+  y += 14;
+  doc.setFontSize(8.5);
+  doc.text('Dossiê gerado em ' + new Date().toLocaleDateString('pt-BR'), M, y);
+  y += 36;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...INK);
+  doc.text('Etapas do processo seletivo', M, y);
+  y += 20;
+
+  function stageRow(label, done, detail) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
+    doc.setTextColor(...(done ? OK : PEND));
+    doc.text(done ? 'CONCLUÍDO' : 'PENDENTE', M, y);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(...INK);
+    doc.text(label, M + 78, y);
+    if (detail) {
+      doc.setTextColor(...SOFT);
+      doc.text(pdfSafe(detail), M + 78, y + 13);
+      y += 13;
+    }
+    y += 24;
+  }
+
+  stageRow('Candidatura na vaga', !!c.candidatura, c.candidatura ? (c.candidatura.cv_url ? 'Currículo anexado — link disponível abaixo' : 'Sem currículo anexado') : null);
+  stageRow('Teste comportamental DISC', !!c.disc, c.disc ? `Perfil predominante: ${DIM[c.disc.primary_profile]?.name || c.disc.primary_profile || '-'}` : null);
+  stageRow('Formulário da vaga', !!c.forms, c.forms ? `Nota no questionário técnico: ${c.forms.technical_score ?? '-'} / 5` : null);
+
+  if (c.candidatura?.cv_url) {
+    y += 8;
+    doc.setDrawColor(...BORDER); doc.line(M, y, W - M, y);
+    y += 20;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+    doc.text('Link do currículo:', M, y);
+    y += 14;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(40, 80, 160);
+    const cvLines = doc.splitTextToSize(c.candidatura.cv_url, W - M * 2);
+    doc.text(cvLines, M, y);
+    doc.link(M, y - 8, doc.getTextWidth(cvLines[0] || ''), 12, { url: c.candidatura.cv_url });
+  }
+
+  doc.setFontSize(8); doc.setTextColor(180,175,168);
+  doc.text('La Vie Consultoria · lavieconsultoria.com · Documento de uso interno do processo seletivo.', M, 822);
 
   if (c.disc) {
     doc.addPage();
@@ -723,6 +781,49 @@ function _drawDiscBody(doc, row) {
     doc.text((score > 0 ? '+' : '') + score, barX + barW + 8, y + 8);
     y += 24;
   });
+  y += 12;
+
+  if (primary && DIM[primary]) {
+    const prof = DIM[primary];
+    const bW = (W - M * 2 - 14) / 2;
+    const boxH = 92;
+    doc.setFillColor(245, 241, 234);
+    doc.roundedRect(M, y, bW, boxH, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...INK);
+    doc.text('PONTOS FORTES', M + 12, y + 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SOFT);
+    prof.strengths.forEach((s, i) => {
+      const sLines = doc.splitTextToSize('- ' + pdfSafe(s), bW - 24);
+      doc.text(sLines, M + 12, y + 30 + i * 15);
+    });
+
+    const b2X = M + bW + 14;
+    doc.setFillColor(245, 241, 234);
+    doc.roundedRect(b2X, y, bW, boxH, 3, 3, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...INK);
+    doc.text('PONTOS DE ATENÇÃO', b2X + 12, y + 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SOFT);
+    prof.challenges.forEach((s, i) => {
+      const sLines = doc.splitTextToSize('- ' + pdfSafe(s), bW - 24);
+      doc.text(sLines, b2X + 12, y + 30 + i * 15);
+    });
+    y += boxH + 18;
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+    doc.text('O que motiva:', M, y);
+    y += 13;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...SOFT);
+    let motLines = doc.splitTextToSize(pdfSafe(prof.motivation), W - M * 2);
+    doc.text(motLines, M, y);
+    y += motLines.length * 12 + 12;
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+    doc.text('Funções ideais:', M, y);
+    y += 13;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...SOFT);
+    let roleLines = doc.splitTextToSize(pdfSafe(prof.ideal_roles), W - M * 2);
+    doc.text(roleLines, M, y);
+  }
 
   doc.setFontSize(8); doc.setTextColor(180,175,168);
   doc.text('La Vie Consultoria · lavieconsultoria.com · Documento de uso interno do processo seletivo.', M, 822);
