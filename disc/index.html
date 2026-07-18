@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Avaliação Comportamental DISC — La Vie Consultoria</title>
+<title>Avaliação Comportamental DISC · La Vie Consultoria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -248,7 +248,7 @@ const ROUNDS = [
   // 2
   { D: "Encaro desafios de frente e não fujo de conflitos quando necessário",
     I: "Consigo convencer e motivar as pessoas com facilidade",
-    S: "Sou paciente e confiável — as pessoas sabem que podem contar comigo",
+    S: "Sou paciente e confiável, as pessoas sabem que podem contar comigo",
     C: "Prefiro fazer algo certo a fazer rápido" },
   // 3
   { D: "Tenho iniciativa e gosto de liderar projetos importantes",
@@ -439,6 +439,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const incoming = {
   nome: urlParams.get('nome') || '',
   email: urlParams.get('email') || '',
+  telefone: urlParams.get('telefone') || '',
   vaga: urlParams.get('vaga') || ''
 };
 const FORMS_URL = 'https://lavieconsultoria.com/vagas/forms-gerente-captacao.html';
@@ -475,6 +476,50 @@ async function deleteResult(id) {
 // RENDER: WELCOME
 // ═══════════════════════════════════════════════════════
 function renderWelcome() {
+  const jaTemDados = incoming.nome.trim() && incoming.email.includes('@');
+
+  if (jaTemDados) {
+    // Veio da candidatura na vaga: nao pedir os dados de novo, so confirmar e iniciar
+    app.innerHTML = `
+      <div class="card">
+        <svg class="card-deco" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+          <path d="M120 20 C 95 28, 75 50, 66 84 C 60 108, 62 130, 70 148" fill="none" stroke="#7A776E" stroke-width="1"/>
+          <path d="M75 56 C 88 50, 100 52, 110 60 C 102 65, 89 67, 75 56 Z" fill="none" stroke="#7A776E" stroke-width="1"/>
+          <path d="M66 84 C 80 80, 93 84, 102 95 C 92 100, 77 99, 66 84 Z" fill="none" stroke="#7A776E" stroke-width="1"/>
+        </svg>
+        ${!db ? '<div class="warning-box">⚠ Banco de dados não configurado: os resultados não serão salvos.</div>' : ''}
+        <span class="eyebrow">Avaliação Comportamental</span>
+        <h1 class="title">Descubra seu <em>perfil</em> DISC</h1>
+        <p class="lede">Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você: da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.</p>
+        <div class="profile-legend">
+          <div class="profile-item"><span class="profile-dot" style="background:#9B6B52"></span>Dominância: foco em resultados</div>
+          <div class="profile-item"><span class="profile-dot" style="background:#B08A3E"></span>Influência: foco em pessoas</div>
+          <div class="profile-item"><span class="profile-dot" style="background:#6B7A5E"></span>Estabilidade: foco em harmonia</div>
+          <div class="profile-item"><span class="profile-dot" style="background:#5E6E7D"></span>Conformidade: foco em qualidade</div>
+        </div>
+        <div class="desc-block" style="margin-top:24px;">
+          <strong>${incoming.nome}</strong><br>
+          <span style="font-size:13px;color:var(--ink-soft);">${incoming.email}${incoming.telefone ? ' · ' + incoming.telefone : ''}</span>
+        </div>
+        <div style="margin-top:20px;">
+          <button class="btn-primary" id="startBtn">Iniciar avaliação →</button>
+        </div>
+        <p style="font-size:12px;color:var(--ink-soft);margin-top:14px;">Tempo estimado: 8 a 12 minutos. Seus dados já foram preenchidos na etapa da candidatura.</p>
+      </div>
+    `;
+    document.getElementById('startBtn').addEventListener('click', () => {
+      state.name = incoming.nome;
+      state.email = incoming.email;
+      state.phone = incoming.telefone;
+      state.round = 0;
+      state.scores = { D:0, I:0, S:0, C:0 };
+      state.picks = [];
+      state.view = 'test';
+      render();
+    });
+    return;
+  }
+
   app.innerHTML = `
     <div class="card">
       <svg class="card-deco" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
@@ -482,22 +527,22 @@ function renderWelcome() {
         <path d="M75 56 C 88 50, 100 52, 110 60 C 102 65, 89 67, 75 56 Z" fill="none" stroke="#7A776E" stroke-width="1"/>
         <path d="M66 84 C 80 80, 93 84, 102 95 C 92 100, 77 99, 66 84 Z" fill="none" stroke="#7A776E" stroke-width="1"/>
       </svg>
-      ${!db ? '<div class="warning-box">⚠ Banco de dados não configurado — os resultados não serão salvos.</div>' : ''}
+      ${!db ? '<div class="warning-box">⚠ Banco de dados não configurado: os resultados não serão salvos.</div>' : ''}
       <span class="eyebrow">Avaliação Comportamental</span>
       <h1 class="title">Descubra seu <em>perfil</em> DISC</h1>
-      <p class="lede">Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você — da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.</p>
+      <p class="lede">Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você: da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.</p>
       <div class="profile-legend">
-        <div class="profile-item"><span class="profile-dot" style="background:#9B6B52"></span>Dominância — foco em resultados</div>
-        <div class="profile-item"><span class="profile-dot" style="background:#B08A3E"></span>Influência — foco em pessoas</div>
-        <div class="profile-item"><span class="profile-dot" style="background:#6B7A5E"></span>Estabilidade — foco em harmonia</div>
-        <div class="profile-item"><span class="profile-dot" style="background:#5E6E7D"></span>Conformidade — foco em qualidade</div>
+        <div class="profile-item"><span class="profile-dot" style="background:#9B6B52"></span>Dominância: foco em resultados</div>
+        <div class="profile-item"><span class="profile-dot" style="background:#B08A3E"></span>Influência: foco em pessoas</div>
+        <div class="profile-item"><span class="profile-dot" style="background:#6B7A5E"></span>Estabilidade: foco em harmonia</div>
+        <div class="profile-item"><span class="profile-dot" style="background:#5E6E7D"></span>Conformidade: foco em qualidade</div>
       </div>
       <label class="field-label">Nome completo</label>
-      <input type="text" id="f-name" placeholder="Digite seu nome completo" autocomplete="name" value="${incoming.nome.replace(/"/g,'&quot;')}">
+      <input type="text" id="f-name" placeholder="Digite seu nome completo" autocomplete="name">
       <div class="field-row">
         <div>
           <label class="field-label">E-mail</label>
-          <input type="email" id="f-email" placeholder="seu@email.com" autocomplete="email" value="${incoming.email.replace(/"/g,'&quot;')}">
+          <input type="email" id="f-email" placeholder="seu@email.com" autocomplete="email">
         </div>
         <div>
           <label class="field-label">WhatsApp</label>
@@ -520,7 +565,6 @@ function renderWelcome() {
   }
   name.addEventListener('input', check);
   email.addEventListener('input', check);
-  check();
 
   btn.addEventListener('click', () => {
     state.name = name.value.trim();
@@ -747,22 +791,15 @@ function renderResult() {
         <button class="btn-ghost" id="pdfBtn">Baixar PDF</button>
         <button class="btn-primary" id="continueBtn">Continuar para o formulário →</button>
       </div>
-      <p style="text-align:center;margin-top:14px;">
-        <button class="btn-ghost" id="restartBtn" style="border:none;font-size:12px;color:var(--ink-soft);">Fazer nova avaliação</button>
-      </p>
     </div>
   `;
 
   const vagaParam = incoming.vaga || 'Gerente de Captação de Alunos e Televendas';
-  const formsParams = new URLSearchParams({ nome: r.name, email: r.email || '', vaga: vagaParam });
+  const formsParams = new URLSearchParams({ nome: r.name, email: r.email || '', telefone: r.phone || '', vaga: vagaParam });
   const formsUrl = `${FORMS_URL}?${formsParams.toString()}`;
 
   document.getElementById('pdfBtn').addEventListener('click', () => buildPDF(r));
   document.getElementById('continueBtn').addEventListener('click', () => { window.location.href = formsUrl; });
-  document.getElementById('restartBtn').addEventListener('click', () => {
-    state = { view:'welcome', name:'', email:'', phone:'', round:0, scores:{D:0,I:0,S:0,C:0}, picks:[] };
-    render();
-  });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -804,12 +841,18 @@ function buildPDF(r) {
   doc.line(M, y + 26, W - M, y + 26);
   y += 46;
 
-  // Nome e data
+  // Nome e data — ajusta o tamanho da fonte se o nome for muito comprido
   doc.setFont('times', 'italic');
-  doc.setFontSize(26);
+  let nameSize = 26;
+  doc.setFontSize(nameSize);
+  const maxNameWidth = W - M * 2;
+  while (nameSize > 14 && doc.getTextWidth(r.name || '') > maxNameWidth) {
+    nameSize -= 1;
+    doc.setFontSize(nameSize);
+  }
   doc.setTextColor(...INK);
-  doc.text(r.name, M, y);
-  y += 18;
+  doc.text(r.name || '', M, y);
+  y += nameSize * 0.75;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(...SOFT);
@@ -963,11 +1006,11 @@ async function renderAdmin() {
           return `<tr>
             <td>${new Date(r.created_at).toLocaleDateString('pt-BR')}</td>
             <td>${r.name}</td>
-            <td>${r.email || '—'}</td>
-            <td>${r.phone || '—'}</td>
+            <td>${r.email || '-'}</td>
+            <td>${r.phone || '-'}</td>
             <td><span class="pill" style="background:${DIM[primary]?.color || '#999'}">${DIM[primary]?.name || primary}</span></td>
             <td><span class="pill" style="background:${DIM[secondary]?.color || '#ccc'};opacity:0.85">${DIM[secondary]?.name || secondary}</span></td>
-            <td>${r.most?.D ?? '—'}</td><td>${r.most?.I ?? '—'}</td><td>${r.most?.S ?? '—'}</td><td>${r.most?.C ?? '—'}</td>
+            <td>${r.most?.D ?? '-'}</td><td>${r.most?.I ?? '-'}</td><td>${r.most?.S ?? '-'}</td><td>${r.most?.C ?? '-'}</td>
             <td><button class="del-btn" data-id="${r.id}">remover</button></td>
           </tr>`;
         }).join('')}
