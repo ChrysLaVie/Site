@@ -171,6 +171,11 @@ const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
 const ADMIN_PASS = 'lavie2026';
 const VAGA_TITULO_PADRAO = 'Gerente de Captação de Alunos e Televendas';
 
+// Banco do sistema de R&S (painel Cambury) — projeto Supabase separado.
+// Usado só para empurrar o candidato pro funil automaticamente ao final do formulário.
+const RS_SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
+const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
+
 const QUIZ = [
   {
     q: 'Qual a ordem mais correta das etapas de um funil de captação de alunos?',
@@ -226,6 +231,70 @@ const QUIZ = [
 
 let db = null;
 try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
+
+let rsDb = null;
+try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY); } catch(e) {}
+
+// Envia o candidato para o funil do sistema de R&S (Cambury) assim que ele termina
+// o formulário — busca o currículo e o DISC no banco das vagas, casa a vaga pelo
+// título no banco do R&S e cria (ou atualiza) o registro em "candidatos".
+// Roda em segundo plano: se algo falhar aqui, não afeta a confirmação do candidato.
+async function pushCandidatoParaRS(formPayload) {
+  if (!rsDb || !db) return;
+  try {
+    const emailNorm = (formPayload.email || '').trim().toLowerCase();
+
+    const [candidaturaRes, discRes] = await Promise.all([
+      db.from('candidaturas').select('cv_url').ilike('email', emailNorm).order('created_at', { ascending:false }).limit(1).maybeSingle(),
+      db.from('candidatos_disc').select('primary_profile,secondary_profile').ilike('email', emailNorm).order('created_at', { ascending:false }).limit(1).maybeSingle()
+    ]);
+
+    const cvUrl = candidaturaRes?.data?.cv_url || null;
+    const discPrimary = discRes?.data?.primary_profile || null;
+    const discSecondary = discRes?.data?.secondary_profile || null;
+    const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
+
+    let obs = `Nota no questionário técnico: ${formPayload.technical_score}/5.`;
+    if (discPrimary) {
+      obs += ` Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
+    }
+    if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
+
+    // Casa a vaga pelo título (sem diferenciar maiúsculas/acentos exatos) — se não achar,
+    // o candidato ainda entra no funil, só que sem vaga vinculada, com o título anotado.
+    const vagaRes = await rsDb.from('vagas').select('id,titulo').ilike('titulo', formPayload.vaga_titulo).limit(1).maybeSingle();
+    const vagaId = vagaRes?.data?.id || null;
+    if (!vagaId) obs = `[Vaga do site: "${formPayload.vaga_titulo}" — não encontrada no R&S, cadastre-a para vincular automaticamente] ` + obs;
+
+    const documentos = cvUrl ? [{ nome: 'Currículo', url: cvUrl, tipo: 'pdf', enviadoEm: new Date().toISOString(), enviadoPor: 'Site (automático)' }] : [];
+    const agora = new Date().toISOString();
+
+    const candidato = {
+      id: 'site-' + Date.now().toString(),
+      nome: formPayload.nome,
+      cpf: null,
+      telefone: formPayload.whatsapp,
+      email: formPayload.email,
+      vaga_id: vagaId,
+      etapa: 'entrevista_rh', // "Formulários e Testes" — é exatamente onde o candidato parou
+      data_entrada: agora.slice(0, 10),
+      fonte: 'Site La Vie (vaga + DISC + formulário)',
+      obs,
+      documentos,
+      historico: [{ etapa: 'entrevista_rh', data: agora, obs: 'Candidatura completa recebida automaticamente pelo site.', usuario: 'Site (automático)' }],
+      criado_por: 'Site (automático)'
+    };
+
+    // Evita duplicar se o candidato já existe no R&S (mesmo e-mail + mesma vaga)
+    const existente = await rsDb.from('candidatos').select('id').ilike('email', emailNorm).eq('vaga_id', vagaId).limit(1).maybeSingle();
+    if (existente?.data?.id) {
+      candidato.id = existente.data.id;
+    }
+    await rsDb.from('candidatos').upsert(candidato);
+  } catch (e) {
+    console.warn('Não foi possível enviar o candidato para o R&S:', e);
+  }
+}
 
 const params = new URLSearchParams(window.location.search);
 const prefill = {
@@ -395,6 +464,14 @@ function renderForm() {
     });
 
     if (result.ok) {
+      pushCandidatoParaRS({
+        nome: nome.value.trim(),
+        email: email.value.trim(),
+        whatsapp: whatsapp.value.trim(),
+        vaga_titulo: prefill.vaga,
+        observacoes: document.getElementById('f-observacoes').value.trim() || null,
+        technical_score: technicalScore
+      });
       app.innerHTML = `
         <div class="card success-card">
           <h2>Formulário recebido ✓</h2>
