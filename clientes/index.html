@@ -507,7 +507,7 @@ header {
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--light)"><span id="dash-pct-left"></span><span id="dash-pct-right"></span></div>
   </div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Análise de Candidatos</div>
-  <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-bottom:14px;align-items:stretch">
+  <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-bottom:14px;align-items:start">
     <div class="card chart-card">
       <div class="chart-card-title">Status das Vagas</div>
       <div class="chart-card-sub">Panorama rápido de todas as posições do ciclo</div>
@@ -519,7 +519,7 @@ header {
       <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr;gap:14px;margin-bottom:24px;align-items:stretch">
+  <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr;gap:14px;margin-bottom:24px;align-items:start">
     <div class="card chart-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:4px">
         <div>
@@ -545,7 +545,7 @@ header {
       <div id="dash-metricas-tempo"></div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:24px;align-items:stretch">
+  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:24px;align-items:start">
     <div class="card chart-card">
       <div class="chart-card-title">Tempo Médio por Etapa</div>
       <div class="chart-card-sub">Dias reais em cada etapa comparado à meta de SLA</div>
@@ -2433,8 +2433,8 @@ function renderAcoesPendentes(){
 
   const cor={r:'var(--red)',   a:'#B7791F',   g:'var(--green)'};
   const bg ={r:'var(--red-lt)',a:'#FBF3E4',   g:'var(--green-lt)'};
-
-  el.innerHTML = itens.map(it=>`
+  const LIMITE=6;
+  const card=it=>`
     <div class="card" style="padding:14px 18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;border-left:4px solid ${cor[it.nivel]}" onclick="moverCandidato('${it.c.id}')">
       <div style="min-width:200px">
         <strong>${it.c.nome}</strong><br>
@@ -2445,7 +2445,15 @@ function renderAcoesPendentes(){
         <span style="background:${bg[it.nivel]};color:${cor[it.nivel]};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${it.dias}d nesta etapa</span>
         ${it.finTxt?`<div style="font-size:11px;color:var(--mid);margin-top:4px">${it.finTxt}</div>`:''}
       </div>
-    </div>`).join('');
+    </div>`;
+
+  const visiveis=itens.slice(0,LIMITE), resto=itens.slice(LIMITE);
+  let html = visiveis.map(card).join('');
+  if(resto.length){
+    html += `<div id="dash-acoes-resto" style="display:none">${resto.map(card).join('')}</div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="const r=document.getElementById('dash-acoes-resto');const btn=event.currentTarget;const abrindo=r.style.display==='none';r.style.display=abrindo?'block':'none';btn.textContent=abrindo?'Mostrar menos':'Mostrar mais ${resto.length} pendência${resto.length>1?'s':''}';">Mostrar mais ${resto.length} pendência${resto.length>1?'s':''}</button>`;
+  }
+  el.innerHTML = html;
 }
 
 // ══ INDICADORES DE R&S — gráficos reais: tempo por etapa, funil, candidatos por vaga, destino ══
