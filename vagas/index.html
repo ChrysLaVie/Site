@@ -93,6 +93,7 @@ nav {
 .vaga-card h3 { font-family:'Cormorant Garamond',serif; font-size:1.35rem; font-weight:500; color:var(--charcoal); margin-bottom:0.7rem; }
 .vaga-meta { display:flex; gap:0.9rem; flex-wrap:wrap; }
 .vaga-meta span { font-size:0.78rem; color:var(--muted); }
+.vaga-remun { color:var(--charcoal); font-weight:500; }
 .vaga-arrow { font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:var(--sand-dark); flex-shrink:0; transition:transform 0.2s; }
 .vaga-card.open .vaga-arrow { transform:rotate(90deg); }
 .vaga-detail { display:none; padding:0 2rem 2rem; border-top:1px solid var(--border); }
@@ -408,7 +409,7 @@ async function renderVagas() {
         <div>
           <span class="vaga-setor">${esc(v.area)}</span>
           <h3>${esc(v.title)}</h3>
-          <div class="vaga-meta"><span>${esc(v.local)}</span><span>·</span><span>${esc(v.tipo)}</span><span>·</span><span>${esc(v.modelo)}</span></div>
+          <div class="vaga-meta"><span>${esc(v.local)}</span><span>·</span><span>${esc(v.tipo)}</span><span>·</span><span>${esc(v.modelo)}</span>${v.remuneracao ? `<span>·</span><span class="vaga-remun">${esc(v.remuneracao)}</span>` : ''}</div>
         </div>
         <span class="vaga-arrow">›</span>
       </div>
@@ -517,6 +518,7 @@ function openVagaForm(vaga, onSaved) {
           <div class="form-group"><label class="fl">Tipo *</label><input type="text" id="v-tipo" placeholder="Ex: CLT / PJ / Estágio" value="${esc(vaga?.tipo)}"></div>
         </div>
         <div class="form-group"><label class="fl">Modelo de trabalho *</label><input type="text" id="v-modelo" placeholder="Ex: Presencial / Híbrido / Remoto" value="${esc(vaga?.modelo)}"></div>
+        <div class="form-group"><label class="fl">Remuneração (opcional)</label><input type="text" id="v-remuneracao" placeholder="Ex: R$ 10.000 ou R$ 5.000 + comissão" value="${esc(vaga?.remuneracao)}"></div>
         <div class="form-group"><label class="fl">Descrição da vaga *</label><textarea class="ta" id="v-descricao" placeholder="Um resumo da vaga e do contexto da empresa...">${esc(vaga?.descricao)}</textarea></div>
         <div class="form-group"><label class="fl">Responsabilidades</label><textarea class="ta" id="v-responsabilidades" placeholder="Uma por linha">${esc(arrayToLines(vaga?.responsabilidades))}</textarea></div>
         <div class="form-group"><label class="fl">Requisitos</label><textarea class="ta" id="v-requisitos" placeholder="Um por linha">${esc(arrayToLines(vaga?.requisitos))}</textarea></div>
@@ -552,6 +554,7 @@ function openVagaForm(vaga, onSaved) {
 
     const payload = {
       title, area, local, tipo, modelo, descricao,
+      remuneracao: document.getElementById('v-remuneracao').value.trim() || null,
       responsabilidades: linesToArray(document.getElementById('v-responsabilidades').value),
       requisitos: linesToArray(document.getElementById('v-requisitos').value),
       diferenciais: linesToArray(document.getElementById('v-diferenciais').value),
