@@ -240,6 +240,15 @@ header {
 .cand-table tr:last-child td { border-bottom:none; }
 .cand-table tr:hover td { background:var(--cream); }
 
+/* ── FINANCEIRO: larguras de coluna e Valor sem quebra de linha ── */
+.fin-table th:nth-child(1), .fin-table td:nth-child(1) { width:28%; }                 /* Vaga */
+.fin-table th:nth-child(2), .fin-table td:nth-child(2) { width:22%; }                 /* Parcela */
+.fin-table th:nth-child(3), .fin-table td:nth-child(3) { width:7%;  text-align:center; } /* % */
+.fin-table th:nth-child(4), .fin-table td:nth-child(4) { width:14%; white-space:nowrap; } /* Valor */
+.fin-table th:nth-child(5), .fin-table td:nth-child(5) { width:15%; white-space:nowrap; } /* Vencimento */
+.fin-table th:nth-child(6), .fin-table td:nth-child(6) { width:8%; }                  /* Status */
+.fin-table th:nth-child(7), .fin-table td:nth-child(7) { width:6%;  white-space:nowrap; } /* Ação */
+
 /* ── FILTERS ── */
 .filters-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
 .filter-input { border:1.5px solid var(--bege); border-radius:8px; padding:7px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--charcoal); background:var(--offwhite); outline:none; transition:border-color .2s; }
@@ -721,7 +730,7 @@ header {
     </select>
   </div>
   <div class="cand-table-wrap" style="margin-top:12px">
-    <table class="cand-table">
+    <table class="cand-table fin-table">
       <thead><tr><th>Vaga</th><th>Parcela</th><th>%</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead>
       <tbody id="fin-tbody"></tbody>
     </table>
