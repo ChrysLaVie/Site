@@ -347,11 +347,17 @@ async function saveCandidatura(data) {
   if (!db) return { ok:false, err:'Banco não configurado' };
   try {
     let cv_url = null;
-    if (data.file) {
-      const ext = data.file.name.split('.').pop();
-      const path = `${Date.now()}-${data.nome.replace(/\s+/g,'-').toLowerCase()}.${ext}`;
-      const { error: upErr } = await db.storage.from('curriculos').upload(path, data.file);
-      if (!upErr) { const { data: urlData } = db.storage.from('curriculos').getPublicUrl(path); cv_url = urlData.publicUrl; }
+    const files = data.files || (data.file ? [data.file] : []);
+    if (files.length) {
+      const urls = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const ext = f.name.split('.').pop();
+        const path = `${Date.now()}-${i}-${data.nome.replace(/\s+/g,'-').toLowerCase()}.${ext}`;
+        const { error: upErr } = await db.storage.from('curriculos').upload(path, f);
+        if (!upErr) { const { data: urlData } = db.storage.from('curriculos').getPublicUrl(path); urls.push(urlData.publicUrl); }
+      }
+      if (urls.length) cv_url = urls.join('\n');
     }
     const { error } = await db.from('candidaturas').insert({ nome:data.nome, email:data.email, whatsapp:data.whatsapp, vaga_id:data.vaga_id, vaga_titulo:data.vaga_titulo, cv_url, lida:false });
     if (error) return { ok:false, err:error.message };
@@ -382,6 +388,13 @@ async function loadFormsRespostas() {
 function linesToArray(text) { return (text || '').split('\n').map(s => s.trim()).filter(Boolean); }
 function arrayToLines(arr) { return (arr || []).join('\n'); }
 function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cvUrls(cv) { return (cv || '').split('\n').map(s => s.trim()).filter(Boolean); }
+function cvLinksHTML(cv) {
+  const urls = cvUrls(cv);
+  if (!urls.length) return '';
+  if (urls.length === 1) return `<a href="${urls[0]}" target="_blank">Ver currículo</a>`;
+  return urls.map((u, i) => `<a href="${u}" target="_blank">Ver currículo ${i+1}</a>`).join(' · ');
+}
 
 // ── RENDER: VAGAS (público) ──
 async function renderVagas() {
@@ -435,7 +448,7 @@ async function renderVagas() {
 
 // ── MODAL: CANDIDATURA ──
 function openApplyModal(vaga) {
-  let selectedFile = null;
+  let selectedFiles = [];
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
       <div class="modal-box">
@@ -450,10 +463,10 @@ function openApplyModal(vaga) {
             <div class="form-group"><label class="fl">WhatsApp *</label><input type="tel" id="m-whatsapp" placeholder="(62) 9 0000-0000"></div>
           </div>
           <div class="form-group">
-            <label class="fl">Currículo (PDF ou Word) *</label>
+            <label class="fl">Currículo e anexos (PDF ou Word) *</label>
             <div class="file-drop" id="fileArea">
-              <input type="file" id="m-file" accept=".pdf,.doc,.docx">
-              <label class="file-drop-label" for="m-file"><strong>Clique para selecionar</strong> ou arraste seu currículo aqui<br><span style="font-size:0.72rem;">PDF, DOC ou DOCX · máx. 5MB</span></label>
+              <input type="file" id="m-file" accept=".pdf,.doc,.docx" multiple>
+              <label class="file-drop-label" for="m-file"><strong>Clique para selecionar</strong> ou arraste seus arquivos aqui<br><span style="font-size:0.72rem;">Currículo, portfólio, carta... · PDF, DOC ou DOCX · até 5 arquivos · máx. 5MB cada</span></label>
               <div class="file-name" id="fileName" style="display:none"></div>
             </div>
           </div>
@@ -468,17 +481,27 @@ function openApplyModal(vaga) {
   const fileInput = document.getElementById('m-file'), fileArea = document.getElementById('fileArea'), fileName = document.getElementById('fileName');
   const submitBtn = document.getElementById('submitBtn');
 
-  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFile; }
+  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length; }
   nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check);
 
-  function handleFile(f) {
-    if (!f) return;
-    if (f.size > 5*1024*1024) { alert('Arquivo muito grande. Máximo 5MB.'); return; }
-    selectedFile = f; fileName.textContent = f.name; fileName.style.display = 'block'; fileArea.classList.add('has-file'); check();
+  function handleFiles(fileList) {
+    const incoming = Array.from(fileList || []);
+    if (!incoming.length) return;
+    for (const f of incoming) {
+      if (f.size > 5*1024*1024) { alert(`"${f.name}" é maior que 5MB e não foi adicionado.`); continue; }
+      if (selectedFiles.length >= 5) { alert('Máximo de 5 arquivos.'); break; }
+      if (!selectedFiles.some(x => x.name === f.name && x.size === f.size)) selectedFiles.push(f);
+    }
+    if (selectedFiles.length) {
+      fileName.innerHTML = selectedFiles.map((f, i) => `<div>${esc(f.name)} <span data-rm="${i}" style="color:var(--err);cursor:pointer;">×</span></div>`).join('');
+      fileName.style.display = 'block'; fileArea.classList.add('has-file');
+      fileName.querySelectorAll('[data-rm]').forEach(x => x.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); selectedFiles.splice(+x.dataset.rm, 1); handleFiles([]); if (!selectedFiles.length) { fileName.style.display='none'; fileArea.classList.remove('has-file'); } check(); }));
+    }
+    check();
   }
-  fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+  fileInput.addEventListener('change', () => handleFiles(fileInput.files));
   fileArea.addEventListener('dragover', e => e.preventDefault());
-  fileArea.addEventListener('drop', e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
+  fileArea.addEventListener('drop', e => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
 
   document.getElementById('closeModal').addEventListener('click', closeModal);
   document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
@@ -486,7 +509,7 @@ function openApplyModal(vaga) {
   submitBtn.addEventListener('click', async () => {
     submitBtn.disabled = true; submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
     document.getElementById('formError').style.display = 'none';
-    const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:vaga.title, file:selectedFile });
+    const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:vaga.title, files:selectedFiles });
     if (result.ok) {
       const discParams = new URLSearchParams({ nome: nome.value.trim(), email: email.value.trim(), telefone: whatsapp.value.trim(), vaga: vaga.title });
       const discUrl = `https://lavieconsultoria.com/disc/?${discParams.toString()}`;
@@ -585,7 +608,7 @@ function openDossieModal(c) {
 
         <div class="dossie-section">
           <h4>Currículo</h4>
-          ${c.candidatura ? (c.candidatura.cv_url ? `<div class="dossie-row"><span>Arquivo enviado na candidatura</span><a href="${c.candidatura.cv_url}" target="_blank">Ver currículo →</a></div>` : '<p class="dossie-empty">Candidatura recebida, mas sem arquivo de currículo anexado.</p>') : '<p class="dossie-empty">Ainda não se candidatou a nenhuma vaga.</p>'}
+          ${c.candidatura ? (c.candidatura.cv_url ? `<div class="dossie-row"><span>Currículos e anexos enviados</span><span>${cvLinksHTML(c.candidatura.cv_url)}</span></div>` : '<p class="dossie-empty">Candidatura recebida, mas sem arquivo de currículo anexado.</p>') : '<p class="dossie-empty">Ainda não se candidatou a nenhuma vaga.</p>'}
         </div>
 
         <div class="dossie-section">
@@ -676,12 +699,16 @@ function buildDossiePDF(c) {
     doc.setDrawColor(...BORDER); doc.line(M, y, W - M, y);
     y += 20;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK);
-    doc.text('Link do currículo:', M, y);
+    const _urls = cvUrls(c.candidatura.cv_url);
+    doc.text(_urls.length > 1 ? 'Links dos currículos e anexos:' : 'Link do currículo:', M, y);
     y += 14;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(40, 80, 160);
-    const cvLines = doc.splitTextToSize(c.candidatura.cv_url, W - M * 2);
-    doc.text(cvLines, M, y);
-    doc.link(M, y - 8, doc.getTextWidth(cvLines[0] || ''), 12, { url: c.candidatura.cv_url });
+    _urls.forEach(u => {
+      const cvLines = doc.splitTextToSize(u, W - M * 2);
+      doc.text(cvLines, M, y);
+      doc.link(M, y - 8, doc.getTextWidth(cvLines[0] || ''), 12, { url: u });
+      y += cvLines.length * 11 + 6;
+    });
   }
 
   doc.setFontSize(8); doc.setTextColor(180,175,168);
@@ -971,7 +998,7 @@ async function renderAdmin() {
             <p>${esc(c.email)} · ${esc(c.whatsapp) || '-'} · ${esc(c.vaga_titulo)} · ${new Date(c.created_at).toLocaleDateString('pt-BR')}</p>
           </div>
           <div class="entry-actions">
-            ${c.cv_url ? `<a href="${c.cv_url}" target="_blank">Ver currículo</a>` : '<span style="font-size:0.7rem;color:var(--muted);padding:0.4rem 0.7rem;">Sem currículo</span>'}
+            ${c.cv_url ? cvLinksHTML(c.cv_url) : '<span style="font-size:0.7rem;color:var(--muted);padding:0.4rem 0.7rem;">Sem currículo</span>'}
             ${!c.lida ? `<button class="mark-read" data-id="${c.id}">Marcar lida</button>` : ''}
             <button class="danger del-cand" data-id="${c.id}">Remover</button>
           </div>
