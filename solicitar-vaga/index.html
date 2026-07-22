@@ -125,6 +125,7 @@
     body{padding:24px 14px}
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -141,14 +142,21 @@
 
   <!--
     ============================================================
-    E-MAIL AUTOMÁTICO: já configurado com o Formspree da La Vie
-    (form ID: xojgnjzz). As solicitações caem na conta cadastrada
-    em formspree.io. Se um dia precisar trocar o e-mail de destino,
-    é só ajustar direto lá dentro da conta Formspree — não precisa
-    mexer neste arquivo.
+    E-MAIL AUTOMÁTICO COM PDF EM ANEXO: usando FormSubmit.co
+    (gratuito, sem limite de envios, envia anexo sem custo).
+    Destino: chrys@lavieconsultoria.com
+
+    IMPORTANTE — ATIVAÇÃO ÚNICA:
+    No primeiro envio deste formulário, o FormSubmit manda um
+    e-mail de confirmação para chrys@lavieconsultoria.com com um
+    link "Activate Form". É preciso clicar nesse link uma única
+    vez — depois disso, todos os próximos envios chegam direto,
+    sem qualquer ação manual.
     ============================================================
   -->
-  <form id="form" action="https://formspree.io/f/xojgnjzz" method="POST" novalidate>
+  <form id="form" action="https://formsubmit.co/ajax/chrys@lavieconsultoria.com" method="POST" novalidate>
+    <input type="hidden" name="_subject" value="Nova solicitação de vaga — La Vie Consultoria">
+    <input type="hidden" name="_captcha" value="false">
     <fieldset>
       <legend><span class="num">1</span> Dados da empresa</legend>
       <div class="grid">
@@ -298,7 +306,7 @@
 
     <div class="ok" id="ok">
       <strong>Solicitação enviada com sucesso!</strong>
-      A equipe La Vie recebeu os dados por e-mail e vai entrar em contato em breve. Se preferir, confirme também pelo WhatsApp abaixo.
+      A equipe La Vie recebeu um PDF com todos os dados por e-mail e vai entrar em contato em breve. Se preferir, confirme também pelo WhatsApp abaixo.
     </div>
 
     <div class="erro" id="erro">
@@ -309,9 +317,9 @@
     <div class="actions">
       <button type="submit" class="btn-primary" id="btnEnviar">Enviar solicitação</button>
       <button type="button" class="btn-whats" id="whats">Enviar por WhatsApp</button>
-      <button type="button" class="btn-ghost" id="baixar">Baixar resumo (.txt)</button>
+      <button type="button" class="btn-ghost" id="baixar">Baixar resumo (PDF)</button>
     </div>
-    <p class="note">Ao clicar em "Enviar solicitação", os dados vão automaticamente por e-mail para a equipe La Vie. O botão de WhatsApp abre uma conversa já com o resumo preenchido, caso você prefira confirmar por lá também.</p>
+    <p class="note">Ao clicar em "Enviar solicitação", um PDF com os dados é gerado automaticamente e enviado por e-mail para a equipe La Vie. O botão de WhatsApp abre uma conversa já com o resumo preenchido, caso você prefira confirmar por lá também.</p>
   </form>
 
   <footer>La Vie Consultoria · Gestão Empresarial Integrada</footer>
@@ -361,6 +369,121 @@ Observações: ${campo('observacoes')}
 `;
   }
 
+  function gerarPDF(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 50;
+    const larguraUtil = 495;
+    let y = 55;
+
+    // Logo (reaproveita a imagem já carregada na página)
+    const logoEl = document.querySelector('.logo');
+    if (logoEl && logoEl.src) {
+      try {
+        const logoWidth = 90;
+        const proporcao = (logoEl.naturalHeight && logoEl.naturalWidth) ? (logoEl.naturalHeight / logoEl.naturalWidth) : 0.5;
+        doc.addImage(logoEl.src, 'PNG', marginX, y, logoWidth, logoWidth * proporcao);
+      } catch (e) { /* segue sem logo se der algum problema */ }
+    }
+
+    y += 62;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(19);
+    doc.setTextColor(61, 59, 58);
+    doc.text('Solicitação de Vaga', marginX, y);
+
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(143, 136, 127);
+    doc.text('La Vie Consultoria · Gestão Empresarial Integrada', marginX, y);
+
+    y += 14;
+    doc.setDrawColor(138, 129, 120);
+    doc.setLineWidth(1);
+    doc.line(marginX, y, marginX + larguraUtil, y);
+    y += 28;
+
+    const d = new FormData(form);
+    const campo = (k) => d.get(k) || '—';
+
+    function secao(titulo){
+      if (y > 750) { doc.addPage(); y = 55; }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12.5);
+      doc.setTextColor(61, 59, 58);
+      doc.text(titulo.toUpperCase(), marginX, y);
+      y += 6;
+      doc.setDrawColor(228, 221, 211);
+      doc.setLineWidth(0.75);
+      doc.line(marginX, y, marginX + larguraUtil, y);
+      y += 18;
+    }
+
+    function campoLinha(label, valor){
+      if (y > 770) { doc.addPage(); y = 55; }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(138, 129, 120);
+      doc.text(label.toUpperCase(), marginX, y);
+      y += 13;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(61, 59, 58);
+      const linhas = doc.splitTextToSize(String(valor), larguraUtil);
+      linhas.forEach((linha) => {
+        if (y > 785) { doc.addPage(); y = 55; }
+        doc.text(linha, marginX, y);
+        y += 14;
+      });
+      y += 11;
+    }
+
+    secao('Nível de necessidade');
+    campoLinha('Urgência', campo('urgencia'));
+
+    secao('Empresa');
+    campoLinha('Razão social', campo('empresa'));
+    campoLinha('CNPJ', campo('cnpj'));
+    campoLinha('Contato / RH', campo('contato'));
+    campoLinha('E-mail', campo('email'));
+    campoLinha('Telefone', campo('telefone'));
+    campoLinha('Cidade / UF', `${campo('cidade')} / ${campo('uf')}`);
+
+    secao('Detalhes da vaga');
+    campoLinha('Cargo', campo('cargo'));
+    campoLinha('Senioridade', campo('senioridade'));
+    campoLinha('Número de vagas', campo('quantidade'));
+    campoLinha('Modelo de trabalho', campo('modelo'));
+    campoLinha('Tipo de contrato', campo('contrato'));
+    campoLinha('Jornada', campo('jornada'));
+    campoLinha('Faixa salarial', campo('salario'));
+    campoLinha('Benefícios', campo('beneficios'));
+
+    secao('Requisitos e atividades');
+    campoLinha('Descrição das atividades', campo('atividades'));
+    campoLinha('Requisitos obrigatórios', campo('requisitos'));
+    campoLinha('Competências desejáveis', campo('competencias'));
+    campoLinha('Formação', campo('formacao'));
+    campoLinha('Observações adicionais', campo('observacoes'));
+
+    const paginas = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= paginas; p++){
+      doc.setPage(p);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(143, 136, 127);
+      doc.text(`La Vie Consultoria · página ${p} de ${paginas}`, marginX, 815);
+    }
+
+    return doc;
+  }
+
+  function nomeArquivo(extensao){
+    const nome = (form.empresa.value || 'empresa').replace(/[^\w]+/g, '-').toLowerCase();
+    return `solicitacao-vaga-${nome}.${extensao}`;
+  }
+
   function abrirWhatsApp(){
     const texto = coletar();
     const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(texto)}`;
@@ -378,12 +501,18 @@ Observações: ${campo('observacoes')}
     erro.classList.remove('show');
     ok.classList.remove('show');
     btnEnviar.disabled = true;
-    btnEnviar.textContent = 'Enviando…';
+    btnEnviar.textContent = 'Gerando PDF e enviando…';
 
     try{
+      const pdfBlob = gerarPDF().output('blob');
+      const pdfFile = new File([pdfBlob], nomeArquivo('pdf'), { type: 'application/pdf' });
+
+      const dados = new FormData(form);
+      dados.append('attachment', pdfFile);
+
       const resposta = await fetch(form.action, {
         method: 'POST',
-        body: new FormData(form),
+        body: dados,
         headers: { 'Accept': 'application/json' }
       });
 
@@ -405,13 +534,11 @@ Observações: ${campo('observacoes')}
   document.getElementById('whats').addEventListener('click', abrirWhatsApp);
 
   document.getElementById('baixar').addEventListener('click', ()=>{
-    const blob = new Blob([coletar()], {type:'text/plain;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    const nome = (form.empresa.value||'empresa').replace(/[^\w]+/g,'-').toLowerCase();
-    a.download = `solicitacao-vaga-${nome}.txt`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    if(!form.empresa.value){
+      form.empresa.focus();
+      return;
+    }
+    gerarPDF().save(nomeArquivo('pdf'));
   });
 </script>
 </body>
