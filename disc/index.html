@@ -444,11 +444,13 @@ const incoming = {
   vaga: urlParams.get('vaga') || ''
 };
 const FORMS_URL = 'https://lavieconsultoria.com/vagas/forms-gerente-captacao.html';
-const FORMS_URL_GENERICO = 'https://lavieconsultoria.com/vagas/forms-generico.html';
+const FORMS_URL_COORD_INSTITUTO = 'https://lavieconsultoria.com/vagas/forms-coord-instituto.html';
+const FORMS_URL_GENERICO = FORMS_URL_COORD_INSTITUTO;
 // Vagas que têm formulário técnico próprio (perguntas específicas do cargo).
 // Qualquer vaga fora dessa lista cai no formulário genérico (condições + dados, sem perguntas técnicas).
 const VAGAS_COM_FORMS_PROPRIO = {
-  'Gerente de Captação de Alunos e Televendas': FORMS_URL
+  'Gerente de Captação de Alunos e Televendas': FORMS_URL,
+  'Coordenador de Instituto Tecnológico': FORMS_URL_COORD_INSTITUTO
 };
 function formsUrlParaVaga(titulo) {
   return VAGAS_COM_FORMS_PROPRIO[titulo] || FORMS_URL_GENERICO;
