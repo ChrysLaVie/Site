@@ -520,7 +520,7 @@ async function renderAdmin() {
         <h1 class="section-title" style="margin-bottom:0;">Respostas do <em>formulário</em></h1>
       </div>
     </div>
-    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.4rem;">${subs.length} candidato(s) · Formulário genérico (outras vagas)</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.4rem;">${subs.length} candidato(s) · Coordenador de Instituto Tecnológico</p>
     <div id="subsList"></div>
   `;
 
@@ -654,6 +654,30 @@ function buildSubmissionPDF(s) {
     y += obsLines.length * 12 + 4;
   }
   y += 14;
+
+  // Questionário técnico
+  checkPageBreak(40);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...INK);
+  doc.text(`Questionário técnico: nota ${s.technical_score ?? '-'} / 5`, M, y);
+  y += 18;
+
+  (Array.isArray(s.technical_answers) ? s.technical_answers : []).forEach((a, i) => {
+    checkPageBreak(50);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...INK);
+    const qLines = doc.splitTextToSize(pdfSafe(`${i + 1}. ${a.pergunta}`), W - M * 2);
+    doc.text(qLines, M, y);
+    y += qLines.length * 11 + 3;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...(a.correta ? OK : ERR));
+    const respLines = doc.splitTextToSize(pdfSafe(`Resposta: ${a.escolhida || '(não respondida)'} ${a.correta ? '(correta)' : '(incorreta)'}`), W - M * 2 - 10);
+    doc.text(respLines, M + 10, y);
+    y += respLines.length * 11 + 10;
+  });
 
   doc.setFontSize(8);
   doc.setTextColor(180, 175, 168);
