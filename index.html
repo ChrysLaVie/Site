@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>La Vie Consultoria | Gestão Empresarial Integrada</title>
+<link rel="icon" type="image/png" href="logo.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="logo-branco.png" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/png" href="logo.png">
 <meta name="description" content="Consultoria de gestão empresarial integrada. Do diagnóstico à execução processos, pessoas, financeiro e certificações.">
 <meta name="keywords" content="consultoria empresarial, gestão empresarial, processos empresariais, planejamento estratégico, BPM, certificações ISO, La Vie Consultoria">
@@ -409,11 +411,7 @@ nav.scrolled .nav-logo img { height:54px; }
 }
 .galeria-foto:hover img { filter:grayscale(0%); transform:scale(1.05); }
 
-/* ── Equipe ── */
-#equipe {
-  padding:var(--section-pad);
-  background:var(--bg-alt);
-}
+/* ── Equipe (card usado dentro de Institucional) ── */
 .equipe-grid {
   display:flex !important; flex-direction:column !important;
   gap:1.5rem; margin-top:2.5rem; max-width:860px; margin-left:auto; margin-right:auto;
@@ -801,10 +799,9 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
 <nav id="navbar">
   <a href="#" class="nav-logo"><img src="logo-branco.png" alt="La Vie Consultoria" ></a>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#quem-somos">Quem Somos</a></li>
+    <li><a href="#quem-somos">Institucional</a></li>
     <li><a href="#servicos">Serviços</a></li>
     <li><a href="#clientes">Clientes</a></li>
-    <li><a href="#equipe">Equipe</a></li>
     <li><a href="#mentorias">Mentorias</a></li>
     <li><a href="#candidatos">Banco de Talentos</a></li>
     <li><a href="#contato" class="nav-cta">Fale Conosco</a></li>
@@ -832,12 +829,14 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
 
 <!-- QUEM SOMOS -->
 <section id="quem-somos" style="padding:var(--section-pad);background:var(--bg);">
+  <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto 1.5rem;">
+    <span class="eyebrow">Institucional</span>
+  </div>
   <div class="solucao-grid reveal">
     <div>
-      <span class="eyebrow">Quem Somos</span>
       <h2 class="section-title">Consultoria que vai <em>até o fim</em></h2>
       <p style="color:var(--muted);font-size:0.95rem;line-height:1.85;font-weight:300;margin-bottom:2.5rem;">A La Vie Consultoria nasceu da convicção de que gestão precisa ser integrada. Não basta diagnosticar: é preciso implementar, acompanhar e gerar resultado real. Atuamos do planejamento à execução, com método e presença.</p>
-      <p style="color:var(--muted);font-size:0.95rem;line-height:1.85;font-weight:300;">Com 16 anos de experiência prática em empresas de diferentes setores, entregamos soluções que funcionam porque foram vividas antes de serem ensinadas.</p>
+      <p style="color:var(--muted);font-size:0.95rem;line-height:1.85;font-weight:300;">Com 16 anos de experiência prática em empresas de diferentes setores, entrego soluções que funcionam porque foram vividas antes de serem ensinadas.</p>
     </div>
     <div class="mvv-grid">
       <div class="mvv-card">
@@ -854,7 +853,48 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
       </div>
     </div>
   </div>
+
+  <div class="reveal" style="display:flex;justify-content:center;gap:3rem;margin:4rem 0 3rem;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">16+</p>
+      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Anos de experiência</p>
+    </div>
+    <div style="text-align:center;">
+      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">50+</p>
+      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Empresas atendidas</p>
+    </div>
+    <div style="text-align:center;">
+      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">6</p>
+      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Setores de atuação</p>
+    </div>
+    <div style="text-align:center;">
+      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">100%</p>
+      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Foco em resultados reais</p>
+    </div>
+  </div>
+
+  <div style="max-width:860px;margin:0 auto;" class="reveal">
+    <div class="equipe-card">
+      <div class="equipe-foto"><img src="chrys.jpg" alt="Chrysthyan Kelly Ferreira Alves"></div>
+      <div class="equipe-info">
+        <span class="equipe-role">Fundadora &amp; Consultora</span>
+        <h3 class="equipe-name">Chrysthyan Kelly Ferreira Alves</h3>
+        <p class="equipe-bio">16 anos transitando entre Financeiro, Pessoas e Processos, sendo 10 deles à frente de gestões seniores em empresas como Centro Universitário Cambury, TCL Transportes e Logística e Corretora Unimed Goiânia. Não entrego diagnóstico e vou embora — fico até a mudança estar implantada e a empresa andar com as próprias pernas.</p>
+        <div class="equipe-tags">
+          <span class="equipe-tag">Contadora (CFC)</span>
+          <span class="equipe-tag">Auditora Líder ISO 9001</span>
+          <span class="equipe-tag">CPA-20</span>
+          <span class="equipe-tag">SUSEP</span>
+          <span class="equipe-tag">Mestranda em Administração · UFG</span>
+        </div>
+        <p style="margin-top:1.2rem;">
+          <a href="https://lavieconsultoria.com/portfolio.html" target="_blank" class="btn-ghost">Conheça minha trajetória completa →</a>
+        </p>
+      </div>
+    </div>
+  </div>
 </section>
+
 
 <!-- SERVIÇOS -->
 <section id="servicos" style="padding:var(--section-pad);background:var(--dark);position:relative;overflow:hidden;">
@@ -910,53 +950,6 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
       <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Planejamento Estratégico</h4><p>Missão, visão, valores, metas SMART e desdobramento por área.</p></div></div>
       <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Expansão Comercial</h4><p>Estratégia de mercado, desenvolvimento de canais e gestão de grandes contas.</p></div></div>
       <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>T&amp;D e Cultura</h4><p>Trilhas de desenvolvimento, treinamentos e programas de endomarketing.</p></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- EQUIPE -->
-<section id="equipe" style="padding:var(--section-pad);background:var(--bg-alt);">
-  <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto 1.5rem;">
-    <span class="eyebrow">Nossa Equipe</span>
-    <h2 class="section-title">Quem está <em>à frente</em></h2>
-    <p style="color:var(--muted);font-size:0.95rem;line-height:1.85;font-weight:300;margin-top:1rem;">A La Vie existe porque acreditamos que gestão bem feita transforma vidas. Não apenas empresas. Cada processo estruturado, cada pessoa desenvolvida, cada resultado entregue: é uma história que começa com alguém disposto a fazer diferente.</p>
-  </div>
-  <div class="reveal" style="display:flex;justify-content:center;gap:3rem;margin-bottom:3rem;flex-wrap:wrap;">
-    <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">16+</p>
-      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Anos de experiência</p>
-    </div>
-    <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">50+</p>
-      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Empresas atendidas</p>
-    </div>
-    <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">6</p>
-      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Setores de atuação</p>
-    </div>
-    <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">100%</p>
-      <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Foco em resultados reais</p>
-    </div>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:860px;margin:0 auto;" class="reveal">
-    <div class="equipe-card">
-      <div class="equipe-foto"><img src="chrys.jpg" alt="Chrysthyan Kelly Ferreira Alves"></div>
-      <div class="equipe-info">
-        <span class="equipe-role">Fundadora &amp; Consultora</span>
-        <h3 class="equipe-name">Chrysthyan Kelly Ferreira Alves</h3>
-        <p class="equipe-bio">16 anos transitando entre Financeiro, Pessoas e Processos, sendo 10 deles à frente de gestões seniores em empresas como Centro Universitário Cambury, TCL Transportes e Logística e Corretora Unimed Goiânia. Não entrego diagnóstico e vou embora — fico até a mudança estar implantada e a empresa andar com as próprias pernas.</p>
-        <div class="equipe-tags">
-          <span class="equipe-tag">Contadora (CFC)</span>
-          <span class="equipe-tag">Auditora Líder ISO 9001</span>
-          <span class="equipe-tag">CPA-20</span>
-          <span class="equipe-tag">SUSEP</span>
-          <span class="equipe-tag">Mestranda em Administração · UFG</span>
-        </div>
-        <p style="margin-top:1.2rem;">
-          <a href="https://lavieconsultoria.com/portfolio.html" target="_blank" class="btn-ghost">Conheça minha trajetória completa →</a>
-        </p>
-      </div>
     </div>
   </div>
 </section>
