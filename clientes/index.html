@@ -717,7 +717,7 @@ header {
 <div id="page-financeiro" class="page">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
     <div><h1 class="page-title">Financeiro</h1><p class="page-sub" style="margin-bottom:20px">Honorários por vaga · pagamento 50% entrada + 50% fechamento</p></div>
-    <button class="btn btn-ghost btn-sm" onclick="exportFinanceiroCSV()">⬇ CSV</button>
+    <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
   </div>
   <div class="stats-row" id="fin-stats"></div>
   <div class="filters-bar" style="margin-top:20px">
@@ -2863,12 +2863,17 @@ function _statusReal(p){
 const FIN_TAG={pendente:'tag-rh',pago:'tag-aprovado',atrasado:'tag-reprovado',cancelada:'tag-closed'};
 const FIN_LBL={pendente:'Pendente',pago:'Pago',atrasado:'Atrasado',cancelada:'Cancelada'};
 
+const USUARIOS_CLIENTE = new Set(['giuseppe','leonardo']); // logins do lado UniCambury — veem só o que está em aberto
+function isClienteCambury(){ return currentUser && USUARIOS_CLIENTE.has(currentUser.id); }
+
 async function renderFinanceiro(){
   if(!_pagamentos.length){ await loadPagamentos(); }
   await sincronizarParcelas();
   const vagas=getVagas();
   const search=(document.getElementById('fin-search')?.value||'').toLowerCase();
   const fStatus=document.getElementById('fin-filter-status')?.value||'';
+  const souCliente = isClienteCambury();
+  const csvBtn=document.getElementById('fin-csv-btn'); if(csvBtn) csvBtn.style.display=souCliente?'none':'';
   // stats
   let totalPrev=0,totalPago=0,totalPend=0,totalAtr=0,totalCancelado=0;
   _pagamentos.forEach(p=>{
@@ -2879,30 +2884,39 @@ async function renderFinanceiro(){
     else if(s==='atrasado')totalAtr+=p.valor;
     else totalPend+=p.valor;
   });
-  document.getElementById('fin-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPrev)}</div><div class="stat-lbl">Honorários totais</div></div>
-    <div class="stat-card"><div class="stat-num g">${_fmtBRL(totalPago)}</div><div class="stat-lbl">Recebido</div></div>
-    <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPend)}</div><div class="stat-lbl">A receber</div></div>
-    <div class="stat-card"><div class="stat-num r">${_fmtBRL(totalAtr)}</div><div class="stat-lbl">Atrasado</div></div>
-    ${totalCancelado>0?`<div class="stat-card"><div class="stat-num" style="color:var(--light)">${_fmtBRL(totalCancelado)}</div><div class="stat-lbl">Cancelado (não devido)</div></div>`:''}`;
+  if(souCliente){
+    // Visão do cliente: só o que está em aberto (pendente + atrasado). Sem
+    // "Honorários totais" nem "Recebido" — pra não parecer que já pagou mais do que devia.
+    document.getElementById('fin-stats').innerHTML=`
+      <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPend)}</div><div class="stat-lbl">A pagar</div></div>
+      <div class="stat-card"><div class="stat-num r">${_fmtBRL(totalAtr)}</div><div class="stat-lbl">Atrasado</div></div>`;
+  } else {
+    document.getElementById('fin-stats').innerHTML=`
+      <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPrev)}</div><div class="stat-lbl">Honorários totais</div></div>
+      <div class="stat-card"><div class="stat-num g">${_fmtBRL(totalPago)}</div><div class="stat-lbl">Recebido</div></div>
+      <div class="stat-card"><div class="stat-num">${_fmtBRL(totalPend)}</div><div class="stat-lbl">A receber</div></div>
+      <div class="stat-card"><div class="stat-num r">${_fmtBRL(totalAtr)}</div><div class="stat-lbl">Atrasado</div></div>
+      ${totalCancelado>0?`<div class="stat-card"><div class="stat-num" style="color:var(--light)">${_fmtBRL(totalCancelado)}</div><div class="stat-lbl">Cancelado (não devido)</div></div>`:''}`;
+  }
   // tabela
   const rows=_pagamentos.map(p=>{
     const v=vagas.find(x=>x.id===p.vagaId); if(!v) return null;
     const s=_statusReal(p);
     return {p,v,s};
   }).filter(Boolean)
+    .filter(({s})=> souCliente ? (s==='pendente'||s==='atrasado') : true) // cliente só vê o que está em aberto
     .filter(({v})=>!search||v.titulo.toLowerCase().includes(search))
     .filter(({s})=>!fStatus||s===fStatus)
     .sort((a,b)=> (a.v.titulo+a.p.parcela).localeCompare(b.v.titulo+b.p.parcela));
   const tbody=document.getElementById('fin-tbody');
-  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💰</div><p>Nenhuma parcela encontrada.</p></div></td></tr>`; return; }
+  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💰</div><p>${souCliente?'Nenhuma pendência no momento.':'Nenhuma parcela encontrada.'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(({p,v,s})=>{
     const venc=p.vencimento?new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-    const acao = s==='pago'
+    const acao = souCliente ? '' : (s==='pago'
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>`
       : s==='cancelada'
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
-      : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>`;
+      : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
       <td style="font-size:12px"><strong>${v.titulo}</strong></td>
