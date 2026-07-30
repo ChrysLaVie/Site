@@ -1461,8 +1461,8 @@ document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', 
 
 // ══ ETAPAS ════════════════════════════════════════════════════════════════════
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
-const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral'};
-const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral'};
+const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral'};
+const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
 const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'aprovacao'};
@@ -1849,7 +1849,7 @@ function renderVagas() {
         <span>🎯 ${n} candidato${n!==1?'s':''}</span>
         ${v.criadoPor?`<span style="color:var(--light)">por ${v.criadoPor.split(' ')[0]}</span>`:''}
       </div>
-      ${v.honorario?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${v.honorario}</span></div>`:''}
+      ${v.honorario&&!isClienteCambury()?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${v.honorario}</span></div>`:''}
       <div class="vaga-actions">
         <button class="btn btn-ghost btn-sm" onclick="editVaga('${v.id}')">✏ Editar</button>
         <button class="btn btn-ghost btn-sm" onclick="verCandVaga('${v.id}')">👥 Candidatos</button>
@@ -1963,14 +1963,15 @@ function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById
 function renderCandidatos() {
   const cands=getCandsVisiveis(),vagas=getVagasVisiveis(),entrevistas=getEntrevistasVisiveis();
   const search=document.getElementById('cand-search').value.toLowerCase(),fV=document.getElementById('cand-filter-vaga').value,fE=document.getElementById('cand-filter-etapa').value;
-  const fi=cands.filter(c=>(!search||c.nome.toLowerCase().includes(search))&&(!fV||c.vagaId===fV)&&(!fE||c.etapa===fE));
+  const fi=cands.filter(c=>(!search||c.nome.toLowerCase().includes(search))&&(!fV||c.vagaId===fV)&&(!fE||c.etapa===fE))
+    .sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR',{sensitivity:'base'}));
   const tbody=document.getElementById('cand-tbody');
   if(!fi.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
   tbody.innerHTML=fi.map(c=>{
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
     const nE=entrevistas.filter(e=>e.nome===c.nome&&e.vagaId===c.vagaId).length;
     const dt=c.dataEntrada?new Date(c.dataEntrada+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-    const finalizado=(c.etapa==='reprovado'||c.etapa==='banco_talentos_administrativo'||c.etapa==='banco_talentos_academico'||c.etapa==='banco_talentos_geral');
+    const finalizado=(c.etapa==='reprovado'||c.etapa==='admissao'||String(c.etapa||'').startsWith('banco_talentos'));
     const acoes=`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">`
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--green-lt,#e6f4ea);color:var(--green,#1a7f37);border:1px solid var(--green,#1a7f37)" onclick="aprovarCard('${c.id}')" title="Aprovar e avançar">✓ Aprovar</button>`)
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--red-lt);color:var(--red);border:1px solid var(--red)" onclick="reprovarCard('${c.id}')" title="Reprovar e enviar feedback">✗ Reprovar</button>`)
@@ -2877,7 +2878,12 @@ async function renderFinanceiro(){
   // stats
   let totalPrev=0,totalPago=0,totalPend=0,totalAtr=0,totalCancelado=0;
   _pagamentos.forEach(p=>{
-    const s=_statusReal(p);
+    const v=vagas.find(x=>x.id===p.vagaId);
+    if(!v) return; // parcela órfã (vaga excluída) não entra em nenhum total
+    let s=_statusReal(p);
+    // Blindagem: vaga cancelada só mantém como devida a parcela já paga (entrada
+    // não reembolsável). Qualquer parcela em aberto de vaga cancelada não é devida.
+    if(v.status==='cancelada' && s!=='pago') s='cancelada';
     if(s==='cancelada'){ totalCancelado+=p.valor; return; } // nunca foi devida — não conta em nenhum total
     totalPrev+=p.valor;
     if(s==='pago')totalPago+=p.valor;
@@ -2901,7 +2907,8 @@ async function renderFinanceiro(){
   // tabela
   const rows=_pagamentos.map(p=>{
     const v=vagas.find(x=>x.id===p.vagaId); if(!v) return null;
-    const s=_statusReal(p);
+    let s=_statusReal(p);
+    if(v.status==='cancelada' && s!=='pago') s='cancelada';
     return {p,v,s};
   }).filter(Boolean)
     .filter(({s})=> souCliente ? (s==='pendente'||s==='atrasado') : true) // cliente só vê o que está em aberto
