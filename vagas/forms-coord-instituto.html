@@ -377,8 +377,8 @@ function renderForm() {
     </div>
 
     <div class="card">
-      <h3>Questionário técnico</h3>
-      <p class="lead" style="font-size:0.9rem;margin-bottom:0.6rem;">Responda às questões abaixo. Elas fazem parte da avaliação técnica para a vaga.</p>
+      <h3>Perguntas técnicas</h3>
+      <p class="body-text" style="margin-bottom:1.2rem;">Responda com base no que você já sabe hoje sobre a área. Não há problema em não saber alguma; respeite sua sinceridade.</p>
       <div id="quizBox"></div>
     </div>
 
@@ -412,17 +412,17 @@ function renderForm() {
   const cHor = document.getElementById('c-horario');
   const submitBtn = document.getElementById('submitBtn');
 
-  // Render do questionário técnico
+  // Render do questionário técnico (mesmo padrão visual dos outros formulários)
   const quizBox = document.getElementById('quizBox');
   if (quizBox) {
     quizBox.innerHTML = QUIZ.map((item, qi) => `
-      <div style="padding:1rem 0;border-bottom:1px solid var(--border);">
-        <p style="font-size:0.9rem;font-weight:500;color:var(--charcoal);margin-bottom:0.7rem;">${qi + 1}. ${esc(item.q)}</p>
+      <div class="quiz-q" data-qi="${qi}">
+        <div class="quiz-q-title"><span class="quiz-num">${qi + 1}.</span>${esc(item.q)}</div>
         ${item.options.map((opt, oi) => `
-          <label style="display:flex;gap:0.6rem;align-items:flex-start;padding:0.4rem 0;font-size:0.86rem;color:var(--charcoal);font-weight:300;cursor:pointer;">
-            <input type="radio" name="q${qi}" value="${oi}" style="margin-top:3px;accent-color:var(--charcoal);cursor:pointer;flex-shrink:0;">
-            <span>${esc(opt)}</span>
-          </label>
+          <div class="quiz-opt">
+            <input type="radio" name="quiz-${qi}" id="quiz-${qi}-${oi}" value="${oi}">
+            <label for="quiz-${qi}-${oi}">${esc(opt)}</label>
+          </div>
         `).join('')}
       </div>
     `).join('');
@@ -445,7 +445,7 @@ function renderForm() {
 
     // Apura o questionário técnico
     const technicalAnswers = QUIZ.map((item, qi) => {
-      const sel = document.querySelector(`input[name="q${qi}"]:checked`);
+      const sel = document.querySelector(`input[name="quiz-${qi}"]:checked`);
       const chosen = sel ? parseInt(sel.value, 10) : null;
       return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null, correta: chosen === item.correct };
     });
