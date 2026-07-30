@@ -354,11 +354,22 @@ async function saveCandidatura(data) {
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
         const ext = f.name.split('.').pop();
-        const path = `${Date.now()}-${i}-${data.nome.replace(/\s+/g,'-').toLowerCase()}.${ext}`;
+        const nomeArquivo = (data.nome || 'candidato')
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // remove acentos
+          .replace(/[^a-zA-Z0-9\s-]/g, '')                     // remove outros caracteres inválidos
+          .trim().replace(/\s+/g, '-').toLowerCase();
+        const path = `${Date.now()}-${i}-${nomeArquivo || 'candidato'}.${ext}`;
         const { error: upErr } = await db.storage.from('curriculos').upload(path, f);
         if (!upErr) { const { data: urlData } = db.storage.from('curriculos').getPublicUrl(path); urls.push(urlData.publicUrl); }
+        else { console.warn('Falha ao enviar currículo:', f.name, upErr.message); }
       }
       if (urls.length) cv_url = urls.join('\n');
+    }
+    // Se o candidato anexou arquivo(s) mas NENHUM foi salvo, avisa em vez de
+    // prosseguir silenciosamente sem currículo (o que já causou candidaturas
+    // "completas" no painel sem nenhum arquivo anexado).
+    if (files.length && !cv_url) {
+      return { ok:false, err:'Não foi possível enviar seu(s) arquivo(s). Tente novamente ou use outro formato/nome de arquivo.' };
     }
     const { error } = await db.from('candidaturas').insert({ nome:data.nome, email:data.email, whatsapp:data.whatsapp, vaga_id:data.vaga_id, vaga_titulo:data.vaga_titulo, cv_url, lida:false });
     if (error) return { ok:false, err:error.message };
@@ -379,10 +390,20 @@ async function loadCandidatosDisc() {
   try { const { data } = await db.from('candidatos_disc').select('*').order('created_at', { ascending:false }); return data || []; }
   catch(e) { return []; }
 }
+// Lista de tabelas de formulário técnico — uma por vaga com forms próprio,
+// mais a genérica (vagas sem forms específico). Sempre que uma vaga nova ganhar
+// seu próprio formulário/tabela, adicionar o nome da tabela aqui.
+const FORMS_TABLES = ['forms_gerente_captacao', 'forms_coord_instituto', 'forms_gerente_marketing', 'forms_generico'];
 async function loadFormsRespostas() {
   if (!db) return [];
-  try { const { data } = await db.from('forms_gerente_captacao').select('*').order('created_at', { ascending:false }); return data || []; }
-  catch(e) { return []; }
+  const all = [];
+  for (const t of FORMS_TABLES) {
+    try {
+      const { data, error } = await db.from(t).select('*').order('created_at', { ascending:false });
+      if (!error && data) all.push(...data);
+    } catch(e) { /* tabela pode não existir ainda — ignora e segue */ }
+  }
+  return all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
 // ── HELPERS ──
