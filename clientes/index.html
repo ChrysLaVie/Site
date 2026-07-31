@@ -821,6 +821,7 @@ header {
     <div class="form-field"><label>CPF</label><input id="nc-cpf" placeholder="000.000.000-00"></div>
     <div class="form-field"><label>Telefone</label><input id="nc-tel"></div>
     <div class="form-field"><label>E-mail</label><input id="nc-email"></div>
+    <div class="form-field" style="grid-column:1/-1"><label>LinkedIn</label><input id="nc-linkedin" placeholder="linkedin.com/in/..."></div>
     <div class="form-field" style="grid-column:1/-1"><label>Vaga *</label><select id="nc-vaga"><option value="">Selecione...</option></select></div>
     <div class="form-field"><label>Etapa</label><select id="nc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option></select></div>
     <div class="form-field"><label>Data entrada</label><input id="nc-data" type="date"></div>
@@ -834,6 +835,7 @@ header {
   <div class="modal-header"><div class="modal-title" id="mc-titulo">Atualizar Candidato</div><button class="modal-close" onclick="closeModal('modal-mover-cand')">✕</button></div>
   <input type="hidden" id="mc-id">
   <div class="form-grid">
+    <div class="form-field" style="grid-column:1/-1"><label>🔗 LinkedIn</label><div style="display:flex;gap:6px"><input id="mc-linkedin" placeholder="linkedin.com/in/..." style="flex:1"><button type="button" class="btn btn-ghost btn-sm" onclick="abrirLinkedin()" title="Abrir perfil">Abrir</button></div></div>
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option><option value="reprovado">Reprovado</option><option value="banco_talentos_administrativo">Banco de Talentos Administrativo</option><option value="banco_talentos_academico">Banco de Talentos Acadêmico</option><option value="banco_talentos_geral">Banco de Talentos Geral</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observação (anotações sobre o candidato)</label><textarea id="mc-obs" placeholder="Ex.: perfil aderente; confirmar disponibilidade presencial; nota técnica do teste..."></textarea></div>
@@ -1163,17 +1165,36 @@ function renderAgendaLista(){
     const linkBtn=e.link?`<a href="${e.link}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">🔗 Entrar</a>`:'';
     const gcalBtn=`<a href="${gcalLink(e,'interna')}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">📅</a>`;
     const statusTag=e.status&&e.status!=='agendada'?` · ${e.status}`:'';
+    const cand=getCands().find(x=>x.id===e.candidatoId)||{};
+    const contato=[
+      cand.tel?`<span onclick="event.stopPropagation();copiarContato('${cand.tel.replace(/'/g,"")}','Telefone')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">📞 ${escapeHtmlAg(cand.tel)}</span>`:'',
+      cand.email?`<span onclick="event.stopPropagation();copiarContato('${cand.email.replace(/'/g,"")}','E-mail')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">✉ ${escapeHtmlAg(cand.email)}</span>`:''
+    ].filter(Boolean).join(' &nbsp;·&nbsp; ');
     return `<div class="ag-lista-item" onclick="abrirAgendaModal('${e.id}')">
       <div class="ag-lista-date"><div class="d">${parseInt(d)}</div><div class="m">${AG_MES_ABREV[parseInt(m)-1]}</div></div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:600">${escapeHtmlAg(e.candidato||e.titulo||'Entrevista')}</div>
         <div style="font-size:12px;color:var(--mid)">${escapeHtmlAg(e.titulo||'')}${e.vaga?' · '+escapeHtmlAg(e.vaga):''}</div>
         <div style="font-size:12px;color:var(--mid)">${horario} · ${e.tipo==='presencial'?'Presencial':'Online'}${statusTag}</div>
+        ${contato?`<div style="font-size:12px;color:var(--mid);margin-top:3px">${contato}</div>`:''}
       </div>
       ${linkBtn}
       ${gcalBtn}
     </div>`;
   }).join('');
+}
+
+function abrirLinkedin(){
+  let u=(document.getElementById('mc-linkedin').value||'').trim();
+  if(!u){ alert('Nenhum perfil do LinkedIn cadastrado para este candidato.'); return; }
+  if(!/^https?:\/\//i.test(u)) u='https://'+u.replace(/^\/+/,'');
+  window.open(u,'_blank');
+}
+
+function copiarContato(valor,rotulo){
+  navigator.clipboard.writeText(valor)
+    .then(()=>showToast('📋 '+rotulo+' copiado: '+valor))
+    .catch(()=>prompt('Copie o '+rotulo.toLowerCase()+':',valor));
 }
 
 function escapeHtmlAg(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1210,6 +1231,12 @@ function gcalLink(a, versao){
     if(a.obs) det+=`\nObs: ${a.obs}`;
   }
   const p=new URLSearchParams({action:'TEMPLATE',text:titulo,dates:start+'/'+end,details:det,location:local});
+  // Na versão interna, o candidato entra como convidado para o Google já oferecer
+  // o envio do convite por e-mail, sem precisar digitar o endereço na mão.
+  if(versao!=='candidato'){
+    const c=getCands().find(x=>x.id===a.candidatoId);
+    if(c&&c.email) p.append('add', c.email);
+  }
   return 'https://calendar.google.com/calendar/render?'+p.toString();
 }
 
@@ -1389,11 +1416,11 @@ function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ id:r.id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
-const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
+const dbToCand  = r => ({ id:r.id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
-const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
+const candToDb  = c => ({ id:c.id, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
 const agendaToDb= a => ({ id:a.id, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
@@ -2076,15 +2103,16 @@ function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.i
 async function salvarCandidato(){
   const nome=document.getElementById('nc-nome').value.trim(),vagaId=document.getElementById('nc-vaga').value;
   if(!nome){alert('Preencha o nome.');return;}if(!vagaId){alert('Selecione a vaga.');return;}
-  const c={id:Date.now().toString(),nome,vagaId,cpf:document.getElementById('nc-cpf').value.trim(),tel:document.getElementById('nc-tel').value.trim(),email:document.getElementById('nc-email').value.trim(),etapa:document.getElementById('nc-etapa').value,dataEntrada:document.getElementById('nc-data').value||new Date().toISOString().slice(0,10),fonte:document.getElementById('nc-fonte').value.trim(),obs:document.getElementById('nc-obs').value.trim(),historico:[{etapa:document.getElementById('nc-etapa').value,data:new Date().toISOString(),obs:'Cadastro inicial',usuario:getUserName()}],criadoPor:getUserName()};
+  const c={id:Date.now().toString(),nome,vagaId,cpf:document.getElementById('nc-cpf').value.trim(),tel:document.getElementById('nc-tel').value.trim(),email:document.getElementById('nc-email').value.trim(),linkedin:document.getElementById('nc-linkedin').value.trim(),etapa:document.getElementById('nc-etapa').value,dataEntrada:document.getElementById('nc-data').value||new Date().toISOString().slice(0,10),fonte:document.getElementById('nc-fonte').value.trim(),obs:document.getElementById('nc-obs').value.trim(),historico:[{etapa:document.getElementById('nc-etapa').value,data:new Date().toISOString(),obs:'Cadastro inicial',usuario:getUserName()}],criadoPor:getUserName()};
   try{await upsertCand(c);_cands.unshift(c);closeModal('modal-novo-cand');['nc-nome','nc-cpf','nc-tel','nc-email','nc-fonte','nc-obs'].forEach(id=>document.getElementById(id).value='');renderFunil();renderCandidatos();showToast('✅ Candidato adicionado!');abrirMensagem(c.id,'inicial');}catch(e){alert('Erro: '+e.message);}
 }
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
-  document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';openModal('modal-mover-cand');renderDocsList();}
+  document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
   const novaEtapa=document.getElementById('mc-etapa').value,obs=document.getElementById('mc-obs').value.trim();
+  const linkedin=document.getElementById('mc-linkedin').value.trim();
   const novaVaga=document.getElementById('mc-vaga').value,vagaAntiga=_cands[idx].vagaId;
   const etapaAntiga=_cands[idx].etapa;
   const hist=[...(_cands[idx].historico||[])];
@@ -2095,7 +2123,7 @@ async function atualizarCandidato(){
   if(novaEtapa!==etapaAntiga){
     hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
   }
-  _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,historico:hist};
+  _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
   try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
