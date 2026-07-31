@@ -698,6 +698,16 @@ header {
     </select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="ag-obs"></textarea></div>
   </div>
+  <div id="ag-msg-wrap" style="border-top:1px solid var(--bege);margin-top:14px;padding-top:14px">
+    <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:8px">💬 Avisar o candidato</label>
+    <div class="form-field" id="ag-ref-wrap" style="display:none;margin-bottom:8px"><label>Nome de referência (quem recebe no local)</label><input type="text" id="ag-ref" placeholder="Ex: Chrys, na recepção"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="avisarDaAgenda('copiar')">📋 Copiar</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="avisarDaAgenda('email')">✉ E-mail</button>
+      <button type="button" class="btn btn-sm" style="background:#25D366;border-color:#25D366;color:#fff" onclick="avisarDaAgenda('whats')">💬 WhatsApp</button>
+    </div>
+    <div style="font-size:11px;color:var(--mid);margin-top:6px">Usa a data, o horário e o link preenchidos acima. Não precisa digitar de novo.</div>
+  </div>
   <div id="ag-gcal-wrap" style="display:none;border-top:1px solid var(--bege);margin-top:14px;padding-top:14px">
     <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:8px">📅 Adicionar ao Google Agenda</label>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1276,9 +1286,64 @@ function agToggleTipo(){
   const tipo=document.getElementById('ag-tipo').value;
   document.getElementById('ag-link-wrap').style.display=tipo==='online'?'block':'none';
   document.getElementById('ag-local-wrap').style.display=tipo==='presencial'?'block':'none';
+  const rw=document.getElementById('ag-ref-wrap'); if(rw) rw.style.display=tipo==='presencial'?'block':'none';
 }
 
 function agPreencheVaga(){ /* vaga é derivada do candidato no salvar */ }
+
+// ── Avisar o candidato usando os dados já digitados na Agenda ────────────────
+// Evita retrabalho: o que está no formulário da entrevista alimenta a mensagem.
+function _dataBR(iso){ if(!iso) return ''; const [a,m,d]=iso.split('-'); return `${d}/${m}/${a}`; }
+
+function _montaTextoAgenda(){
+  const candId=document.getElementById('ag-cand').value;
+  const c=getCands().find(x=>x.id===candId);
+  if(!c){ alert('Selecione o candidato antes de enviar a mensagem.'); return null; }
+  const data=document.getElementById('ag-data').value;
+  const hora=document.getElementById('ag-ini').value;
+  if(!data||!hora){ alert('Preencha a data e o horário de início.'); return null; }
+  const tipo=document.getElementById('ag-tipo').value;
+  const tplKey = tipo==='online' ? 'confirmaOnline' : 'confirmaPresencial';
+  const tpl=MSG_TEMPLATES[tplKey];
+  if(!tpl){ alert('Modelo de mensagem não encontrado.'); return null; }
+
+  let valores;
+  if(tipo==='online'){
+    const link=document.getElementById('ag-link').value.trim();
+    if(!link){ alert('Informe o link da reunião.'); return null; }
+    valores={'DATA':_dataBR(data),'HORÁRIO':hora,'LINK':link};
+  } else {
+    const local=document.getElementById('ag-local').value.trim();
+    if(!local){ alert('Informe o local da entrevista.'); return null; }
+    valores={'DATA':_dataBR(data),'HORÁRIO':hora,'ENDEREÇO':local,
+             'NOME DE REFERÊNCIA':(document.getElementById('ag-ref').value.trim()||getUserName())};
+  }
+
+  let txt=_aplicaVars(tpl.texto,c);
+  tpl.campos.forEach(cp=>{ txt=txt.replace('['+cp+']', valores[cp]||('['+cp+']')); });
+  return {c,txt,tpl};
+}
+
+function avisarDaAgenda(canal){
+  const r=_montaTextoAgenda(); if(!r) return;
+  const {c,txt}=r;
+  if(canal==='copiar'){
+    navigator.clipboard.writeText(txt).then(()=>showToast('📋 Mensagem copiada')).catch(()=>alert('Não foi possível copiar.'));
+    return;
+  }
+  if(canal==='whats'){
+    if(!c.tel){ alert('Este candidato não tem telefone cadastrado.'); return; }
+    window.open('https://wa.me/'+_fmtTel(c.tel)+'?text='+encodeURIComponent(txt),'_blank');
+    showToast('💬 WhatsApp aberto com a mensagem pronta'); return;
+  }
+  if(canal==='email'){
+    if(!c.email){ alert('Este candidato não tem e-mail cadastrado.'); return; }
+    const v=getVagas().find(x=>x.id===c.vagaId);
+    const assunto='Processo seletivo'+(v?' — '+v.titulo:'')+' | La Vie Consultoria';
+    window.open('mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(txt),'_blank');
+    showToast('✉ E-mail aberto com a mensagem pronta'); return;
+  }
+}
 
 async function salvarAgenda(){
   const candId=document.getElementById('ag-cand').value;
@@ -1690,6 +1755,21 @@ const MSG_MENU=['inicial','confirmaOnline','confirmaPresencial','reagendar','noS
 
 // ── Preenche {nome}/{vaga} e abre pop-up para [CAMPOS], depois WhatsApp/e-mail ──
 let _msgCtx=null;
+// Busca a próxima entrevista agendada do candidato para pré-preencher a mensagem.
+function _dadosDaAgendaDoCand(candId){
+  try{
+    const hoje=new Date().toISOString().slice(0,10);
+    const lista=(_agenda||[]).filter(a=>a.candidatoId===candId && a.status!=='cancelada' && a.data);
+    if(!lista.length) return null;
+    const futuras=lista.filter(a=>a.data>=hoje).sort((x,y)=>x.data.localeCompare(y.data));
+    const a=futuras[0]||lista.sort((x,y)=>y.data.localeCompare(x.data))[0];
+    const d=_dataBR(a.data);
+    const valores={'DATA':d,'HORÁRIO':a.horaIni||''};
+    if(a.tipo==='presencial'){ valores['ENDEREÇO']=a.local||''; valores['NOME DE REFERÊNCIA']=getUserName(); }
+    else { valores['LINK']=a.link||''; }
+    return {valores, rotulo:`${d}${a.horaIni?' às '+a.horaIni:''} · ${a.titulo||'Entrevista'}`};
+  }catch(e){ return null; }
+}
 function _fmtTel(t){return (t||'').replace(/\D/g,'').replace(/^0+/,'').replace(/^(?!55)/,'55');}
 function _aplicaVars(txt,c){const v=getVagas().find(x=>x.id===c.vagaId);return txt.replace(/\{nome\}/g,(c.nome||'').split(' ')[0]).replace(/\{vaga\}/g,v?v.titulo:'');}
 function abrirMensagem(candId,tplKey){
@@ -1698,8 +1778,19 @@ function abrirMensagem(candId,tplKey){
   _msgCtx={candId,tplKey};
   let corpo=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${tpl.nome}</div><div style="font-size:12px;color:var(--mid);margin-bottom:14px">Para: <strong>${c.nome}</strong>${c.tel?` · ${c.tel}`:' · (sem telefone)'}</div>`;
   if(tpl.campos.length){
-    corpo+=`<div style="font-size:12px;color:var(--mid);margin-bottom:8px">Preencha os campos abaixo (eles entram no texto):</div>`;
-    corpo+=tpl.campos.map((cp,i)=>`<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}"></div>`).join('');
+    // Se já existe entrevista agendada para este candidato, puxa os dados de lá
+    // em vez de obrigar a digitar tudo de novo.
+    const pre=_dadosDaAgendaDoCand(candId);
+    if(pre){
+      corpo+=`<div style="background:var(--bege-lt);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--mid);margin-bottom:10px">📅 Preenchido a partir da entrevista já agendada para <strong>${pre.rotulo}</strong>. Ajuste se precisar.</div>`;
+    } else {
+      corpo+=`<div style="background:var(--bege-lt);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--mid);margin-bottom:10px">Não há entrevista agendada para este candidato. Se você agendar pela aba Agenda, a mensagem já sai preenchida e o evento entra no Google Agenda.</div>`;
+    }
+    corpo+=`<div style="font-size:12px;color:var(--mid);margin-bottom:8px">Confira os campos abaixo (eles entram no texto):</div>`;
+    corpo+=tpl.campos.map((cp,i)=>{
+      const v=pre&&pre.valores[cp]?pre.valores[cp]:'';
+      return `<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}" value="${(v+'').replace(/"/g,'&quot;')}"></div>`;
+    }).join('');
   } else {
     corpo+=`<div style="font-size:12px;color:var(--mid)">Mensagem pronta — nome e vaga já preenchidos.</div>`;
   }
