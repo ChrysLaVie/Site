@@ -384,6 +384,7 @@ async function loadCandidaturas() {
 }
 async function marcarLida(id) { if (!db) return; try { await db.from('candidaturas').update({ lida:true }).eq('id', id); } catch(e) {} }
 async function deleteCandidatura(id) { if (!db) return; try { await db.from('candidaturas').delete().eq('id', id); } catch(e) {} }
+async function arquivarCandidatura(id, valor) { if (!db) return; try { await db.from('candidaturas').update({ arquivada: valor }).eq('id', id); } catch(e) {} }
 
 // ── SUPABASE: DISC e FORMULÁRIO (para a aba "Candidatos") ──
 async function loadCandidatosDisc() {
@@ -965,7 +966,9 @@ async function renderAdmin() {
   const formsRows = await loadFormsRespostas();
   if (state.view !== 'admin') return;
 
-  const naoLidas = candidaturas.filter(c => !c.lida).length;
+  const naoLidas = candidaturas.filter(c => !c.lida && !c.arquivada).length;
+  const arquivadas = candidaturas.filter(c => c.arquivada).length;
+  let mostrarArquivados = false;
   let filtroCand = 'todas';
 
   // ── cruzamento por e-mail para a aba "Candidatos" ──
@@ -990,6 +993,8 @@ async function renderAdmin() {
     else { const c = candidatosMap.get(key); c.forms = f; c.whatsapp = c.whatsapp || f.whatsapp; c.vaga_titulo = c.vaga_titulo || f.vaga_titulo; }
   });
   const candidatosUnificados = [...candidatosMap.values()].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  // Um candidato é considerado arquivado quando a candidatura dele está arquivada.
+  candidatosUnificados.forEach(c => { c.arquivado = !!(c.candidatura && c.candidatura.arquivada); });
 
   function vagasTabHTML() {
     return `
@@ -1012,7 +1017,12 @@ async function renderAdmin() {
   }
 
   function candListHTML(filter) {
-    const lista = filter === 'todas' ? candidaturas : filter === 'novas' ? candidaturas.filter(c => !c.lida) : candidaturas.filter(c => c.vaga_id === filter);
+    // Arquivadas ficam fora de todos os filtros, exceto o filtro "Arquivadas".
+    const ativas = candidaturas.filter(c => !c.arquivada);
+    const lista = filter === 'arquivadas' ? candidaturas.filter(c => c.arquivada)
+      : filter === 'todas' ? ativas
+      : filter === 'novas' ? ativas.filter(c => !c.lida)
+      : ativas.filter(c => c.vaga_id === filter);
     return lista.length === 0 ? '<p class="empty-note">Nenhuma candidatura encontrada.</p>' :
       lista.map(c => `
         <div class="entry-row">
@@ -1022,7 +1032,8 @@ async function renderAdmin() {
           </div>
           <div class="entry-actions">
             ${c.cv_url ? cvLinksHTML(c.cv_url) : '<span style="font-size:0.7rem;color:var(--muted);padding:0.4rem 0.7rem;">Sem currículo</span>'}
-            ${!c.lida ? `<button class="mark-read" data-id="${c.id}">Marcar lida</button>` : ''}
+            ${!c.lida && !c.arquivada ? `<button class="mark-read" data-id="${c.id}">Marcar lida</button>` : ''}
+            <button class="arq-cand" data-id="${c.id}" data-arq="${c.arquivada ? '1' : '0'}">${c.arquivada ? 'Desarquivar' : 'Arquivar'}</button>
             <button class="danger del-cand" data-id="${c.id}">Remover</button>
           </div>
         </div>
@@ -1033,13 +1044,15 @@ async function renderAdmin() {
     return `
       <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Candidaturas recebidas</h2></div>
       <div class="stat-row">
-        <div><div class="stat-num">${candidaturas.length}</div><div class="stat-label">Total</div></div>
+        <div><div class="stat-num">${candidaturas.filter(c => !c.arquivada).length}</div><div class="stat-label">Ativas</div></div>
         <div><div class="stat-num ok">${naoLidas}</div><div class="stat-label">Não lidas</div></div>
+        <div><div class="stat-num">${arquivadas}</div><div class="stat-label">Arquivadas</div></div>
       </div>
       <div class="filter-row2">
         <button class="filter-chip2 ${filtroCand==='todas'?'active':''}" data-filter="todas">Todas</button>
         <button class="filter-chip2 ${filtroCand==='novas'?'active':''}" data-filter="novas">Não lidas (${naoLidas})</button>
         ${ADMIN_VAGAS.map(v => `<button class="filter-chip2 ${filtroCand===v.id?'active':''}" data-filter="${v.id}">${esc(v.title)}</button>`).join('')}
+        <button class="filter-chip2 ${filtroCand==='arquivadas'?'active':''}" data-filter="arquivadas">Arquivadas (${arquivadas})</button>
       </div>
       <div id="candList">${candListHTML(filtroCand)}</div>
     `;
@@ -1052,17 +1065,25 @@ async function renderAdmin() {
         <p class="empty-note">Nenhum candidato encontrado ainda em nenhuma das etapas.</p>
       `;
     }
+    const listaUnif = mostrarArquivados ? candidatosUnificados.filter(c => c.arquivado) : candidatosUnificados.filter(c => !c.arquivado);
+    const qtdArquivados = candidatosUnificados.filter(c => c.arquivado).length;
     return `
       <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Candidatos</h2></div>
-      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1.4rem;">Cruza automaticamente currículo, resultado do DISC e formulário da vaga pelo e-mail informado em cada etapa.</p>
-      ${candidatosUnificados.map((c, idx) => `
-        <div class="cand-row" data-idx="${idx}">
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1rem;">Cruza automaticamente currículo, resultado do DISC e formulário da vaga pelo e-mail informado em cada etapa.</p>
+      <div class="filter-row2" style="margin-bottom:1.4rem;">
+        <button class="filter-chip2 ${!mostrarArquivados?'active':''}" id="unifAtivos">Em análise (${candidatosUnificados.length - qtdArquivados})</button>
+        <button class="filter-chip2 ${mostrarArquivados?'active':''}" id="unifArquivados">Arquivados (${qtdArquivados})</button>
+      </div>
+      ${listaUnif.length === 0 ? `<p class="empty-note">${mostrarArquivados ? 'Nenhum candidato arquivado.' : 'Nenhum candidato em análise.'}</p>` : ''}
+      ${listaUnif.map((c, idx) => `
+        <div class="cand-row" data-idx="${candidatosUnificados.indexOf(c)}">
           <div class="cand-top">
             <div>
               <h4>${esc(c.nome)}</h4>
               <p>${esc(c.email)} · ${esc(c.whatsapp) || '-'} ${c.vaga_titulo ? '· ' + esc(c.vaga_titulo) : ''}</p>
             </div>
-            <button class="dossie-btn" data-idx="${idx}">Ver Dossiê →</button>
+            <button class="dossie-btn" data-idx="${candidatosUnificados.indexOf(c)}">Ver Dossiê →</button>
+            ${c.candidatura ? `<button class="arq-unif" data-id="${c.candidatura.id}" data-arq="${c.arquivado ? '1' : '0'}" style="margin-left:0.5rem;">${c.arquivado ? 'Desarquivar' : 'Arquivar'}</button>` : ''}
           </div>
           <div class="cand-stages">
             <div class="stage-chip ${c.candidatura ? 'done' : 'pending'}">${c.candidatura ? '📄 Currículo recebido' : '📄 Ainda não se candidatou'}</div>
@@ -1086,9 +1107,28 @@ async function renderAdmin() {
     document.querySelectorAll('.filter-chip2').forEach(btn => btn.addEventListener('click', () => { filtroCand = btn.dataset.filter; draw(); }));
     document.querySelectorAll('.mark-read').forEach(btn => btn.addEventListener('click', async () => { await marcarLida(btn.dataset.id); const c = candidaturas.find(x => x.id === btn.dataset.id); if (c) c.lida = true; draw(); }));
     document.querySelectorAll('.del-cand').forEach(btn => btn.addEventListener('click', async () => { if (!confirm('Remover esta candidatura?')) return; await deleteCandidatura(btn.dataset.id); candidaturas.splice(candidaturas.findIndex(x => x.id === btn.dataset.id), 1); draw(); }));
+    document.querySelectorAll('.arq-cand').forEach(btn => btn.addEventListener('click', async () => {
+      const novoValor = btn.dataset.arq !== '1';
+      await arquivarCandidatura(btn.dataset.id, novoValor);
+      const c = candidaturas.find(x => x.id === btn.dataset.id);
+      if (c) { c.arquivada = novoValor; if (novoValor) c.lida = true; }
+      draw();
+    }));
   }
   function bindUnifTabEvents() {
     document.querySelectorAll('.dossie-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openDossieModal(candidatosUnificados[btn.dataset.idx]); }));
+    document.querySelectorAll('.arq-unif').forEach(btn => btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const novoValor = btn.dataset.arq !== '1';
+      await arquivarCandidatura(btn.dataset.id, novoValor);
+      const cand = candidaturas.find(x => x.id === btn.dataset.id);
+      if (cand) { cand.arquivada = novoValor; if (novoValor) cand.lida = true; }
+      const unif = candidatosUnificados.find(c => c.candidatura && c.candidatura.id === btn.dataset.id);
+      if (unif) { unif.arquivado = novoValor; if (unif.candidatura) unif.candidatura.arquivada = novoValor; }
+      draw();
+    }));
+    document.getElementById('unifAtivos')?.addEventListener('click', () => { mostrarArquivados = false; draw(); });
+    document.getElementById('unifArquivados')?.addEventListener('click', () => { mostrarArquivados = true; draw(); });
     document.querySelectorAll('.cand-row').forEach(row => row.addEventListener('click', () => openDossieModal(candidatosUnificados[row.dataset.idx])));
   }
 
