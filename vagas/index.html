@@ -315,6 +315,13 @@ const DIM = {
 let db = null;
 try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
 
+// ── Conexão com o sistema de R&S (banco separado) ────────────────────────────
+const RS_SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
+const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
+const BUCKET_DOCS = 'curriculos'; // bucket público já existente
+let rsDb = null;
+try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY); } catch(e) {}
+
 let state = { view: 'vagas', adminTab: 'vagas' };
 let VAGAS = [];
 let ADMIN_VAGAS = [];
@@ -660,6 +667,10 @@ function openDossieModal(c) {
         </div>
 
         ${(c.disc || c.forms) ? `<button class="btn-primary" id="dossiePdfFull" style="width:100%;margin-top:0.4rem;">Baixar Dossiê Completo (PDF)</button>` : ''}
+        ${(c.disc || c.forms) ? `
+          <button class="btn-primary" id="dossieEnviarRS" style="width:100%;margin-top:0.6rem;background:transparent;color:var(--charcoal);border:1px solid var(--charcoal);">Enviar DISC e Formulário ao R&amp;S</button>
+          <p style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.5rem;line-height:1.4;">Gera os PDFs e anexa ao registro do candidato no sistema de R&amp;S. O currículo já vai automaticamente no envio do formulário.</p>
+        ` : ''}
       </div>
     </div>
   `;
@@ -668,6 +679,7 @@ function openDossieModal(c) {
   document.getElementById('dossiePdfDisc')?.addEventListener('click', () => buildDiscPDFFromRow(c.disc));
   document.getElementById('dossiePdfForms')?.addEventListener('click', () => buildFormsPDFFromRow(c.forms));
   document.getElementById('dossiePdfFull')?.addEventListener('click', () => buildDossiePDF(c));
+  document.getElementById('dossieEnviarRS')?.addEventListener('click', (e) => enviarDocsParaRS(c, e.currentTarget));
 }
 
 function buildDossiePDF(c) {
@@ -948,6 +960,82 @@ function _drawFormsBody(doc, s) {
 
   doc.setFontSize(8); doc.setTextColor(180,175,168);
   doc.text('La Vie Consultoria · lavieconsultoria.com · Documento de uso interno do processo seletivo.', M, 822);
+}
+
+// ── Enviar DISC e Formulário para o sistema de R&S ───────────────────────────
+// Gera os PDFs em memória, sobe para o storage e anexa ao registro do candidato.
+function _slug(t) {
+  return (t || 'candidato').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+}
+
+async function _subirPdf(blob, caminho) {
+  const { error } = await db.storage.from(BUCKET_DOCS).upload(caminho, blob, {
+    contentType: 'application/pdf', upsert: true
+  });
+  if (error) throw new Error('Falha no upload: ' + error.message);
+  const { data } = db.storage.from(BUCKET_DOCS).getPublicUrl(caminho);
+  return data.publicUrl;
+}
+
+async function enviarDocsParaRS(c, btn) {
+  if (!rsDb || !db) { alert('Conexão com o sistema de R&S indisponível.'); return; }
+  if (!c.disc && !c.forms) { alert('Este candidato ainda não tem DISC nem formulário.'); return; }
+
+  const txtOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const base = _slug(c.nome);
+    const carimbo = Date.now();
+    const novos = [];
+
+    if (c.disc) {
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      _drawDiscBody(doc, c.disc);
+      const url = await _subirPdf(doc.output('blob'), `documentos/${base}/${carimbo}-disc.pdf`);
+      novos.push({ nome: 'Relatório DISC', url, tipo: 'application/pdf',
+        enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
+    }
+
+    if (c.forms) {
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      _drawFormsBody(doc, c.forms);
+      const url = await _subirPdf(doc.output('blob'), `documentos/${base}/${carimbo}-formulario.pdf`);
+      novos.push({ nome: 'Formulário da vaga', url, tipo: 'application/pdf',
+        enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
+    }
+
+    // Localiza o candidato no R&S pelo e-mail
+    const emailNorm = (c.email || '').trim().toLowerCase();
+    const busca = await rsDb.from('candidatos').select('id,nome,documentos')
+      .ilike('email', emailNorm).order('criado_em', { ascending: false }).limit(1).maybeSingle();
+
+    if (!busca?.data?.id) {
+      alert('Candidato não encontrado no sistema de R&S pelo e-mail ' + emailNorm +
+            '. Verifique se ele foi criado por lá antes de enviar os documentos.');
+      return;
+    }
+
+    // Junta com o que já existe, sem duplicar o mesmo tipo de documento
+    const atuais = Array.isArray(busca.data.documentos) ? busca.data.documentos : [];
+    const nomesNovos = novos.map(d => d.nome);
+    const mantidos = atuais.filter(d => !nomesNovos.includes(d.nome));
+    const documentos = [...mantidos, ...novos];
+
+    const { error } = await rsDb.from('candidatos')
+      .update({ documentos, atualizado_em: new Date().toISOString() })
+      .eq('id', busca.data.id);
+    if (error) throw new Error(error.message);
+
+    alert('Documentos enviados para o R&S: ' + nomesNovos.join(' e ') +
+          '.\nCandidato: ' + busca.data.nome);
+  } catch (e) {
+    alert('Não foi possível enviar: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = txtOriginal; }
+  }
 }
 
 function buildFormsPDFFromRow(s) {
