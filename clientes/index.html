@@ -2292,6 +2292,9 @@ function _arteBeneficios(texto){
 // no meio do texto. Se não achar esse padrão, usa a string inteira mesmo.
 function _parseSalario(str){
   const s = str||'';
+  if(!s.trim() || /a definir/i.test(s)){
+    return { hero:'A combinar', heroLabel:'Remuneração', sub:'' };
+  }
   const m = s.match(/média\s+de\s+ganhos?[^R$]*?(R\$\s?[\d.,]+)\s*(?:a|e|até)\s*(R\$\s?[\d.,]+)/i);
   if(m){
     const resto = s.replace(m[0],'').replace(/^[·\-–,\s()]+|[·\-–,\s()]+$/g,'').trim();
