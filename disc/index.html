@@ -451,11 +451,13 @@ const incoming = {
 const FORMS_GERENTE_CAPTACAO  = 'https://lavieconsultoria.com/vagas/forms-gerente-captacao.html';
 const FORMS_COORD_INSTITUTO   = 'https://lavieconsultoria.com/vagas/forms-coord-instituto.html';
 const FORMS_GERENTE_MARKETING = 'https://lavieconsultoria.com/vagas/forms-gerente-marketing.html';
+const FORMS_COORD_RELACIONAMENTO = 'https://lavieconsultoria.com/vagas/forms-coord-relacionamento.html';
 
 const VAGAS_COM_FORMS_PROPRIO = {
-  'Gerente de Captação de Alunos e Televendas': FORMS_GERENTE_CAPTACAO,
-  'Coordenador de Instituto Tecnológico':       FORMS_COORD_INSTITUTO,
-  'Gerente de Marketing':                       FORMS_GERENTE_MARKETING
+  'Gerente de Captação de Alunos e Televendas':            FORMS_GERENTE_CAPTACAO,
+  'Coordenador de Instituto Tecnológico':                  FORMS_COORD_INSTITUTO,
+  'Gerente de Marketing':                                  FORMS_GERENTE_MARKETING,
+  'Coordenador de Relacionamento e Experiência do Aluno':  FORMS_COORD_RELACIONAMENTO
 };
 
 // Retorna a URL do formulário da vaga, ou null se a vaga não tiver um.
@@ -516,7 +518,14 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
       historico: [{ etapa:'triagem', data:agora, obs:'Candidatura + DISC recebidos automaticamente pelo site (sem formulário técnico específico).', usuario:'Site (automático)' }],
       criado_por: 'Site (automático)'
     };
-    const existente = await rsDb.from('candidatos').select('id').ilike('email', emailNorm).eq('vaga_id', vagaId).limit(1).maybeSingle();
+    // Quando a vaga não é encontrada no R&S, vaga_id fica NULL. No PostgREST,
+    // eq('vaga_id', null) NÃO casa com linhas NULL — sem o is(), o mesmo candidato
+    // entraria duplicado a cada envio. Por isso a condição é montada conforme o caso.
+    let buscaExistente = rsDb.from('candidatos').select('id').ilike('email', emailNorm);
+    buscaExistente = vagaId
+      ? buscaExistente.eq('vaga_id', vagaId)
+      : buscaExistente.is('vaga_id', null);
+    const existente = await buscaExistente.limit(1).maybeSingle();
     if (existente?.data?.id) candidato.id = existente.data.id;
     await rsDb.from('candidatos').upsert(candidato);
   } catch (e) { console.warn('Não foi possível enviar o candidato (sem forms) para o R&S:', e); }
