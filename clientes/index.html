@@ -265,12 +265,12 @@ header {
   display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px;
 }
 .cand-field label { display:block; font-size:9px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--light); margin-bottom:4px; }
-.cand-field input {
+.cand-field input, .cand-field select {
   width:100%; border:none; border-bottom:1.5px solid var(--bege); background:transparent;
   font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--charcoal);
   padding:3px 0; outline:none; transition:border-color .2s;
 }
-.cand-field input:focus { border-color:var(--charcoal); }
+.cand-field input:focus, .cand-field select:focus { border-color:var(--charcoal); }
 .cond-card { background:var(--charcoal); color:#F2F1ED; border-radius:12px; padding:18px 22px; margin-bottom:20px; }
 .cond-title { font-size:9px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:rgba(242,241,237,.45); margin-bottom:12px; }
 .cond-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
@@ -392,7 +392,18 @@ header {
   /* Esconde toasts, modais, login, header e barras */
   .toast, .modal-bg, #login-screen, header, nav { display: none !important; }
   body { background: #fff !important; }
+
+  /* Modo dossiê: reimpressão de uma entrevista já salva, a partir do
+     Histórico — funciona mesmo que o roteiro original tenha sido editado
+     ou removido, porque usa só os dados guardados no registro. Quando esse
+     modo está ativo (body.printing-dossie), ele tem prioridade sobre as
+     regras do roteiro ao vivo acima. */
+  body.printing-dossie * { visibility: hidden !important; }
+  body.printing-dossie #dossie-print-area, body.printing-dossie #dossie-print-area * { visibility: visible !important; }
+  body.printing-dossie #dossie-print-area { position: absolute !important; left: 0; top: 0; width: 100%; display: block !important; }
+  .dossie-sec { break-inside: avoid; margin-bottom: 10px; }
 }
+.dossie-print-only { display: none; }
 
 .user-btn{display:flex;align-items:center;gap:12px;background:var(--cream);border:1.5px solid var(--bege);border-radius:10px;padding:12px 16px;cursor:pointer;transition:border-color .2s;width:100%;margin-bottom:8px;font-family:'DM Sans',sans-serif;user-select:none}
 .user-btn:hover{border-color:var(--charcoal)}
@@ -1499,11 +1510,11 @@ function getEntrevistas() { return _entrevistas; }
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
-const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, registradoPor:r.registrado_por, data:r.criado_em });
+const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
-const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, registrado_por:e.registradoPor });
+const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
 const agendaToDb= a => ({ id:a.id, empresa_id:a.empresaId||currentEmpresa, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
 
@@ -2575,7 +2586,7 @@ function abrirRoteiro(id){
   curRoteiro.sections.forEach((_,i)=>{secState[i]={done:false,checks:new Array(curRoteiro.sections[i].questions.length).fill(false),notes:[]};});
   document.getElementById('ev-home').style.display='none';document.getElementById('ev-interview').style.display='block';
   document.getElementById('ev-role').textContent=curRoteiro.nome;document.getElementById('ev-dept').textContent=curRoteiro.setor;document.getElementById('ev-dur').textContent='⏱ '+curRoteiro.duracao;
-  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Nome da Mãe</label><input id="f-mae" placeholder="Nome da mãe"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div>`;
+  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div><div class="cand-field"><label>Como soube da vaga</label><input id="f-como-soube" placeholder="Ex.: LinkedIn, indicação..."></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="14" max="100" placeholder="Ex.: 32"></div><div class="cand-field"><label>Estado civil</label><select id="f-estado-civil"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União estável</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select></div><div class="cand-field"><label>Naturalidade</label><input id="f-naturalidade" placeholder="Cidade/UF"></div><div class="cand-field"><label>Quantidade de filhos</label><input id="f-qtd-filhos" type="number" min="0" max="20" placeholder="Ex.: 2"></div><div class="cand-field"><label>Onde mora atualmente</label><input id="f-onde-mora" placeholder="Cidade/bairro"></div>`;
   document.getElementById('ev-cond-card').innerHTML=`<div class="cond-title">Condições da Vaga</div><div class="cond-grid">${Object.entries(curRoteiro.conditions).map(([k,v])=>`<div class="cond-item"><label>${k}</label><span>${v}</span></div>`).join('')}</div>`;
   renderSections();renderEval();updateProg();window.scrollTo(0,0);
 }
@@ -2597,7 +2608,25 @@ async function salvarEntrevista(){
   const nome=(document.getElementById('f-nome')||{}).value||'';if(!nome.trim()){alert('Preencha o nome do candidato.');return;}
   const stars=Object.values(evalState).map(Number),avg=stars.length?(stars.reduce((a,b)=>a+b,0)/stars.length).toFixed(1):null;
   const cpf=(document.getElementById('f-cpf')||{}).value||'';
-  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,mae:(document.getElementById('f-mae')||{}).value||'',entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,registradoPor:getUserName()};
+  // Guarda o roteiro respondido por completo (pergunta a pergunta, com marcação
+  // e anotação) — é isso que permite reimprimir o dossiê depois, mesmo que o
+  // roteiro original seja editado ou removido no futuro.
+  const respostas = curRoteiro.sections.map((sec,si)=>({
+    nome: sec.name,
+    perguntas: sec.questions.map((q,qi)=>({
+      texto: q,
+      marcada: !!(secState[si] && secState[si].checks && secState[si].checks[qi]),
+      nota: (secState[si] && secState[si].notes && secState[si].notes[qi]) || ''
+    }))
+  }));
+  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,
+    comoSoube:(document.getElementById('f-como-soube')||{}).value||'',
+    idade:(document.getElementById('f-idade')||{}).value||'',
+    estadoCivil:(document.getElementById('f-estado-civil')||{}).value||'',
+    naturalidade:(document.getElementById('f-naturalidade')||{}).value||'',
+    qtdFilhos:(document.getElementById('f-qtd-filhos')||{}).value||'',
+    ondeMora:(document.getElementById('f-onde-mora')||{}).value||'',
+    entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,respostas,registradoPor:getUserName()};
   try{
     await upsertEntrev(rec);
     _entrevistas.unshift(rec);
@@ -2608,6 +2637,74 @@ async function salvarEntrevista(){
     setTimeout(()=>{btn.textContent='💾 Salvar no histórico';btn.classList.remove('saved');},3000);
     showToast('✅ Entrevista salva e candidato adicionado ao funil!');
   }catch(e){alert('Erro: '+e.message);}
+}
+
+// Reimprime o dossiê de uma entrevista já salva, a qualquer momento — usa só
+// o que ficou gravado no registro (respostas, dados pessoais, avaliações),
+// então funciona mesmo que o roteiro original tenha mudado ou sumido depois.
+function gerarDossiePDF(id){
+  const e = _entrevistas.find(x=>x.id===id) || (typeof getEntrevistas==='function' ? getEntrevistas().find(x=>x.id===id) : null);
+  if(!e){ alert('Entrevista não encontrada.'); return; }
+  if(!e.respostas){ alert('Esta entrevista foi salva antes da função de reimpressão existir, então não temos o roteiro completo guardado — não é possível gerar o dossiê.'); return; }
+
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const dados = [
+    ['Nome', e.nome], ['CPF', e.cpf], ['Idade', e.idade], ['Estado civil', e.estadoCivil],
+    ['Naturalidade', e.naturalidade], ['Quantidade de filhos', e.qtdFilhos], ['Onde mora atualmente', e.ondeMora],
+    ['Como soube da vaga', e.comoSoube], ['Vaga', e.vaga], ['Setor', e.setor],
+    ['Entrevistador', e.entrevistador], ['Data', e.data ? new Date(e.data).toLocaleDateString('pt-BR') : ''],
+    ['Resultado', e.resultado==='approved'?'Aprovado':e.resultado==='reprovado'?'Reprovado':'Em avaliação'],
+  ].filter(([,v])=>v!==undefined && v!==null && v!=='');
+
+  const estrelas = n => '★★★★★☆☆☆☆☆'.slice(5-(n||0),10-(n||0));
+
+  const html = `
+    <div style="font-family:'DM Sans',sans-serif;color:#222;max-width:760px;margin:0 auto">
+      <div style="border-bottom:2px solid #3A3A3A;padding-bottom:14px;margin-bottom:20px">
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700">Dossiê de Entrevista</div>
+        <div style="font-size:14px;color:#666;margin-top:2px">${esc(e.nome)} · ${esc(e.vaga||'')}</div>
+      </div>
+
+      <div class="dossie-sec" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-bottom:22px;font-size:13px">
+        ${dados.map(([label,v])=>`<div><div style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">${esc(label)}</div><div style="font-weight:600">${esc(v)}</div></div>`).join('')}
+      </div>
+
+      ${Object.keys(e.avaliacoes||{}).length ? `
+      <div class="dossie-sec" style="margin-bottom:22px">
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #ccc;padding-bottom:6px;margin-bottom:10px">Ficha de Avaliação</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px">
+          ${Object.entries(e.avaliacoes).map(([c,v])=>`<div>${esc(c)}: <span style="letter-spacing:2px">${estrelas(Number(v))}</span> <span style="color:#888">(${v}/5)</span></div>`).join('')}
+        </div>
+        ${e.avgStar?`<div style="margin-top:8px;font-weight:700">Média geral: ${e.avgStar}/5</div>`:''}
+      </div>` : ''}
+
+      ${e.respostas.map(sec=>`
+        <div class="dossie-sec" style="margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #ccc;padding-bottom:6px;margin-bottom:10px">${esc(sec.nome)}</div>
+          ${sec.perguntas.map(p=>`
+            <div style="margin-bottom:8px;font-size:13px">
+              <div>${p.marcada?'☑':'☐'} ${esc(p.texto)}</div>
+              ${p.nota?`<div style="color:#555;margin-left:20px;margin-top:2px">↳ ${esc(p.nota)}</div>`:''}
+            </div>`).join('')}
+        </div>`).join('')}
+
+      ${e.observacoes ? `
+      <div class="dossie-sec" style="margin-top:22px">
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #ccc;padding-bottom:6px;margin-bottom:10px">Observações Gerais</div>
+        <div style="font-size:13px;white-space:pre-wrap">${esc(e.observacoes)}</div>
+      </div>` : ''}
+
+      <div style="margin-top:30px;font-size:11px;color:#999">Gerado por La Vie · R&S em ${new Date().toLocaleString('pt-BR')}</div>
+    </div>`;
+
+  document.getElementById('dossie-print-area').innerHTML = html;
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  document.querySelectorAll('.modal-bg.open, .modal-bg.active').forEach(m=>m.classList.remove('open','active'));
+  document.body.classList.add('printing-dossie');
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>document.body.classList.remove('printing-dossie'), 300);
+  }, 50);
 }
 
 // Normaliza nome pra comparação (ignora acento, espaço duplo, maiúscula/minúscula)
@@ -3309,16 +3406,18 @@ function renderHist(){
     const dt=new Date(e.data),ds=dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const rTag=e.resultado==='approved'?'<span class="tag tag-aprovado">Aprovado</span>':e.resultado==='reprovado'?'<span class="tag tag-reprovado">Reprovado</span>':'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">—</span>';
     return `<tr><td style="font-size:11px;color:var(--mid);white-space:nowrap">${ds}</td><td><strong>${e.nome}</strong>${e.cpf?`<br><span style="font-size:11px;color:var(--light)">${e.cpf}</span>`:''}</td><td style="font-size:12px">${e.vaga}</td><td style="font-size:12px;color:var(--mid)">${e.entrevistador||'—'}</td><td style="font-size:12px;color:var(--mid)">${e.registradoPor||'—'}</td><td style="font-weight:600">${e.avgStar?'★ '+e.avgStar:'—'}</td><td>${rTag}</td><td><button class="btn btn-ghost btn-sm" onclick="toggleHistDetail('${e.id}')">Ver</button></td></tr>
-    <tr id="hd-${e.id}" style="display:none"><td colspan="8"><div class="detail-inner"><div class="detail-grid"><div class="detail-item"><label>Nome da Mãe</label><span>${e.mae||'—'}</span></div><div class="detail-item"><label>Setor</label><span>${e.setor||'—'}</span></div><div class="detail-item"><label>Registrado por</label><span>${e.registradoPor||'—'}</span></div><div class="detail-item"><label>Seções</label><span>${e.secoesConcluidas}/${e.totalSecoes}</span></div>${e.observacoes?`<div class="detail-item" style="grid-column:1/-1"><label>Observações</label><span>${e.observacoes}</span></div>`:''}</div><div class="section-label" style="margin-bottom:8px">Avaliações</div><div style="display:flex;flex-wrap:wrap;gap:14px">${Object.entries(e.avaliacoes||{}).map(([c,v])=>`<div><div style="font-size:11px;color:var(--mid);margin-bottom:3px">${c}</div><div>${[1,2,3,4,5].map(n=>`<span class="dstar ${n<=v?'on':'off'}">${n<=v?'★':'☆'}</span>`).join('')}</div></div>`).join('')}</div><button onclick="excluirEntrevista('${e.id}')" style="margin-top:14px" class="btn-danger">🗑 Excluir</button></div></td></tr>`;
+    <tr id="hd-${e.id}" style="display:none"><td colspan="8"><div class="detail-inner"><div class="detail-grid"><div class="detail-item"><label>Idade</label><span>${e.idade||'—'}</span></div><div class="detail-item"><label>Estado civil</label><span>${e.estadoCivil||'—'}</span></div><div class="detail-item"><label>Naturalidade</label><span>${e.naturalidade||'—'}</span></div><div class="detail-item"><label>Quantidade de filhos</label><span>${e.qtdFilhos||'—'}</span></div><div class="detail-item"><label>Onde mora atualmente</label><span>${e.ondeMora||'—'}</span></div><div class="detail-item"><label>Como soube da vaga</label><span>${e.comoSoube||'—'}</span></div><div class="detail-item"><label>Setor</label><span>${e.setor||'—'}</span></div><div class="detail-item"><label>Registrado por</label><span>${e.registradoPor||'—'}</span></div><div class="detail-item"><label>Seções</label><span>${e.secoesConcluidas}/${e.totalSecoes}</span></div>${e.observacoes?`<div class="detail-item" style="grid-column:1/-1"><label>Observações</label><span>${e.observacoes}</span></div>`:''}</div><div class="section-label" style="margin-bottom:8px">Avaliações</div><div style="display:flex;flex-wrap:wrap;gap:14px">${Object.entries(e.avaliacoes||{}).map(([c,v])=>`<div><div style="font-size:11px;color:var(--mid);margin-bottom:3px">${c}</div><div>${[1,2,3,4,5].map(n=>`<span class="dstar ${n<=v?'on':'off'}">${n<=v?'★':'☆'}</span>`).join('')}</div></div>`).join('')}</div><div style="display:flex;gap:10px;margin-top:14px">${e.respostas?`<button onclick="gerarDossiePDF('${e.id}')" class="btn btn-primary btn-sm">🖨 Reimprimir dossiê</button>`:`<span style="font-size:11px;color:var(--light);align-self:center">Roteiro completo não disponível pra reimpressão (entrevista salva antes dessa função existir)</span>`}<button onclick="excluirEntrevista('${e.id}')" class="btn-danger">🗑 Excluir</button></div></div></td></tr>`;
   }).join('');
 }
 function toggleHistDetail(id){const r=document.getElementById('hd-'+id);r.style.display=r.style.display==='none'?'table-row':'none';}
 async function excluirEntrevista(id){if(!confirm('Excluir?'))return;await deleteEntrev(id);_entrevistas=_entrevistas.filter(e=>e.id!==id);renderPainel();}
 function exportCSV(){
   const all=getEntrevistas();if(!all.length){alert('Sem registros.');return;}
-  const rows=all.map(e=>[new Date(e.data).toLocaleString('pt-BR'),e.nome,e.cpf||'',e.mae||'',e.vaga,e.setor||'',e.entrevistador||'',e.registradoPor||'',e.avgStar||'',e.resultado==='approved'?'Aprovado':e.resultado==='reprovado'?'Reprovado':'',(e.observacoes||'').replace(/"/g,'""')].map(v=>`"${v}"`).join(','));
-  const csv=['"Data","Candidato","CPF","Mãe","Vaga","Setor","Entrevistador","Registrado por","Nota","Resultado","Observações"',...rows].join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`cambury_rs_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+  const rows=all.map(e=>[new Date(e.data).toLocaleString('pt-BR'),e.nome,e.cpf||'',e.idade||'',e.estadoCivil||'',e.naturalidade||'',e.qtdFilhos||'',e.ondeMora||'',e.comoSoube||'',e.vaga,e.setor||'',e.entrevistador||'',e.registradoPor||'',e.avgStar||'',e.resultado==='approved'?'Aprovado':e.resultado==='reprovado'?'Reprovado':'',(e.observacoes||'').replace(/"/g,'""')].map(v=>`"${v}"`).join(','));
+  const csv=['"Data","Candidato","CPF","Idade","Estado civil","Naturalidade","Qtd. filhos","Onde mora","Como soube da vaga","Vaga","Setor","Entrevistador","Registrado por","Nota","Resultado","Observações"',...rows].join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+  const slug=(EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:'rs').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  a.download=`${slug}_rs_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
 }
 
 // ══ SEED ══════════════════════════════════════════════════════════════════════
@@ -3811,5 +3910,6 @@ create policy "public pagamentos"  on pagamentos  for all using (true) with chec
 -- quando quiser seguir com essa etapa.
 ================================================================================
 -->
+<div id="dossie-print-area" class="dossie-print-only"></div>
 </body>
 </html>
