@@ -228,6 +228,67 @@ const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
 const ADMIN_PASS   = 'lavie2026';
 const NOTIFY_EMAIL = 'chrys@lavieconsultoria.com';
 const ROUNDS_N     = 24;
+// ── VERSÃO SIMPLIFICADA (motorista) ──────────────────────────────────
+// 12 rodadas em vez de 24, frases curtas e concretas do dia a dia, e a
+// pessoa só toca em duas: a que MAIS parece e a que MENOS parece.
+// Pensado para candidatos com pouca escolaridade — ordenar 4 frases por
+// arrastar gera resposta aleatória, que contamina o resultado.
+const ROUNDS_SIMPLES = [
+  { D: "Gosto de resolver o problema na hora",
+    I: "Gosto de conversar com todo mundo",
+    S: "Prefiro a rota que eu já conheço",
+    C: "Confiro tudo antes de sair: pneu, óleo, carga" },
+  { D: "Quando dá problema, eu tomo a frente",
+    I: "Faço amizade fácil em qualquer lugar",
+    S: "Tenho paciência para esperar o tempo que precisar",
+    C: "Sigo a regra do jeito que mandaram" },
+  { D: "Gosto de ter meta e bater a meta",
+    I: "Gosto de trabalhar perto de outras pessoas",
+    S: "Prefiro um trabalho tranquilo, sem susto",
+    C: "Anoto tudo para não esquecer" },
+  { D: "Falo o que penso, mesmo que o outro não goste",
+    I: "Sou animado e deixo o clima leve",
+    S: "Sou calmo, é difícil me tirar do sério",
+    C: "Reparo em detalhe pequeno" },
+  { D: "Gosto de decidir sozinho",
+    I: "Gosto de contar história e fazer o pessoal rir",
+    S: "Ajudo o colega quando ele precisa",
+    C: "Prefiro perguntar do que fazer errado" },
+  { D: "Não tenho medo de encarar situação difícil",
+    I: "Me dou bem com o cliente que recebe a carga",
+    S: "Trabalho melhor quando o dia é organizado",
+    C: "Faço do jeito certo, mesmo que demore" },
+  { D: "Corro atrás até conseguir o que quero",
+    I: "Convenço as pessoas com facilidade",
+    S: "Sou o mesmo todo dia",
+    C: "Sigo a lista do começo ao fim" },
+  { D: "Prefiro mandar do que receber ordem",
+    I: "Gosto de estar perto de gente",
+    S: "Prefiro ajudar do que aparecer",
+    C: "Confiro duas vezes antes de entregar" },
+  { D: "Trabalho bem sob pressão",
+    I: "Sou falante",
+    S: "Tenho paciência no trânsito",
+    C: "Sou caprichoso com documento e papelada" },
+  { D: "Gosto de desafio novo",
+    I: "Gosto de conhecer gente nova",
+    S: "Gosto da rotina que já sei de cor",
+    C: "Gosto de instrução clara e por escrito" },
+  { D: "Sou direto quando falo",
+    I: "Sou brincalhão",
+    S: "Sou tranquilo e evito discussão",
+    C: "Sou exigente comigo mesmo" },
+  { D: "Assumo a responsabilidade quando dá errado",
+    I: "Sei conversar para resolver uma confusão",
+    S: "Sou fiel à empresa onde trabalho",
+    C: "Cumpro horário e prazo à risca" }
+];
+
+// O modo simples liga sozinho quando a vaga é de motorista.
+function _ehVagaSimples(titulo){
+  return /motorista|carreteir|caminhon|entregador|ajudante/i.test(titulo || '');
+}
+
 
 let db = null;
 try {
@@ -246,7 +307,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAABdDklEQVR4nO3dd1
 // O candidato ordena da que mais combina para a que menos combina
 const ROUNDS = [
   // 1
-  { D: "Gosto de decidir com rapidez e assumir o controlo da situação",
+  { D: "Gosto de decidir com rapidez e assumir o controle da situação",
     I: "Prefiro trabalhar com pessoas e criar um ambiente animado",
     S: "Valorizo a constância e prefiro ambientes estáveis",
     C: "Prefiro analisar bem antes de tomar qualquer decisão" },
@@ -434,8 +495,15 @@ let state = {
   name: '', email: '', phone: '',
   round: 0,
   scores: { D: 0, I: 0, S: 0, C: 0 },
-  picks: []
+  picks: [],
+  simples: false,        // modo reduzido (motorista)
+  escolhaMais: null,     // no modo simples: dimensão marcada como "mais"
+  escolhaMenos: null
 };
+
+// Conjunto de rodadas e total, conforme o modo em uso.
+function rodadas(){ return state.simples ? ROUNDS_SIMPLES : ROUNDS; }
+function totalRodadas(){ return rodadas().length; }
 
 const app = document.getElementById('app');
 
@@ -493,6 +561,34 @@ const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
 let rsDb = null;
 try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY); } catch(e) {}
 
+
+// Casa o título da vaga entre o site e o R&S tolerando diferenças cosméticas:
+// sufixo entre parênteses (ex.: "Motorista Carreteiro (5 vagas)"), acento,
+// caixa e espaço duplo. Tenta o título exato primeiro; só depois relaxa.
+function _tituloBase(t){
+  return (t || '').replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+/g, ' ').trim();
+}
+function _normTitulo(t){
+  return _tituloBase(t).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+async function _acharVagaNoRS(rsDb, titulo){
+  try{
+    const exato = await rsDb.from('vagas').select('id,titulo').ilike('titulo', titulo).limit(1).maybeSingle();
+    if (exato?.data?.id) return exato.data;
+    const base = _tituloBase(titulo);
+    if (base && base !== titulo){
+      const semSufixo = await rsDb.from('vagas').select('id,titulo').ilike('titulo', base).limit(1).maybeSingle();
+      if (semSufixo?.data?.id) return semSufixo.data;
+    }
+    // Último recurso: compara normalizado contra a lista de vagas do R&S.
+    const todas = await rsDb.from('vagas').select('id,titulo');
+    const alvo = _normTitulo(titulo);
+    const achou = (todas?.data || []).find(v => _normTitulo(v.titulo) === alvo);
+    return achou || null;
+  } catch(e){ return null; }
+}
+
 async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
   if (!rsDb || !db) return;
   try {
@@ -503,7 +599,7 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
 
     const norm = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                        .toLowerCase().replace(/\s+/g, ' ').trim();
-    const vagaRes = await rsDb.from('vagas').select('id,titulo').ilike('titulo', vagaTitulo).limit(1).maybeSingle();
+    const vagaRes = { data: await _acharVagaNoRS(rsDb, vagaTitulo) };
     const vagaId = vagaRes?.data?.id || null;
 
     const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
@@ -663,6 +759,8 @@ function renderWelcome() {
     state.round = 0;
     state.scores = { D:0, I:0, S:0, C:0 };
     state.picks = [];
+    state.simples = _ehVagaSimples(incoming.vaga);
+    state.escolhaMais = null; state.escolhaMenos = null;
     state.view = 'test';
     render();
   });
@@ -672,7 +770,7 @@ function renderWelcome() {
 // RENDER: TEST (drag-and-drop)
 // ═══════════════════════════════════════════════════════
 function renderTest() {
-  const roundData = ROUNDS[state.round];
+  const roundData = rodadas()[state.round];
   const dims = ['D', 'I', 'S', 'C'];
   // Embaralhar ordem de exibição
   let order = [...dims].sort(() => Math.random() - 0.5);
@@ -681,12 +779,12 @@ function renderTest() {
   const RANK_LABELS = ['Mais parecido comigo', '', '', 'Menos parecido comigo'];
 
   function draw() {
-    const pct = Math.round((state.round / ROUNDS_N) * 100);
+    const pct = Math.round((state.round / totalRodadas()) * 100);
     app.innerHTML = `
       <div class="card">
         <div class="progress-wrap">
           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-          <div class="progress-info"><span>Situação ${state.round + 1} de ${ROUNDS_N}</span><span>${state.name}</span></div>
+          <div class="progress-info"><span>Situação ${state.round + 1} de ${totalRodadas()}</span><span>${state.name}</span></div>
         </div>
         <div class="sort-instruction">
           👆 <strong>Arraste</strong> as frases para ordenar da que <strong>mais</strong> combina com você (posição 1) até a que <strong>menos</strong> combina (posição 4).
@@ -778,7 +876,100 @@ function renderTest() {
       const pts = [3, 1, -1, -3];
       order.forEach((dim, i) => { state.scores[dim] += pts[i]; });
       state.picks.push({ most: order[0], second: order[1], secondLast: order[2], least: order[3] });
-      if (state.round === ROUNDS_N - 1) finishTest();
+      if (state.round === totalRodadas() - 1) finishTest();
+      else { state.round++; render(); }
+    });
+  }
+
+  draw();
+}
+
+
+// ═══════════════════════════════════════════════════════
+// RENDER: TESTE SIMPLIFICADO (dois toques, sem arrastar)
+// ═══════════════════════════════════════════════════════
+function renderTestSimples() {
+  const roundData = rodadas()[state.round];
+  const dims = ['D','I','S','C'];
+  const ordem = [...dims].sort(() => Math.random() - 0.5);
+
+  function draw() {
+    const total = totalRodadas();
+    const pct = Math.round((state.round / total) * 100);
+    const etapa = state.escolhaMais === null ? 'mais' : 'menos';
+
+    const titulo = etapa === 'mais'
+      ? 'Toque na frase que <strong>MAIS</strong> parece com você'
+      : 'Agora toque na frase que <strong>MENOS</strong> parece com você';
+
+    app.innerHTML = `
+      <div class="card">
+        <div class="progress-wrap">
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <div class="progress-info"><span>Pergunta ${state.round + 1} de ${total}</span><span>${state.name}</span></div>
+        </div>
+
+        <div class="sort-instruction" style="font-size:17px;line-height:1.5">
+          👆 ${titulo}
+        </div>
+
+        <div class="sort-list" id="listaSimples">
+          ${ordem.map(dim => {
+            const ehMais  = state.escolhaMais  === dim;
+            const ehMenos = state.escolhaMenos === dim;
+            const bloqueado = ehMais && etapa === 'menos';
+            let borda = '#E2DBC9', fundo = '#FFFFFF', selo = '';
+            if (ehMais)  { borda = '#6B7A5E'; fundo = '#F1F4EE'; selo = '<span style="background:#6B7A5E;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px;white-space:nowrap">MAIS</span>'; }
+            if (ehMenos) { borda = '#B08A3E'; fundo = '#FAF5EA'; selo = '<span style="background:#B08A3E;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px;white-space:nowrap">MENOS</span>'; }
+            return `
+            <div class="opcao-simples" data-dim="${dim}"
+                 style="display:flex;align-items:center;gap:12px;padding:18px 16px;margin-bottom:10px;
+                        border:2px solid ${borda};background:${fundo};border-radius:12px;
+                        font-size:17px;line-height:1.4;
+                        cursor:${bloqueado ? 'default' : 'pointer'};opacity:${bloqueado ? '.55' : '1'}">
+              <span style="flex:1">${roundData[dim]}</span>
+              ${selo}
+            </div>`;
+          }).join('')}
+        </div>
+
+        <div class="test-nav">
+          <button class="btn-ghost" id="backBtn" ${state.round === 0 && state.escolhaMais === null ? 'disabled' : ''}>Voltar</button>
+          <button class="btn-primary" id="nextBtn" ${state.escolhaMenos === null ? 'disabled' : ''}>
+            ${state.round === total - 1 ? 'Finalizar' : 'Próxima'}
+          </button>
+        </div>
+      </div>`;
+
+    document.querySelectorAll('.opcao-simples').forEach(el => {
+      el.addEventListener('click', () => {
+        const dim = el.dataset.dim;
+        if (state.escolhaMais === null) { state.escolhaMais = dim; draw(); return; }
+        if (dim === state.escolhaMais) return;          // não pode ser mais e menos
+        state.escolhaMenos = dim; draw();
+      });
+    });
+
+    // Voltar: primeiro desfaz a escolha da rodada atual; se não houver, volta uma rodada.
+    document.getElementById('backBtn').addEventListener('click', () => {
+      if (state.escolhaMenos !== null) { state.escolhaMenos = null; draw(); return; }
+      if (state.escolhaMais  !== null) { state.escolhaMais  = null; draw(); return; }
+      if (state.round === 0) return;
+      const ant = state.picks.pop();
+      if (ant) { state.scores[ant.most] -= 3; state.scores[ant.least] -= -3; }
+      state.round--;
+      state.escolhaMais = null; state.escolhaMenos = null;
+      render();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (state.escolhaMenos === null) return;
+      // Mesma escala da versão longa: mais = +3, menos = -3, as duas do meio = 0
+      state.scores[state.escolhaMais]  += 3;
+      state.scores[state.escolhaMenos] += -3;
+      state.picks.push({ most: state.escolhaMais, second: null, secondLast: null, least: state.escolhaMenos });
+      state.escolhaMais = null; state.escolhaMenos = null;
+      if (state.round === totalRodadas() - 1) finishTest();
       else { state.round++; render(); }
     });
   }
@@ -1137,7 +1328,7 @@ async function renderAdmin() {
 // ═══════════════════════════════════════════════════════
 function render() {
   if (state.view === 'welcome') renderWelcome();
-  else if (state.view === 'test') renderTest();
+  else if (state.view === 'test') { state.simples ? renderTestSimples() : renderTest(); }
   else if (state.view === 'result') renderResult();
   else if (state.view === 'admin') renderAdmin();
 }
