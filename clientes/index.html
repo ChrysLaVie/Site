@@ -933,7 +933,7 @@ header {
   <div class="modal-header"><div class="modal-title">Novo Usuário</div><button class="modal-close" onclick="closeModal('modal-novo-usuario')">✕</button></div>
   <div id="nu-empresa-nota" style="font-size:11px;color:var(--mid);margin:-8px 0 6px"></div>
   <div style="font-size:11px;color:var(--mid);margin-bottom:14px;background:var(--bege-lt);border-radius:8px;padding:10px 12px">
-    ⚠️ Antes de preencher aqui, convide o e-mail da pessoa no Supabase (Authentication → Invite user) e espere ela aceitar. Este formulário só vincula o acesso — não cria a conta nem define senha.
+    ⚠️ Antes de preencher aqui, crie o acesso da pessoa no Supabase (Authentication → Add user → preencha e-mail/senha e marque "Auto Confirm User"). Este formulário só vincula esse acesso à empresa e ao papel certo — não cria a conta nem define senha.
   </div>
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>E-mail (o mesmo do convite) *</label><input id="nu-email" type="email" placeholder="pessoa@empresa.com"></div>
@@ -1032,7 +1032,7 @@ let currentEmpresa=null; // empresaId do cliente cujos dados estão sendo exibid
 // Login de verdade: e-mail + senha via Supabase Auth. A sessão é gerenciada
 // pelo próprio SDK do Supabase (token seguro, não fica senha nenhuma em
 // localStorage). Contas novas são criadas por convite direto no painel do
-// Supabase (Authentication → Invite) — o botão "+ Novo Usuário" aqui dentro
+// Supabase (Authentication → Add user, com senha própria) — o botão "+ Novo Usuário" aqui dentro
 // só vincula o perfil (empresa/papel) depois que a pessoa aceitou o convite.
 
 function _mostrarErroLogin(msg){
@@ -3943,43 +3943,28 @@ create table if not exists pagamentos (
   obs text
 );
 
--- Para a demonstração, políticas públicas (ajuste para produção):
-alter table vagas       enable row level security;
-alter table candidatos  enable row level security;
-alter table entrevistas enable row level security;
-alter table agenda      enable row level security;
-alter table pagamentos  enable row level security;
-create policy "public vagas"       on vagas       for all using (true) with check (true);
-create policy "public candidatos"  on candidatos  for all using (true) with check (true);
-create policy "public entrevistas" on entrevistas for all using (true) with check (true);
-create policy "public agenda"      on agenda      for all using (true) with check (true);
-create policy "public pagamentos"  on pagamentos  for all using (true) with check (true);
-
--- Ative o Realtime (Database → Replication) para vagas, candidatos e entrevistas
--- se quiser a sincronização ao vivo entre vários usuários.
-
--- ⚠️ SOBRE SEGURANÇA MULTI-CLIENTE — LEIA ANTES DE CADASTRAR DADOS SENSÍVEIS:
--- A partir desta versão, o sistema já filtra os dados por cliente (empresa_id)
--- em toda a tela — um usuário da TCL nunca VÊ dados da UniCambury e vice-versa.
--- Isso é suficiente pro dia a dia normal do sistema.
+-- ⚠️ SEGURANÇA — ESTADO ATUAL (leia isto, não o texto de baixo criado antes):
+-- O isolamento por empresa e o login já NÃO dependem mais só da tela.
+-- Desde a migração de segurança, o banco tem:
+--   • Tabela "profiles" ligando cada conta do Supabase Auth a uma empresa e
+--     a um papel (lavie_master / cliente_admin / gestor);
+--   • Login de verdade via Supabase Auth (e-mail + senha, sessão segura);
+--   • Row Level Security REAL em vagas, candidatos, entrevistas, agenda e
+--     pagamentos — cada consulta já é filtrada pelo próprio banco pela
+--     empresa e pelo papel de quem está autenticado, não só pela tela.
+-- Ou seja: mesmo alguém com a URL e a chave pública do projeto (visíveis no
+-- código-fonte — isso sempre foi normal) NÃO consegue mais ler ou alterar
+-- dados de outro cliente batendo direto na API, porque a regra vive no banco.
 --
--- Mas as políticas acima ("using (true)") ainda deixam a tabela tecnicamente
--- aberta: são políticas de demonstração, então alguém com a URL e a chave
--- pública do Supabase (visíveis no código-fonte da página) poderia, em teoria,
--- consultar o banco diretamente por fora da tela de login e ver tudo.
--- Isso é aceitável enquanto for só você e clientes de confiança operando pela
--- tela normal do sistema. Se algum dia quiser a garantia de que isso é
--- IMPOSSÍVEL mesmo por fora da tela (recomendado antes de guardar dados mais
--- sensíveis de vários clientes), o passo seguinte é trocar o login "de mentira"
--- (senha comparada no navegador) por Supabase Auth de verdade, e então trocar
--- essas policies por algo como:
+-- Os comandos que fazem isso de verdade estão em 3 arquivos separados
+-- (peça de novo se precisar):
+--   01-perfis-e-seguranca.sql   → tabela profiles + todas as políticas reais
+--   02-bootstrap-perfis.sql     → vincula cada pessoa já criada no Supabase
+--   03-vincular-perfil.sql      → função usada pelo botão "Novo Usuário"
+-- Os três já foram rodados neste projeto. Não rode novamente o bloco de SQL
+-- abaixo — ele é só o histórico de como as tabelas foram criadas
+-- originalmente e não reflete mais as políticas de acesso em uso hoje.
 --
---   create policy "isolado por empresa" on vagas for all
---     using (empresa_id = auth.jwt() ->> 'empresa_id')
---     with check (empresa_id = auth.jwt() ->> 'empresa_id');
---
--- (o mesmo padrão nas outras 4 tabelas). Isso é um projeto à parte — avise
--- quando quiser seguir com essa etapa.
 ================================================================================
 -->
 <div id="dossie-print-area" class="dossie-print-only"></div>
