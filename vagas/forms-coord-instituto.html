@@ -277,17 +277,24 @@ async function pushCandidatoParaRS(formPayload) {
       telefone: formPayload.whatsapp,
       email: formPayload.email,
       vaga_id: vagaId,
-      etapa: 'entrevista_rh', // "Formulários e Testes" — é exatamente onde o candidato parou
+      etapa: 'triagem', // entra no funil do R&S já na Triagem
       data_entrada: agora.slice(0, 10),
       fonte: 'Site La Vie (vaga + DISC + formulário)',
       obs,
       documentos,
-      historico: [{ etapa: 'entrevista_rh', data: agora, obs: 'Candidatura completa recebida automaticamente pelo site.', usuario: 'Site (automático)' }],
+      historico: [{ etapa: 'triagem', data: agora, obs: 'Candidatura completa recebida automaticamente pelo site.', usuario: 'Site (automático)' }],
       criado_por: 'Site (automático)'
     };
 
     // Evita duplicar se o candidato já existe no R&S (mesmo e-mail + mesma vaga)
-    const existente = await rsDb.from('candidatos').select('id').ilike('email', emailNorm).eq('vaga_id', vagaId).limit(1).maybeSingle();
+    // Quando a vaga não é encontrada no R&S, vaga_id fica NULL. No PostgREST,
+    // eq('vaga_id', null) NÃO casa com linhas NULL — sem o is(), o mesmo candidato
+    // entraria duplicado a cada envio. Por isso a condição é montada conforme o caso.
+    let buscaExistente = rsDb.from('candidatos').select('id').ilike('email', emailNorm);
+    buscaExistente = vagaId
+      ? buscaExistente.eq('vaga_id', vagaId)
+      : buscaExistente.is('vaga_id', null);
+    const existente = await buscaExistente.limit(1).maybeSingle();
     if (existente?.data?.id) {
       candidato.id = existente.data.id;
     }
