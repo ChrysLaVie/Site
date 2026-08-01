@@ -1679,6 +1679,11 @@ function _aplicarTerminologiaEmpresa(){
       if(typeof ETAPA_SUBSTATUS!=='undefined' && ov.substatus) ETAPA_SUBSTATUS[e.id]=ov.substatus;
     }
   });
+  // Mantém ETAPA_LABEL (usado em toasts, mensagens e tags do candidato) sempre
+  // igual ao rótulo do banco de talentos do cliente ativo — evita, por exemplo,
+  // a Roma ver "Banco de Talentos Geral" (rótulo da Cambury) num toast quando
+  // o dela é só "Banco de Talentos".
+  getBancos().forEach(b=>{ ETAPA_LABEL[b.id]=b.label; if(!ETAPA_TAG[b.id]) ETAPA_TAG[b.id]='geral'; });
 }
 
 // Categorias do banco de talentos por cliente — cada cliente tem as suas
@@ -1693,6 +1698,9 @@ const BANCOS_POR_EMPRESA = {
   tcl: [
     { id:'banco_talentos_administrativo', label:'Banco de Talentos Administrativo' },
     { id:'banco_talentos_motorista',      label:'Banco de Talentos Motorista' },
+  ],
+  roma: [
+    { id:'banco_talentos_geral',          label:'Banco de Talentos' },
   ],
 };
 const BANCOS_PADRAO = BANCOS_POR_EMPRESA.cambury;
@@ -3197,15 +3205,16 @@ function _vencParcela(v,def){
 }
 
 // Persistência (segue o padrão demo/online do resto do sistema)
-function demoLoadPag(){ try{ _pagamentos=JSON.parse(localStorage.getItem('cambury_pag')||'[]'); }catch(e){ _pagamentos=[]; } }
-function demoSavePag(){ try{ localStorage.setItem('cambury_pag', JSON.stringify(_pagamentos)); }catch(e){} }
+function demoLoadPag(){ try{ _pagamentos=JSON.parse(localStorage.getItem('cambury_pag_'+(currentEmpresa||'geral'))||'[]'); }catch(e){ _pagamentos=[]; } }
+function demoSavePag(){ try{ localStorage.setItem('cambury_pag_'+(currentEmpresa||'geral'), JSON.stringify(_pagamentos)); }catch(e){} }
 async function loadPagamentos(){
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ demoLoadPag(); return; }
-  try{ const {data}=await sb.from('pagamentos').select('*'); if(data) _pagamentos=data.map(r=>({id:r.id,vagaId:r.vaga_id,parcela:r.parcela,pct:r.pct,valor:r.valor,vencimento:r.vencimento,status:r.status,pagoEm:r.pago_em,obs:r.obs})); }catch(e){ console.error(e); }
+  try{ const {data}=await sb.from('pagamentos').select('*').eq('empresa_id',currentEmpresa); if(data) _pagamentos=data.map(r=>({id:r.id,empresaId:r.empresa_id,vagaId:r.vaga_id,parcela:r.parcela,pct:r.pct,valor:r.valor,vencimento:r.vencimento,status:r.status,pagoEm:r.pago_em,obs:r.obs})); }catch(e){ console.error(e); }
 }
 async function upsertPagamento(p){
+  if(!p.empresaId) p.empresaId=currentEmpresa;
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ const i=_pagamentos.findIndex(x=>x.id===p.id); if(i>=0)_pagamentos[i]=p; else _pagamentos.push(p); demoSavePag(); return; }
-  const row={id:p.id,vaga_id:p.vagaId,parcela:p.parcela,pct:p.pct,valor:p.valor,vencimento:p.vencimento,status:p.status,pago_em:p.pagoEm||null,obs:p.obs||null};
+  const row={id:p.id,empresa_id:p.empresaId,vaga_id:p.vagaId,parcela:p.parcela,pct:p.pct,valor:p.valor,vencimento:p.vencimento,status:p.status,pago_em:p.pagoEm||null,obs:p.obs||null};
   const {error}=await sb.from('pagamentos').upsert(row); if(error)throw error;
 }
 // Garante que cada vaga tenha suas 3 parcelas geradas
