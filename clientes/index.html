@@ -2335,7 +2335,10 @@ function _arteBeneficios(texto){
   const s = texto||'';
   const m = s.match(/benef[ií]cios?:\s*([^.]+)\.?/i);
   if(!m) return [];
-  return m[1].split(/,| e (?=[a-zà-ú])/i).map(x=>x.trim()).filter(x=>x.length>1).slice(0,8);
+  // Só separa em vírgula quando ela vem seguida de espaço (item da lista) — uma
+  // vírgula colada em dois dígitos, como em "R$ 313,00", é separador decimal,
+  // não separador de lista, e não deve quebrar o benefício ao meio.
+  return m[1].split(/,\s+| e (?=[a-zà-ú])/i).map(x=>x.trim()).filter(x=>x.length>1).slice(0,8);
 }
 // Tenta separar "média de ganhos" (o número mais atraente) do resto da string
 // de salário, pra ele virar o número grande da arte em vez de ficar perdido
