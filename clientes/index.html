@@ -589,7 +589,7 @@ header {
 <div id="page-candidatos" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
     <div><h1 class="page-title">Candidatos</h1><p class="page-sub">Funil de R&S</p></div>
-    <button class="btn btn-primary" id="btn-novo-cand" onclick="openModal('modal-novo-cand')">+ Novo Candidato</button>
+    <button class="btn btn-primary" id="btn-novo-cand" onclick="abrirNovoCandidatoModal()">+ Novo Candidato</button>
   </div>
   <div class="funnel-visual" id="funnel-visual"></div>
   <div class="funil-steps" id="funil-steps"></div>
@@ -1126,6 +1126,7 @@ function doLogin(id){
   if(!src)av.style.background=currentUser.cor;
   document.getElementById('user-name').textContent=currentUser.nome;
   document.title = `La Vie · R&S ${currentEmpresa && EMPRESAS[currentEmpresa] ? EMPRESAS[currentEmpresa].nome : ''}`;
+  _aplicarTerminologiaEmpresa();
   renderEmpresaSwitcher();
   initApp();
 }
@@ -1158,6 +1159,7 @@ async function switchEmpresa(id){
   currentEmpresa = id;
   try{sessionStorage.setItem('lavie_empresa_ativa', id);}catch(e){}
   document.title = `La Vie · R&S ${EMPRESAS[id].nome}`;
+  _aplicarTerminologiaEmpresa();
   renderEmpresaSwitcher();
   document.getElementById('page-loading').classList.add('active');
   await loadAll();
@@ -1353,6 +1355,8 @@ async function salvarSalaPadrao(){
 function abrirAgendaModal(id,dataPre){
   const sel=document.getElementById('ag-cand');
   sel.innerHTML='<option value="">— selecione —</option>'+getCandsVisiveis().slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'})).map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
+  const vivenciaLabel = (ETAPAS.find(e=>e.id==='vivencia')||{}).label || 'Entrevista Final';
+  document.getElementById('ag-etapa').innerHTML = ['Formulários e Testes','Entrevista La Vie',vivenciaLabel,'Devolutiva','Outro'].map(t=>`<option value="${t}">${t}</option>`).join('');
   document.getElementById('ag-del-btn').style.display=id?'block':'none';
   if(id){
     const a=_agenda.find(x=>x.id===id); if(!a)return;
@@ -1635,12 +1639,53 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
 
 // ══ ETAPAS ════════════════════════════════════════════════════════════════════
+// Os IDs internos do funil (triagem, entrevista_rh, entrevista_gestor, vivencia,
+// aprovacao) são os mesmos pra todo cliente — isso é motor interno do sistema
+// e não muda. Só o TEXTO muda por cliente (ex.: "vivencia" vira "Teste Prático"
+// pra quem contrata motorista, em vez de "Entrevista Final"). Por isso ETAPAS e
+// ETAPA_LABEL abaixo são mutáveis: _aplicarTerminologiaEmpresa() atualiza o
+// texto certo sempre que a empresa ativa muda, e todo o resto do sistema (toasts,
+// agenda, funil, dashboard) lê desses mesmos objetos sem precisar saber qual
+// cliente está logado.
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
-const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral'};
-const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral'};
+const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
+const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
 const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'aprovacao'};
+
+// Texto de cada etapa por cliente (só entram aqui as que diferem do padrão)
+const ETAPA_TEXTO_POR_EMPRESA = {
+  tcl: { vivencia: { label:'Teste Prático', short:'Prático', substatus:'Em Teste Prático com o cliente' } },
+};
+function _aplicarTerminologiaEmpresa(){
+  const overrides = ETAPA_TEXTO_POR_EMPRESA[currentEmpresa] || {};
+  const base = { vivencia:{label:'Entrevista Final',short:'Final',substatus:'Em Entrevista Final com o cliente'} }; // valor padrão pra restaurar ao trocar de cliente
+  ETAPAS.forEach(e=>{
+    const ov = overrides[e.id] || base[e.id];
+    if(ov){
+      e.label=ov.label; e.short=ov.short; ETAPA_LABEL[e.id]=ov.label;
+      if(typeof ETAPA_SUBSTATUS!=='undefined' && ov.substatus) ETAPA_SUBSTATUS[e.id]=ov.substatus;
+    }
+  });
+}
+
+// Categorias do banco de talentos por cliente — cada cliente tem as suas
+// (ex.: a UniCambury separa Administrativo/Acadêmico/Geral; a TCL só tem
+// Administrativo e Motorista, porque é isso que ela contrata).
+const BANCOS_POR_EMPRESA = {
+  cambury: [
+    { id:'banco_talentos_administrativo', label:'Banco de Talentos Administrativo' },
+    { id:'banco_talentos_academico',      label:'Banco de Talentos Acadêmico' },
+    { id:'banco_talentos_geral',          label:'Banco de Talentos Geral' },
+  ],
+  tcl: [
+    { id:'banco_talentos_administrativo', label:'Banco de Talentos Administrativo' },
+    { id:'banco_talentos_motorista',      label:'Banco de Talentos Motorista' },
+  ],
+};
+const BANCOS_PADRAO = BANCOS_POR_EMPRESA.cambury;
+function getBancos(){ return BANCOS_POR_EMPRESA[currentEmpresa] || BANCOS_PADRAO; }
 
 // ══ MENSAGENS PADRÃO — La Vie Consultoria ════════════════════════════════════════
 // {nome} e {vaga} são preenchidos automaticamente. [CAMPOS] viram inputs no pop-up.
@@ -2152,7 +2197,7 @@ function renderFunil() {
   const todos=getCandsVisiveis(),vagas=getVagasVisiveis();
   const selV=document.getElementById('cand-filter-vaga'),curV=selV.value;
   selV.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}" ${v.id===curV?'selected':''}>${v.titulo}</option>`).join('');
-  document.getElementById('cand-filter-etapa').innerHTML='<option value="">Todas as etapas</option>'+[...ETAPAS,{id:'banco_talentos_administrativo',label:'Banco de Talentos Administrativo'},{id:'banco_talentos_academico',label:'Banco de Talentos Acadêmico'},{id:'banco_talentos_geral',label:'Banco de Talentos Geral'},{id:'reprovado',label:'Reprovados'}].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
+  document.getElementById('cand-filter-etapa').innerHTML='<option value="">Todas as etapas</option>'+[...ETAPAS,...getBancos(),{id:'reprovado',label:'Reprovados'}].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   const searchEl=document.getElementById('cand-search'),search=searchEl?searchEl.value.toLowerCase():'';
   const fV=curV;
   const cands=todos.filter(c=>(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
@@ -2160,7 +2205,7 @@ function renderFunil() {
   const totalCardVisual=`<div class="funnel-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-n">${cands.length}</div><div class="fs-l">Total</div><div class="fs-pct">100%</div></div>`;
   document.getElementById('funnel-visual').innerHTML=totalCardVisual+ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
   const totalCardSteps=`<div class="funil-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-count">${cands.length}</div><div class="fs-name">Total</div></div>`;
-  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat([{id:'banco_talentos_administrativo',label:'Banco de Talentos Administrativo'},{id:'banco_talentos_academico',label:'Banco de Talentos Acadêmico'},{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
 function renderCandidatos() {
@@ -2191,8 +2236,13 @@ async function salvarCandidato(){
   const c={id:Date.now().toString(),nome,vagaId,cpf:document.getElementById('nc-cpf').value.trim(),tel:document.getElementById('nc-tel').value.trim(),email:document.getElementById('nc-email').value.trim(),linkedin:document.getElementById('nc-linkedin').value.trim(),etapa:document.getElementById('nc-etapa').value,dataEntrada:document.getElementById('nc-data').value||new Date().toISOString().slice(0,10),fonte:document.getElementById('nc-fonte').value.trim(),obs:document.getElementById('nc-obs').value.trim(),historico:[{etapa:document.getElementById('nc-etapa').value,data:new Date().toISOString(),obs:'Cadastro inicial',usuario:getUserName()}],criadoPor:getUserName()};
   try{await upsertCand(c);_cands.unshift(c);closeModal('modal-novo-cand');['nc-nome','nc-cpf','nc-tel','nc-email','nc-fonte','nc-obs'].forEach(id=>document.getElementById(id).value='');renderFunil();renderCandidatos();showToast('✅ Candidato adicionado!');abrirMensagem(c.id,'inicial');}catch(e){alert('Erro: '+e.message);}
 }
+function abrirNovoCandidatoModal(){
+  document.getElementById('nc-etapa').innerHTML=ETAPAS.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
+  openModal('modal-novo-cand');
+}
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
+  const selE=document.getElementById('mc-etapa');selE.innerHTML=[...ETAPAS,{id:'reprovado',label:'Reprovado'},...getBancos()].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
