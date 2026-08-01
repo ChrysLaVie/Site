@@ -1472,7 +1472,7 @@ async function excluirAgenda(){
   try{ await deleteAgenda(id); _agenda=_agenda.filter(x=>x.id!==id); closeModal('modal-agenda'); renderAgenda(); showToast('Entrevista removida'); }
   catch(e){ alert('Erro: '+e.message); }
 }
-function getRoteirosVisiveis()   { if(isAdmin())return VAGAS_ROTEIRO; return VAGAS_ROTEIRO.filter(r=>currentUser.setores.includes(r.setor)); }
+function getRoteirosVisiveis()   { const base = VAGAS_ROTEIRO.filter(r=>r.empresaId===currentEmpresa); if(isAdmin())return base; return base.filter(r=>currentUser.setores.includes(r.setor)); }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function autoEncerramento(status){
@@ -2353,7 +2353,7 @@ const VAGAS_ROTEIRO = [
   // 1) COORDENADOR(A) FINANCEIRO E DE GESTÃO
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-coord-fin', nome:'Coordenador(a) Financeiro e de Gestão', setor:'Financeiro', duracao:'40 min',
+  { id:'cb-coord-fin', empresaId:'cambury', nome:'Coordenador(a) Financeiro e de Gestão', setor:'Financeiro', duracao:'40 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Áreas sob gestão':'Financeiro · RH/DP · Jurídico · TI · Logística · Patrimônio · Compras · Suprimentos' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação das rotinas financeiras e gestão administrativa de áreas estratégicas de uma Instituição de Ensino Superior. Regime PJ, R$ 10.000,00, horário comercial. Posição que assessora a Direção Executiva.']},
@@ -2371,7 +2371,7 @@ const VAGAS_ROTEIRO = [
   // 2) GERENTE DE CAPTAÇÃO DE ALUNOS
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-cap-alunos', nome:'Gerente de Captação de Alunos', setor:'Comercial / Captação', duracao:'40 min',
+  { id:'cb-cap-alunos', empresaId:'cambury', nome:'Gerente de Captação de Alunos', setor:'Comercial / Captação', duracao:'40 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 + comissionamento', 'Jornada':'Segunda a sexta, presencial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Consultores comerciais / de captação' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejamento, execução e acompanhamento das estratégias de prospecção, conversão e matrícula de novos alunos, além da gestão da equipe de consultores comerciais. Regime PJ, R$ 5.000,00 + comissionamento. Jornada de segunda a sexta, presencial.']},
@@ -2388,7 +2388,7 @@ const VAGAS_ROTEIRO = [
   // ══════════════════════════════════════════════════════════════════════════
   // 3) COORDENADOR GERAL DE ENSINO  (URGENTE — preencher até 10/07)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-coord-ensino', nome:'Coordenador Geral de Ensino', setor:'Ensino', duracao:'45 min',
+  { id:'cb-coord-ensino', empresaId:'cambury', nome:'Coordenador Geral de Ensino', setor:'Ensino', duracao:'45 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 10.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Prazo de início':'Até 10/07 (2º semestre)', 'Sob coordenação':'Qualidade de Ensino · NAE · Coordenadores de curso · Corpo docente' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação geral das atividades acadêmicas da IES, assegurando qualidade de ensino, conformidade regulatória (MEC), desenvolvimento dos cursos e excelência na experiência do estudante. Regime PJ, R$ 10.000,00. Posição estratégica com início até 10/07. (Antigo cargo de Diretor de Ensino.)']},
@@ -2405,7 +2405,7 @@ const VAGAS_ROTEIRO = [
   // ══════════════════════════════════════════════════════════════════════════
   // 4) COORDENADOR DE RELACIONAMENTO E EXPERIÊNCIA DO ALUNO (NAE)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-coord-nae', nome:'Coordenador de Relacionamento e Experiência do Aluno (NAE)', setor:'Relacionamento / NAE', duracao:'40 min',
+  { id:'cb-coord-nae', empresaId:'cambury', nome:'Coordenador de Relacionamento e Experiência do Aluno (NAE)', setor:'Relacionamento / NAE', duracao:'40 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 a R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Direção Executiva', 'Perfil-alvo':'Secretário(a) geral acadêmico', 'Áreas vinculadas':'Secretaria Acadêmica · Núcleo de Apoio ao Aluno · Ouvidoria' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação do Núcleo de Atendimento ao Estudante (NAE), garantindo excelência no atendimento, eficiência na secretaria acadêmica e experiência positiva ao aluno em toda a jornada. Regime PJ, R$ 5.000 a R$ 6.000. Perfil de secretário geral acadêmico.']},
@@ -2422,7 +2422,7 @@ const VAGAS_ROTEIRO = [
   // ══════════════════════════════════════════════════════════════════════════
   // 5) GERENTE DE MARKETING
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-ger-mkt', nome:'Gerente de Marketing', setor:'Marketing', duracao:'40 min',
+  { id:'cb-ger-mkt', empresaId:'cambury', nome:'Gerente de Marketing', setor:'Marketing', duracao:'40 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Marketing e Social Media', 'Foco':'Captação, retenção e marca' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, coordenar e executar as estratégias de marketing da IES — fortalecendo a marca, ampliando visibilidade e gerando demanda para os processos comerciais (captação e retenção de alunos). Regime PJ, R$ 6.000,00.']},
@@ -2439,7 +2439,7 @@ const VAGAS_ROTEIRO = [
   // ══════════════════════════════════════════════════════════════════════════
   // 6) SOCIAL MEDIA
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-social', nome:'Social Media', setor:'Marketing', duracao:'30 min',
+  { id:'cb-social', empresaId:'cambury', nome:'Social Media', setor:'Marketing', duracao:'30 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 3.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Gerência de Marketing', 'Plataformas':'Instagram · Facebook · LinkedIn · TikTok · YouTube' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, produzir e gerenciar conteúdos das redes sociais da IES, fortalecendo a presença digital, ampliando o relacionamento com alunos e prospects e apoiando a captação. Regime PJ, R$ 3.000,00, reporte à Gerência de Marketing.']},
@@ -2463,7 +2463,7 @@ function renderRoteiros(){
   const roteiros=getRoteirosVisiveis();
   const s={};roteiros.forEach(v=>{if(!s[v.setor])s[v.setor]=[];s[v.setor].push(v);});
   const c=document.getElementById('roteiros-container');c.innerHTML='';
-  if(!roteiros.length){c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum roteiro disponível para o seu setor.</p></div>';return;}
+  if(!roteiros.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum roteiro de entrevista cadastrado ainda para ${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:'este cliente'}.</p></div>`;return;}
   Object.entries(s).forEach(([setor,vagas])=>{
     const w=document.createElement('div');w.style.marginBottom='28px';
     w.innerHTML=`<div class="section-label" style="margin-bottom:10px">${setor}</div><div class="vagas-grid">${vagas.map(v=>`<div class="vaga-card" onclick="abrirRoteiro('${v.id}')" data-nome="${v.nome.toLowerCase()}"><div class="vaga-name">${v.nome}</div><div class="vaga-meta"><span>⏱ ${v.duracao}</span></div></div>`).join('')}</div>`;
@@ -3258,6 +3258,22 @@ function seedVagas(){
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) demoSave();
 }
 
+// ── Vagas-semente da TCL Transportes ────────────────────────────────────────
+function seedVagasTCL(){
+  if(getVagas().length > 0) return;
+  const hoje = new Date().toISOString().slice(0,10);
+  const vagas = [
+    { id:'tcl1', empresaId:'tcl', titulo:'Motorista Carreteiro', setor:'Operações / Frota', dataAbertura:hoje, qtd:5, qtdFechadas:0, status:'aberta',
+      tipo:'CLT · Viagens (rodoviário)', salario:'R$ 2.018,00 base + variáveis (média de ganhos R$ 6.000 a R$ 7.000/mês)', gestor:'', motivo:'Nova posição',
+      canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
+      obs:'Motorista Carreteiro com experiência em Rodotrem. CNH categoria E. Benefícios: vale alimentação de R$ 313,00, diária de R$ 86,00, plano odontológico, telemedicina, seguro de vida e vale transporte.',
+      honorario:'', criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:00:00Z' },
+  ];
+  _vagas = vagas;
+  _cands = [];
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) demoSave();
+}
+
 // ══ LOGIN SCREEN RENDERING ════════════════════════════════════════════════════
 function renderLoginScreen() {
   USERS = loadUsers();
@@ -3422,6 +3438,11 @@ async function initApp(){
   // as vagas reais pelo botão "+ Nova vaga" — nunca herda dados de outro cliente.
   if(_vagas.length===0 && currentEmpresa==='cambury'){
     seedVagas();
+    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
+    await loadAll();
+  }
+  if(_vagas.length===0 && currentEmpresa==='tcl'){
+    seedVagasTCL();
     for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
     await loadAll();
   }
