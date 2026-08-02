@@ -550,6 +550,13 @@ async function renderVagas() {
 // ── MODAL: CANDIDATURA ──
 function openApplyModal(vaga) {
   let selectedFiles = [];
+  // Vaga de motorista exige documentos além do currículo. O MOPP não é
+  // obrigatório como arquivo separado quando já está averbado na CNH, então o
+  // texto pede os documentos sem travar o envio de quem tem tudo numa folha só.
+  const ehMotorista = /motorista|carreteir|caminhon|entregador/i.test(vaga.title || '');
+  const textoDocs = ehMotorista
+    ? 'Currículo, CNH (categoria E) e MOPP · se o MOPP já estiver averbado na CNH, basta enviar a CNH'
+    : 'Currículo, portfólio, carta...';
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
       <div class="modal-box">
@@ -564,10 +571,10 @@ function openApplyModal(vaga) {
             <div class="form-group"><label class="fl">WhatsApp *</label><input type="tel" id="m-whatsapp" placeholder="(62) 9 0000-0000"></div>
           </div>
           <div class="form-group">
-            <label class="fl">Currículo e anexos (PDF ou Word) *</label>
+            <label class="fl">${ehMotorista ? 'Currículo e documentos *' : 'Currículo e anexos (PDF ou Word) *'}</label>
             <div class="file-drop" id="fileArea">
-              <input type="file" id="m-file" accept=".pdf,.doc,.docx" multiple>
-              <label class="file-drop-label" for="m-file"><strong>Clique para selecionar</strong> ou arraste seus arquivos aqui<br><span style="font-size:0.72rem;">Currículo, portfólio, carta... · PDF, DOC ou DOCX · até 5 arquivos · máx. 5MB cada</span></label>
+              <input type="file" id="m-file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" multiple>
+              <label class="file-drop-label" for="m-file"><strong>Clique para selecionar</strong> ou arraste seus arquivos aqui<br><span style="font-size:0.72rem;">${textoDocs} · PDF, Word ou foto · máx. 10MB cada</span></label>
               <div class="file-name" id="fileName" style="display:none"></div>
             </div>
           </div>
