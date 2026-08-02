@@ -157,7 +157,7 @@ input:focus { border-color: var(--charcoal); }
                color: var(--charcoal); margin: 0 0 0.25rem; }
 .quiz-sec p { font-size: 0.82rem; color: var(--muted); margin: 0 0 0.4rem; }
 .quiz-img { margin: 0.6rem 0 0.9rem; }
-.quiz-img img { max-width: 150px; max-height: 130px; display: block;
+.quiz-img img { max-width: 200px; max-height: 190px; width: 100%; height: auto; display: block;
                 border: 1px solid var(--border); border-radius: 8px;
                 background: #fff; padding: 8px; }
 .quiz-rank-row { display: flex; align-items: center; justify-content: space-between;
@@ -184,6 +184,10 @@ input:focus { border-color: var(--charcoal); }
 @media (max-width: 520px) {
   .quiz-rank-row { flex-direction: column; align-items: flex-start; gap: 6px; }
   .quiz-rank-sel { width: 100%; }
+  /* Placa maior no celular: a tela é estreita e o detalhe da placa importa
+     para o candidato conseguir responder. */
+  .quiz-img img { max-width: 240px; max-height: 230px; margin: 0 auto; }
+  .quiz-img { text-align: center; }
 }
 
 .nota-box { display: flex; gap: 12px; flex-wrap: wrap; margin: 1.4rem 0 1rem; }
@@ -230,7 +234,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-01.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Curva à esquerda.",
    "Curva em \"S\" à direita.",
@@ -242,7 +247,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-02.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Bifurcação em Y.",
    "Retorno à esquerda.",
@@ -254,7 +260,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-03.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Semáforo trifásico.",
    "Semáforo à frente.",
@@ -266,7 +273,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-04.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Início de pista dupla.",
    "Fim de pista dupla.",
@@ -278,7 +286,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-05.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Início de pista dupla.",
    "Fim de pista dupla.",
@@ -290,7 +299,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-06.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Pista escorregadia.",
    "Pista sinuosa à esquerda.",
@@ -302,7 +312,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-07.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Caminhões devem se manter à direita.",
    "Tráfego de veículos leves e pesados somente pela esquerda.",
@@ -314,7 +325,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-08.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Emergência.",
    "Cruz Vermelha.",
@@ -326,7 +338,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-09.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Cruze com cuidado.",
    "Semáforo à frente.",
@@ -338,7 +351,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-10.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Proibido virar à direita.",
    "Vire à esquerda.",
@@ -350,7 +364,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "A placa acima significa:",
+  "img": "quiz-motorista-11.png",
+  "q": "A placa a seguir significa:",
   "options": [
    "Proibido animais soltos.",
    "Proibido trânsito de veículos de tração animal.",
@@ -362,7 +377,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "O símbolo acima significa:",
+  "img": "quiz-motorista-12.png",
+  "q": "O símbolo a seguir significa:",
   "options": [
    "Nível baixo do óleo de motor.",
    "Nível de abastecimento.",
@@ -374,7 +390,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "O símbolo acima significa:",
+  "img": "quiz-motorista-13.png",
+  "q": "O símbolo a seguir significa:",
   "options": [
    "Temperatura do ar-condicionado.",
    "Temperatura do líquido de arrefecimento.",
@@ -386,7 +403,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "O símbolo acima significa:",
+  "img": "quiz-motorista-14.png",
+  "q": "O símbolo a seguir significa:",
   "options": [
    "Nível de óleo.",
    "Combustível.",
@@ -398,7 +416,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "O símbolo acima significa:",
+  "img": "quiz-motorista-15.png",
+  "q": "O símbolo a seguir significa:",
   "options": [
    "Nível de combustível abaixo.",
    "Nível baixo de óleo de motor.",
@@ -410,7 +429,8 @@ const QUIZ = [
  {
   "bloco": "conhecimentos",
   "tipo": "mc",
-  "q": "O símbolo acima significa:",
+  "img": "quiz-motorista-16.png",
+  "q": "O símbolo a seguir significa:",
   "options": [
    "Nível de combustível abaixo.",
    "Freio de estacionamento.",
@@ -656,15 +676,18 @@ function renderForm() {
     <div class="hero">
       <span class="eyebrow">La Vie Consultoria · Processo Seletivo</span>
       <h1 class="section-title">Formulário da vaga: <em>${esc(prefill.vaga)}</em></h1>
-      <p class="lead">Leia com atenção as informações abaixo antes de preencher o formulário. Esta é a etapa final do processo seletivo. Suas respostas serão analisadas pela nossa equipe.</p>
+      <p class="lead">Leia com atenção as informações abaixo antes de preencher o formulário. Suas respostas serão analisadas pela nossa equipe, e entraremos em contato para as próximas etapas do processo.</p>
     </div>
 
     <div class="card">
       <h3>Benefícios</h3>
       <ul class="benefit-list">
-        <li><strong>13º salário:</strong> pago via nota fiscal, no mês subsequente ao mês de aniversário do contrato.</li>
-        <li><strong>Recesso:</strong> ao completar 1 ano de contrato, 30 dias de recesso sem prejuízo do valor da nota fiscal.</li>
-        <li><strong>Bolsa de estudos:</strong> inicia em 60%. Após o 1º ano de contrato, sobe para 70%. Após o 2º ano de contrato, chega a 80% (exceto para os cursos de Odontologia e Gastronomia).</li>
+        <li><strong>Vale alimentação:</strong> R$ 313,00.</li>
+        <li><strong>Diária de viagem:</strong> R$ 86,00.</li>
+        <li><strong>Plano odontológico.</strong></li>
+        <li><strong>Telemedicina.</strong></li>
+        <li><strong>Seguro de vida.</strong></li>
+        <li><strong>Vale transporte.</strong></li>
       </ul>
     </div>
 
@@ -741,7 +764,7 @@ function renderForm() {
         blocoAtual = item.bloco;
         cabecalho = item.bloco === 'conhecimentos'
           ? `<div class="quiz-sec"><h4>Parte 1 — Conhecimentos gerais em trânsito</h4>
-               <p>20 questões de múltipla escolha. Observe a imagem e marque a alternativa correta.</p></div>`
+               <p>20 questões de múltipla escolha. Nas primeiras, observe a placa ou o símbolo mostrado e marque a alternativa correta.</p></div>`
           : `<div class="quiz-sec"><h4>Parte 2 — Avaliação teórica</h4>
                <p>5 questões sobre condução, mecânica e cálculo de autonomia.</p></div>`;
       }
@@ -1065,10 +1088,10 @@ function buildSubmissionPDF(s) {
   doc.text('Condições da vaga', M, y);
   y += 16;
   const conds = [
-    ['Contratação PJ', s.ciente_pj],
-    ['Remuneração R$ 2.018,00 + variáveis', s.ciente_remuneracao],
-    ['Presencial em Goiânia/GO', s.ciente_presencial],
-    ['Horário de funcionamento do departamento', s.ciente_horario]
+    ['Contratação CLT', s.ciente_pj],
+    ['Remuneração R$ 2.018,00 base + variáveis', s.ciente_remuneracao],
+    ['Viagens rodoviárias com pernoite', s.ciente_presencial],
+    ['CNH E, MOPP e toxicológico em dia', s.ciente_horario]
   ];
   conds.forEach(([label, val]) => {
     doc.setFont('helvetica', 'bold');
