@@ -245,6 +245,31 @@ try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY); } c
 // o formulário — busca o currículo e o DISC no banco das vagas, casa a vaga pelo
 // título no banco do R&S e cria (ou atualiza) o registro em "candidatos".
 // Roda em segundo plano: se algo falhar aqui, não afeta a confirmação do candidato.
+
+// Casa o título da vaga entre o site e o R&S tolerando diferenças cosméticas:
+// sufixo entre parênteses (ex.: "Motorista Carreteiro (5 vagas)"), acento,
+// caixa e espaço duplo. Tenta o título exato primeiro; só depois relaxa.
+function _tituloBase(t){
+  return (t || '').replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+/g, ' ').trim();
+}
+function _normTitulo(t){
+  return _tituloBase(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+async function _acharVagaNoRS(rsDb, titulo){
+  try{
+    const exato = await rsDb.from('vagas').select('id,titulo').ilike('titulo', titulo).limit(1).maybeSingle();
+    if (exato?.data?.id) return exato.data;
+    const base = _tituloBase(titulo);
+    if (base && base !== titulo){
+      const semSufixo = await rsDb.from('vagas').select('id,titulo').ilike('titulo', base).limit(1).maybeSingle();
+      if (semSufixo?.data?.id) return semSufixo.data;
+    }
+    const todas = await rsDb.from('vagas').select('id,titulo');
+    const alvo = _normTitulo(titulo);
+    return (todas?.data || []).find(v => _normTitulo(v.titulo) === alvo) || null;
+  } catch(e){ return null; }
+}
+
 async function pushCandidatoParaRS(formPayload) {
   if (!rsDb || !db) return;
   try {
@@ -269,7 +294,7 @@ async function pushCandidatoParaRS(formPayload) {
 
     // Casa a vaga pelo título (sem diferenciar maiúsculas/acentos exatos) — se não achar,
     // o candidato ainda entra no funil, só que sem vaga vinculada, com o título anotado.
-    const vagaRes = await rsDb.from('vagas').select('id,titulo').ilike('titulo', formPayload.vaga_titulo).limit(1).maybeSingle();
+    const vagaRes = { data: await _acharVagaNoRS(rsDb, formPayload.vaga_titulo) };
     const vagaId = vagaRes?.data?.id || null;
     if (!vagaId) obs = `[Vaga do site: "${formPayload.vaga_titulo}" — não encontrada no R&S, cadastre-a para vincular automaticamente] ` + obs;
 
