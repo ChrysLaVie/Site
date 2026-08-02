@@ -274,7 +274,7 @@ const QUIZ = [
    "Entroncamento oblíquo à esquerda.",
    "Confluência à esquerda."
   ],
-  "correct": 3
+  "correct": 2
  },
  {
   "bloco": "conhecimentos",
@@ -538,7 +538,8 @@ const QUIZ = [
  {
   "bloco": "teorica",
   "tipo": "mc",
-  "q": "O conta-giros do caminhão é dividido em faixas. Qual alternativa apresenta corretamente as 5 partes?",
+  "img": "quiz-motorista-17.png",
+  "q": "O conta-giros do caminhão é dividido em faixas. Observe o mostrador e marque a alternativa que apresenta corretamente as 5 partes:",
   "options": [
    "Marcha lenta, faixa verde (econômica), faixa de potência máxima, faixa de freio-motor e faixa vermelha (zona de perigo).",
    "Marcha lenta, faixa azul, faixa de partida, faixa de reserva e faixa vermelha.",
@@ -785,7 +786,7 @@ function renderForm() {
           ? `<div class="quiz-sec"><h4>Parte 1 — Conhecimentos gerais em trânsito</h4>
                <p>20 questões de múltipla escolha. Nas primeiras, observe a placa ou o símbolo mostrado e marque a alternativa correta.</p></div>`
           : `<div class="quiz-sec"><h4>Parte 2 — Avaliação teórica</h4>
-               <p>5 questões sobre condução, mecânica e cálculo de autonomia.</p></div>`;
+               <p>5 questões sobre condução, mecânica e cálculo de autonomia. Numa delas você verá o mostrador do conta-giros.</p></div>`;
       }
 
       const img = item.img
