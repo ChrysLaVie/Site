@@ -709,7 +709,9 @@ function renderWelcome() {
         ${!db ? '<div class="warning-box">⚠ Banco de dados não configurado: os resultados não serão salvos.</div>' : ''}
         <span class="eyebrow">Avaliação Comportamental</span>
         <h1 class="title">Descubra seu <em>perfil</em> DISC</h1>
-        <p class="lede">Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você: da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.</p>
+        <p class="lede">${_ehVagaSimples(incoming.vaga)
+          ? 'Em cada uma das 12 perguntas, você verá 4 frases. Toque na que <strong>mais</strong> parece com você e depois na que <strong>menos</strong> parece. Não há respostas certas ou erradas.'
+          : 'Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você: da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.'}</p>
         <div class="profile-legend">
           <div class="profile-item"><span class="profile-dot" style="background:#9B6B52"></span>Dominância: foco em resultados</div>
           <div class="profile-item"><span class="profile-dot" style="background:#B08A3E"></span>Influência: foco em pessoas</div>
@@ -742,7 +744,9 @@ function renderWelcome() {
       ${!db ? '<div class="warning-box">⚠ Banco de dados não configurado: os resultados não serão salvos.</div>' : ''}
       <span class="eyebrow">Avaliação Comportamental</span>
       <h1 class="title">Descubra seu <em>perfil</em> DISC</h1>
-      <p class="lede">Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você: da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.</p>
+      <p class="lede">${_ehVagaSimples(incoming.vaga)
+          ? 'Em cada uma das 12 perguntas, você verá 4 frases. Toque na que <strong>mais</strong> parece com você e depois na que <strong>menos</strong> parece. Não há respostas certas ou erradas.'
+          : 'Em cada uma das 24 rodadas, você verá 4 frases. Arraste-as para colocar na ordem que mais combina com você: da que <strong>mais</strong> representa seu comportamento no trabalho até a que <strong>menos</strong> representa. Não há respostas certas ou erradas.'}</p>
       <div class="profile-legend">
         <div class="profile-item"><span class="profile-dot" style="background:#9B6B52"></span>Dominância: foco em resultados</div>
         <div class="profile-item"><span class="profile-dot" style="background:#B08A3E"></span>Influência: foco em pessoas</div>
