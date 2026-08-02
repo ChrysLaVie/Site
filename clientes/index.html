@@ -2350,8 +2350,19 @@ async function atualizarCandidato(){
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
 
-// ══ DOCUMENTOS DO CANDIDATO (Supabase Storage) ════════════════════════════════
+// ══ DOCUMENTOS DO CANDIDATO (Supabase Storage — bucket PRIVADO) ═══════════════
+// Importante: o bucket "documentos" precisa estar configurado como privado no
+// Supabase (Storage → documentos → Public bucket: desligado). O link pra abrir
+// um arquivo aqui não é mais uma URL pública fixa — é gerada na hora, válida
+// por 60 segundos, e some depois. Cada abertura fica registrada em
+// document_access_log (quem, quando, qual arquivo).
 const DOCS_BUCKET='documentos';
+const DOC_TAMANHO_MAX = 10*1024*1024; // 10 MB por arquivo
+const DOC_TIPOS_PERMITIDOS = ['application/pdf','application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/png','image/jpeg'];
+const DOC_EXT_PERMITIDAS = ['pdf','doc','docx','png','jpg','jpeg'];
+
 function renderDocsList(){
   const id=document.getElementById('mc-id').value;
   const c=getCands().find(x=>x.id===id);
@@ -2363,12 +2374,32 @@ function renderDocsList(){
   const icon=t=>{t=(t||'').toLowerCase(); if(t.includes('pdf'))return '📕'; if(t.includes('image')||/\.(png|jpe?g)$/.test(t))return '🖼'; if(t.includes('word')||/\.docx?$/.test(t))return '📘'; return '📄';};
   list.innerHTML=docs.map((d,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--bege);border-radius:8px;padding:7px 10px">
       <span style="font-size:16px">${icon(d.tipo||d.nome)}</span>
-      <a href="${d.url}" target="_blank" rel="noopener" style="flex:1;font-size:12px;color:var(--charcoal);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.nome}</a>
+      <a href="#" onclick="abrirDocumento('${d.path}','${(d.nome||'').replace(/'/g,"\\'")}');return false" style="flex:1;font-size:12px;color:var(--charcoal);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.nome}</a>
       <span style="font-size:10px;color:var(--light)">${d.tamanho||''}</span>
       <button onclick="removerDoc(${i})" title="Remover" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px">✕</button>
     </div>`).join('');
 }
 function _fmtTam(bytes){ if(bytes<1024)return bytes+' B'; if(bytes<1048576)return (bytes/1024).toFixed(0)+' KB'; return (bytes/1048576).toFixed(1)+' MB'; }
+
+// Gera uma URL temporária (60s) pro arquivo — nunca fica pública/permanente —
+// e registra no banco quem abriu, quando e qual documento.
+async function abrirDocumento(path, nome){
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Abrir documentos exige conexão com o Supabase.'); return; }
+  try{
+    const { data, error } = await sb.storage.from(DOCS_BUCKET).createSignedUrl(path, 60);
+    if(error || !data){ alert('Não foi possível abrir esse arquivo agora.'); return; }
+    try{
+      await sb.from('document_access_log').insert({
+        candidato_id: path.split('/')[0], path, nome_arquivo: nome,
+        empresa_id: currentEmpresa, acessado_por: currentUser.id, acessado_por_nome: getUserName()
+      });
+    }catch(e){ /* log é best-effort — não bloqueia a abertura do arquivo por causa dele */ }
+    window.open(data.signedUrl, '_blank', 'noopener');
+  }catch(e){
+    alert('Não foi possível abrir esse arquivo agora.');
+  }
+}
+
 async function anexarDocs(ev){
   const files=[...ev.target.files]; ev.target.value='';
   if(!files.length)return;
@@ -2378,15 +2409,30 @@ async function anexarDocs(ev){
     alert('Para anexar arquivos de verdade, o sistema precisa estar conectado ao banco (Supabase) e ter o bucket "documentos" criado. No modo demonstração os uploads ficam desativados.');
     return;
   }
-  showToast('⏳ Enviando documento(s)...');
+  // Validações antes de subir qualquer coisa — barram na tela o que dá pra
+  // barrar, mas a barreira que realmente conta é a do próprio bucket no
+  // Supabase (tamanho máximo e tipos MIME permitidos configurados lá), porque
+  // essa checagem aqui roda no navegador e alguém técnico poderia burlar.
+  const validos=[];
   for(const f of files){
+    const ext=(f.name.split('.').pop()||'').toLowerCase();
+    if(f.size > DOC_TAMANHO_MAX){ alert(`"${f.name}" tem mais de 10 MB e não foi enviado.`); continue; }
+    if(!DOC_TIPOS_PERMITIDOS.includes(f.type) && !DOC_EXT_PERMITIDAS.includes(ext)){
+      alert(`"${f.name}" não é um tipo de arquivo permitido (só PDF, Word, PNG ou JPG).`); continue;
+    }
+    validos.push(f);
+  }
+  if(!validos.length) return;
+  showToast('⏳ Enviando documento(s)...');
+  for(const f of validos){
     try{
       const safe=f.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
       const path=id+'/'+Date.now()+'_'+safe;
       const {error}=await sb.storage.from(DOCS_BUCKET).upload(path,f,{upsert:false});
       if(error)throw error;
-      const {data}=sb.storage.from(DOCS_BUCKET).getPublicUrl(path);
-      const doc={nome:f.name, path, url:data.publicUrl, tipo:f.type||f.name.split('.').pop(), tamanho:_fmtTam(f.size), enviadoEm:new Date().toISOString(), enviadoPor:getUserName()};
+      // Sem URL pública guardada — só o caminho do arquivo. O link pra abrir
+      // é gerado na hora (ver abrirDocumento), nunca fica fixo/permanente.
+      const doc={nome:f.name, path, tipo:f.type||f.name.split('.').pop(), tamanho:_fmtTam(f.size), enviadoEm:new Date().toISOString(), enviadoPor:getUserName()};
       const docsAtuais=Array.isArray(_cands[idx].documentos)?_cands[idx].documentos:[];
       _cands[idx].documentos=[...docsAtuais,doc];
     }catch(e){ alert('Erro ao enviar "'+f.name+'": '+e.message); }
