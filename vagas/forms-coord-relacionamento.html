@@ -252,14 +252,18 @@ async function pushCandidatoParaRS(formPayload) {
   try {
     const emailNorm = (formPayload.email || '').trim().toLowerCase();
 
-    const [candidaturaRes, discRes] = await Promise.all([
-      db.from('candidaturas').select('cv_url').ilike('email', emailNorm).order('created_at', { ascending:false }).limit(1).maybeSingle(),
-      db.from('candidatos_disc').select('primary_profile,secondary_profile').ilike('email', emailNorm).order('created_at', { ascending:false }).limit(1).maybeSingle()
-    ]);
+    // Busca currículo e perfil DISC deste candidato através de uma função
+    // do banco, em vez de ler as tabelas candidaturas e candidatos_disc
+    // direto. Motivo: o candidato não tem login, e para a leitura direta
+    // funcionar era preciso deixar essas duas tabelas abertas para
+    // qualquer visitante, o que expunha a base inteira. A função devolve
+    // só estes três campos e só deste e-mail.
+    const { data: compl } = await db.rpc('lv_complementos_candidato', { p_email: emailNorm });
+    const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
 
-    const cvUrl = candidaturaRes?.data?.cv_url || null;
-    const discPrimary = discRes?.data?.primary_profile || null;
-    const discSecondary = discRes?.data?.secondary_profile || null;
+    const cvUrl = c.cv_url || null;
+    const discPrimary = c.primary_profile || null;
+    const discSecondary = c.secondary_profile || null;
     const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
 
     let obs = `Nota no questionário técnico: ${formPayload.technical_score ?? '-'}/5.`;
