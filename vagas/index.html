@@ -1010,30 +1010,25 @@ async function enviarDocsParaRS(c, btn) {
         enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
     }
 
-    // Localiza o candidato no R&S pelo e-mail
+    // Localiza o candidato no R&S pelo e-mail e anexa os documentos — tudo
+    // numa função só no banco (anexar_documentos_por_email), porque o painel
+    // de vagas não tem login de verdade contra o banco do R&S e não pode
+    // mais ler/gravar a tabela de candidatos diretamente.
     const emailNorm = (c.email || '').trim().toLowerCase();
-    const busca = await rsDb.from('candidatos').select('id,nome,documentos')
-      .ilike('email', emailNorm).order('criado_em', { ascending: false }).limit(1).maybeSingle();
+    const { data: resultado, error: erroRpc } = await rsDb.rpc('anexar_documentos_por_email', {
+      p_email: emailNorm,
+      p_novos_documentos: novos
+    });
+    if (erroRpc) throw new Error(erroRpc.message);
 
-    if (!busca?.data?.id) {
+    if (!resultado?.encontrado) {
       alert('Candidato não encontrado no sistema de R&S pelo e-mail ' + emailNorm +
             '. Verifique se ele foi criado por lá antes de enviar os documentos.');
       return;
     }
 
-    // Junta com o que já existe, sem duplicar o mesmo tipo de documento
-    const atuais = Array.isArray(busca.data.documentos) ? busca.data.documentos : [];
-    const nomesNovos = novos.map(d => d.nome);
-    const mantidos = atuais.filter(d => !nomesNovos.includes(d.nome));
-    const documentos = [...mantidos, ...novos];
-
-    const { error } = await rsDb.from('candidatos')
-      .update({ documentos, atualizado_em: new Date().toISOString() })
-      .eq('id', busca.data.id);
-    if (error) throw new Error(error.message);
-
-    alert('Documentos enviados para o R&S: ' + nomesNovos.join(' e ') +
-          '.\nCandidato: ' + busca.data.nome);
+    alert('Documentos enviados para o R&S: ' + novos.map(d => d.nome).join(' e ') +
+          '.\nCandidato: ' + resultado.nome);
   } catch (e) {
     alert('Não foi possível enviar: ' + e.message);
   } finally {
