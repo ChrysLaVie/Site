@@ -174,7 +174,9 @@ input:focus { border-color: var(--charcoal); }
 
 const SUPABASE_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
-const ADMIN_PASS = 'lavie2026';
+// A senha fixa que ficava aqui foi removida: ela estava visível no
+// código-fonte da página. O acesso ao painel agora usa e-mail e senha reais
+// do Supabase Auth (mesma conta do vagas.html e do disc.html).
 const VAGA_TITULO_PADRAO = 'Coordenador de Relacionamento e Experiência do Aluno';
 
 const QUIZ = [
@@ -236,10 +238,10 @@ const RS_SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
 const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
 
 let db = null;
-try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
 let rsDb = null;
-try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY); } catch(e) {}
+try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
 // Envia o candidato para o funil do sistema de R&S assim que ele termina
 // o formulário — busca o currículo e o DISC no banco das vagas, casa a vaga pelo
@@ -330,12 +332,16 @@ async function saveForm(payload) {
   } catch(e) { return { ok:false, err:e.message }; }
 }
 
+// Retorna null quando a leitura falha (sessão expirada ou conta sem
+// permissão), para o painel não dizer "nenhuma resposta recebida" quando o
+// problema real é acesso negado pelo banco.
 async function loadSubmissions() {
-  if (!db) return [];
+  if (!db) return null;
   try {
-    const { data } = await db.from('forms_coord_relacionamento').select('*').order('created_at', { ascending:false });
+    const { data, error } = await db.from('forms_coord_relacionamento').select('*').order('created_at', { ascending:false });
+    if (error) return null;
     return data || [];
-  } catch(e) { return []; }
+  } catch(e) { return null; }
 }
 
 async function deleteSubmission(id) {
@@ -515,14 +521,29 @@ async function renderAdmin() {
   const subs = await loadSubmissions();
   if (state.view !== 'admin') return;
 
+  if (subs === null) {
+    app.innerHTML = `
+      <button class="back-link" id="backBtn">← Voltar ao formulário</button>
+      <span class="eyebrow">Painel do recrutador</span>
+      <h1 class="section-title">Respostas do <em>formulário</em></h1>
+      <p style="color:var(--muted);font-size:0.9rem;">Não foi possível carregar as respostas. Sua sessão pode ter expirado, ou esta conta não tem permissão de leitura. Saia e entre de novo.</p>
+      <p><button class="back-link" id="logoutBtn">Sair da conta</button></p>
+    `;
+    document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+    document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
+    return;
+  }
+
   if (subs.length === 0) {
     app.innerHTML = `
       <button class="back-link" id="backBtn">← Voltar ao formulário</button>
       <span class="eyebrow">Painel do recrutador</span>
       <h1 class="section-title">Respostas do <em>formulário</em></h1>
       <p style="color:var(--muted);font-size:0.9rem;">Nenhuma resposta recebida ainda.</p>
+      <p><button class="back-link" id="logoutBtn">Sair da conta</button></p>
     `;
     document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+    document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
     return;
   }
 
@@ -533,12 +554,14 @@ async function renderAdmin() {
         <span class="eyebrow">Painel do recrutador</span>
         <h1 class="section-title" style="margin-bottom:0;">Respostas do <em>formulário</em></h1>
       </div>
+      <button class="back-link" id="logoutBtn">Sair da conta</button>
     </div>
     <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.4rem;">${subs.length} candidato(s) · Coordenador de Relacionamento e Experiência do Aluno</p>
     <div id="subsList"></div>
   `;
 
   document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+  document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
 
   document.getElementById('subsList').innerHTML = subs.map(s => {
     const score = s.technical_score ?? null;
@@ -708,11 +731,78 @@ function render() {
   else if (state.view === 'admin') renderAdmin();
 }
 
-document.getElementById('adminBtn').addEventListener('click', () => {
+// ═══════════════════════════════════════════════════════
+// LOGIN DO PAINEL (Supabase Auth)
+// ═══════════════════════════════════════════════════════
+// Antes: prompt() comparado com uma senha escrita no código, ou seja, a
+// trava existia só no navegador e o banco liberava a leitura pra qualquer um.
+// Agora é o próprio banco que decide se a conta pode ler as respostas.
+// Este painel lê apenas a tabela do formulário, que fica no banco principal
+// (db). O login no banco do R&S (rsDb) é tentado junto para a sessão ficar
+// igual à das outras páginas, mas não é obrigatório aqui.
+function openLoginModal() {
+  const wrap = document.createElement('div');
+  wrap.id = 'loginOverlay';
+  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+  wrap.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;">
+      <button id="loginClose" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#999;">&times;</button>
+      <h3 style="margin:0 0 6px;font-size:18px;">Entrar no painel</h3>
+      <p style="margin:0 0 16px;font-size:13px;color:#777;">Use o mesmo e-mail e senha da sua conta.</p>
+      <input type="email" id="loginEmail" placeholder="seu-email@exemplo.com" autocomplete="username"
+        style="width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid #d8cfc4;border-radius:8px;font-size:14px;box-sizing:border-box;">
+      <input type="password" id="loginSenha" placeholder="Senha" autocomplete="current-password"
+        style="width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid #d8cfc4;border-radius:8px;font-size:14px;box-sizing:border-box;">
+      <p id="loginErro" style="color:#a33;font-size:12px;display:none;margin:0 0 8px;"></p>
+      <button id="loginSubmit" style="width:100%;padding:11px;border:none;border-radius:8px;background:#2b2b2b;color:#fff;font-size:14px;cursor:pointer;">Entrar</button>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+  const fechar = () => wrap.remove();
+  wrap.addEventListener('click', e => { if (e.target === wrap) fechar(); });
+  document.getElementById('loginClose').addEventListener('click', fechar);
+  document.getElementById('loginSubmit').addEventListener('click', fazerLoginPainel);
+  document.getElementById('loginSenha').addEventListener('keydown', e => { if (e.key === 'Enter') fazerLoginPainel(); });
+  document.getElementById('loginEmail').focus();
+}
+
+async function fazerLoginPainel() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const erroEl = document.getElementById('loginErro');
+  const btn = document.getElementById('loginSubmit');
+  erroEl.style.display = 'none';
+  if (!email || !senha) { erroEl.textContent = 'Preencha e-mail e senha.'; erroEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    if (!db) throw new Error('Conexão com o banco indisponível.');
+    const { error } = await db.auth.signInWithPassword({ email, password: senha });
+    if (error) throw new Error('E-mail ou senha incorretos.');
+    try { if (rsDb) await rsDb.auth.signInWithPassword({ email, password: senha }); } catch(e) {}
+    document.getElementById('loginOverlay')?.remove();
+    state.view = 'admin'; render();
+  } catch (e) {
+    erroEl.textContent = e.message; erroEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function fazerLogoutPainel() {
+  try { await db?.auth.signOut(); } catch(e) {}
+  try { await rsDb?.auth.signOut(); } catch(e) {}
+  state.view = 'form'; render();
+}
+
+async function sessaoValida() {
+  if (!db) return false;
+  try { const { data } = await db.auth.getSession(); return !!data?.session; } catch(e) { return false; }
+}
+
+document.getElementById('adminBtn').addEventListener('click', async () => {
   if (state.view === 'admin') { state.view = 'form'; render(); return; }
-  const pw = prompt('Senha:');
-  if (pw === ADMIN_PASS) { state.view = 'admin'; render(); }
-  else if (pw !== null) alert('Senha incorreta.');
+  if (await sessaoValida()) { state.view = 'admin'; render(); return; }
+  openLoginModal();
 });
 
 render();
