@@ -200,6 +200,25 @@ input:focus { border-color: var(--charcoal); }
 .nota-val em { font-style: normal; font-size: 1.05rem; color: var(--muted); }
 .nota-sub { font-size: 0.76rem; color: var(--muted); margin-top: 0.35rem; }
 .nota-nota { font-size: 0.8rem; color: var(--muted); line-height: 1.55; }
+
+/* ── Cabeçalho no celular ─────────────────────────────────────
+   Na tela estreita o cabeçalho ficava com tudo espremido: a etapa
+   quebrava em três linhas, os ícones de rede social encostavam na
+   logo e o botão do painel saía cortado pela borda. No celular o
+   candidato não precisa de rede social nem do painel do recrutador,
+   então os dois somem e sobra espaço para o que importa. */
+@media (max-width: 760px) {
+  nav { padding: 0.6rem 4vw; gap: 0.6rem; }
+  .nav-logo img { height: 42px; max-width: 120px; }
+  .nav-socials { display: none; }
+  .nav-admin-btn { display: none; }
+  .nav-tag { font-size: 0.6rem; letter-spacing: 0.08em; line-height: 1.35;
+             text-align: right; max-width: 60vw; }
+  #app { padding-top: 110px; }
+}
+@media (max-width: 400px) {
+  .nav-tag { font-size: 0.55rem; }
+}
 </style>
 </head>
 <body>
@@ -531,20 +550,20 @@ const QUIZ = [
  {
   "bloco": "teorica",
   "tipo": "num",
-  "q": "Um veículo com tanque de 1.000 litros e consumo médio de 1,5 km/l: qual será a autonomia, em quilômetros?",
+  "q": "Um veículo com tanque de 1.000 litros e consumo médio de 1,5 km/l: com o tanque cheio, quantos quilômetros ele consegue rodar?",
   "resposta": 1500,
   "tolerancia": 10,
   "unidade": "km",
-  "dica": "Distância = média × litros"
+  "dica": "Distância = consumo médio × litros do tanque"
  },
  {
   "bloco": "teorica",
   "tipo": "num",
-  "q": "A distância entre Goiânia e Epitaciolândia (AC) é de 3.020 km. Um veículo com tanque de 1.000 litros e consumo médio de 2,5 km/l fará um abastecimento complementar em Ariquemes (RO) para chegar ao destino. Quantos litros serão necessários abastecer para chegar a Epitaciolândia?",
+  "q": "Um veículo com tanque de 1.000 litros e consumo médio de 2,5 km/l sai de Goiânia com o tanque cheio rumo a Epitaciolândia (AC), a 3.020 km de distância. No meio do caminho ele fará um abastecimento complementar. Quantos litros precisará abastecer para completar a viagem?",
   "resposta": 208,
   "tolerancia": 5,
   "unidade": "litros",
-  "dica": "Distância = média × litros"
+  "dica": "Calcule quantos litros a viagem inteira consome (distância ÷ consumo) e desconte o que já cabe no tanque"
  }
 ];
 

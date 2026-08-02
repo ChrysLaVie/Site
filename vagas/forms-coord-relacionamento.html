@@ -149,6 +149,25 @@ input:focus { border-color: var(--charcoal); }
   .field-row { grid-template-columns: 1fr; }
   .card { padding: 1.6rem; }
 }
+
+/* ── Cabeçalho no celular ─────────────────────────────────────
+   Na tela estreita o cabeçalho ficava com tudo espremido: a etapa
+   quebrava em três linhas, os ícones de rede social encostavam na
+   logo e o botão do painel saía cortado pela borda. No celular o
+   candidato não precisa de rede social nem do painel do recrutador,
+   então os dois somem e sobra espaço para o que importa. */
+@media (max-width: 760px) {
+  nav { padding: 0.6rem 4vw; gap: 0.6rem; }
+  .nav-logo img { height: 42px; max-width: 120px; }
+  .nav-socials { display: none; }
+  .nav-admin-btn { display: none; }
+  .nav-tag { font-size: 0.6rem; letter-spacing: 0.08em; line-height: 1.35;
+             text-align: right; max-width: 60vw; }
+  #app { padding-top: 110px; }
+}
+@media (max-width: 400px) {
+  .nav-tag { font-size: 0.55rem; }
+}
 </style>
 </head>
 <body>
