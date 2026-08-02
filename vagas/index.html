@@ -288,7 +288,6 @@ footer p a { color:inherit; text-decoration:none; }
 
 const SUPABASE_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
-const ADMIN_PASS   = 'lavie2026';
 
 // Resumo compacto dos perfis DISC, usado para gerar o PDF do teste
 // direto no painel (sem depender da página do DISC)
@@ -316,14 +315,13 @@ const DIM = {
 };
 
 let db = null;
-try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
 // ── Conexão com o sistema de R&S (banco separado) ────────────────────────────
 const RS_SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
 const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
-const BUCKET_DOCS = 'curriculos'; // bucket público já existente
 let rsDb = null;
-try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY); } catch(e) {}
+try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
 let state = { view: 'vagas', adminTab: 'vagas' };
 let VAGAS = [];
@@ -360,8 +358,25 @@ async function saveCandidatura(data) {
   try {
     let cv_url = null;
     const files = data.files || (data.file ? [data.file] : []);
+    // Mesma barreira do lado do sistema de R&S: tamanho máximo e tipos
+    // permitidos. Aqui é ainda mais importante avisar com uma mensagem clara,
+    // já que quem está enviando é o próprio candidato, não a equipe.
+    const TAMANHO_MAX = 10*1024*1024; // 10 MB
+    const TIPOS_PERMITIDOS = ['application/pdf','application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/png','image/jpeg'];
+    const EXT_PERMITIDAS = ['pdf','doc','docx','png','jpg','jpeg'];
+    for (const f of files) {
+      const ext = (f.name.split('.').pop()||'').toLowerCase();
+      if (f.size > TAMANHO_MAX) {
+        return { ok:false, err:`O arquivo "${f.name}" passa de 10 MB. Envie um arquivo menor.` };
+      }
+      if (!TIPOS_PERMITIDOS.includes(f.type) && !EXT_PERMITIDAS.includes(ext)) {
+        return { ok:false, err:`O arquivo "${f.name}" não é um formato aceito. Envie PDF, Word, PNG ou JPG.` };
+      }
+    }
     if (files.length) {
-      const urls = [];
+      const paths = [];
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
         const ext = f.name.split('.').pop();
@@ -371,10 +386,13 @@ async function saveCandidatura(data) {
           .trim().replace(/\s+/g, '-').toLowerCase();
         const path = `${Date.now()}-${i}-${nomeArquivo || 'candidato'}.${ext}`;
         const { error: upErr } = await db.storage.from('curriculos').upload(path, f);
-        if (!upErr) { const { data: urlData } = db.storage.from('curriculos').getPublicUrl(path); urls.push(urlData.publicUrl); }
+        // Guarda só o caminho do arquivo, não uma URL pública — o bucket é
+        // privado, então o link pra abrir é sempre gerado na hora (ver
+        // abrirCurriculo), nunca fica fixo/permanente.
+        if (!upErr) { paths.push(path); }
         else { console.warn('Falha ao enviar currículo:', f.name, upErr.message); }
       }
-      if (urls.length) cv_url = urls.join('\n');
+      if (paths.length) cv_url = paths.join('\n');
     }
     // Se o candidato anexou arquivo(s) mas NENHUM foi salvo, avisa em vez de
     // prosseguir silenciosamente sem currículo (o que já causou candidaturas
@@ -395,6 +413,45 @@ async function loadCandidaturas() {
 async function marcarLida(id) { if (!db) return; try { await db.from('candidaturas').update({ lida:true }).eq('id', id); } catch(e) {} }
 async function deleteCandidatura(id) { if (!db) return; try { await db.from('candidaturas').delete().eq('id', id); } catch(e) {} }
 async function arquivarCandidatura(id, valor) { if (!db) return; try { await db.from('candidaturas').update({ arquivada: valor }).eq('id', id); } catch(e) {} }
+
+// Extrai o caminho do arquivo tanto de uma URL pública antiga (de antes do
+// bucket virar privado) quanto de um path novo já salvo puro — pra não
+// quebrar candidaturas que já existiam antes desta correção.
+function _pathDoCurriculo(v) {
+  v = (v || '').trim();
+  const marcador = '/curriculos/';
+  const i = v.indexOf(marcador);
+  if (v.startsWith('http') && i >= 0) return decodeURIComponent(v.slice(i + marcador.length));
+  return v;
+}
+// Gera um link temporário pro currículo (60s, só pra abrir na hora). Usado
+// nos links clicáveis dentro do painel.
+async function abrirCurriculo(valor) {
+  const path = _pathDoCurriculo(valor);
+  if (!db) { alert('Conexão indisponível.'); return; }
+  try {
+    const { data, error } = await db.storage.from('curriculos').createSignedUrl(path, 60);
+    if (error || !data) { alert('Não foi possível abrir o currículo agora.'); return; }
+    try {
+      const { data: { user } } = await db.auth.getUser();
+      await db.from('curriculo_access_log').insert({ path, acessado_por: user?.id || null, acessado_por_email: user?.email || null });
+    } catch(e) { /* log é best-effort — não bloqueia a abertura por causa dele */ }
+    window.open(data.signedUrl, '_blank', 'noopener');
+  } catch(e) { alert('Não foi possível abrir o currículo agora.'); }
+}
+// Mesma ideia, mas com validade mais longa (7 dias) — usado só quando o link
+// vai ser embutido dentro de um PDF baixado (um arquivo salvo no computador
+// de alguém dura mais que 60 segundos, então o link precisa acompanhar).
+async function _urlAssinadaParaPdf(valor) {
+  const path = _pathDoCurriculo(valor);
+  if (!db) return valor;
+  try {
+    const { data, error } = await db.storage.from('curriculos').createSignedUrl(path, 7*24*3600);
+    if (error || !data) return valor;
+    return data.signedUrl;
+  } catch(e) { return valor; }
+}
+window.__abrirCurriculo = abrirCurriculo;
 
 // ── SUPABASE: DISC e FORMULÁRIO (para a aba "Candidatos") ──
 async function loadCandidatosDisc() {
@@ -426,9 +483,19 @@ function cvUrls(cv) { return (cv || '').split('\n').map(s => s.trim()).filter(Bo
 function cvLinksHTML(cv) {
   const urls = cvUrls(cv);
   if (!urls.length) return '';
-  if (urls.length === 1) return `<a href="${urls[0]}" target="_blank">Ver currículo</a>`;
-  return urls.map((u, i) => `<a href="${u}" target="_blank">Ver currículo ${i+1}</a>`).join(' · ');
+  const attr = u => u.replace(/'/g, "&#39;");
+  if (urls.length === 1) return `<a href="#" class="cv-link" data-cv='${attr(urls[0])}'>Ver currículo</a>`;
+  return urls.map((u, i) => `<a href="#" class="cv-link" data-cv='${attr(u)}'>Ver currículo ${i+1}</a>`).join(' · ');
 }
+// Delegação única pro clique em qualquer link de currículo, não importa em
+// qual tela/render ele apareceu — evita ter que religar isso em cada função
+// de render separadamente.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('.cv-link');
+  if (!a) return;
+  e.preventDefault();
+  window.__abrirCurriculo(a.dataset.cv);
+});
 
 // ── RENDER: VAGAS (público) ──
 async function renderVagas() {
@@ -685,7 +752,7 @@ function openDossieModal(c) {
   document.getElementById('dossieEnviarRS')?.addEventListener('click', (e) => enviarDocsParaRS(c, e.currentTarget));
 }
 
-function buildDossiePDF(c) {
+async function buildDossiePDF(c) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
@@ -738,7 +805,7 @@ function buildDossiePDF(c) {
     doc.setDrawColor(...BORDER); doc.line(M, y, W - M, y);
     y += 20;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK);
-    const _urls = cvUrls(c.candidatura.cv_url);
+    const _urls = await Promise.all(cvUrls(c.candidatura.cv_url).map(_urlAssinadaParaPdf));
     doc.text(_urls.length > 1 ? 'Links dos currículos e anexos:' : 'Link do currículo:', M, y);
     y += 14;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(40, 80, 160);
@@ -972,15 +1039,6 @@ function _slug(t) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 }
 
-async function _subirPdf(blob, caminho) {
-  const { error } = await db.storage.from(BUCKET_DOCS).upload(caminho, blob, {
-    contentType: 'application/pdf', upsert: true
-  });
-  if (error) throw new Error('Falha no upload: ' + error.message);
-  const { data } = db.storage.from(BUCKET_DOCS).getPublicUrl(caminho);
-  return data.publicUrl;
-}
-
 async function enviarDocsParaRS(c, btn) {
   if (!rsDb || !db) { alert('Conexão com o sistema de R&S indisponível.'); return; }
   if (!c.disc && !c.forms) { alert('Este candidato ainda não tem DISC nem formulário.'); return; }
@@ -989,32 +1047,45 @@ async function enviarDocsParaRS(c, btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
 
   try {
+    const emailNorm = (c.email || '').trim().toLowerCase();
+
+    // Localiza o candidato no R&S primeiro — precisamos do ID dele pra saber
+    // em qual pasta salvar os PDFs (o R&S guarda documentos em
+    // "documentos/<id-do-candidato>/arquivo.pdf", e é lá que o próprio
+    // sistema de R&S vai procurar quando alguém clicar pra abrir).
+    const { data: achado, error: erroBusca } = await rsDb.rpc('buscar_candidato_por_email', { p_email: emailNorm });
+    if (erroBusca) throw new Error(erroBusca.message);
+    if (!achado?.encontrado) {
+      alert('Candidato não encontrado no sistema de R&S pelo e-mail ' + emailNorm +
+            '. Verifique se ele foi criado por lá antes de enviar os documentos.');
+      return;
+    }
+
     const { jsPDF } = window.jspdf;
-    const base = _slug(c.nome);
     const carimbo = Date.now();
     const novos = [];
 
     if (c.disc) {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       _drawDiscBody(doc, c.disc);
-      const url = await _subirPdf(doc.output('blob'), `documentos/${base}/${carimbo}-disc.pdf`);
-      novos.push({ nome: 'Relatório DISC', url, tipo: 'application/pdf',
+      const path = `${achado.id}/${carimbo}-disc.pdf`;
+      const { error: upErr } = await rsDb.storage.from('documentos').upload(path, doc.output('blob'), { contentType: 'application/pdf', upsert: true });
+      if (upErr) throw new Error('Falha ao enviar o PDF do DISC: ' + upErr.message);
+      novos.push({ nome: 'Relatório DISC', path, tipo: 'application/pdf',
         enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
     }
 
     if (c.forms) {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       _drawFormsBody(doc, c.forms);
-      const url = await _subirPdf(doc.output('blob'), `documentos/${base}/${carimbo}-formulario.pdf`);
-      novos.push({ nome: 'Formulário da vaga', url, tipo: 'application/pdf',
+      const path = `${achado.id}/${carimbo}-formulario.pdf`;
+      const { error: upErr } = await rsDb.storage.from('documentos').upload(path, doc.output('blob'), { contentType: 'application/pdf', upsert: true });
+      if (upErr) throw new Error('Falha ao enviar o PDF do formulário: ' + upErr.message);
+      novos.push({ nome: 'Formulário da vaga', path, tipo: 'application/pdf',
         enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
     }
 
-    // Localiza o candidato no R&S pelo e-mail e anexa os documentos — tudo
-    // numa função só no banco (anexar_documentos_por_email), porque o painel
-    // de vagas não tem login de verdade contra o banco do R&S e não pode
-    // mais ler/gravar a tabela de candidatos diretamente.
-    const emailNorm = (c.email || '').trim().toLowerCase();
+    // Anexa os documentos ao registro do candidato no R&S.
     const { data: resultado, error: erroRpc } = await rsDb.rpc('anexar_documentos_por_email', {
       p_email: emailNorm,
       p_novos_documentos: novos
@@ -1225,6 +1296,7 @@ async function renderAdmin() {
       <div class="admin-wrap">
         <button class="back-link" id="backBtn">← Voltar às vagas</button>
         <span class="eyebrow">Painel do recrutador</span>
+        <button class="back-link" id="logoutBtn" style="float:right">Sair</button>
         <div class="admin-tabs">
           <button class="tab-btn2 ${state.adminTab==='vagas'?'active':''}" data-tab="vagas">Vagas (${ADMIN_VAGAS.length})</button>
           <button class="tab-btn2 ${state.adminTab==='candidaturas'?'active':''}" data-tab="candidaturas">Candidaturas ${naoLidas>0?`(${naoLidas} novas)`:''}</button>
@@ -1234,12 +1306,84 @@ async function renderAdmin() {
       </div>
     `;
     document.getElementById('backBtn').addEventListener('click', () => { state.view = 'vagas'; render(); });
+    document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
     document.querySelectorAll('.tab-btn2').forEach(btn => btn.addEventListener('click', () => { state.adminTab = btn.dataset.tab; draw(); }));
     if (state.adminTab === 'vagas') bindVagasTabEvents();
     else if (state.adminTab === 'candidaturas') bindCandTabEvents();
     else bindUnifTabEvents();
   }
   draw();
+}
+
+// ── LOGIN DO PAINEL (Supabase Auth — mesma conta autentica nos dois bancos) ──
+// Antes: uma senha fixa ('lavie2026') escrita no código, comparada no
+// navegador. Agora: e-mail + senha reais, autenticando ao mesmo tempo no
+// projeto deste site (db) e no projeto do R&S (rsDb) — sem isso, o painel
+// não consegue ler currículos nem enviar documentos pro R&S, porque os dois
+// bancos agora exigem login de verdade pra qualquer leitura de dado pessoal.
+function openLoginModal() {
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal-box">
+        <button class="modal-close" id="closeModal">×</button>
+        <h3>Entrar no painel</h3>
+        <p class="modal-sub">Use o mesmo e-mail e senha da sua conta.</p>
+        <input type="email" id="loginEmail" placeholder="seu-email@exemplo.com" autocomplete="username"
+          style="width:100%;padding:0.7rem 0.9rem;margin-bottom:0.6rem;border:1px solid var(--border,#d8cfc4);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        <input type="password" id="loginSenha" placeholder="Senha" autocomplete="current-password"
+          style="width:100%;padding:0.7rem 0.9rem;margin-bottom:0.6rem;border:1px solid var(--border,#d8cfc4);border-radius:8px;font-size:0.85rem;box-sizing:border-box;">
+        <p id="loginErro" style="color:#a33;font-size:0.75rem;display:none;margin-bottom:0.6rem;"></p>
+        <button class="btn-primary" id="loginSubmit" style="width:100%;">Entrar</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+  document.getElementById('loginSubmit').addEventListener('click', fazerLoginPainel);
+  document.getElementById('loginSenha').addEventListener('keydown', e => { if (e.key === 'Enter') fazerLoginPainel(); });
+}
+
+async function fazerLoginPainel() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const erroEl = document.getElementById('loginErro');
+  erroEl.style.display = 'none';
+  if (!email || !senha) { erroEl.textContent = 'Preencha e-mail e senha.'; erroEl.style.display = 'block'; return; }
+  const btn = document.getElementById('loginSubmit');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    if (!db || !rsDb) throw new Error('Conexão com os bancos indisponível.');
+    // Precisa entrar nos DOIS projetos — cada um com sua própria sessão,
+    // porque são bancos Supabase diferentes (não compartilham login entre si).
+    const [r1, r2] = await Promise.all([
+      db.auth.signInWithPassword({ email, password: senha }),
+      rsDb.auth.signInWithPassword({ email, password: senha })
+    ]);
+    if (r1.error || r2.error) {
+      throw new Error('E-mail ou senha incorretos, ou a conta ainda não existe em um dos dois sistemas.');
+    }
+    closeModal();
+    state.view = 'admin'; state.adminTab = 'vagas'; render();
+  } catch (e) {
+    erroEl.textContent = e.message; erroEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function fazerLogoutPainel() {
+  try { await Promise.all([db?.auth.signOut(), rsDb?.auth.signOut()]); } catch(e) {}
+  state.view = 'vagas'; render();
+}
+
+// Se já existir uma sessão válida nos dois bancos (usuário já logado antes,
+// aba recarregada), pula direto pro painel sem pedir login de novo.
+async function sessaoValidaNosDois() {
+  if (!db || !rsDb) return false;
+  try {
+    const [s1, s2] = await Promise.all([db.auth.getSession(), rsDb.auth.getSession()]);
+    return !!(s1?.data?.session && s2?.data?.session);
+  } catch(e) { return false; }
 }
 
 // ── ROUTER ──
@@ -1249,14 +1393,16 @@ function render() {
   else if (state.view === 'admin') renderAdmin();
 }
 
-adminBtn.addEventListener('click', () => {
+adminBtn.addEventListener('click', async () => {
   if (state.view === 'admin') { state.view = 'vagas'; render(); return; }
-  const pw = prompt('Senha:');
-  if (pw === ADMIN_PASS) { state.view = 'admin'; state.adminTab = 'vagas'; render(); }
-  else if (pw !== null) alert('Senha incorreta.');
+  if (await sessaoValidaNosDois()) { state.view = 'admin'; state.adminTab = 'vagas'; render(); return; }
+  openLoginModal();
 });
 
-render();
+(async () => {
+  if (await sessaoValidaNosDois()) { state.view = 'admin'; state.adminTab = 'vagas'; }
+  render();
+})();
 })();
 </script>
 </body>
