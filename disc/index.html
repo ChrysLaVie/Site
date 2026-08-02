@@ -618,9 +618,13 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
   if (!rsDb || !db) return;
   try {
     const emailNorm = (r.email || '').trim().toLowerCase();
-    const candidaturaRes = await db.from('candidaturas').select('cv_url')
-      .ilike('email', emailNorm).order('created_at', { ascending:false }).limit(1).maybeSingle();
-    const cvUrl = candidaturaRes?.data?.cv_url || null;
+    // Busca o currículo deste candidato através de uma função do banco, em
+    // vez de ler a tabela candidaturas direto. Motivo: o candidato não tem
+    // login, e a leitura direta exigia deixar a tabela aberta para qualquer
+    // visitante. A função devolve só o currículo e só deste e-mail.
+    const { data: compl } = await db.rpc('lv_complementos_candidato', { p_email: emailNorm });
+    const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
+    const cvUrl = c.cv_url || null;
 
     const norm = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                        .toLowerCase().replace(/\s+/g, ' ').trim();
