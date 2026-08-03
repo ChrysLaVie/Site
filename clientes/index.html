@@ -2241,7 +2241,58 @@ async function salvarVaga() {
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
-  }catch(e){alert('Erro: '+e.message);}
+  }catch(e){
+    // Se o banco recusar, a entrevista NÃO pode simplesmente sumir. Antes o
+    // sistema mostrava um alerta com a mensagem crua do Postgres, que parecia
+    // defeito passageiro, e o trabalho da entrevista se perdia sem ninguém
+    // perceber. Agora: guarda uma cópia local, avisa com clareza e entrega o
+    // conteúdo para copiar.
+    console.error('FALHA ao salvar entrevista:', e);
+    let copiaLocal = false;
+    try{
+      const pendentes = JSON.parse(localStorage.getItem('lavie_entrevistas_nao_salvas')||'[]');
+      pendentes.unshift({ salvoEm:new Date().toISOString(), erro:String(e && e.message || e), registro:rec });
+      localStorage.setItem('lavie_entrevistas_nao_salvas', JSON.stringify(pendentes.slice(0,50)));
+      copiaLocal = true;
+    }catch(e2){}
+
+    alert(
+      'A ENTREVISTA NÃO FOI SALVA NO BANCO.\n\n' +
+      'Motivo técnico: ' + (e && e.message ? e.message : e) + '\n\n' +
+      (copiaLocal
+        ? 'Guardei uma cópia neste navegador e vou abrir o conteúdo para você copiar agora. Não feche a aba antes de copiar.'
+        : 'Não consegui nem guardar cópia local. Copie o conteúdo da tela antes de fechar.')
+    );
+
+    // Abre o conteúdo em texto, para copiar e colar em qualquer lugar.
+    try{
+      const linhas = [];
+      linhas.push('ENTREVISTA NÃO SALVA — ' + new Date().toLocaleString('pt-BR'));
+      linhas.push('Candidato: ' + (rec.nome||''));
+      linhas.push('Vaga: ' + (rec.vaga||'') + '   Setor: ' + (rec.setor||''));
+      linhas.push('Entrevistador: ' + (rec.entrevistador||''));
+      linhas.push('Resultado: ' + (rec.resultado||'') + '   Média: ' + (rec.avgStar||'—'));
+      linhas.push('');
+      linhas.push('AVALIAÇÕES');
+      Object.entries(rec.avaliacoes||{}).forEach(([k,v]) => linhas.push('  ' + k + ': ' + v));
+      linhas.push('');
+      linhas.push('OBSERVAÇÕES');
+      linhas.push(rec.observacoes||'—');
+      linhas.push('');
+      linhas.push('ROTEIRO');
+      linhas.push(JSON.stringify(rec.respostas||{}, null, 2));
+      const texto = linhas.join('\n');
+
+      const w = window.open('', '_blank');
+      if(w){
+        w.document.write('<title>Entrevista não salva</title><pre style="font-family:monospace;white-space:pre-wrap;padding:24px;line-height:1.5">' +
+          texto.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>');
+        w.document.close();
+      } else {
+        try{ await navigator.clipboard.writeText(texto); showToast('Conteúdo copiado para a área de transferência.'); }catch(e3){}
+      }
+    }catch(e4){ console.error('Não consegui exibir a cópia:', e4); }
+  }
 }
 
 function editVaga(id) {
@@ -2855,7 +2906,7 @@ async function salvarEntrevista(){
 function gerarDossiePDF(id){
   const e = _entrevistas.find(x=>x.id===id) || (typeof getEntrevistas==='function' ? getEntrevistas().find(x=>x.id===id) : null);
   if(!e){ alert('Entrevista não encontrada.'); return; }
-  if(!e.respostas){ alert('Esta entrevista foi salva antes da função de reimpressão existir, então não temos o roteiro completo guardado — não é possível gerar o dossiê.'); return; }
+  if(!e.respostas){ alert('Esta entrevista não tem o roteiro guardado, então o dossiê completo não pode ser gerado.\n\nIsso vale para as entrevistas feitas até 31/07/2026: a coluna que guarda o roteiro não existia no banco até então. As avaliações, observações e o resultado continuam disponíveis ao expandir a linha na lista.'); return; }
 
   const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const dados = [
