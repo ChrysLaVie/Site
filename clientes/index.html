@@ -1080,17 +1080,14 @@ async function fazerLogin(){
     }catch(e){ /* se o RPC falhar por qualquer motivo, segue o login normalmente */ }
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
-    // Entra também no banco das vagas, para conseguir abrir os currículos que
-    // chegaram pelo site. Se essa conta não existir lá, o R&S segue funcionando
-    // normalmente: só os documentos vindos do site é que não abrem.
-    if (!error && sbVagas) {
-      try { await sbVagas.auth.signInWithPassword({ email, password: senha }); }
-      catch(e) { console.warn('Sem acesso ao banco das vagas:', e); }
-    }
     try{ await sb.rpc('registrar_tentativa_login', { p_email: email, p_sucesso: !error }); }catch(e){}
 
     if(error){ _mostrarErroLogin('E-mail ou senha incorretos.'); return; }
-    await carregarPerfilEEntrar(data.user);
+    // Guarda a senha só para esta chamada: o acesso ao banco das vagas é feito
+    // depois, dentro de carregarPerfilEEntrar, e somente se o perfil estiver
+    // ativo. Antes o segundo login acontecia aqui, então uma conta desativada
+    // no R&S ficava autenticada no banco que guarda os currículos.
+    await carregarPerfilEEntrar(data.user, senha);
   }catch(e){
     _mostrarErroLogin('Não foi possível entrar agora. Tente novamente em instantes.');
   }finally{
@@ -1118,15 +1115,37 @@ async function definirSenhaInicial(){
   try{
     const { data, error } = await sb.auth.updateUser({ password: s1 });
     if(error){ el.textContent='Não foi possível salvar a senha: '+error.message; el.style.display='block'; return; }
-    await carregarPerfilEEntrar(data.user);
+    // Espelha a senha no banco das vagas. Sem isso as duas ficam diferentes e
+    // os currículos enviados pelo site param de abrir no próximo login.
+    try{ if(sbVagas){ await sbVagas.auth.signInWithPassword({ email: data.user.email, password: s1 }); await sbVagas.auth.updateUser({ password: s1 }); } }catch(e){ console.warn('Senha não espelhada no banco das vagas:', e); }
+    await carregarPerfilEEntrar(data.user, s1);
   }catch(e){
     el.textContent='Não foi possível salvar a senha agora. Tente novamente.'; el.style.display='block';
   }
 }
 
+// Entra no banco das vagas, onde ficam os currículos enviados pelo site.
+// Retorna true/false: o Supabase devolve { error } em vez de lançar exceção,
+// então verificar só com try/catch deixava a falha passar em silêncio.
+async function entrarNoBancoDasVagas(email, senha){
+  if(!sbVagas || !senha) return false;
+  try{
+    const { error } = await sbVagas.auth.signInWithPassword({ email, password: senha });
+    if(error){ console.warn('Sem acesso ao banco das vagas:', error.message); return false; }
+    return true;
+  }catch(e){ console.warn('Sem acesso ao banco das vagas:', e); return false; }
+}
+
+// Encerra a sessão dos dois bancos. Sair só do principal deixava a sessão do
+// banco dos currículos ativa no navegador.
+async function sairDosDoisBancos(){
+  try{ await sb.auth.signOut(); }catch(e){}
+  try{ if(sbVagas) await sbVagas.auth.signOut(); }catch(e){}
+}
+
 // Busca o perfil (empresa/papel/status) do usuário autenticado e entra no
 // sistema. Se não existir perfil ainda, ou estiver desativado, barra o acesso.
-async function carregarPerfilEEntrar(user){
+async function carregarPerfilEEntrar(user, senha){
   if(!user){ logoutUser(); return; }
   let perfil=null;
   try{
@@ -1142,13 +1161,17 @@ async function carregarPerfilEEntrar(user){
     return;
   }
   if(!perfil.ativo){
-    try{ await sb.auth.signOut(); }catch(e){}
+    await sairDosDoisBancos();
     _mostrarErroLogin('Este acesso está desativado. Fale com a La Vie.');
     document.getElementById('definir-senha-step').style.display='none';
     document.getElementById('login-form-step').style.display='block';
     document.getElementById('login-screen').style.display='flex';
     return;
   }
+
+  // Perfil validado e ativo: só agora liberamos o acesso ao banco das vagas,
+  // que é onde ficam os currículos enviados pelo site.
+  await entrarNoBancoDasVagas(user.email, senha);
 
   // IDs internos (role/masterAdmin/setores/empresaId) mantidos no mesmo
   // formato que o resto do sistema já usa — só a origem do dado mudou (antes
@@ -2413,7 +2436,10 @@ async function abrirDocumento(path, nome, origem){
   try{
     // Currículo vindo do site mora no bucket do banco das vagas; o que foi
     // anexado aqui dentro mora no bucket do próprio R&S.
-    const doSite = origem === 'vagas';
+    // Documentos gravados antes desta mudança não têm o campo "origem".
+    // Nesses casos, o formato do caminho decide: o site guarda o currículo em
+    // "curriculos/<algo>", enquanto o R&S guarda em "<id-do-candidato>/...".
+    const doSite = origem === 'vagas' || (!origem && /^curriculos\//.test(path));
     const cliente = doSite ? sbVagas : sb;
     const balde   = doSite ? VAGAS_BUCKET : DOCS_BUCKET;
     if(!cliente){ alert('Sem conexão com o banco onde esse arquivo está guardado.'); return; }
@@ -2425,11 +2451,19 @@ async function abrirDocumento(path, nome, origem){
       return;
     }
     try{
-      await sb.from('document_access_log').insert({
-        candidato_id: path.split('/')[0], path, nome_arquivo: nome,
+      // O id do candidato vem da ficha aberta. Antes era deduzido do começo do
+      // caminho, o que só funciona para arquivo anexado aqui dentro: currículo
+      // do site fica em "curriculos/...", e o log saía associado a "curriculos".
+      const idFicha = (document.getElementById('mc-id') || {}).value || null;
+      const { error: erroLog } = await sb.from('document_access_log').insert({
+        candidato_id: idFicha || path.split('/')[0], path, nome_arquivo: nome,
         empresa_id: currentEmpresa, acessado_por: currentUser.id, acessado_por_nome: getUserName()
       });
-    }catch(e){ /* log é best-effort — não bloqueia a abertura do arquivo por causa dele */ }
+      // O log não bloqueia a abertura, mas a falha precisa aparecer: ele existe
+      // para haver rastro de quem abriu currículo, e rastro que falha calado
+      // não serve de rastro.
+      if(erroLog) console.error('ACESSO NÃO REGISTRADO no log de documentos:', erroLog.message);
+    }catch(e){ console.error('ACESSO NÃO REGISTRADO no log de documentos:', e); }
     window.open(data.signedUrl, '_blank', 'noopener');
   }catch(e){
     alert('Não foi possível abrir esse arquivo agora.');
@@ -2483,7 +2517,19 @@ async function removerDoc(i){
   const doc=docsAtuais[i]; if(!doc)return;
   if(!confirm('Remover "'+doc.nome+'"?'))return;
   if(!(typeof DEMO_MODE!=='undefined' && DEMO_MODE) && doc.path){
-    try{ await sb.storage.from(DOCS_BUCKET).remove([doc.path]); }catch(e){}
+    // Apaga no bucket certo. Currículo enviado pelo site mora no banco das
+    // vagas; o que foi anexado aqui dentro mora no bucket do próprio R&S.
+    const doSite = doc.origem === 'vagas';
+    const cliente = doSite ? sbVagas : sb;
+    const balde   = doSite ? VAGAS_BUCKET : DOCS_BUCKET;
+    if(cliente){
+      try{
+        const { error } = await cliente.storage.from(balde).remove([doc.path]);
+        if(error) console.warn('Arquivo removido da ficha, mas continua guardado:', error.message);
+      }catch(e){ console.warn('Arquivo removido da ficha, mas continua guardado:', e); }
+    } else if(doSite){
+      alert('Removi da ficha, mas não consegui apagar o arquivo do banco das vagas. Saia e entre de novo se quiser apagar de vez.');
+    }
   }
   _cands[idx].documentos=docsAtuais.filter((_,j)=>j!==i);
   try{ await upsertCand(_cands[idx]); }catch(e){}
@@ -3826,9 +3872,20 @@ async function trocarSenha() {
     if(erroLogin){ erroEl.textContent='Senha atual incorreta.'; erroEl.style.display='block'; return; }
     const { error } = await sb.auth.updateUser({ password: nova });
     if(error){ erroEl.textContent='Não foi possível trocar a senha: '+error.message; erroEl.style.display='block'; return; }
+    // Espelha no banco das vagas: sem isso as duas senhas ficam diferentes e os
+    // currículos enviados pelo site param de abrir no próximo login.
+    let espelhou = false;
+    try{
+      if(sbVagas){
+        const { error: e1 } = await sbVagas.auth.signInWithPassword({ email: currentUser.email, password: atual });
+        if(!e1){ const { error: e2 } = await sbVagas.auth.updateUser({ password: nova }); espelhou = !e2; }
+      }
+    }catch(e){ console.warn('Senha não espelhada no banco das vagas:', e); }
     closeModal('modal-trocar-senha');
     ['ts-atual','ts-nova','ts-confirma'].forEach(f=>document.getElementById(f).value='');
-    showToast('✅ Senha alterada!');
+    showToast(espelhou || !sbVagas
+      ? '✅ Senha alterada!'
+      : '✅ Senha alterada aqui. Não consegui atualizar no banco dos currículos: se algum currículo do site não abrir, avise.');
   }catch(e){
     erroEl.textContent='Não foi possível trocar a senha agora.'; erroEl.style.display='block';
   }
