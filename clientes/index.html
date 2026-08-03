@@ -1080,6 +1080,13 @@ async function fazerLogin(){
     }catch(e){ /* se o RPC falhar por qualquer motivo, segue o login normalmente */ }
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+    // Entra também no banco das vagas, para conseguir abrir os currículos que
+    // chegaram pelo site. Se essa conta não existir lá, o R&S segue funcionando
+    // normalmente: só os documentos vindos do site é que não abrem.
+    if (!error && sbVagas) {
+      try { await sbVagas.auth.signInWithPassword({ email, password: senha }); }
+      catch(e) { console.warn('Sem acesso ao banco das vagas:', e); }
+    }
     try{ await sb.rpc('registrar_tentativa_login', { p_email: email, p_sucesso: !error }); }catch(e){}
 
     if(error){ _mostrarErroLogin('E-mail ou senha incorretos.'); return; }
@@ -1223,6 +1230,7 @@ async function switchEmpresa(id){
 
 async function logoutUser(){
   try{ if(!(typeof DEMO_MODE!=='undefined' && DEMO_MODE)) await sb.auth.signOut(); }catch(e){}
+  try{ if(sbVagas) await sbVagas.auth.signOut(); }catch(e){}
   currentUser=null; currentEmpresa=null; closeUserMenu();
   document.title = 'La Vie · R&S';
   document.getElementById('login-form-step').style.display='block';
@@ -2357,6 +2365,22 @@ async function excluirCandidato(){const id=document.getElementById('mc-id').valu
 // por 60 segundos, e some depois. Cada abertura fica registrada em
 // document_access_log (quem, quando, qual arquivo).
 const DOCS_BUCKET='documentos';
+
+// ── Banco das vagas (projeto separado) ───────────────────────────────────────
+// O currículo que o candidato envia pelo site é guardado no bucket "curriculos"
+// desse outro projeto. O R&S só sabia assinar arquivos do bucket dele próprio,
+// então documento vindo do site dava "não foi possível abrir".
+const VAGAS_SUPABASE_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+const VAGAS_SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
+const VAGAS_BUCKET = 'curriculos';
+let sbVagas = null;
+try {
+  if (typeof DEMO_MODE === 'undefined' || !DEMO_MODE) {
+    sbVagas = createClient(VAGAS_SUPABASE_URL, VAGAS_SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, storageKey: 'sb-vagas-auth' }
+    });
+  }
+} catch(e) { console.warn('Banco das vagas indisponível:', e); }
 const DOC_TAMANHO_MAX = 10*1024*1024; // 10 MB por arquivo
 const DOC_TIPOS_PERMITIDOS = ['application/pdf','application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -2374,7 +2398,7 @@ function renderDocsList(){
   const icon=t=>{t=(t||'').toLowerCase(); if(t.includes('pdf'))return '📕'; if(t.includes('image')||/\.(png|jpe?g)$/.test(t))return '🖼'; if(t.includes('word')||/\.docx?$/.test(t))return '📘'; return '📄';};
   list.innerHTML=docs.map((d,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--bege);border-radius:8px;padding:7px 10px">
       <span style="font-size:16px">${icon(d.tipo||d.nome)}</span>
-      <a href="#" onclick="abrirDocumento('${d.path}','${(d.nome||'').replace(/'/g,"\\'")}');return false" style="flex:1;font-size:12px;color:var(--charcoal);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.nome}</a>
+      <a href="#" onclick="abrirDocumento('${d.path||d.url||''}','${(d.nome||'').replace(/'/g,"\\'")}','${d.origem||''}');return false" style="flex:1;font-size:12px;color:var(--charcoal);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.nome}</a>
       <span style="font-size:10px;color:var(--light)">${d.tamanho||''}</span>
       <button onclick="removerDoc(${i})" title="Remover" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:13px">✕</button>
     </div>`).join('');
@@ -2383,11 +2407,23 @@ function _fmtTam(bytes){ if(bytes<1024)return bytes+' B'; if(bytes<1048576)retur
 
 // Gera uma URL temporária (60s) pro arquivo — nunca fica pública/permanente —
 // e registra no banco quem abriu, quando e qual documento.
-async function abrirDocumento(path, nome){
+async function abrirDocumento(path, nome, origem){
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Abrir documentos exige conexão com o Supabase.'); return; }
+  if(!path){ alert('Este documento foi salvo sem o caminho do arquivo e não pode ser aberto. Peça o currículo ao candidato e anexe de novo.'); return; }
   try{
-    const { data, error } = await sb.storage.from(DOCS_BUCKET).createSignedUrl(path, 60);
-    if(error || !data){ alert('Não foi possível abrir esse arquivo agora.'); return; }
+    // Currículo vindo do site mora no bucket do banco das vagas; o que foi
+    // anexado aqui dentro mora no bucket do próprio R&S.
+    const doSite = origem === 'vagas';
+    const cliente = doSite ? sbVagas : sb;
+    const balde   = doSite ? VAGAS_BUCKET : DOCS_BUCKET;
+    if(!cliente){ alert('Sem conexão com o banco onde esse arquivo está guardado.'); return; }
+    const { data, error } = await cliente.storage.from(balde).createSignedUrl(path, 60);
+    if(error || !data){
+      alert(doSite
+        ? 'Não foi possível abrir o currículo enviado pelo site. Saia e entre de novo: a sessão do banco das vagas pode ter expirado.'
+        : 'Não foi possível abrir esse arquivo agora.');
+      return;
+    }
     try{
       await sb.from('document_access_log').insert({
         candidato_id: path.split('/')[0], path, nome_arquivo: nome,
