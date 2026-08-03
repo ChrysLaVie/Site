@@ -277,7 +277,8 @@ async function pushCandidatoParaRS(formPayload) {
     // funcionar era preciso deixar essas duas tabelas abertas para
     // qualquer visitante, o que expunha a base inteira. A função devolve
     // só estes três campos e só deste e-mail.
-    const { data: compl } = await db.rpc('lv_complementos_candidato', { p_email: emailNorm });
+    const { data: compl, error: erroCompl } = await db.rpc('lv_complementos_candidato', { p_email: emailNorm });
+    if (erroCompl) console.error('Função lv_complementos_candidato falhou:', erroCompl.message);
     const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
 
     const cvUrl = c.cv_url || null;
@@ -291,46 +292,36 @@ async function pushCandidatoParaRS(formPayload) {
     }
     if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
 
-    // Casa a vaga pelo título (sem diferenciar maiúsculas/acentos exatos) — se não achar,
-    // o candidato ainda entra no funil, só que sem vaga vinculada, com o título anotado.
-    const vagaRes = await rsDb.from('vagas').select('id,titulo').ilike('titulo', formPayload.vaga_titulo).limit(1).maybeSingle();
-    const vagaId = vagaRes?.data?.id || null;
-    if (!vagaId) obs = `[Vaga do site: "${formPayload.vaga_titulo}" — não encontrada no R&S, cadastre-a para vincular automaticamente] ` + obs;
-
-    const documentos = cvUrl ? [{ nome: 'Currículo', url: cvUrl, tipo: 'pdf', enviadoEm: new Date().toISOString(), enviadoPor: 'Site (automático)' }] : [];
-    const agora = new Date().toISOString();
-
-    const candidato = {
-      id: 'site-' + Date.now().toString(),
-      nome: formPayload.nome,
-      cpf: null,
-      telefone: formPayload.whatsapp,
-      email: formPayload.email,
-      vaga_id: vagaId,
-      etapa: 'triagem', // entra no funil do R&S já na Triagem
-      data_entrada: agora.slice(0, 10),
-      fonte: 'Site La Vie (vaga + DISC + formulário)',
-      obs,
-      documentos,
-      historico: [{ etapa: 'triagem', data: agora, obs: 'Candidatura completa recebida automaticamente pelo site.', usuario: 'Site (automático)' }],
-      criado_por: 'Site (automático)'
-    };
-
-    // Evita duplicar se o candidato já existe no R&S (mesmo e-mail + mesma vaga)
-    // Quando a vaga não é encontrada no R&S, vaga_id fica NULL. No PostgREST,
-    // eq('vaga_id', null) NÃO casa com linhas NULL — sem o is(), o mesmo candidato
-    // entraria duplicado a cada envio. Por isso a condição é montada conforme o caso.
-    let buscaExistente = rsDb.from('candidatos').select('id').ilike('email', emailNorm);
-    buscaExistente = vagaId
-      ? buscaExistente.eq('vaga_id', vagaId)
-      : buscaExistente.is('vaga_id', null);
-    const existente = await buscaExistente.limit(1).maybeSingle();
-    if (existente?.data?.id) {
-      candidato.id = existente.data.id;
-    }
-    await rsDb.from('candidatos').upsert(candidato);
+    // O candidato é entregue ao R&S por uma função do banco, não gravando na
+    // tabela direto. Motivo: a tabela "candidatos" exige usuário logado e ativo,
+    // e o candidato não tem login, então toda gravação era recusada em silêncio.
+    // A função aceita só estes campos e descobre a empresa a partir da vaga, de
+    // modo que o site nunca escolhe em qual cliente o candidato entra.
+    const { data: resp, error: erroRpc } = await rsDb.rpc('lv_receber_candidato_do_site', {
+      p_nome: formPayload.nome,
+      p_email: emailNorm,
+      p_telefone: formPayload.whatsapp,
+      p_vaga_titulo: formPayload.vaga_titulo,
+      p_obs: obs,
+      p_documentos: documentos
+    });
+    if (erroRpc) throw new Error('Banco do R&S recusou a gravação: ' + erroRpc.message);
+    const r = Array.isArray(resp) ? resp[0] : resp;
+    if (!r || r.ok !== true) throw new Error((r && r.motivo) || 'O R&S não confirmou o cadastro.');
+    console.info('Candidato enviado ao R&S:', candidato.email);
   } catch (e) {
-    console.warn('Não foi possível enviar o candidato para o R&S:', e);
+    // A resposta do candidato já está salva na tabela do formulário, então nada
+    // se perde: o que falhou foi só a cópia automática para o funil do R&S.
+    // O erro fica registrado para dar para descobrir o motivo depois.
+    console.error('FALHA ao enviar candidato para o R&S:', e && e.message ? e.message : e);
+    try {
+      await db.from('sync_rs_falhas').insert({
+        email: (formPayload.email || '').trim().toLowerCase(),
+        nome: formPayload.nome || null,
+        vaga_titulo: formPayload.vaga_titulo || null,
+        erro: String(e && e.message ? e.message : e).slice(0, 500)
+      });
+    } catch (e2) { /* se nem isso gravar, resta o console */ }
   }
 }
 
