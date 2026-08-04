@@ -3451,8 +3451,11 @@ function _addDias(dataISO,dias){ const d=new Date((dataISO||new Date().toISOStri
 // só é cobrada na entrega, sem prazo de calendário correndo antes disso.
 function _vencParcela(v,def){
   if(def.gatilho==='fechamento'){
-    if(v.status==='encerrada' && v.dataEncerramento) return v.dataEncerramento;
-    return def.diasVenc==null ? null : _addDias(v.dataAbertura,def.diasVenc);
+    // A parcela de fechamento só é devida quando a vaga encerra, então só tem
+    // vencimento a partir daí. Antes o sistema contava dias desde a abertura e
+    // criava um prazo para vaga ainda em andamento, o que fazia a parcela
+    // aparecer com data e depois virar "atrasada" sem nunca ter sido devida.
+    return (v.status==='encerrada' && v.dataEncerramento) ? v.dataEncerramento : null;
   }
   return def.diasVenc==null ? null : _addDias(v.dataAbertura,def.diasVenc);
 }
@@ -3507,10 +3510,16 @@ async function sincronizarParcelas(){
       }
       const novoValor=+(base*def.pct/100).toFixed(2);
       const novoVenc=_vencParcela(v,def);
-      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.status!=='cancelada' && ex.vencimento!==novoVenc);
+      // Vencimento ajustado à mão fica marcado na observação e a sincronização
+      // não mexe mais nele. Sem isso, a data corrigida voltava ao valor
+      // calculado na próxima vez que o sistema abrisse.
+      const vencManual = /\[venc\. ajustado\]/.test(ex.obs||'');
+      const podeMexerNoVenc = ex.status!=='pago' && ex.status!=='cancelada' && !vencManual;
+      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (podeMexerNoVenc && ex.vencimento!==novoVenc);
       if(precisaAtualizar){
-        ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando;
-        if(ex.status!=='pago' && ex.status!=='cancelada') ex.vencimento=novoVenc;
+        ex.pct=def.pct; ex.valor=novoValor;
+        if(!vencManual) ex.obs=def.quando;
+        if(podeMexerNoVenc) ex.vencimento=novoVenc;
         try{await upsertPagamento(ex);}catch(e){}
       }
     }
@@ -3603,7 +3612,9 @@ async function renderFinanceiro(){
   const tbody=document.getElementById('fin-tbody');
   if(!rows.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💰</div><p>${souCliente?'Nenhuma pendência no momento.':'Nenhuma parcela encontrada.'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(({p,v,s})=>{
-    const venc=p.vencimento?new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    const venc = p.vencimento
+      ? new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR')
+      : '<span style="font-style:italic;color:var(--light)">aguardando fechamento</span>';
     // Parcela paga: além de estornar, dá para corrigir a data do recebimento.
     // Parcela cancelada: também dá para dar baixa direto — vaga cancelada não
     // impede que a entrada já recebida seja registrada, que era o caso da
@@ -3614,7 +3625,8 @@ async function renderFinanceiro(){
       : s==='cancelada'
       ? `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
          <button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
-      : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>`);
+      : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
+         <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
       <td style="font-size:12px"><strong>${v.titulo}</strong></td>
@@ -3666,6 +3678,41 @@ async function darBaixa(id){
     renderFinanceiro(); return;
   }
   renderFinanceiro(); showToast('✅ Baixa registrada em '+data.split('-').reverse().join('/'));
+}
+
+// Corrige o vencimento de uma parcela em aberto. Serve para acertar prazos
+// combinados com o cliente que não batem com o cálculo automático, e para
+// definir a data da parcela de fechamento antes de a vaga ser encerrada.
+async function editarVencimento(id){
+  const p=_pagamentos.find(x=>x.id===id); if(!p)return;
+  const hoje=new Date().toISOString().slice(0,10);
+  const br = d => d ? d.split('-').reverse().join('/') : '';
+  const resp = prompt('Vencimento · ' + (p.obs||'') + ' · ' + _fmtBRL(p.valor) +
+    '\n\nData de vencimento (dd/mm/aaaa). Deixe em branco para remover a data:',
+    br(p.vencimento));
+  if(resp === null) return;
+  const t = resp.trim();
+  let iso = null;
+  if(t !== ''){
+    const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!m){ alert('Data inválida. Use o formato dd/mm/aaaa, por exemplo 22/07/2026.'); return; }
+    iso = m[3]+'-'+m[2]+'-'+m[1];
+    const dt = new Date(iso+'T12:00:00');
+    if(isNaN(dt.getTime()) || dt.toISOString().slice(0,10) !== iso){ alert('Essa data não existe no calendário.'); return; }
+  }
+  const antes = { vencimento:p.vencimento, obs:p.obs };
+  p.vencimento = iso;
+  // Marca como ajuste manual, para a sincronização automática não desfazer.
+  if(!/\[venc\. ajustado\]/.test(p.obs||'')) p.obs = (p.obs||'') + ' [venc. ajustado]';
+  try{
+    await upsertPagamento(p);
+  }catch(e){
+    p.vencimento=antes.vencimento; p.obs=antes.obs;
+    alert('O VENCIMENTO NÃO FOI SALVO.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro();
+  showToast(iso ? '📆 Vencimento alterado para '+br(iso) : '📆 Vencimento removido.');
 }
 
 // Corrige a data de um pagamento já baixado, sem precisar estornar e refazer.
