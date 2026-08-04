@@ -3474,7 +3474,6 @@ async function upsertPagamento(p){
   const {error}=await sb.from('pagamentos').upsert(row); if(error)throw error;
 }
 // Garante que cada vaga tenha suas 3 parcelas geradas
-const OBS_FECH_CANCELADO = 'Fechamento não devido — vaga cancelada pelo cliente';
 async function sincronizarParcelas(){
   const vagas=getVagas();
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
@@ -3496,14 +3495,14 @@ async function sincronizarParcelas(){
       // paga permanece. Cancela a parcela automaticamente se ainda não foi paga.
       if(v.status==='cancelada' && def.n===2){
         if(ex.status!=='pago' && ex.status!=='cancelada'){
-          ex.status='cancelada'; ex.obs=OBS_FECH_CANCELADO;
+          ex.status='cancelada'; ex.obs=def.quando;
           try{await upsertPagamento(ex);}catch(e){}
         }
         continue;
       }
       // Vaga foi reaberta depois de ter sido cancelada: reverte o cancelamento
       // automático (só se foi ESTE código que cancelou, nunca mexe em cancelamento manual)
-      if(v.status!=='cancelada' && def.n===2 && ex.status==='cancelada' && ex.obs===OBS_FECH_CANCELADO){
+      if(v.status!=='cancelada' && def.n===2 && ex.status==='cancelada'){
         ex.status='pendente'; ex.obs=def.quando; ex.vencimento=_vencParcela(v,def);
         try{await upsertPagamento(ex);}catch(e){}
         continue;
@@ -3531,7 +3530,7 @@ async function sincronizarParcelas(){
       if(_pagamentos.find(p=>p.id===id)) continue;
       // Vaga já nasce cancelada (nunca teve parcela 2 gerada ainda): cria direto cancelada
       const cancelFechamento = v.status==='cancelada' && def.n===2;
-      const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:cancelFechamento?'cancelada':'pendente', pagoEm:null, obs:cancelFechamento?OBS_FECH_CANCELADO:def.quando};
+      const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:cancelFechamento?'cancelada':'pendente', pagoEm:null, obs:def.quando};
       _pagamentos.push(p);
       try{ await upsertPagamento(p); }catch(e){}
     }
@@ -3627,7 +3626,9 @@ async function renderFinanceiro(){
          <button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
       : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
          <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>`);
-    const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
+    const pagoInfo = p.pagoEm
+      ? `<br><span style="font-size:10.5px;color:var(--green)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`
+      : '';
     return `<tr>
       <td style="font-size:12px"><strong>${v.titulo}</strong></td>
       <td style="font-size:12px">${p.parcela}ª · ${p.obs||''}</td>
@@ -3666,9 +3667,6 @@ async function darBaixa(id){
   if(data === null || data === undefined) return;
   const antes = { status:p.status, pagoEm:p.pagoEm, obs:p.obs };
   p.status='pago'; p.pagoEm=data;
-  // Parcela que estava cancelada e foi paga: a observação de cancelamento não
-  // vale mais e confundiria o relatório.
-  if(antes.status==='cancelada' && p.obs===OBS_FECH_CANCELADO) p.obs='Entrada (abertura)';
   try{
     await upsertPagamento(p);
   }catch(e){
