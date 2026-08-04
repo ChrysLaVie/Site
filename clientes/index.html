@@ -3739,16 +3739,15 @@ function _honBase(v){ // valor R$ do honorário a partir do texto "35% · R$ 3.5
 function _fmtBRL(n){ return 'R$ '+ (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function _addDias(dataISO,dias){ const d=new Date((dataISO||new Date().toISOString().slice(0,10))+'T12:00:00'); d.setDate(d.getDate()+dias); return d.toISOString().slice(0,10); }
 // Vencimento da parcela: parcelas com gatilho "fechamento" só ganham data real
-// quando a vaga já foi encerrada (aprovação do candidato); antes disso, se não
-// houver diasVenc definido, fica sem vencimento (null) — é o caso da TCL, que
-// só é cobrada na entrega, sem prazo de calendário correndo antes disso.
-function _vencParcela(v,def){
+// conforme as posições daquela vaga vão sendo fechadas (uma por vez, pelo
+// qtdFechadas) — não espera a vaga inteira encerrar para gerar vencimento.
+// unitIndex é a posição (1ª, 2ª, 3ª...) dentro da vaga; unitIndex<=qtdFechadas
+// significa "esse candidato já foi entregue e aprovado".
+function _vencParcela(v,def,unitIndex){
   if(def.gatilho==='fechamento'){
-    // A parcela de fechamento só é devida quando a vaga encerra, então só tem
-    // vencimento a partir daí. Antes o sistema contava dias desde a abertura e
-    // criava um prazo para vaga ainda em andamento, o que fazia a parcela
-    // aparecer com data e depois virar "atrasada" sem nunca ter sido devida.
-    return (v.status==='encerrada' && v.dataEncerramento) ? v.dataEncerramento : null;
+    const idx = unitIndex||1;
+    const jaFechou = idx <= (v.qtdFechadas||0) || (v.status==='encerrada');
+    return (jaFechou && v.dataEncerramento) ? v.dataEncerramento : null;
   }
   return def.diasVenc==null ? null : _addDias(v.dataAbertura,def.diasVenc);
 }
@@ -3769,9 +3768,16 @@ async function upsertPagamento(p){
 // Garante que cada vaga tenha suas 3 parcelas geradas
 async function sincronizarParcelas(){
   const vagas=getVagas();
-  // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
+  // Cada posição (qtd) da vaga tem seu próprio jogo de parcelas — uma vaga com
+  // 5 posições e honorário "por vaga fechada" gera 5 parcelas de fechamento,
+  // uma pra cada candidato entregue e aprovado, não uma parcela só pra vaga
+  // inteira. Vaga com 1 posição continua com o id antigo (sem sufixo -uN),
+  // então nada muda pra quem já tinha vaga simples.
+  const idOf=(vagaId,n,qtd,u)=> qtd>1 ? `${vagaId}-p${n}-u${u}` : `${vagaId}-p${n}`;
+  // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50,
+  // ou parcela única de vaga que passou a ter qtd>1 e precisa virar N parcelas)
   const idsValidos=new Set();
-  vagas.forEach(v=>_parcelasDef().forEach(d=>idsValidos.add(v.id+'-p'+d.n)));
+  vagas.forEach(v=>{ const qtd=v.qtd||1; _parcelasDef().forEach(d=>{ for(let u=1;u<=qtd;u++) idsValidos.add(idOf(v.id,d.n,qtd,u)); }); });
   const remover=_pagamentos.filter(p=>!idsValidos.has(p.id));
   if(remover.length){
     for(const p of remover){ if(!(typeof DEMO_MODE!=='undefined'&&DEMO_MODE)){try{await sb.from('pagamentos').delete().eq('id',p.id);}catch(e){}} }
@@ -3780,52 +3786,57 @@ async function sincronizarParcelas(){
   // Corrige pct/valor/vencimento de parcelas existentes se o honorário, o % ou a data de
   // encerramento da vaga mudou (mantém status/baixa; nunca mexe em parcela já paga)
   for(const v of vagas){
-    const base=_honBase(v);
+    const base=_honBase(v), qtd=v.qtd||1;
     for(const def of _parcelasDef()){
-      const ex=_pagamentos.find(p=>p.id===v.id+'-p'+def.n);
-      if(!ex) continue;
-      // Vaga cancelada: o fechamento (parcela 2) nunca é devido — só a entrada já
-      // paga permanece. Cancela a parcela automaticamente se ainda não foi paga.
-      if(v.status==='cancelada' && def.n===2){
-        if(ex.status!=='pago' && ex.status!=='cancelada'){
-          ex.status='cancelada'; ex.obs=def.quando;
+      for(let u=1;u<=qtd;u++){
+        const ex=_pagamentos.find(p=>p.id===idOf(v.id,def.n,qtd,u));
+        if(!ex) continue;
+        // Vaga cancelada: o fechamento nunca é devido — só a entrada já paga permanece.
+        // Cancela a parcela automaticamente se ainda não foi paga.
+        if(v.status==='cancelada' && def.gatilho==='fechamento'){
+          if(ex.status!=='pago' && ex.status!=='cancelada'){
+            ex.status='cancelada'; ex.obs=def.quando;
+            try{await upsertPagamento(ex);}catch(e){}
+          }
+          continue;
+        }
+        // Vaga foi reaberta depois de ter sido cancelada: reverte o cancelamento
+        // automático (só se foi ESTE código que cancelou, nunca mexe em cancelamento manual)
+        if(v.status!=='cancelada' && def.gatilho==='fechamento' && ex.status==='cancelada'){
+          ex.status='pendente'; ex.obs=def.quando; ex.vencimento=_vencParcela(v,def,u);
+          try{await upsertPagamento(ex);}catch(e){}
+          continue;
+        }
+        const novoValor=+(base*def.pct/100).toFixed(2);
+        const novoVenc=_vencParcela(v,def,u);
+        // Vencimento ajustado à mão fica marcado na observação e a sincronização
+        // não mexe mais nele. Sem isso, a data corrigida voltava ao valor
+        // calculado na próxima vez que o sistema abrisse.
+        const vencManual = /\[venc\. ajustado\]/.test(ex.obs||'');
+        const podeMexerNoVenc = ex.status!=='pago' && ex.status!=='cancelada' && !vencManual;
+        const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (podeMexerNoVenc && ex.vencimento!==novoVenc);
+        if(precisaAtualizar){
+          ex.pct=def.pct; ex.valor=novoValor;
+          if(!vencManual) ex.obs=def.quando;
+          if(podeMexerNoVenc) ex.vencimento=novoVenc;
           try{await upsertPagamento(ex);}catch(e){}
         }
-        continue;
-      }
-      // Vaga foi reaberta depois de ter sido cancelada: reverte o cancelamento
-      // automático (só se foi ESTE código que cancelou, nunca mexe em cancelamento manual)
-      if(v.status!=='cancelada' && def.n===2 && ex.status==='cancelada'){
-        ex.status='pendente'; ex.obs=def.quando; ex.vencimento=_vencParcela(v,def);
-        try{await upsertPagamento(ex);}catch(e){}
-        continue;
-      }
-      const novoValor=+(base*def.pct/100).toFixed(2);
-      const novoVenc=_vencParcela(v,def);
-      // Vencimento ajustado à mão fica marcado na observação e a sincronização
-      // não mexe mais nele. Sem isso, a data corrigida voltava ao valor
-      // calculado na próxima vez que o sistema abrisse.
-      const vencManual = /\[venc\. ajustado\]/.test(ex.obs||'');
-      const podeMexerNoVenc = ex.status!=='pago' && ex.status!=='cancelada' && !vencManual;
-      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (podeMexerNoVenc && ex.vencimento!==novoVenc);
-      if(precisaAtualizar){
-        ex.pct=def.pct; ex.valor=novoValor;
-        if(!vencManual) ex.obs=def.quando;
-        if(podeMexerNoVenc) ex.vencimento=novoVenc;
-        try{await upsertPagamento(ex);}catch(e){}
       }
     }
   }
   for(const v of vagas){
-    const base=_honBase(v);
+    const base=_honBase(v), qtd=v.qtd||1;
     for(const def of _parcelasDef()){
-      const id=v.id+'-p'+def.n;
-      if(_pagamentos.find(p=>p.id===id)) continue;
-      // Vaga já nasce cancelada (nunca teve parcela 2 gerada ainda): cria direto cancelada
-      const cancelFechamento = v.status==='cancelada' && def.n===2;
-      const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:cancelFechamento?'cancelada':'pendente', pagoEm:null, obs:def.quando};
-      _pagamentos.push(p);
-      try{ await upsertPagamento(p); }catch(e){}
+      for(let u=1;u<=qtd;u++){
+        const id=idOf(v.id,def.n,qtd,u);
+        if(_pagamentos.find(p=>p.id===id)) continue;
+        // Vaga já nasce cancelada: cria a parcela de fechamento direto cancelada
+        const cancelFechamento = v.status==='cancelada' && def.gatilho==='fechamento';
+        const obsUnidade = qtd>1 ? `${def.quando} · posição ${u} de ${qtd}` : def.quando;
+        const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def,u), status:cancelFechamento?'cancelada':'pendente', pagoEm:null, obs:obsUnidade};
+        _pagamentos.push(p);
+        try{ await upsertPagamento(p); }catch(e){}
+      }
     }
   }
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) demoSavePag();
@@ -3856,7 +3867,7 @@ async function renderFinanceiro(){
   if(subEl){
     const frases = {
       cambury: 'Honorários por vaga · pagamento 50% na abertura + 50% no fechamento',
-      tcl:     'Honorários por vaga · 100% na entrega do candidato aprovado, sem parcelamento',
+      tcl:     'Honorários por vaga · R$ 1.350,00, 100% na entrega de cada candidato aprovado, sem parcelamento (uma parcela por posição preenchida)',
       roma:    'Honorários por vaga (percentual por faixa salarial) · pagamento 50% na abertura + 50% no fechamento',
       autoclub:'Honorários por vaga · 50% de R$ 950,00 na abertura + 50% no fechamento (R$ 950,00 por vaga fechada)',
     };
@@ -3901,7 +3912,7 @@ async function renderFinanceiro(){
     .filter(({s})=> souCliente ? (s==='pendente'||s==='atrasado') : true) // cliente só vê o que está em aberto
     .filter(({v})=>!search||v.titulo.toLowerCase().includes(search))
     .filter(({s})=>!fStatus||s===fStatus)
-    .sort((a,b)=> (a.v.titulo+a.p.parcela).localeCompare(b.v.titulo+b.p.parcela));
+    .sort((a,b)=> (a.v.titulo+a.p.parcela+a.p.id).localeCompare(b.v.titulo+b.p.parcela+b.p.id));
   const tbody=document.getElementById('fin-tbody');
   if(!rows.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💰</div><p>${souCliente?'Nenhuma pendência no momento.':'Nenhuma parcela encontrada.'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(({p,v,s})=>{
@@ -4139,7 +4150,7 @@ function seedVagasTCL(){
       obs:'Motorista Carreteiro com experiência em Rodotrem. CNH categoria E. Benefícios: vale alimentação de R$ 313,00, diária de R$ 86,00, plano odontológico, telemedicina, seguro de vida e vale transporte. '+
         'VALORES FIXOS (vigência 01/06/2026, reajuste 4%): salário base Carreteiro R$ 2.018,00; prêmio permanência 5%; adicional de tempo de serviço 1,5% a cada 2 anos; adicional Rodotrem 20%; vale alimentação R$ 313,00; vale refeição (em trabalho interno) Sodexo ou voucher. '+
         'VALORES VARIÁVEIS: diária em viagem R$ 86,00/dia; retirada de carga R$ 35,00 por carga; entrega matriz/filiais R$ 150,00 por carga (raio de até 100km para motoristas de viagem); prêmio por carta frete 3% após abatimento de impostos; outras remunerações com média de R$ 70 a R$ 400 (diário de bordo R$ 50, jornada/horário R$ 50, hora extra R$ 13,23/hora).',
-      honorario:'70% do valor da vaga', criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:00:00Z' },
+      honorario:'100% · R$ 1.350,00 por vaga aprovada (paga na entrega, sem parcelamento)', criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:00:00Z' },
   ];
   _vagas = vagas;
   _cands = [];
