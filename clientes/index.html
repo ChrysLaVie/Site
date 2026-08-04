@@ -3604,10 +3604,16 @@ async function renderFinanceiro(){
   if(!rows.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💰</div><p>${souCliente?'Nenhuma pendência no momento.':'Nenhuma parcela encontrada.'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(({p,v,s})=>{
     const venc=p.vencimento?new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    // Parcela paga: além de estornar, dá para corrigir a data do recebimento.
+    // Parcela cancelada: também dá para dar baixa direto — vaga cancelada não
+    // impede que a entrada já recebida seja registrada, que era o caso da
+    // Social Media (entrada paga, fechamento não devido).
     const acao = souCliente ? '' : (s==='pago'
-      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>`
+      ? `<button class="btn btn-ghost btn-sm" onclick="editarDataPagamento('${p.id}')">📅 Corrigir data</button>
+         <button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>`
       : s==='cancelada'
-      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
+      ? `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
+         <button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
       : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
@@ -3621,17 +3627,75 @@ async function renderFinanceiro(){
     </tr>`;
   }).join('');
 }
+// Pergunta a data do recebimento em vez de carimbar a data de hoje. A baixa
+// costuma ser lançada dias ou semanas depois de o dinheiro entrar, e data de
+// recebimento é informação contábil: precisa ser a real.
+function _perguntarDataPagamento(sugestao, titulo){
+  const hoje = new Date().toISOString().slice(0,10);
+  const padrao = sugestao || hoje;
+  const br = d => d ? d.split('-').reverse().join('/') : '';
+  const resp = prompt(titulo + '\n\nData do recebimento (dd/mm/aaaa):', br(padrao));
+  if(resp === null) return null;                       // cancelou
+  const t = resp.trim();
+  const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!m){ alert('Data inválida. Use o formato dd/mm/aaaa, por exemplo 29/06/2026.'); return undefined; }
+  const iso = m[3]+'-'+m[2]+'-'+m[1];
+  const d = new Date(iso+'T12:00:00');
+  if(isNaN(d.getTime()) || d.toISOString().slice(0,10) !== iso){ alert('Essa data não existe no calendário.'); return undefined; }
+  if(iso > hoje){ alert('A data do recebimento não pode ser no futuro.'); return undefined; }
+  return iso;
+}
+
 async function darBaixa(id){
   const p=_pagamentos.find(x=>x.id===id); if(!p)return;
-  p.status='pago'; p.pagoEm=new Date().toISOString().slice(0,10);
-  try{ await upsertPagamento(p); }catch(e){ alert('Erro: '+e.message); }
-  renderFinanceiro(); showToast('✅ Baixa registrada!');
+  // Sugere a data de vencimento: na prática o recebimento costuma ser nela ou
+  // perto dela, e é mais provável de estar certa do que a data de hoje.
+  const data = _perguntarDataPagamento(p.vencimento, 'Dar baixa · ' + (p.obs||'') + ' · ' + _fmtBRL(p.valor));
+  if(data === null || data === undefined) return;
+  const antes = { status:p.status, pagoEm:p.pagoEm, obs:p.obs };
+  p.status='pago'; p.pagoEm=data;
+  // Parcela que estava cancelada e foi paga: a observação de cancelamento não
+  // vale mais e confundiria o relatório.
+  if(antes.status==='cancelada' && p.obs===OBS_FECH_CANCELADO) p.obs='Entrada (abertura)';
+  try{
+    await upsertPagamento(p);
+  }catch(e){
+    // Devolve o estado anterior: sem isso a tela mostraria pago e o banco não.
+    p.status=antes.status; p.pagoEm=antes.pagoEm; p.obs=antes.obs;
+    alert('A BAIXA NÃO FOI SALVA.\n\nMotivo: '+(e && e.message ? e.message : e)+'\n\nA parcela continua como estava. Tente de novo.');
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro(); showToast('✅ Baixa registrada em '+data.split('-').reverse().join('/'));
+}
+
+// Corrige a data de um pagamento já baixado, sem precisar estornar e refazer.
+async function editarDataPagamento(id){
+  const p=_pagamentos.find(x=>x.id===id); if(!p)return;
+  const data = _perguntarDataPagamento(p.pagoEm, 'Corrigir data · ' + (p.obs||'') + ' · ' + _fmtBRL(p.valor));
+  if(data === null || data === undefined) return;
+  const antes = p.pagoEm;
+  p.pagoEm = data;
+  try{
+    await upsertPagamento(p);
+  }catch(e){
+    p.pagoEm = antes;
+    alert('A DATA NÃO FOI SALVA.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro(); showToast('📅 Data alterada para '+data.split('-').reverse().join('/'));
 }
 async function estornarPagamento(id){
   const p=_pagamentos.find(x=>x.id===id); if(!p)return;
   if(!confirm('Estornar este pagamento (voltar para pendente)?'))return;
+  const antes = { status:p.status, pagoEm:p.pagoEm };
   p.status='pendente'; p.pagoEm=null;
-  try{ await upsertPagamento(p); }catch(e){ alert('Erro: '+e.message); }
+  try{
+    await upsertPagamento(p);
+  }catch(e){
+    p.status=antes.status; p.pagoEm=antes.pagoEm;
+    alert('O ESTORNO NÃO FOI SALVO.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
   renderFinanceiro(); showToast('↩ Pagamento estornado.');
 }
 function exportFinanceiroCSV(){
