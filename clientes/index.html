@@ -3739,14 +3739,16 @@ function _honBase(v){ // valor R$ do honorário a partir do texto "35% · R$ 3.5
 function _fmtBRL(n){ return 'R$ '+ (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function _addDias(dataISO,dias){ const d=new Date((dataISO||new Date().toISOString().slice(0,10))+'T12:00:00'); d.setDate(d.getDate()+dias); return d.toISOString().slice(0,10); }
 // Vencimento da parcela: parcelas com gatilho "fechamento" só ganham data real
-// conforme as posições daquela vaga vão sendo fechadas (uma por vez, pelo
-// qtdFechadas) — não espera a vaga inteira encerrar para gerar vencimento.
-// unitIndex é a posição (1ª, 2ª, 3ª...) dentro da vaga; unitIndex<=qtdFechadas
-// significa "esse candidato já foi entregue e aprovado".
+// quando a vaga já foi encerrada (aprovação do candidato) — comportamento
+// idêntico ao de sempre para a posição 1 de qualquer vaga, pra não recalcular
+// vencimento em cima de parcela que já estava correta (ou paga). Só as
+// posições extras (2ª em diante, que só existem em vaga com mais de 1
+// posição) usam o avanço progressivo pelo qtdFechadas, já que essas nunca
+// existiram antes e não têm histórico pra preservar.
 function _vencParcela(v,def,unitIndex){
   if(def.gatilho==='fechamento'){
     const idx = unitIndex||1;
-    const jaFechou = idx <= (v.qtdFechadas||0) || (v.status==='encerrada');
+    const jaFechou = idx===1 ? (v.status==='encerrada') : (idx <= (v.qtdFechadas||0));
     return (jaFechou && v.dataEncerramento) ? v.dataEncerramento : null;
   }
   return def.diasVenc==null ? null : _addDias(v.dataAbertura,def.diasVenc);
@@ -3773,7 +3775,12 @@ async function sincronizarParcelas(){
   // uma pra cada candidato entregue e aprovado, não uma parcela só pra vaga
   // inteira. Vaga com 1 posição continua com o id antigo (sem sufixo -uN),
   // então nada muda pra quem já tinha vaga simples.
-  const idOf=(vagaId,n,qtd,u)=> qtd>1 ? `${vagaId}-p${n}-u${u}` : `${vagaId}-p${n}`;
+  // IMPORTANTE: a posição 1 de qualquer vaga sempre usa o id antigo (sem
+  // sufixo), mesmo em vagas com várias posições. Isso preserva qualquer
+  // parcela que já tenha sido paga antes dessa mudança — nunca gera um id
+  // novo pra unidade 1, então nunca apaga/recria um pagamento já dado baixa.
+  // Só as posições extras (2ª em diante) ganham id novo com sufixo -uN.
+  const idOf=(vagaId,n,qtd,u)=> u===1 ? `${vagaId}-p${n}` : `${vagaId}-p${n}-u${u}`;
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50,
   // ou parcela única de vaga que passou a ter qtd>1 e precisa virar N parcelas)
   const idsValidos=new Set();
