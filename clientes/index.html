@@ -1209,7 +1209,7 @@ async function carregarPerfilEEntrar(user, senha){
   document.title = `La Vie · R&S ${currentEmpresa && EMPRESAS[currentEmpresa] ? EMPRESAS[currentEmpresa].nome : ''}`;
   _aplicarTerminologiaEmpresa();
   renderEmpresaSwitcher();
-  initApp();
+  initAppSeguro();
 }
 
 // ── Seletor de empresa (só aparece para o masterAdmin da La Vie, que atende
@@ -4080,9 +4080,18 @@ async function initApp(){
     await loadAll();
   }
   document.getElementById('page-loading').classList.remove('active');
+
+  // A tela útil aparece aqui, antes das rotinas de fundo. Se alguma delas
+  // falhar, o sistema continua usável em vez de ficar em branco.
+  goPage('dashboard');
+
   setupRealtime();
-  try{await syncEntrevistasExistentes();}catch(e){}
-  try{await loadPagamentos();await sincronizarParcelas();}catch(e){}
+  try{ await syncEntrevistasExistentes(); }
+  catch(e){ console.error('Sincronização de entrevistas falhou:', e); }
+  try{ await loadPagamentos(); await sincronizarParcelas(); }
+  catch(e){ console.error('Carga do financeiro falhou:', e); showToast('⚠️ O financeiro não carregou. Recarregue a página.'); }
+  // Redesenha com o que chegou depois
+  try{ refreshPage(); }catch(e){}
   // Contexto de setor para gestores
   if(currentUser&&currentUser.role==='gestor'){
     const sub=document.getElementById('dash-subtitle');
@@ -4091,6 +4100,19 @@ async function initApp(){
     if(btnC)btnC.style.display='none';
   }
   goPage('dashboard');
+}
+
+// Rede de segurança: se o initApp parar no meio por qualquer erro, o usuário
+// não pode ficar olhando uma tela vazia sem saber o que houve.
+async function initAppSeguro(){
+  try{
+    await initApp();
+  }catch(e){
+    console.error('Falha ao iniciar o sistema:', e);
+    try{ document.getElementById('page-loading').classList.remove('active'); }catch(e2){}
+    try{ goPage('dashboard'); }catch(e2){}
+    alert('O sistema abriu, mas parte dos dados não carregou.\n\nMotivo: ' + (e && e.message ? e.message : e) + '\n\nRecarregue a página. Se continuar, avise.');
+  }
 }
 
 initAuthFlow();
