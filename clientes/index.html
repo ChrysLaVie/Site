@@ -515,9 +515,17 @@ header {
 <div id="page-dashboard" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
     <div><h1 class="page-title">Dashboard R&S</h1><p class="page-sub" id="dash-subtitle">Dados em tempo real</p></div>
-    <div style="font-size:11px;color:var(--light);padding-top:8px">* Canceladas contam como resolvidas (cancelamento do cliente, não do RH)</div>
+    <div style="font-size:11px;color:var(--light);padding-top:12px;max-width:320px;text-align:right;line-height:1.5">Vagas canceladas pelo cliente entram como resolvidas, não como falha do processo.</div>
   </div>
   <div class="kpi-hero-row" id="dash-kpis"></div>
+
+  <!-- Alertas primeiro: o que exige ação hoje vem antes de qualquer gráfico -->
+  <div id="dash-alertas"></div>
+
+  <!-- Financeiro logo em seguida: é a informação de maior peso no dia a dia -->
+  <div class="section-label" style="margin-top:28px;margin-bottom:10px">Financeiro</div>
+  <div id="dash-financeiro" style="margin-bottom:20px"></div>
+
   <div id="dash-lv-banner"></div>
   <div class="card" style="margin-bottom:24px;padding:18px 22px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -590,7 +598,8 @@ header {
       <tbody id="dash-tempo-tbody"></tbody>
     </table>
   </div>
-  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:8px">Ações Pendentes</div>
+  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:2px">Ações Pendentes</div>
+  <div style="font-size:11px;color:var(--light);margin-bottom:10px">Todo candidato ativo, ordenado por quanto passou do prazo da etapa.</div>
   <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Detalhamento por Setor</div>
   <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
@@ -3052,7 +3061,12 @@ async function syncEntrevistasExistentes(){
 // ══ AÇÕES PENDENTES — central de decisão do dashboard ═══════════════════════
 // Sub-status automático por candidato, calculado a partir da etapa atual do funil
 // (nada de status manual: reflete o que realmente está acontecendo agora).
-const ETAPA_SLA = { triagem:3, entrevista_rh:2, entrevista_gestor:2, vivencia:2, aprovacao:1 };
+// Metas de prazo por etapa, em dias corridos. As anteriores (3/2/2/2/1) eram
+// otimistas demais e deixavam o painel sempre vermelho — indicador que está
+// sempre no vermelho deixa de indicar qualquer coisa. Estas separam o que
+// depende da La Vie do que depende do cliente: entrevista final e aprovação
+// dependem da agenda e da decisão do contratante, e por isso têm prazo maior.
+const ETAPA_SLA = { triagem:5, entrevista_rh:4, entrevista_gestor:4, vivencia:7, aprovacao:10 };
 const ETAPA_SUBSTATUS = {
   triagem:            'Aguardando triagem',
   entrevista_rh:      'Aguardando formulários e testes',
@@ -3067,6 +3081,93 @@ function diasNaEtapaAtual(c){
   if(!dataRef) return 0;
   return diasCorridosCalendario(dataRef);
 }
+// ── Resumo financeiro no dashboard ──────────────────────────────────────
+// O painel falava só de prazo. A informação que mais pesa no dia a dia —
+// quanto está a receber, quanto está atrasado, quanto entrou no mês — só
+// existia na aba financeira. Cliente externo não vê valores.
+function renderResumoFinanceiroDash(){
+  const el=document.getElementById('dash-financeiro'); if(!el) return;
+  if(isClienteExterno()){ el.innerHTML=''; return; }
+  const vagasIds=new Set(getVagasVisiveis().map(v=>v.id));
+  const pags=_pagamentos.filter(p=>vagasIds.has(p.vagaId));
+  if(!pags.length){ el.innerHTML=''; return; }
+
+  const hoje=new Date();
+  const mesAtual=hoje.toISOString().slice(0,7);
+  let aReceber=0, atrasado=0, recebidoMes=0, recebidoTotal=0;
+  pags.forEach(p=>{
+    const st=_statusReal(p);
+    if(st==='pago'){
+      recebidoTotal+=p.valor||0;
+      if((p.pagoEm||'').slice(0,7)===mesAtual) recebidoMes+=p.valor||0;
+    } else if(st==='atrasado'){ atrasado+=p.valor||0; aReceber+=p.valor||0; }
+    else if(st==='pendente'){ aReceber+=p.valor||0; }
+  });
+
+  const cartao=(rot,val,cor,sub)=>`
+    <div class="card" style="padding:16px 18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mid);margin-bottom:6px">${rot}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:${cor}">${_fmtBRL(val)}</div>
+      <div style="font-size:11px;color:var(--light);margin-top:3px">${sub}</div>
+    </div>`;
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+      ${cartao('Recebido no mês', recebidoMes,'var(--green)','entradas com baixa neste mês')}
+      ${cartao('A receber', aReceber,'var(--charcoal)','parcelas em aberto')}
+      ${cartao('Atrasado', atrasado, atrasado>0?'var(--red)':'var(--light)', atrasado>0?'vencidas e não pagas':'nada vencido')}
+      ${cartao('Recebido no total', recebidoTotal,'var(--mid)','desde o início')}
+    </div>`;
+}
+
+// ── Alertas que exigem ação: garantia e candidato parado ─────────────────
+function renderAlertasDash(vagas, cands){
+  const el=document.getElementById('dash-alertas'); if(!el) return;
+  const hoje=new Date();
+  const avisos=[];
+
+  // Garantia de reposição: 60 dias após o fechamento da vaga. Passar desse
+  // prazo sem saber é assumir um custo que já não era obrigatório.
+  const DIAS_GARANTIA=60;
+  vagas.filter(v=>v.status==='encerrada' && v.dataEncerramento).forEach(v=>{
+    const dias=Math.floor((hoje-new Date(v.dataEncerramento+'T12:00:00'))/86400000);
+    const restam=DIAS_GARANTIA-dias;
+    if(restam>=0 && restam<=20){
+      const quem=candidatoAprovadoDaVaga(v,cands);
+      avisos.push({cor: restam<=7?'var(--red)':'#B7791F',
+        txt:`<strong>${v.titulo}</strong>${quem?' · '+quem.nome:''} — garantia de reposição termina em ${restam}d`});
+    }
+  });
+
+  // Vaga aberta com todas as posições marcadas como preenchidas: acontece
+  // quando o aprovado declina e a vaga é reaberta, mas o campo "posições
+  // fechadas" não é zerado. Sem isso o setor aparece 100% concluído com vaga
+  // ainda em aberto.
+  vagas.filter(v=>v.status==='aberta' && (v.qtdFechadas||0)>=(v.qtd||0) && (v.qtd||0)>0).forEach(v=>{
+    avisos.push({cor:'#B7791F',
+      txt:`<strong>${v.titulo}</strong> — está aberta mas com todas as ${v.qtd} posição(ões) marcadas como preenchidas. Edite a vaga e ajuste "posições fechadas" para ${Math.max(0,(v.qtd||0)-1)}.`});
+  });
+
+  // Candidato parado: quem está há muito tempo sem qualquer movimentação é
+  // onde o processo morre em silêncio.
+  const LIMITE=14;
+  cands.filter(c=>ETAPA_SUBSTATUS[c.etapa]).forEach(c=>{
+    const vaga=vagas.find(v=>v.id===c.vagaId);
+    if(vaga && vaga.status!=='aberta') return;
+    const d=diasNaEtapaAtual(c);
+    if(d>=LIMITE) avisos.push({cor:'var(--red)',
+      txt:`<strong>${c.nome}</strong> parado há ${d}d em "${ETAPA_LABEL[c.etapa]||c.etapa}"${vaga?' · '+vaga.titulo:''}`});
+  });
+
+  if(!avisos.length){ el.innerHTML=''; return; }
+  el.innerHTML=`
+    <div class="section-label" style="margin-top:28px;margin-bottom:10px">Precisa de atenção</div>
+    <div class="card" style="padding:14px 18px">
+      ${avisos.map(a=>`<div style="padding:7px 0;border-bottom:1px solid var(--bege-lt);font-size:12.5px">
+        <span style="color:${a.cor};font-weight:700">●</span> ${a.txt}</div>`).join('')}
+    </div>`;
+}
+
 function renderAcoesPendentes(){
   const el=document.getElementById('dash-acoes-pendentes'); if(!el) return;
   const vagas=getVagasVisiveis();
@@ -3084,7 +3185,9 @@ function renderAcoesPendentes(){
       if(p){
         const s=_statusReal(p);
         if(s==='atrasado') finTxt='parcela de fechamento atrasada';
-        else if(s==='pendente'){
+        else if(s==='pendente' && p.vencimento){
+          // A parcela de fechamento só ganha vencimento quando a vaga encerra.
+          // Sem esta checagem, a conta virava data inválida e o painel quebrava.
           const dv=Math.ceil((new Date(p.vencimento+'T12:00:00').getTime()-Date.now())/86400000);
           if(dv<=7) finTxt = dv<0 ? 'parcela de fechamento atrasada' : `parcela vence em ${dv}d`;
         }
@@ -3234,6 +3337,26 @@ function renderIndicadoresFunil(){
       </div>`).join('');
 }
 
+// Quem foi o aprovado desta vaga. Considera a etapa atual e, se ninguém estiver
+// parado ali, procura quem já passou por aprovação ou admissão no histórico —
+// é o caso das vagas já encerradas, em que o candidato saiu do funil.
+function candidatosEmDecisao(vaga, cands){
+  // Quem está agora na reta final desta vaga. Pode ser mais de um: é comum
+  // enviar três finalistas e o cliente escolher.
+  return cands.filter(c=>c.vagaId===vaga.id && (c.etapa==='aprovacao'||c.etapa==='admissao'));
+}
+
+function candidatoAprovadoDaVaga(vaga, cands){
+  const daVaga = cands.filter(c=>c.vagaId===vaga.id);
+  const atual = daVaga.find(c=>c.etapa==='admissao') || daVaga.find(c=>c.etapa==='aprovacao');
+  if(atual) return atual;
+  // Só recorremos ao histórico em vaga ENCERRADA. Em vaga aberta isso trazia
+  // gente que passou por aprovação e depois declinou ou foi descartada — era
+  // por isso que aparecia um nome antigo no lugar dos finalistas atuais.
+  if(vaga.status!=='encerrada') return null;
+  return daVaga.find(c=>(c.historico||[]).some(h=>h.etapa==='admissao'||h.etapa==='aprovacao')) || null;
+}
+
 function renderDashboard(){
   const vagas=getVagasVisiveis();
   // Show sector context for gestores
@@ -3245,10 +3368,16 @@ function renderDashboard(){
       subEl.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · Dados em tempo real`;
     }
   }
-  const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
   const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
-  const fechadas=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtdFechadas||0),0);
-  const emAberto=totalQtd-fechadas-canceladas;
+  // Em vaga cancelada, o que se perde são as posições que AINDA não tinham sido
+  // fechadas. Antes o sistema descontava a quantidade inteira da vaga mais as
+  // já fechadas, contando as mesmas posições duas vezes: uma vaga de 4 com 2
+  // fechadas e depois cancelada descontava 6 de um total de 4, e o saldo em
+  // aberto virava número negativo.
+  const canceladas=vagas.filter(v=>v.status==='cancelada')
+    .reduce((s,v)=>s+Math.max(0,(v.qtd||0)-(v.qtdFechadas||0)),0);
+  const fechadas=vagas.reduce((s,v)=>s+(v.qtdFechadas||0),0);
+  const emAberto=Math.max(0, totalQtd-fechadas-canceladas);
   // Canceladas contam como resolvidas (foi o cliente quem cancelou, não é falha do RH)
   const resolvidas=fechadas+canceladas;
   const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
@@ -3277,16 +3406,27 @@ function renderDashboard(){
   const statusVagasEl = document.getElementById('dash-status-vagas');
   if(statusVagasEl){
     const linhas = vagas.map(v=>{
-      const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
+      // O nome sumia em várias vagas porque só se procurava quem está PARADO na
+      // etapa de aprovação. Quem avançou para admissão, ou já saiu do funil com
+      // a vaga encerrada, deixava de aparecer. Agora vale também o histórico.
+      const emDecisao = candidatosEmDecisao(v, candsParaCalc);
+      const aprovado = candidatoAprovadoDaVaga(v, candsParaCalc);
+      const nomes = emDecisao.length ? emDecisao.map(c=>c.nome).join(', ') : (aprovado ? aprovado.nome : '—');
       let statusHtml, dias;
-      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='—'; }
+      if(v.status==='cancelada'){
+        // Vaga cancelada consumiu trabalho real: triagem, entrevistas, dossiê.
+        // Antes aparecia com travessão e esse esforço ficava invisível.
+        statusHtml='<span style="color:var(--red)">● Cancelada</span>';
+        const ate = v.dataEncerramento || null;
+        dias = v.dataAbertura ? diasCorridosCalendario(v.dataAbertura, ate)+'d' : '—';
+      }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
         dias = td ? td.corridos+'d' : '—';
-      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
+      } else if(emDecisao.length){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
       else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
-      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${aprovado?aprovado.nome:'—'}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
+      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${nomes}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
     });
     statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
@@ -3321,6 +3461,8 @@ function renderDashboard(){
   document.getElementById('dash-pct-label').textContent=pct+'%';
   document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
   document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
+  renderResumoFinanceiroDash();
+  renderAlertasDash(vagas, candsParaCalc);
   renderAcoesPendentes();
   renderIndicadoresFunil();
 
@@ -3336,7 +3478,7 @@ function renderDashboard(){
       metricasEl.innerHTML = [
         linha(minC.corridos+'d', `${minC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais rápida)</span>`, 'var(--green)'),
         linha(maxC.corridos+'d', `${maxC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais lenta)</span>`, 'var(--red)'),
-        linha(mediaC+'d', `Média do ciclo <span style="color:var(--light)">(${mediaT}d úteis)</span>`, 'var(--charcoal)')
+        linha(mediaC+'d', `Média do ciclo <span style="color:var(--light)" title="Estimativa: dias corridos x 5/7. Não desconta feriados.">(~${mediaT}d úteis)</span>`, 'var(--charcoal)')
       ].join('');
     }
 
@@ -3383,7 +3525,7 @@ function renderDashboard(){
         <td style="font-size:12px;color:var(--mid)">${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</td>
         <td style="font-size:12px;color:var(--green)">${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</td>
         <td>${divisaoHtml}</td>
-        <td style="font-size:12px;font-weight:500;text-align:center">${t.corridos}d<div style="font-size:10px;color:var(--light)">${t.trabalhados}d úteis</div>${destaque}</td>
+        <td style="font-size:12px;font-weight:500;text-align:center">${t.corridos}d<div style="font-size:10px;color:var(--light)" title="Estimativa: dias corridos x 5/7. Não desconta feriados.">~${t.trabalhados}d úteis</div>${destaque}</td>
       </tr>`;}).join('');
   } else {
     const divisaoWrap2 = document.getElementById('dash-divisao-wrap');
@@ -3400,7 +3542,12 @@ function renderDashboard(){
     const s=v.setor||'Outros';
     if(!sm[s])sm[s]={qtd:0,fech:0,aberto:0,canc:0};
     sm[s].qtd+=(v.qtd||0);
-    sm[s].fech+=(v.qtdFechadas||0);
+    // Em vaga que voltou a ficar ABERTA, as posições marcadas como fechadas não
+    // podem passar do que ainda faz sentido: se o aprovado declinou e a vaga foi
+    // reaberta, ela não está 100% resolvida. O excedente vira alerta (abaixo).
+    sm[s].fech += v.status==='aberta'
+      ? Math.min(v.qtdFechadas||0, Math.max(0,(v.qtd||0)-1))
+      : (v.qtdFechadas||0);
     if(v.status==='cancelada') sm[s].canc+=(v.qtd||0);
     else sm[s].aberto+=(v.qtd||0)-(v.qtdFechadas||0);
   });
