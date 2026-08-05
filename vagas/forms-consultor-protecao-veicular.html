@@ -196,7 +196,7 @@ const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
 // A senha fixa que ficava aqui foi removida: ela estava visível no
 // código-fonte da página. O acesso ao painel agora usa e-mail e senha reais
 // do Supabase Auth (mesma conta do vagas.html e do disc.html).
-const VAGA_TITULO_PADRAO = 'Consultor Comercial, Proteção Veicular';
+const VAGA_TITULO_PADRAO = 'Consultor Especialista';
 
 // Banco do sistema de R&S, projeto Supabase separado.
 // Usado só para empurrar o candidato pro funil automaticamente ao final do formulário.
@@ -353,11 +353,11 @@ function renderForm() {
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-remuneracao">
-        <label for="c-remuneracao">Estou ciente de que a remuneração é de <strong>R$ 1.800,00 de salário-base + R$ 900,00 em cartão Caju, mais comissão de 30% a 50% sobre as vendas</strong>.</label>
+        <label for="c-remuneracao">Estou ciente de que a remuneração é composta por <strong>salário-base de R$ 1.900,00 (CLT)</strong>, <strong>comissão de 50% por adesão, paga toda sexta-feira</strong>, <strong>bônus por meta de até R$ 4.000,00</strong>, <strong>R$ 728,00 em cartão de alimentação + transporte</strong>, <strong>prêmio assiduidade de R$ 100,00</strong> e <strong>day off no aniversário (folga sem desconto)</strong>, com potencial de ganho de até R$ 10.000,00 por mês.</label>
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-presencial">
-        <label for="c-presencial">Estou ciente de que a vaga é <strong>presencial, em Goiânia/GO (Jardim Guanabara)</strong>, com atendimento interno via CRM e também prospecção ativa em campo.</label>
+        <label for="c-presencial">Estou ciente de que a vaga é <strong>presencial, em Goiânia/GO</strong>, de <strong>segunda a sexta, das 8h às 17h30</strong>, com <strong>eventuais sábados programados, incluindo participação em eventos</strong>, e envolve atendimento interno via CRM e também prospecção ativa em campo.</label>
       </div>
 
       <label class="field-label">Observações ou comentários (opcional)</label>
@@ -365,7 +365,7 @@ function renderForm() {
 
       <label class="field-label">Pretensão salarial (opcional, preencha só se for diferente do valor informado acima)</label>
       <input type="text" id="f-pretensao" placeholder="Ex: R$ 2.500,00">
-      <div class="field-hint">Deixe em branco se o valor de R$ 1.800,00 + Caju R$ 900,00 + comissão atende sua expectativa.</div>
+      <div class="field-hint">Deixe em branco se o pacote de R$ 1.900,00 de salário-base + comissão de 50% por adesão + bônus de até R$ 4.000,00 + R$ 728,00 no cartão atende sua expectativa.</div>
     </div>
 
     <div class="card">
@@ -643,8 +643,8 @@ function buildSubmissionPDF(s) {
   y += 16;
   const conds = [
     ['Contratação CLT', s.ciente_clt],
-    ['Remuneração R$1.800 + Caju R$900 + comissão', s.ciente_remuneracao],
-    ['Presencial em Goiânia/GO (Jardim Guanabara)', s.ciente_presencial]
+    ['Base R$1.900 + 50% por adesao + bonus ate R$4.000 + R$728 cartao', s.ciente_remuneracao],
+    ['Presencial Goiania/GO, seg a sex 8h-17h30, sabados eventuais', s.ciente_presencial]
   ];
   conds.forEach(([label, val]) => {
     doc.setFont('helvetica', 'bold');
