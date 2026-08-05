@@ -1681,14 +1681,29 @@ async function deleteAgenda(id){ if(DEMO_MODE){_agenda=_agenda.filter(x=>x.id!==
 // ══ REALTIME ══════════════════════════════════════════════════════════════════
 // Cada assinatura recarrega já filtrando pela empresa ativa, para que uma
 // alteração no cliente A nunca dispare um refresh visível pro cliente B.
+let _realtimeChannel = null;
 function setupRealtime() {
   if(DEMO_MODE) return;
-  sb.channel('rs')
-    .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=r.data.map(dbToVaga); refreshPage(); showToast('🔄 Vagas atualizadas');} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); showToast('🔄 Candidatos atualizados');} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
-    .subscribe(s => setSyncOk(s==='SUBSCRIBED'));
+  try{
+    // Se já existe um canal 'rs' de uma inicialização anterior (ex.: a aba
+    // voltou do cache do navegador, ou o login rodou duas vezes na mesma
+    // página), o Supabase reaproveita o MESMO objeto de canal — e adicionar
+    // callbacks nele de novo, já inscrito, é o que gera o erro "cannot add
+    // postgres_changes callbacks ... after subscribe()". Removendo qualquer
+    // canal antigo antes de criar um novo, isso nunca mais acontece.
+    if(_realtimeChannel){ try{ sb.removeChannel(_realtimeChannel); }catch(e){} _realtimeChannel=null; }
+    try{ sb.getChannels().forEach(ch=>{ if(ch.topic==='realtime:rs') sb.removeChannel(ch); }); }catch(e){}
+    _realtimeChannel = sb.channel('rs')
+      .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=r.data.map(dbToVaga); refreshPage(); showToast('🔄 Vagas atualizadas');} })
+      .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); showToast('🔄 Candidatos atualizados');} })
+      .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
+      .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
+      .subscribe(s => setSyncOk(s==='SUBSCRIBED'));
+  }catch(e){
+    // Realtime é só "nice to have" (atualização automática entre abas) — se
+    // falhar, o sistema continua funcionando normalmente, só sem esse recurso.
+    console.error('Realtime não pôde ser iniciado:', e);
+  }
 }
 
 function setSyncOk(ok) {
@@ -2206,10 +2221,18 @@ function renderVagasStats() {
   const v=getVagasVisiveis();
   const subEl=document.getElementById('vagas-subtitle');
   if(subEl) subEl.textContent = `Gerencie as vagas ${EMPRESAS[currentEmpresa]?('da '+EMPRESAS[currentEmpresa].nome):'do cliente'}`;
+  // Os números contam POSIÇÕES (qtd), não quantidade de vagas cadastradas —
+  // uma vaga só com qtd:5 conta como 5 aqui, não como 1. "Abertas" é o que
+  // ainda falta preencher (qtd - qtdFechadas); "Encerradas" é o que já foi
+  // preenchido (soma de qtdFechadas em todas as vagas, mesmo as que ainda
+  // não foram marcadas como encerradas por completo).
+  const totalPos = v.reduce((s,x)=>s+(x.qtd||1),0);
+  const abertasPos = v.filter(x=>x.status==='aberta').reduce((s,x)=>s+Math.max(0,(x.qtd||1)-(x.qtdFechadas||0)),0);
+  const encerradasPos = v.reduce((s,x)=>s+(x.qtdFechadas||0),0);
   document.getElementById('vagas-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-num">${v.length}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card"><div class="stat-num g">${v.filter(x=>x.status==='aberta').length}</div><div class="stat-lbl">Abertas</div></div>
-    <div class="stat-card"><div class="stat-num">${v.filter(x=>x.status==='encerrada').length}</div><div class="stat-lbl">Encerradas</div></div>
+    <div class="stat-card"><div class="stat-num">${totalPos}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-num g">${abertasPos}</div><div class="stat-lbl">Abertas</div></div>
+    <div class="stat-card"><div class="stat-num">${encerradasPos}</div><div class="stat-lbl">Encerradas</div></div>
     <div class="stat-card"><div class="stat-num">${getCands().length}</div><div class="stat-lbl">Candidatos</div></div>`;
 }
 
