@@ -2962,52 +2962,37 @@ const VAGAS_ROTEIRO = [
   // Roteiro de 30 min · OS Auto Club nº 01 · 4 vagas
   // Aplicado DEPOIS do formulário online e do teste DISC.
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'ac-consultor-esp', empresaId:'autoclub', nome:'Consultor Especialista', setor:'Comercial', duracao:'30 min',
+  { id:'ac-consultor-esp', empresaId:'autoclub', nome:'Consultor Especialista', setor:'Comercial', duracao:'15 min',
     conditions:{ 'Regime':'CLT · experiência 45 + 45 dias', 'Salário':'R$ 1.900,00 base + 50% de comissão por adesão (paga toda sexta)', 'Bônus e benefícios':'Meta até R$ 4.000,00 · Caju R$ 728,00 · assiduidade R$ 100,00 · day off no aniversário', 'Jornada':'Seg a sex 8h–17h30 · sábados programados e eventos', 'Local':'Goiânia · Jardim Guanabara · presencial', 'Reporte':'Helen Vieira Feliciano (apoio: Letícia Feliciano)' },
     sections:[
-      {name:'Abertura',time:'3 min',questions:[
-        'Apresente o processo: La Vie Consultoria conduzindo a seleção da Auto Club Proteção Veicular para 4 vagas de Consultor Especialista. Conversa de 30 minutos: trajetória, duas situações práticas de venda e, no fim, as condições da vaga com espaço para perguntas.',
-        'Onde você mora, quanto tempo leva até o Jardim Guanabara e como pretende se deslocar?',
-        'Qual sua disponibilidade para início imediato?',
-        'Você tem algum vínculo de amizade, parentesco ou sociedade com alguém da Auto Club?'
+      {name:'Abertura',time:'2 min',questions:[
+        'Apresente: La Vie conduzindo a seleção da Auto Club para 4 vagas de Consultor Especialista. Conversa curta, de 15 minutos, com espaço para perguntas no fim.',
+        'Onde você mora, quanto tempo leva até o Jardim Guanabara e como pretende se deslocar? Disponibilidade para início imediato?',
+        'NÃO PERGUNTAR AQUI (já respondido por escrito no formulário): motivo da saída do último emprego, ganho mensal ideal, maior ganho em um mês, meta não alcançada, forças e fraquezas, vínculo com alguém da empresa, onde se vê em um ano. Leia o dossiê antes da entrevista.'
       ]},
-      {name:'Trajetória e Densidade Comercial',time:'7 min',questions:[
-        'Me leve pelo seu último emprego: o que você vendia, para quem, e como o cliente chegava até você?',
-        'Qual era a meta mensal e com que frequência você batia? Traga os números dos últimos seis meses.',
+      {name:'Números que o formulário não pega',time:'5 min',questions:[
+        'Qual era a sua meta mensal no último emprego e em quantos dos últimos seis meses você bateu?',
+        'Qual era o seu volume: quantas vendas por mês e qual o ticket médio?',
         'Desses clientes, quantos vinham da loja e quantos você foi buscar? Como você buscava?',
-        'ESCUTA: vendedor de resultado fala em primeira pessoa e lembra da própria performance; vendedor de balcão lembra do movimento da loja.'
-      ]},
-      {name:'Prospecção Ativa e Resiliência',time:'4 min',questions:[
-        'Conte uma venda que só aconteceu porque você foi atrás do cliente. Como chegou até ele?',
         'Descreva sua rotina de prospecção num dia comum: quantos contatos, por qual canal, em que horário?',
-        'Qual foi o "não" mais duro que você levou de um cliente? O que você fez depois?',
-        'Como você lida com um dia em que nada fecha? O que muda no dia seguinte?'
+        'ESCUTA: vendedor de resultado responde com número próprio, sem hesitar. Quem só sabe falar do movimento da loja nunca prospectou.'
       ]},
-      {name:'Ambição, Dinheiro e Disciplina',time:'4 min',questions:[
-        'Quanto você quer ganhar por mês daqui a um ano, e o que já está fazendo hoje para chegar lá?',
-        'Aqui o salário-base é R$ 1.900,00 e o restante vem de comissão e bônus. Como você organizaria seus primeiros três meses sabendo disso?',
-        'Como é seu controle de carteira e de follow-up? CRM, planilha, agenda?',
-        'Quantas faltas ou atrasos você teve no último ano? Há sábados programados e eventos: isso conversa com a sua vida hoje?',
-        'ESCUTA: a vaga foi desenhada para quem hoje ganha entre R$ 4.000 e R$ 6.000 e quer chegar perto de R$ 10.000. Ambição sem plano é bravata; plano sem ambição não sustenta a rotina de prospecção.'
+      {name:'Confronto com o que ele escreveu',time:'4 min',questions:[
+        'OBJEÇÃO AO VIVO (ele já respondeu isso por escrito): "Gostei da proposta, confio em você, mas vou fechar com o concorrente porque ficou R$ 30 mais barato." Responda agora. — Compare com a resposta escrita: divergência grande sugere resposta pesquisada.',
+        'No formulário você disse que quer ganhar R$ ____ por mês. O que você já está fazendo hoje, na prática, para chegar nesse número?',
+        'Você escreveu que saiu do último emprego por ____. O que precisaria ter acontecido para você ficar?'
       ]},
-      {name:'Simulação Prática',time:'7 min',questions:[
-        'INSTRUÇÃO AO CANDIDATO: "Vou ser um cliente e quero que você me atenda de verdade. Não precisa conhecer proteção veicular, eu te dou qualquer informação que você pedir."',
-        'CENÁRIO A · cliente frio: "Recebi seu contato, mas já tenho seguro na minha seguradora há oito anos e estou satisfeito. Por que eu mudaria?" — Observe se ele pergunta antes de argumentar e se investiga franquia, perfil do veículo e uso.',
-        'CENÁRIO B · cliente que some: "Vou pensar e te retorno." E some por cinco dias. — Observe se ele tem método de retomada com prazo e canal definidos.',
-        'OPCIONAL (só se sobrar tempo): a objeção de preço já foi respondida por escrito no formulário. Leia a resposta antes e peça a versão falada. Divergência grande sugere resposta pesquisada.'
-      ]},
-      {name:'Alinhamento de Expectativas',time:'4 min',questions:[
-        'Apresente sem suavizar: CLT com experiência de 45 dias prorrogável por mais 45; base de R$ 1.900,00; comissão de 50% por adesão paga toda sexta; bônus por meta de até R$ 4.000,00.',
-        'R$ 728,00 no cartão Caju (R$ 550,00 alimentação e R$ 178,00 transporte), prêmio assiduidade de R$ 100,00 e day off no aniversário.',
-        'Presencial no Jardim Guanabara, de segunda a sexta das 8h às 17h30, com sábados programados e eventos. Rotina mista: atendimento interno via CRM e prospecção ativa em campo.',
+      {name:'Alinhamento de Expectativas',time:'3 min',questions:[
+        'Apresente sem suavizar: CLT com experiência de 45 + 45 dias; base R$ 1.900,00; comissão de 50% por adesão paga toda sexta; bônus por meta de até R$ 4.000,00; Caju R$ 728,00; assiduidade R$ 100,00; day off no aniversário.',
+        'Presencial no Jardim Guanabara, seg a sex das 8h às 17h30, com sábados programados e eventos. Rotina mista: CRM interno e prospecção em campo.',
         '"Sendo bem direto: esse pacote atende o que você precisa hoje? Se não, o que faltaria?" — hesitação aqui é informação valiosa e barata.'
       ]},
-      {name:'Pergunta Final',time:'1 min',questions:[
+      {name:'Fecho',time:'1 min',questions:[
         'O que você quer saber sobre a vaga ou sobre a Auto Club que eu ainda não falei?',
-        'Explique as próximas etapas e dê uma data de retorno — e cumpra, inclusive com quem não avançar.'
+        'Explique as próximas etapas e dê uma data de retorno.'
       ]}
     ],
-    avaliacao:['Prospecção ativa e iniciativa','Resiliência e manejo de objeções','Ambição e orientação a resultado','Disciplina e assiduidade','Comunicação, escuta e presença','Aderência às condições da vaga'] }
+    avaliacao:['Prospecção ativa e iniciativa','Números próprios e consistência do relato','Resiliência e manejo de objeções','Ambição e orientação a resultado','Comunicação, escuta e presença','Aderência às condições da vaga'] }
 ];
 
 
