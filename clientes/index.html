@@ -2285,7 +2285,12 @@ async function salvarVaga() {
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
   const honorarioEl=document.getElementById('nv-honorario');
-  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),honorario:honorarioEl?honorarioEl.value.trim():'',criadoPor:getUserName()};
+  const honorarioVal = honorarioEl?honorarioEl.value.trim():'';
+  if(honorarioVal && !/R\$\s*[\d]/.test(honorarioVal)){
+    const seguir = confirm('O campo Honorário não tem um valor em "R$" que o sistema consiga calcular (ex.: "50% · R$ 950,00 por vaga"). Se salvar assim, o Financeiro dessa vaga vai aparecer zerado.\n\nSalvar mesmo assim?');
+    if(!seguir) return;
+  }
+  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),honorario:honorarioVal,criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
@@ -2376,6 +2381,14 @@ async function atualizarVaga() {
   const evHonEl=document.getElementById('ev-honorario');
   const honorarioAtualizado = (evHonEl && evHonEl.closest('#ev-honorario-field') && evHonEl.closest('#ev-honorario-field').style.display!=='none')
     ? evHonEl.value.trim() : _vagas[idx].honorario;
+  // Se o honorário foi preenchido mas não tem um "R$ valor" que o sistema
+  // consiga ler, o Financeiro vai calcular tudo como R$ 0,00 sem avisar
+  // ninguém — então avisa AQUI, na hora de salvar, em vez de deixar
+  // descobrir isso só quando for tarde.
+  if(honorarioAtualizado && !/R\$\s*[\d]/.test(honorarioAtualizado)){
+    const seguir = confirm('O campo Honorário não tem um valor em "R$" que o sistema consiga calcular (ex.: "50% · R$ 950,00 por vaga"). Se salvar assim, o Financeiro dessa vaga vai aparecer zerado.\n\nSalvar mesmo assim?');
+    if(!seguir) return;
+  }
   _vagas[idx]={..._vagas[idx],
     titulo:document.getElementById('ev-titulo').value.trim(),
     setor:document.getElementById('ev-setor').value.trim(),
@@ -3799,17 +3812,16 @@ function _honBase(v){ // valor R$ do honorário a partir do texto "35% · R$ 3.5
 }
 function _fmtBRL(n){ return 'R$ '+ (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function _addDias(dataISO,dias){ const d=new Date((dataISO||new Date().toISOString().slice(0,10))+'T12:00:00'); d.setDate(d.getDate()+dias); return d.toISOString().slice(0,10); }
-// Vencimento da parcela: parcelas com gatilho "fechamento" só ganham data real
-// quando a vaga já foi encerrada (aprovação do candidato) — comportamento
-// idêntico ao de sempre para a posição 1 de qualquer vaga, pra não recalcular
-// vencimento em cima de parcela que já estava correta (ou paga). Só as
-// posições extras (2ª em diante, que só existem em vaga com mais de 1
-// posição) usam o avanço progressivo pelo qtdFechadas, já que essas nunca
-// existiram antes e não têm histórico pra preservar.
+// Vencimento da parcela: parcelas com gatilho "fechamento" ganham data real
+// conforme as posições daquela vaga vão sendo fechadas, uma a uma, pelo
+// qtdFechadas — a 1ª posição fechada usa a 1ª parcela de fechamento, a 2ª
+// posição fechada usa a 2ª, e assim por diante. Não depende mais da vaga
+// inteira estar com status "encerrada" (isso só acontecia quando todas as
+// posições já tivessem sido preenchidas, o que travava o fechamento parcial).
 function _vencParcela(v,def,unitIndex){
   if(def.gatilho==='fechamento'){
     const idx = unitIndex||1;
-    const jaFechou = idx===1 ? (v.status==='encerrada') : (idx <= (v.qtdFechadas||0));
+    const jaFechou = idx <= (v.qtdFechadas||0) || v.status==='encerrada';
     return (jaFechou && v.dataEncerramento) ? v.dataEncerramento : null;
   }
   return def.diasVenc==null ? null : _addDias(v.dataAbertura,def.diasVenc);
