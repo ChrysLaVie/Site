@@ -747,7 +747,7 @@ header {
 </div></div>
 <div id="page-financeiro" class="page">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
-    <div><h1 class="page-title">Financeiro</h1><p class="page-sub" id="fin-subtitle" style="margin-bottom:20px">Honorários por vaga</p></div>
+    <div><h1 class="page-title">Financeiro</h1><p class="page-sub" id="fin-subtitle" style="margin-bottom:6px">Honorários por vaga</p><div id="fin-aviso-honorario"></div></div>
     <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
   </div>
   <div class="stats-row" id="fin-stats"></div>
@@ -1803,7 +1803,7 @@ const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gesto
 const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
-const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'aprovacao'};
+const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'admissao'};
 
 // Texto de cada etapa por cliente (só entram aqui as que diferem do padrão)
 const ETAPA_TEXTO_POR_EMPRESA = {
@@ -2379,13 +2379,17 @@ async function atualizarVaga() {
   // está salvando não é do lado do cliente) — assim o valor existente nunca
   // é apagado por engano por quem nem consegue ver esse campo.
   const evHonEl=document.getElementById('ev-honorario');
-  const honorarioAtualizado = (evHonEl && evHonEl.closest('#ev-honorario-field') && evHonEl.closest('#ev-honorario-field').style.display!=='none')
-    ? evHonEl.value.trim() : _vagas[idx].honorario;
+  const honorarioFieldVisivel = evHonEl && evHonEl.closest('#ev-honorario-field') && evHonEl.closest('#ev-honorario-field').style.display!=='none';
+  const honorarioAtualizado = honorarioFieldVisivel ? evHonEl.value.trim() : _vagas[idx].honorario;
   // Se o honorário foi preenchido mas não tem um "R$ valor" que o sistema
   // consiga ler, o Financeiro vai calcular tudo como R$ 0,00 sem avisar
   // ninguém — então avisa AQUI, na hora de salvar, em vez de deixar
-  // descobrir isso só quando for tarde.
-  if(honorarioAtualizado && !/R\$\s*[\d]/.test(honorarioAtualizado)){
+  // descobrir isso só quando for tarde. IMPORTANTE: só avisa se o campo
+  // estava mesmo visível pra quem está salvando (ou seja, só pro admin da
+  // La Vie) — do contrário um usuário do lado do cliente, que nem deveria
+  // saber que existe honorário, veria esse alerta ao salvar qualquer edição
+  // de vaga e ficaria sabendo de um campo que é pra ser só interno.
+  if(honorarioFieldVisivel && honorarioAtualizado && !/R\$\s*[\d]/.test(honorarioAtualizado)){
     const seguir = confirm('O campo Honorário não tem um valor em "R$" que o sistema consiga calcular (ex.: "50% · R$ 950,00 por vaga"). Se salvar assim, o Financeiro dessa vaga vai aparecer zerado.\n\nSalvar mesmo assim?');
     if(!seguir) return;
   }
@@ -3952,6 +3956,17 @@ async function renderFinanceiro(){
       autoclub:'Honorários por vaga · 50% de R$ 950,00 na abertura + 50% no fechamento (R$ 950,00 por vaga fechada)',
     };
     subEl.textContent = frases[currentEmpresa] || 'Honorários por vaga';
+  }
+  // Aviso visível pra quem administra (nunca pro cliente): lista vagas cujo
+  // honorário está vazio ou sem um "R$ valor" reconhecível — sem isso, a
+  // pessoa só descobre o problema pelo total zerado, sem saber qual vaga
+  // causou e o que fazer a respeito.
+  const avisoEl=document.getElementById('fin-aviso-honorario');
+  if(avisoEl && !souCliente){
+    const semHon = vagas.filter(v=>_honBase(v)===0);
+    avisoEl.innerHTML = semHon.length
+      ? `<div style="background:#fff3ec;border:1px solid #f0c9a8;border-radius:8px;padding:10px 14px;margin:10px 0;font-size:13px;color:#7a4a1f">⚠️ Sem honorário configurado (Financeiro vai mostrar R$ 0,00): ${semHon.map(v=>`<b>${v.titulo}</b>`).join(', ')}. Edite a vaga e preencha o campo Honorário com um valor em "R$" (ex.: "50% · R$ 950,00 por vaga").</div>`
+      : '';
   }
   // stats
   let totalPrev=0,totalPago=0,totalPend=0,totalAtr=0,totalCancelado=0;
