@@ -3561,9 +3561,13 @@ function renderIndicadoresFunil(){
 // parado ali, procura quem já passou por aprovação ou admissão no histórico —
 // é o caso das vagas já encerradas, em que o candidato saiu do funil.
 function candidatosEmDecisao(vaga, cands){
-  // Quem está agora na reta final desta vaga. Pode ser mais de um: é comum
-  // enviar três finalistas e o cliente escolher.
-  return cands.filter(c=>c.vagaId===vaga.id && (c.etapa==='aprovacao'||c.etapa==='admissao'));
+  // Quem está agora na reta final desta vaga, aguardando a decisão do
+  // cliente. NÃO inclui quem já foi admitido — esse já foi decidido, não
+  // está mais "em decisão" (antes isso fazia a vaga ficar marcada como "Em
+  // Decisão" pra sempre, mesmo depois do candidato já ter sido aprovado e
+  // admitido). Pode ser mais de um: é comum enviar três finalistas e o
+  // cliente escolher.
+  return cands.filter(c=>c.vagaId===vaga.id && c.etapa==='aprovacao');
 }
 
 function candidatoAprovadoDaVaga(vaga, cands){
@@ -3630,8 +3634,14 @@ function renderDashboard(){
       // etapa de aprovação. Quem avançou para admissão, ou já saiu do funil com
       // a vaga encerrada, deixava de aparecer. Agora vale também o histórico.
       const emDecisao = candidatosEmDecisao(v, candsParaCalc);
+      const admitidos = candsParaCalc.filter(c=>c.vagaId===v.id && c.etapa==='admissao');
       const aprovado = candidatoAprovadoDaVaga(v, candsParaCalc);
-      const nomes = emDecisao.length ? emDecisao.map(c=>c.nome).join(', ') : (aprovado ? aprovado.nome : '—');
+      // Prioridade pra mostrar nome: quem está em decisão agora > todos que já
+      // foram admitidos (vaga com várias posições pode ter mais de um) > o
+      // último aprovado encontrado no histórico.
+      const nomes = emDecisao.length ? emDecisao.map(c=>c.nome).join(', ')
+        : admitidos.length ? admitidos.map(c=>c.nome).join(', ')
+        : (aprovado ? aprovado.nome : '—');
       let statusHtml, dias;
       if(v.status==='cancelada'){
         // Vaga cancelada consumiu trabalho real: triagem, entrevistas, dossiê.
@@ -3644,7 +3654,16 @@ function renderDashboard(){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
         dias = td ? td.corridos+'d' : '—';
-      } else if(emDecisao.length){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
+      }
+      // Vaga com mais de 1 posição, algumas já preenchidas mas ainda não
+      // encerrada por completo — mostra o progresso em vez de ficar preso
+      // em "Em Decisão" (que já foi resolvida) ou voltar a "Em Aberto" (que
+      // esconde que parte do trabalho já foi entregue).
+      else if((v.qtdFechadas||0) > 0 && (v.qtdFechadas||0) < (v.qtd||1)){
+        statusHtml=`<span style="color:var(--green)">● ${v.qtdFechadas}/${v.qtd} fechadas</span>`;
+        dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—';
+      }
+      else if(emDecisao.length){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
       else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
       return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${nomes}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
     });
