@@ -863,7 +863,7 @@ function drawPdfHeader(doc, subtitle) {
   const M = 52;
   const INK = [58,58,58], SOFT = [122,119,110], BORDER = [216,207,196];
   let y = 50;
-  try { doc.addImage(LOGO_PDF_B64, 'PNG', M, y - 28, 30, 39); } catch(e) {}
+  try { doc.addImage(LOGO_PDF_B64, 'PNG', M, y - 24, 30, 23.4); } catch(e) {}
   doc.setFont('times', 'italic'); doc.setFontSize(18); doc.setTextColor(...INK);
   doc.text('La Vie Consultoria', M + 40, y);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SOFT);
