@@ -136,6 +136,7 @@ header {
 .tag-triagem  { background:#EDE9FE; color:#5B21B6; }
 .tag-rh       { background:#DBEAFE; color:#1D4ED8; }
 .tag-gestor   { background:#FEF3C7; color:#92400E; }
+.tag-final    { background:#CCFBF1; color:#0F766E; }
 .tag-aprovado { background:var(--green-lt); color:var(--green); }
 .tag-admissao { background:#ECFDF5; color:#065F46; }
 .tag-reprovado{ background:var(--red-lt); color:var(--red); }
@@ -858,6 +859,10 @@ header {
   <div class="modal-header"><div class="modal-title" id="mc-titulo">Atualizar Candidato</div><button class="modal-close" onclick="closeModal('modal-mover-cand')">✕</button></div>
   <input type="hidden" id="mc-id">
   <div class="form-grid">
+    <div class="form-field" style="grid-column:1/-1"><label>Nome completo</label><input id="mc-nome" placeholder="Nome completo"></div>
+    <div class="form-field"><label>CPF</label><input id="mc-cpf" placeholder="000.000.000-00"></div>
+    <div class="form-field"><label>Telefone</label><input id="mc-tel" placeholder="(00) 00000-0000"></div>
+    <div class="form-field" style="grid-column:1/-1"><label>E-mail</label><input id="mc-email" placeholder="nome@email.com"></div>
     <div class="form-field" style="grid-column:1/-1"><label>🔗 LinkedIn</label><div style="display:flex;gap:6px"><input id="mc-linkedin" placeholder="linkedin.com/in/..." style="flex:1"><button type="button" class="btn btn-ghost btn-sm" onclick="abrirLinkedin()" title="Abrir perfil">Abrir</button></div></div>
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option><option value="reprovado">Reprovado</option><option value="banco_talentos_administrativo">Banco de Talentos Administrativo</option><option value="banco_talentos_academico">Banco de Talentos Acadêmico</option><option value="banco_talentos_geral">Banco de Talentos Geral</option></select></div>
@@ -1799,7 +1804,7 @@ document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', 
 // agenda, funil, dashboard) lê desses mesmos objetos sem precisar saber qual
 // cliente está logado.
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
-const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
+const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'final',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
 const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
@@ -2488,11 +2493,17 @@ function abrirNovoCandidatoModal(){
   openModal('modal-novo-cand');
 }
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
+  document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
   const selE=document.getElementById('mc-etapa');selE.innerHTML=[...ETAPAS,{id:'reprovado',label:'Reprovado'},...getBancos()].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
+  const novoNome=document.getElementById('mc-nome').value.trim();
+  if(!novoNome){alert('O nome do candidato não pode ficar em branco.');return;}
+  const novoCpf=document.getElementById('mc-cpf').value.trim();
+  const novoTel=document.getElementById('mc-tel').value.trim();
+  const novoEmail=document.getElementById('mc-email').value.trim();
   const novaEtapa=document.getElementById('mc-etapa').value,obs=document.getElementById('mc-obs').value.trim();
   const linkedin=document.getElementById('mc-linkedin').value.trim();
   const novaVaga=document.getElementById('mc-vaga').value,vagaAntiga=_cands[idx].vagaId;
@@ -2505,7 +2516,7 @@ async function atualizarCandidato(){
   if(novaEtapa!==etapaAntiga){
     hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
   }
-  _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
+  _cands[idx]={..._cands[idx],nome:novoNome,cpf:novoCpf,tel:novoTel,email:novoEmail,vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
   try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
@@ -3196,9 +3207,29 @@ function gerarDossiePDF(id){
 function normNome(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toLowerCase(); }
 
 async function syncCandidatoFromEntrevista(entrev){
-  // Determina etapa baseado no resultado
+  // Se a entrevista já veio vinculada a um candidato existente (selecionado
+  // no dropdown, não digitado), usa o ID direto — sem chute por nome, sem
+  // risco de duplicar. Precisa saber isso ANTES de decidir a etapa, porque
+  // "Aprovado" agora avança uma etapa a partir de onde o candidato já estava
+  // (veja comentário abaixo).
+  const existe = entrev.candidatoId
+    ? _cands.find(c => c.id === entrev.candidatoId)
+    : _cands.find(c =>
+        normNome(c.nome) === normNome(entrev.nome) &&
+        (entrev.cpf ? c.cpf === entrev.cpf : true)
+      );
+
+  // Determina etapa baseado no resultado. IMPORTANTE: "Aprovado" numa
+  // entrevista significa aprovado PRA AVANÇAR NESSA ETAPA — não aprovado no
+  // processo inteiro. Por isso avança o candidato uma etapa a partir de onde
+  // ele já estava (ex.: aprovado na "Entrevista La Vie" avança pra "Entrevista
+  // Final", não pula direto pra "Aprovação"/decisão do cliente). Só quando não
+  // há candidato existente pra saber de onde ele vinha é que cai no padrão
+  // antigo (direto pra decisão), por falta de informação melhor.
   let etapa = 'entrevista_rh';
-  if(entrev.resultado === 'approved') etapa = 'aprovacao';
+  if(entrev.resultado === 'approved'){
+    etapa = existe ? (ETAPA_PROXIMA[existe.etapa] || 'aprovacao') : 'aprovacao';
+  }
   if(entrev.resultado === 'reprovado') etapa = 'reprovado';
 
   // Encontra vaga real pelo vagaId do roteiro ou pelo nome
@@ -3211,16 +3242,6 @@ async function syncCandidatoFromEntrevista(entrev){
     v.titulo.toLowerCase().includes(entrev.vaga.toLowerCase().split('–')[0].trim().toLowerCase().substring(0,10))
   ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
   if(vagaMatch) vagaId = vagaMatch.id;
-
-  // Se a entrevista já veio vinculada a um candidato existente (selecionado
-  // no dropdown, não digitado), usa o ID direto — sem chute por nome, sem
-  // risco de duplicar.
-  const existe = entrev.candidatoId
-    ? _cands.find(c => c.id === entrev.candidatoId)
-    : _cands.find(c =>
-        normNome(c.nome) === normNome(entrev.nome) &&
-        (entrev.cpf ? c.cpf === entrev.cpf : true)
-      );
 
   if(existe){
     // Atualiza etapa (e a vaga, se ainda não tinha uma vinculada) se mudou
