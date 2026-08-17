@@ -349,7 +349,14 @@ async function saveVaga(payload, id) {
     return { ok:true };
   } catch(e) { return { ok:false, err:e.message }; }
 }
-async function setVagaAtiva(id, ativa) { if (!db) return; try { await db.from('vagas').update({ ativa }).eq('id', id); } catch(e) {} }
+async function setVagaAtiva(id, ativa) {
+  if (!db) return { ok:false, err:'Banco não configurado' };
+  try {
+    const { error } = await db.from('vagas').update({ ativa }).eq('id', id);
+    if (error) return { ok:false, err:error.message };
+    return { ok:true };
+  } catch(e) { return { ok:false, err:e.message }; }
+}
 async function deleteVaga(id) { if (!db) return; try { await db.from('vagas').delete().eq('id', id); } catch(e) {} }
 
 // ── SUPABASE: CANDIDATURAS ──
@@ -1264,7 +1271,12 @@ async function renderAdmin() {
     document.getElementById('newVagaBtn')?.addEventListener('click', openNew);
     document.getElementById('newVagaBtnEmpty')?.addEventListener('click', openNew);
     document.querySelectorAll('.edit-vaga').forEach(btn => btn.addEventListener('click', () => openVagaForm(ADMIN_VAGAS.find(v => v.id === btn.dataset.id), () => draw())));
-    document.querySelectorAll('.toggle-vaga').forEach(btn => btn.addEventListener('click', async () => { await setVagaAtiva(btn.dataset.id, btn.dataset.ativa !== 'true'); await draw(); }));
+    document.querySelectorAll('.toggle-vaga').forEach(btn => btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const r = await setVagaAtiva(btn.dataset.id, btn.dataset.ativa !== 'true');
+      if (!r.ok) { alert('Não foi possível alterar o status da vaga: ' + (r.err || 'erro desconhecido') + '\n\nIsso geralmente indica uma política de RLS na tabela "vagas" bloqueando UPDATE para o usuário logado.'); btn.disabled = false; return; }
+      await draw();
+    }));
     document.querySelectorAll('.del-vaga').forEach(btn => btn.addEventListener('click', async () => { if (!confirm('Remover esta vaga permanentemente? As candidaturas já recebidas continuam no histórico.')) return; await deleteVaga(btn.dataset.id); await draw(); }));
   }
   function bindCandTabEvents() {
