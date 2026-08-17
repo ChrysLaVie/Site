@@ -3483,7 +3483,7 @@ function renderIndicadoresFunil(){
   };
   renderChart('chart-candidatos-vaga', {
     type:'bar',
-    data:{ labels:porVaga.map(x=>x.v.titulo.split('–')[0].trim()), datasets:[{ data:porVaga.map(x=>x.n), backgroundColor:porVaga.map((_,i)=>corBarraVaga(i)), borderRadius:5, maxBarThickness:26 }] },
+    data:{ labels:porVaga.map(x=>_labelVagaDesambiguado(x.v, vagas)), datasets:[{ data:porVaga.map(x=>x.n), backgroundColor:porVaga.map((_,i)=>corBarraVaga(i)), borderRadius:5, maxBarThickness:26 }] },
     options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.x} candidatos` } } },
       scales:{ x:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
@@ -3543,6 +3543,20 @@ function candidatosEmDecisao(vaga, cands){
   return cands.filter(c=>c.vagaId===vaga.id && (c.etapa==='aprovacao'||c.etapa==='admissao'));
 }
 
+// Quando o mesmo cargo existe como vários registros de vaga separados (ex.:
+// 4 posições de "Consultor Especialista", cada uma com seu próprio ciclo/
+// candidato), usar só v.titulo deixa tabelas e gráficos com rótulos idênticos
+// e impossíveis de diferenciar. Essa função numera as vagas-irmãs (mesmo
+// título + mesma empresa) na ordem em que foram abertas: "Consultor
+// Especialista (1/4)", "(2/4)"... Vaga sem irmã continua com o título puro.
+function _labelVagaDesambiguado(v, todasVagas){
+  const irmas = (todasVagas||[])
+    .filter(x=>x.titulo===v.titulo && x.empresaId===v.empresaId)
+    .sort((a,b)=>(a.criadoEm||a.dataAbertura||'').localeCompare(b.criadoEm||b.dataAbertura||''));
+  if(irmas.length<=1) return v.titulo;
+  const idx = irmas.findIndex(x=>x.id===v.id)+1;
+  return `${v.titulo} (${idx}/${irmas.length})`;
+}
 function candidatoAprovadoDaVaga(vaga, cands){
   const daVaga = cands.filter(c=>c.vagaId===vaga.id);
   const atual = daVaga.find(c=>c.etapa==='admissao') || daVaga.find(c=>c.etapa==='aprovacao');
@@ -3623,7 +3637,7 @@ function renderDashboard(){
         dias = td ? td.corridos+'d' : '—';
       } else if(emDecisao.length){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
       else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
-      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${nomes}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
+      return `<tr><td style="font-size:12px;font-weight:500">${_labelVagaDesambiguado(v, vagas)}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${nomes}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
     });
     statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
@@ -3673,8 +3687,8 @@ function renderDashboard(){
     if(metricasEl){
       const linha = (dias,texto,cor) => `<div style="padding:9px 0;border-bottom:1px solid var(--bege-lt);font-size:12.5px"><strong style="color:${cor};font-family:'Playfair Display',serif;font-size:15px">${dias}</strong> → ${texto}</div>`;
       metricasEl.innerHTML = [
-        linha(minC.corridos+'d', `${minC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais rápida)</span>`, 'var(--green)'),
-        linha(maxC.corridos+'d', `${maxC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais lenta)</span>`, 'var(--red)'),
+        linha(minC.corridos+'d', `${_labelVagaDesambiguado(minC.v, vagas)} <span style="color:var(--light)">(mais rápida)</span>`, 'var(--green)'),
+        linha(maxC.corridos+'d', `${_labelVagaDesambiguado(maxC.v, vagas)} <span style="color:var(--light)">(mais lenta)</span>`, 'var(--red)'),
         linha(mediaC+'d', `Média do ciclo <span style="color:var(--light)" title="Estimativa: dias corridos x 5/7. Não desconta feriados.">(~${mediaT}d úteis)</span>`, 'var(--charcoal)')
       ].join('');
     }
@@ -3688,7 +3702,7 @@ function renderDashboard(){
       divisaoWrap.style.height = Math.max(140, comSplitChart.length*38+40)+'px';
       renderChart('chart-divisao-tempo', {
         type:'bar',
-        data:{ labels:comSplitChart.map(t=>t.v.titulo.split('–')[0].trim()), datasets:[
+        data:{ labels:comSplitChart.map(t=>_labelVagaDesambiguado(t.v, vagas)), datasets:[
           { label:'La Vie (até o dossiê)', data:comSplitChart.map(t=>t.diasLaVie), backgroundColor:CH.green, borderRadius:4, stack:'s' },
           { label:'Cliente (decisão)', data:comSplitChart.map(t=>t.diasCliente), backgroundColor:CH.amber, borderRadius:4, stack:'s' }
         ]},
@@ -3717,7 +3731,7 @@ function renderDashboard(){
                       : t.corridos===maxC.corridos&&maxC.v.id===v.id ? '<div style="font-size:9.5px;color:var(--red)">mais lenta</div>' : '';
       return `
       <tr style="${i%2===0?'':'background:var(--cream)'}">
-        <td style="font-size:12px;font-weight:500">${v.titulo} <span style="color:var(--light);font-size:11px">(${v.setor})</span></td>
+        <td style="font-size:12px;font-weight:500">${_labelVagaDesambiguado(v, vagas)} <span style="color:var(--light);font-size:11px">(${v.setor})</span></td>
         <td style="text-align:center;font-size:12px">${v.qtdFechadas||v.qtd||1}</td>
         <td style="font-size:12px;color:var(--mid)">${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</td>
         <td style="font-size:12px;color:var(--green)">${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</td>
