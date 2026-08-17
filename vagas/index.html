@@ -222,6 +222,10 @@ textarea.ta { min-height:76px; }
 .stage-chip button, .stage-chip a { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em; background:none; border:none; color:inherit; text-decoration:underline; cursor:pointer; font-family:inherit; padding:0; }
 .dossie-btn { font-size:0.72rem; letter-spacing:0.06em; text-transform:uppercase; padding:0.5rem 1rem; border-radius:var(--radius); border:1px solid var(--border); background:none; color:var(--charcoal); cursor:pointer; font-family:inherit; white-space:nowrap; transition:all 0.15s; flex-shrink:0; }
 .dossie-btn:hover { background:var(--charcoal); color:#fff; border-color:var(--charcoal); }
+.action-btn { font-size:0.72rem; letter-spacing:0.06em; text-transform:uppercase; padding:0.5rem 1rem; border-radius:var(--radius); border:1px solid var(--border); background:none; color:var(--charcoal); cursor:pointer; font-family:inherit; white-space:nowrap; transition:all 0.15s; flex-shrink:0; }
+.action-btn:hover { background:var(--charcoal); color:#fff; border-color:var(--charcoal); }
+.action-btn.danger-outline { border-color:var(--err); color:var(--err); }
+.action-btn.danger-outline:hover { background:var(--err); color:#fff; border-color:var(--err); }
 .dossie-section { margin-bottom:1.6rem; padding-bottom:1.6rem; border-bottom:1px solid var(--border); }
 .dossie-section:last-of-type { border-bottom:none; margin-bottom:0; padding-bottom:0; }
 .dossie-section h4 { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-weight:500; color:var(--charcoal); margin-bottom:0.7rem; }
@@ -476,11 +480,23 @@ async function loadFormsRespostas() {
   for (const t of FORMS_TABLES) {
     try {
       const { data, error } = await db.from(t).select('*').order('created_at', { ascending:false });
-      if (!error && data) all.push(...data);
+      // Marca cada linha com a tabela de origem (_tabela) — necessário porque
+      // o formulário técnico está espalhado em várias tabelas (uma por vaga),
+      // e pra arquivar/excluir precisamos saber em qual tabela mexer.
+      if (!error && data) all.push(...data.map(row => ({ ...row, _tabela: t })));
     } catch(e) { /* tabela pode não existir ainda — ignora e segue */ }
   }
   return all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 }
+// ── Arquivar/excluir DISC e Formulário isoladamente ──
+// Usado quando o candidato ainda não tem candidatura (não se aplicou a
+// nenhuma vaga), só fez o DISC e/ou respondeu o formulário — nesse caso não
+// existe linha em "candidaturas" pra arquivar/excluir, então mexemos direto
+// nas tabelas candidatos_disc / forms_*.
+async function arquivarDisc(id, valor) { if (!db) return; try { await db.from('candidatos_disc').update({ arquivada: valor }).eq('id', id); } catch(e) {} }
+async function deleteDisc(id) { if (!db) return; try { await db.from('candidatos_disc').delete().eq('id', id); } catch(e) {} }
+async function arquivarForms(tabela, id, valor) { if (!db || !tabela) return; try { await db.from(tabela).update({ arquivada: valor }).eq('id', id); } catch(e) {} }
+async function deleteForms(tabela, id) { if (!db || !tabela) return; try { await db.from(tabela).delete().eq('id', id); } catch(e) {} }
 
 // ── HELPERS ──
 function linesToArray(text) { return (text || '').split('\n').map(s => s.trim()).filter(Boolean); }
@@ -1165,7 +1181,12 @@ async function renderAdmin() {
   });
   const candidatosUnificados = [...candidatosMap.values()].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
   // Um candidato é considerado arquivado quando a candidatura dele está arquivada.
-  candidatosUnificados.forEach(c => { c.arquivado = !!(c.candidatura && c.candidatura.arquivada); });
+  // Quando não há candidatura (só DISC e/ou formulário), usa o status de
+  // arquivamento do DISC/formulário — o que existir.
+  candidatosUnificados.forEach(c => {
+    if (c.candidatura) c.arquivado = !!c.candidatura.arquivada;
+    else c.arquivado = !!(c.disc?.arquivada || c.forms?.arquivada);
+  });
 
   function vagasTabHTML() {
     return `
@@ -1254,7 +1275,10 @@ async function renderAdmin() {
               <p>${esc(c.email)} · ${esc(c.whatsapp) || '-'} ${c.vaga_titulo ? '· ' + esc(c.vaga_titulo) : ''}</p>
             </div>
             <button class="dossie-btn" data-idx="${candidatosUnificados.indexOf(c)}">Ver Dossiê →</button>
-            ${c.candidatura ? `<button class="arq-unif" data-id="${c.candidatura.id}" data-arq="${c.arquivado ? '1' : '0'}" style="margin-left:0.5rem;">${c.arquivado ? 'Desarquivar' : 'Arquivar'}</button>` : ''}
+            ${c.candidatura ? `<button class="action-btn arq-unif" data-id="${c.candidatura.id}" data-arq="${c.arquivado ? '1' : '0'}" style="margin-left:0.5rem;">${c.arquivado ? 'Desarquivar' : 'Arquivar'}</button>` : `
+              <button class="action-btn arq-sem-cand" data-idx="${candidatosUnificados.indexOf(c)}" data-arq="${c.arquivado ? '1' : '0'}" style="margin-left:0.5rem;">${c.arquivado ? 'Desarquivar' : 'Arquivar'}</button>
+              <button class="action-btn danger-outline del-sem-cand" data-idx="${candidatosUnificados.indexOf(c)}" style="margin-left:0.5rem;">Remover</button>
+            `}
           </div>
           <div class="cand-stages">
             <div class="stage-chip ${c.candidatura ? 'done' : 'pending'}">${c.candidatura ? '📄 Currículo recebido' : '📄 Ainda não se candidatou'}</div>
@@ -1301,6 +1325,31 @@ async function renderAdmin() {
       if (cand) { cand.arquivada = novoValor; if (novoValor) cand.lida = true; }
       const unif = candidatosUnificados.find(c => c.candidatura && c.candidatura.id === btn.dataset.id);
       if (unif) { unif.arquivado = novoValor; if (unif.candidatura) unif.candidatura.arquivada = novoValor; }
+      draw();
+    }));
+    // Arquivar/desarquivar candidato sem candidatura (só tem DISC e/ou
+    // formulário) — mexe direto nas tabelas candidatos_disc / forms_*.
+    document.querySelectorAll('.arq-sem-cand').forEach(btn => btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const novoValor = btn.dataset.arq !== '1';
+      const c = candidatosUnificados[btn.dataset.idx];
+      if (!c) return;
+      if (c.disc) await arquivarDisc(c.disc.id, novoValor);
+      if (c.forms) await arquivarForms(c.forms._tabela, c.forms.id, novoValor);
+      if (c.disc) c.disc.arquivada = novoValor;
+      if (c.forms) c.forms.arquivada = novoValor;
+      c.arquivado = novoValor;
+      draw();
+    }));
+    // Remover candidato sem candidatura — exclui o DISC e/ou formulário dele.
+    document.querySelectorAll('.del-sem-cand').forEach(btn => btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Remover este candidato? O DISC e/ou formulário respondidos serão apagados permanentemente.')) return;
+      const c = candidatosUnificados[btn.dataset.idx];
+      if (!c) return;
+      if (c.disc) await deleteDisc(c.disc.id);
+      if (c.forms) await deleteForms(c.forms._tabela, c.forms.id);
+      candidatosUnificados.splice(candidatosUnificados.indexOf(c), 1);
       draw();
     }));
     document.getElementById('unifAtivos')?.addEventListener('click', () => { mostrarArquivados = false; draw(); });
