@@ -255,6 +255,11 @@ async function pushCandidatoParaRS(formPayload) {
     const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
 
     const cvUrl = c.cv_url || null;
+    // O R&S abre documentos por "path" (link temporário, bucket privado).
+    const documentos = cvUrl ? [{
+      nome:'Currículo', path:cvUrl, origem:'vagas', bucket:'curriculos',
+      tipo:'pdf', enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
+    }] : [];
     const discPrimary = c.primary_profile || null;
     const discSecondary = c.secondary_profile || null;
     const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
@@ -281,7 +286,7 @@ async function pushCandidatoParaRS(formPayload) {
     if (erroRpc) throw new Error('Banco do R&S recusou a gravação: ' + erroRpc.message);
     const r = Array.isArray(resp) ? resp[0] : resp;
     if (!r || r.ok !== true) throw new Error((r && r.motivo) || 'O R&S não confirmou o cadastro.');
-    console.info('Candidato enviado ao R&S:', candidato.email);
+    console.info('Candidato enviado ao R&S:', emailNorm);
   } catch (e) {
     // A resposta do candidato já está salva na tabela do formulário, então nada
     // se perde: o que falhou foi só a cópia automática para o funil do R&S.
