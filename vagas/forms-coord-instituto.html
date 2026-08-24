@@ -282,14 +282,16 @@ async function pushCandidatoParaRS(formPayload) {
     const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
 
     const cvUrl = c.cv_url || null;
-    // O R&S abre documentos por "path" (link temporário, bucket privado).
+    const discPrimary = c.primary_profile || null;
+    const discSecondary = c.secondary_profile || null;
+    const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
+
+    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
+    // campo gravado como "url", o clique no arquivo dava "não foi possível abrir".
     const documentos = cvUrl ? [{
       nome:'Currículo', path:cvUrl, origem:'vagas', bucket:'curriculos',
       tipo:'pdf', enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
     }] : [];
-    const discPrimary = c.primary_profile || null;
-    const discSecondary = c.secondary_profile || null;
-    const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
 
     let obs = '';
     if (discPrimary) {
