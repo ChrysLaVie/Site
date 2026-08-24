@@ -3622,7 +3622,11 @@ function renderDashboard(){
       // a vaga encerrada, deixava de aparecer. Agora vale também o histórico.
       const emDecisao = candidatosEmDecisao(v, candsParaCalc);
       const aprovado = candidatoAprovadoDaVaga(v, candsParaCalc);
-      const nomes = emDecisao.length ? emDecisao.map(c=>c.nome).join(', ') : (aprovado ? aprovado.nome : '—');
+      // Vaga já Fechada: mostra só o aprovado de fato (nunca a lista bruta de quem
+      // passou pela etapa aprovação/admissão, que pode incluir candidato que ficou
+      // "esquecido" nessa etapa depois que outro foi escolhido). A lista com vários
+      // nomes só faz sentido em vaga ainda ABERTA e em decisão entre finalistas.
+      const nomes = (v.status!=='encerrada' && emDecisao.length) ? emDecisao.map(c=>c.nome).join(', ') : (aprovado ? aprovado.nome : '—');
       let statusHtml, dias;
       if(v.status==='cancelada'){
         // Vaga cancelada consumiu trabalho real: triagem, entrevistas, dossiê.
