@@ -632,7 +632,7 @@ header {
     <select class="filter-input" id="cand-filter-etapa" onchange="renderCandidatos()"><option value="">Todas as etapas</option></select>
   </div>
   <div class="cand-table-wrap" style="margin-top:16px">
-    <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Entrou em</th><th>Entrevistas</th><th>Ações</th></tr></thead>
+    <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Match</th><th>Etapa</th><th>Entrou em</th><th>Entrevistas</th><th>Ações</th></tr></thead>
     <tbody id="cand-tbody"></tbody></table>
   </div>
 </div>
@@ -858,11 +858,6 @@ header {
   <div class="modal-header"><div class="modal-title" id="mc-titulo">Atualizar Candidato</div><button class="modal-close" onclick="closeModal('modal-mover-cand')">✕</button></div>
   <input type="hidden" id="mc-id">
   <div class="form-grid">
-    <div class="form-field" style="grid-column:1/-1"><label>Nome</label><input id="mc-nome" placeholder="Nome completo"></div>
-    <div class="form-field"><label>CPF</label><input id="mc-cpf" placeholder="000.000.000-00"></div>
-    <div class="form-field"><label>Telefone</label><input id="mc-tel" placeholder="(00) 00000-0000"></div>
-    <div class="form-field" style="grid-column:1/-1"><label>E-mail</label><input id="mc-email" type="email" placeholder="candidato@email.com"></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Fonte (como chegou até nós)</label><input id="mc-fonte" placeholder="Ex.: site, indicação, LinkedIn..."></div>
     <div class="form-field" style="grid-column:1/-1"><label>🔗 LinkedIn</label><div style="display:flex;gap:6px"><input id="mc-linkedin" placeholder="linkedin.com/in/..." style="flex:1"><button type="button" class="btn btn-ghost btn-sm" onclick="abrirLinkedin()" title="Abrir perfil">Abrir</button></div></div>
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option><option value="reprovado">Reprovado</option><option value="banco_talentos_administrativo">Banco de Talentos Administrativo</option><option value="banco_talentos_academico">Banco de Talentos Acadêmico</option><option value="banco_talentos_geral">Banco de Talentos Geral</option></select></div>
@@ -1632,7 +1627,7 @@ const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cp
 
 const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, arte_custom:v.arteCustom||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
-const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor, criado_em:e.data||new Date().toISOString() });
+const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
 const agendaToDb= a => ({ id:a.id, empresa_id:a.empresaId||currentEmpresa, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
 
@@ -2438,25 +2433,48 @@ function renderFunil() {
   document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
+// Lê o "Nível geral" do Dossiê de Match automático gravado no campo "obs" do
+// candidato (montado pelos forms/DISC no momento em que ele entra no funil).
+// Não existe coluna própria pra isso ainda — o dossiê inteiro fica em "obs" e
+// aqui só extraímos o resumo (nível + primeira linha) pra mostrar um selo na
+// lista sem precisar abrir o candidato. Candidato antigo ou cadastrado à mão
+// não tem esse selo (obs sem o marcador "🎯 DOSSIÊ DE MATCH").
+function _extrairMatch(obs){
+  if(!obs) return null;
+  const m = obs.match(/🎯 DOSSIÊ DE MATCH \(automático\) — Nível geral: (\w+)/);
+  if(!m) return null;
+  return m[1]; // 'Alto' | 'Médio' | 'Baixo' | 'Parcial'
+}
+const MATCH_BADGE = {
+  'Alto':   {bg:'var(--green-lt,#e6f4ea)', cor:'var(--green,#1a7f37)', label:'● Alto'},
+  'Médio':  {bg:'var(--amber-lt,#fdf0dc)', cor:'var(--amber,#b7791f)', label:'● Médio'},
+  'Baixo':  {bg:'var(--red-lt,#fde8e8)',   cor:'var(--red,#c53030)',   label:'● Baixo'},
+  'Parcial':{bg:'var(--bege-lt,#f1ede4)',  cor:'var(--mid,#6b6560)',   label:'◐ Parcial'}
+};
 function renderCandidatos() {
   const cands=getCandsVisiveis(),vagas=getVagasVisiveis(),entrevistas=getEntrevistasVisiveis();
   const search=document.getElementById('cand-search').value.toLowerCase(),fV=document.getElementById('cand-filter-vaga').value,fE=document.getElementById('cand-filter-etapa').value;
   const fi=cands.filter(c=>(!search||c.nome.toLowerCase().includes(search))&&(!fV||c.vagaId===fV)&&(!fE||c.etapa===fE))
     .sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR',{sensitivity:'base'}));
   const tbody=document.getElementById('cand-tbody');
-  if(!fi.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
+  if(!fi.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
   tbody.innerHTML=fi.map(c=>{
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
     const nE=entrevistas.filter(e=>e.nome===c.nome&&e.vagaId===c.vagaId).length;
     const dt=c.dataEntrada?new Date(c.dataEntrada+'T12:00:00').toLocaleDateString('pt-BR'):'—';
     const finalizado=(c.etapa==='reprovado'||c.etapa==='admissao'||String(c.etapa||'').startsWith('banco_talentos'));
+    const nivelMatch=_extrairMatch(c.obs);
+    const badge=nivelMatch?MATCH_BADGE[nivelMatch]:null;
+    const matchCel=badge
+      ? `<span class="tag" style="background:${badge.bg};color:${badge.cor}" title="Dossiê de match automático — abra o candidato para ver o detalhamento">${badge.label}</span>`
+      : `<span style="font-size:11px;color:var(--light)">—</span>`;
     const acoes=`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">`
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--green-lt,#e6f4ea);color:var(--green,#1a7f37);border:1px solid var(--green,#1a7f37)" onclick="aprovarCard('${c.id}')" title="Aprovar e avançar">✓ Aprovar</button>`)
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--red-lt);color:var(--red);border:1px solid var(--red)" onclick="reprovarCard('${c.id}')" title="Reprovar e enviar feedback">✗ Reprovar</button>`)
       +`<button class="btn btn-ghost btn-sm" onclick="menuMensagens('${c.id}')" title="Enviar mensagem">💬</button>`
       +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
       +`</div>`;
-    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
+    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td>${matchCel}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
   }).join('');
 }
 function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.innerHTML='<option value="">Selecione...</option>'+getVagasVisiveis().filter(v=>v.status==='aberta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('');}
@@ -2471,18 +2489,11 @@ function abrirNovoCandidatoModal(){
   openModal('modal-novo-cand');
 }
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
-  document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';document.getElementById('mc-fonte').value=c.fonte||'';
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
   const selE=document.getElementById('mc-etapa');selE.innerHTML=[...ETAPAS,{id:'reprovado',label:'Reprovado'},...getBancos()].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
-  const novoNome=document.getElementById('mc-nome').value.trim();
-  if(!novoNome){alert('Preencha o nome.');return;}
-  const novoCpf=document.getElementById('mc-cpf').value.trim();
-  const novoTel=document.getElementById('mc-tel').value.trim();
-  const novoEmail=document.getElementById('mc-email').value.trim();
-  const novaFonte=document.getElementById('mc-fonte').value.trim();
   const novaEtapa=document.getElementById('mc-etapa').value,obs=document.getElementById('mc-obs').value.trim();
   const linkedin=document.getElementById('mc-linkedin').value.trim();
   const novaVaga=document.getElementById('mc-vaga').value,vagaAntiga=_cands[idx].vagaId;
@@ -2495,7 +2506,7 @@ async function atualizarCandidato(){
   if(novaEtapa!==etapaAntiga){
     hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
   }
-  _cands[idx]={..._cands[idx],nome:novoNome,cpf:novoCpf,tel:novoTel,email:novoEmail,fonte:novaFonte,vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
+  _cands[idx]={..._cands[idx],vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
   try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
@@ -2949,23 +2960,7 @@ const VAGAS_ROTEIRO = [
     avaliacao:['Produção de conteúdo','Domínio das plataformas','Design e edição','Métricas e captação','Criatividade','Organização e prazos','Execução prática'] },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // 7) COORDENADOR DE INSTITUTO TECNOLÓGICO
-  // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-instituto', empresaId:'cambury', nome:'Coordenador de Instituto Tecnológico', setor:'Instituto Tecnológico', duracao:'40 min',
-    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 (PJ)', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Foco':'Comercialização B2B de cursos técnicos e profissionalizantes para empresas' },
-    sections:[
-      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação do Instituto Tecnológico, com foco na prospecção e comercialização de cursos técnicos e profissionalizantes para empresas (B2B), incluindo treinamentos corporativos e parcerias institucionais. Regime PJ, R$ 5.000,00, presencial em Goiânia, horário comercial.']},
-      {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Marketing, Gestão Comercial ou correlatas) e sua trajetória comercial.','Qual sua experiência com vendas B2B, prospecção ativa (outbound) ou negociação com empresas?','Já atuou no setor educacional ou vendendo treinamentos/cursos corporativos? (diferencial)']},
-      {name:'Competência Técnica · Prospecção e Vendas B2B',time:'8 min',questions:['Como você estrutura uma prospecção ativa de empresas, da geração do lead até o fechamento?','O que caracteriza, na sua visão, um lead qualificado — e como você prioriza sua carteira com base nisso?','Como você constrói uma proposta de valor para uma empresa, entendendo a dor e o objetivo dela, em vez de só apresentar preço?','Como você conduziria a comercialização de cursos técnicos e de pós-graduação junto a empresas parceiras?']},
-      {name:'Competência Técnica · Indicadores e Gestão da Carteira',time:'6 min',questions:['O que é ticket médio e como você usa esse indicador para orientar suas ações comerciais?','Quais outros indicadores comerciais você acompanha no dia a dia (conversão, ciclo de venda, etc.)?','Que experiência tem com CRM ou ferramentas de gestão de carteira e funil de vendas?']},
-      {name:'Compromisso com Resultados',time:'5 min',questions:['Sua carteira está grande, mas os negócios travam no meio do funil e as vendas não avançam. Qual é o seu primeiro passo?','Conte uma situação em que reverteu uma meta comercial em risco.','Como mantém o ritmo de prospecção mesmo em períodos de baixa resposta das empresas?']},
-      {name:'Aspectos Comportamentais',time:'4 min',questions:['Como é sua capacidade de negociação com tomadores de decisão em empresas (RH, gestores, diretoria)?','Como você organiza sua rotina para equilibrar prospecção, atendimento e fechamento?','Como lida com repetidas recusas ou silêncio de um prospect sem perder o ritmo?']},
-      {name:'Pergunta Final',time:'2 min',questions:['Esta posição depende de geração ativa de negócios e relacionamento institucional com empresas. Por que você é a pessoa certa para ela?']}
-    ],
-    avaliacao:['Prospecção B2B','Negociação','Construção de proposta de valor','Indicadores comerciais','Gestão de carteira/CRM','Resiliência comercial','Comunicação institucional'] },
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // 8) MOTORISTA CARRETEIRO (TCL Transportes)
+  // 7) MOTORISTA CARRETEIRO (TCL Transportes)
   //    Baseado no Manual do Motorista (MAN-TCL-01, rev.01) e na Ficha de Vaga.
   //    Exigência-chave da cliente: experiência comprovada em Rodotrem / 9 eixos
   //    (mínimo 6 meses) — sem isso, reprova direto na Formação e Experiência.
@@ -3109,7 +3104,7 @@ async function salvarEntrevista(){
       nota: (secState[si] && secState[si].notes && secState[si].notes[qi]) || ''
     }))
   }));
-  const rec={id:Date.now().toString(),data:new Date().toISOString(),nome:nome.trim(),cpf,candidatoId:candidatoIdSelecionado,
+  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,candidatoId:candidatoIdSelecionado,
     comoSoube:(document.getElementById('f-como-soube')||{}).value||'',
     idade:(document.getElementById('f-idade')||{}).value||'',
     estadoCivil:(document.getElementById('f-estado-civil')||{}).value||'',
@@ -3650,11 +3645,7 @@ function renderDashboard(){
       // a vaga encerrada, deixava de aparecer. Agora vale também o histórico.
       const emDecisao = candidatosEmDecisao(v, candsParaCalc);
       const aprovado = candidatoAprovadoDaVaga(v, candsParaCalc);
-      // Vaga já Fechada: mostra só o aprovado de fato (nunca a lista bruta de quem
-      // passou pela etapa aprovação/admissão, que pode incluir candidato que ficou
-      // "esquecido" nessa etapa depois que outro foi escolhido). A lista com vários
-      // nomes só faz sentido em vaga ainda ABERTA e em decisão entre finalistas.
-      const nomes = (v.status!=='encerrada' && emDecisao.length) ? emDecisao.map(c=>c.nome).join(', ') : (aprovado ? aprovado.nome : '—');
+      const nomes = emDecisao.length ? emDecisao.map(c=>c.nome).join(', ') : (aprovado ? aprovado.nome : '—');
       let statusHtml, dias;
       if(v.status==='cancelada'){
         // Vaga cancelada consumiu trabalho real: triagem, entrevistas, dossiê.
