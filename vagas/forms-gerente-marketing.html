@@ -271,6 +271,38 @@ try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { pe
 let rsDb = null;
 try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
+// ═══ DOSSIÊ DE MATCH AUTOMÁTICO (Nível 1) ═══════════════════════════════
+// Cruza DISC + desempenho no questionário técnico pra já chegar no R&S com
+// uma leitura inicial pronta. É um pré-filtro por dados estruturados (não lê
+// o currículo em si) — não substitui a análise humana da equipe de R&S.
+// Perfil buscado pra Gerência de Marketing (leitura de dados/funil e gestão
+// de equipe e processos): conformidade/rigor analítico (C) e dominância/
+// decisão (D).
+const DISC_IDEAL = ['C', 'D'];
+function montarDossieMatch(discPrimary, discSecondary, technicalScore, DISC_NOMES) {
+  let pontos = 0;
+  const linhas = [];
+  if (technicalScore !== null && technicalScore !== undefined) {
+    const nivelTec = technicalScore >= 4 ? 'Alto' : (technicalScore >= 2 ? 'Médio' : 'Baixo');
+    pontos += technicalScore >= 4 ? 2 : (technicalScore >= 2 ? 1 : 0);
+    linhas.push(`• Técnico: ${technicalScore}/5 no questionário (${nivelTec})`);
+  }
+  if (discPrimary) {
+    const idxPrim = DISC_IDEAL.indexOf(discPrimary);
+    const idxSec = discSecondary ? DISC_IDEAL.indexOf(discSecondary) : -1;
+    let nivelDisc, pontosDisc;
+    if (idxPrim === 0) { nivelDisc = 'Alto'; pontosDisc = 2; }
+    else if (idxPrim > 0 || idxSec === 0) { nivelDisc = 'Médio'; pontosDisc = 1; }
+    else { nivelDisc = 'Baixo'; pontosDisc = 0; }
+    pontos += pontosDisc;
+    const perfilTxt = discSecondary ? `${DISC_NOMES[discPrimary]} / ${DISC_NOMES[discSecondary]}` : DISC_NOMES[discPrimary];
+    linhas.push(`• Perfil comportamental: ${perfilTxt} — perfil buscado pra vaga é ${DISC_IDEAL.map(d=>DISC_NOMES[d]).join('/')} (${nivelDisc})`);
+  }
+  if (!linhas.length) return '';
+  const nivelGeral = pontos >= 3 ? 'Alto' : (pontos >= 1 ? 'Médio' : 'Baixo');
+  return `🎯 DOSSIÊ DE MATCH (automático) — Nível geral: ${nivelGeral}\n${linhas.join('\n')}\nGerado a partir do DISC e do questionário técnico. Pré-filtro — revisão humana antes da entrevista.`;
+}
+
 // Envia o candidato para o funil do sistema de R&S assim que ele termina
 // o formulário — busca o currículo e o DISC no banco das vagas, casa a vaga pelo
 // título no banco do R&S e cria (ou atualiza) o registro em "candidatos".
@@ -296,7 +328,8 @@ async function pushCandidatoParaRS(formPayload) {
     const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
 
     const q = formPayload.qualificacao || {};
-    let obs = `Nota no questionário técnico: ${formPayload.technical_score}/5.`;
+    const dossie = montarDossieMatch(discPrimary, discSecondary, formPayload.technical_score, DISC_NOMES);
+    let obs = dossie ? dossie + '\n\n' : `Nota no questionário técnico: ${formPayload.technical_score}/5.`;
     if (discPrimary) {
       obs += ` Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
     }
