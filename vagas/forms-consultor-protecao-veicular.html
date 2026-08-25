@@ -235,6 +235,48 @@ try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { pe
 let rsDb = null;
 try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
+const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
+
+// ═══ DOSSIÊ DE MATCH AUTOMÁTICO (Nível 1) ═══════════════════════════════
+// Cruza DISC + sinais de discurso comercial nas respostas abertas pra já
+// chegar no R&S com uma leitura inicial pronta. Como esta vaga não tem quiz
+// técnico (as perguntas são abertas), o "técnico" aqui vira uma varredura por
+// palavras-chave associadas a foco em resultado/vendas nas respostas do
+// bloco comercial. É um pré-filtro por dados estruturados (não lê o
+// currículo em si) — não substitui a análise humana da equipe de R&S.
+// Perfil buscado pra Consultor Especialista (vendas): influência/persuasão
+// (I) e dominância/foco em resultado (D).
+const DISC_IDEAL = ['I', 'D'];
+const PALAVRAS_COMERCIAIS = ['meta','venda','vendi','bati','result','cliente','fechei',
+  'fechamento','comiss','ganhei','disciplina','consist','treinamento','processo','negocia'];
+function pontuarDiscursoComercial(respostasTexto) {
+  const texto = (respostasTexto || '').toLowerCase();
+  let hits = 0;
+  PALAVRAS_COMERCIAIS.forEach(p => { if (texto.includes(p)) hits++; });
+  return hits;
+}
+function montarDossieMatch(discPrimary, discSecondary, respostasTexto) {
+  let pontos = 0;
+  const linhas = [];
+  const hits = pontuarDiscursoComercial(respostasTexto);
+  const nivelDiscurso = hits >= 5 ? 'Alto' : (hits >= 2 ? 'Médio' : 'Baixo');
+  pontos += hits >= 5 ? 2 : (hits >= 2 ? 1 : 0);
+  linhas.push(`• Discurso comercial nas respostas: ${hits} sinal(is) de foco em resultado/vendas (${nivelDiscurso})`);
+  if (discPrimary) {
+    const idxPrim = DISC_IDEAL.indexOf(discPrimary);
+    const idxSec = discSecondary ? DISC_IDEAL.indexOf(discSecondary) : -1;
+    let nivelDisc, pontosDisc;
+    if (idxPrim === 0) { nivelDisc = 'Alto'; pontosDisc = 2; }
+    else if (idxPrim > 0 || idxSec === 0) { nivelDisc = 'Médio'; pontosDisc = 1; }
+    else { nivelDisc = 'Baixo'; pontosDisc = 0; }
+    pontos += pontosDisc;
+    const perfilTxt = discSecondary ? `${DISC_NOMES[discPrimary]} / ${DISC_NOMES[discSecondary]}` : DISC_NOMES[discPrimary];
+    linhas.push(`• Perfil comportamental: ${perfilTxt} — perfil buscado pra vaga é ${DISC_IDEAL.map(d=>DISC_NOMES[d]).join('/')} (${nivelDisc})`);
+  }
+  const nivelGeral = pontos >= 3 ? 'Alto' : (pontos >= 1 ? 'Médio' : 'Baixo');
+  return `🎯 DOSSIÊ DE MATCH (automático) — Nível geral: ${nivelGeral}\n${linhas.join('\n')}\nGerado a partir do DISC e das respostas abertas (varredura por palavras-chave, não é leitura de conteúdo). Pré-filtro — revisão humana antes da entrevista.`;
+}
+
 // Envia o candidato para o funil do sistema de R&S assim que ele termina
 // o formulário, busca o currículo e o DISC no banco das vagas, casa a vaga pelo
 // título no banco do R&S e cria (ou atualiza) o registro em "candidatos".
@@ -257,16 +299,9 @@ async function pushCandidatoParaRS(formPayload) {
     const cvUrl = c.cv_url || null;
     const discPrimary = c.primary_profile || null;
     const discSecondary = c.secondary_profile || null;
-    const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
 
-    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
-    // campo gravado como "url", o clique no arquivo dava "não foi possível abrir".
-    const documentos = cvUrl ? [{
-      nome:'Currículo', path:cvUrl, origem:'vagas', bucket:'curriculos',
-      tipo:'pdf', enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
-    }] : [];
-
-    let obs = `Questionário completo (perfil e avaliação comercial) recebido.`;
+    const dossie = montarDossieMatch(discPrimary, discSecondary, formPayload.respostas_texto);
+    let obs = dossie + '\n\n' + `Questionário completo (perfil e avaliação comercial) recebido.`;
     if (discPrimary) {
       obs += ` Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
     }
@@ -277,6 +312,15 @@ async function pushCandidatoParaRS(formPayload) {
     // e o candidato não tem login, então toda gravação era recusada em silêncio.
     // A função aceita só estes campos e descobre a empresa a partir da vaga, de
     // modo que o site nunca escolhe em qual cliente o candidato entra.
+    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
+    // currículo do site guardado em outro projeto Supabase, o R&S sabe abrir
+    // esse caminho porque tem acesso configurado ao bucket "curriculos" de lá.
+    const documentos = cvUrl ? [{
+      nome: 'Currículo (enviado no site)',
+      path: cvUrl,
+      origem: 'vagas'
+    }] : [];
+
     const { data: resp, error: erroRpc } = await rsDb.rpc('lv_receber_candidato_do_site', {
       p_nome: formPayload.nome,
       p_email: emailNorm,
@@ -479,12 +523,14 @@ function renderForm() {
     });
 
     if (result.ok) {
+      const respostasTexto = [...respostasComerciais, ...respostasPerfil].map(r => r.resposta).join(' ');
       pushCandidatoParaRS({
         nome: nome.value.trim(),
         email: email.value.trim(),
         whatsapp: whatsapp.value.trim(),
         vaga_titulo: prefill.vaga,
-        observacoes: document.getElementById('f-observacoes').value.trim() || null
+        observacoes: document.getElementById('f-observacoes').value.trim() || null,
+        respostas_texto: respostasTexto
       });
       app.innerHTML = `
         <div class="card success-card">

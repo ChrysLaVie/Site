@@ -262,6 +262,39 @@ try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { pe
 let rsDb = null;
 try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
+const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
+
+// ═══ DOSSIÊ DE MATCH AUTOMÁTICO (Nível 1) ═══════════════════════════════
+// Cruza DISC + desempenho no questionário técnico pra já chegar no R&S com
+// uma leitura inicial pronta. É um pré-filtro por dados estruturados (não lê
+// o currículo em si) — não substitui a análise humana da equipe de R&S.
+// Perfil buscado pra Coordenação Acadêmica: rigor e consistência de processos
+// (C) e estabilidade/paciência com pessoas e rotina (S).
+const DISC_IDEAL = ['C', 'S'];
+function montarDossieMatch(discPrimary, discSecondary, technicalScore) {
+  let pontos = 0;
+  const linhas = [];
+  if (technicalScore !== null && technicalScore !== undefined) {
+    const nivelTec = technicalScore >= 4 ? 'Alto' : (technicalScore >= 2 ? 'Médio' : 'Baixo');
+    pontos += technicalScore >= 4 ? 2 : (technicalScore >= 2 ? 1 : 0);
+    linhas.push(`• Técnico: ${technicalScore}/5 no questionário (${nivelTec})`);
+  }
+  if (discPrimary) {
+    const idxPrim = DISC_IDEAL.indexOf(discPrimary);
+    const idxSec = discSecondary ? DISC_IDEAL.indexOf(discSecondary) : -1;
+    let nivelDisc, pontosDisc;
+    if (idxPrim === 0) { nivelDisc = 'Alto'; pontosDisc = 2; }
+    else if (idxPrim > 0 || idxSec === 0) { nivelDisc = 'Médio'; pontosDisc = 1; }
+    else { nivelDisc = 'Baixo'; pontosDisc = 0; }
+    pontos += pontosDisc;
+    const perfilTxt = discSecondary ? `${DISC_NOMES[discPrimary]} / ${DISC_NOMES[discSecondary]}` : DISC_NOMES[discPrimary];
+    linhas.push(`• Perfil comportamental: ${perfilTxt} — perfil buscado pra vaga é ${DISC_IDEAL.map(d=>DISC_NOMES[d]).join('/')} (${nivelDisc})`);
+  }
+  if (!linhas.length) return '';
+  const nivelGeral = pontos >= 3 ? 'Alto' : (pontos >= 1 ? 'Médio' : 'Baixo');
+  return `🎯 DOSSIÊ DE MATCH (automático) — Nível geral: ${nivelGeral}\n${linhas.join('\n')}\nGerado a partir do DISC e do questionário técnico. Pré-filtro — revisão humana antes da entrevista.`;
+}
+
 // Envia o candidato para o funil do sistema de R&S assim que ele termina
 // o formulário — busca o currículo e o DISC no banco das vagas, casa a vaga pelo
 // título no banco do R&S e cria (ou atualiza) o registro em "candidatos".
@@ -284,20 +317,22 @@ async function pushCandidatoParaRS(formPayload) {
     const cvUrl = c.cv_url || null;
     const discPrimary = c.primary_profile || null;
     const discSecondary = c.secondary_profile || null;
-    const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
 
-    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
-    // campo gravado como "url", o clique no arquivo dava "não foi possível abrir".
-    const documentos = cvUrl ? [{
-      nome:'Currículo', path:cvUrl, origem:'vagas', bucket:'curriculos',
-      tipo:'pdf', enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
-    }] : [];
-
-    let obs = '';
+    const dossie = montarDossieMatch(discPrimary, discSecondary, formPayload.technical_score);
+    let obs = dossie ? dossie + '\n\n' : '';
     if (discPrimary) {
       obs += `Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
     }
     if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
+
+    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
+    // currículo do site guardado em outro projeto Supabase, o R&S sabe abrir
+    // esse caminho porque tem acesso configurado ao bucket "curriculos" de lá.
+    const documentos = cvUrl ? [{
+      nome: 'Currículo (enviado no site)',
+      path: cvUrl,
+      origem: 'vagas'
+    }] : [];
 
     // O candidato é entregue ao R&S por uma função do banco, não gravando na
     // tabela direto. Motivo: a tabela "candidatos" exige usuário logado e ativo,
@@ -511,7 +546,8 @@ function renderForm() {
         email: email.value.trim(),
         whatsapp: whatsapp.value.trim(),
         vaga_titulo: prefill.vaga,
-        observacoes: document.getElementById('f-observacoes').value.trim() || null
+        observacoes: document.getElementById('f-observacoes').value.trim() || null,
+        technical_score: technicalScore
       });
       app.innerHTML = `
         <div class="card success-card">
