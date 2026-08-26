@@ -1381,57 +1381,100 @@ async function renderAdmin() {
     return;
   }
 
+  // Ordena por nome (ordem alfabética, ignorando acento/caixa) — facilita achar
+  // um candidato numa lista grande sem depender só da busca.
+  const ordenados = [...results].sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' })
+  );
+
+  function _norm(s) {
+    return (s || '').toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function renderTabela(lista) {
+    const tabela = document.getElementById('adminTabelaWrap');
+    if (!lista.length) {
+      tabela.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);padding:16px 0;">Nenhum candidato encontrado com esse termo de busca.</p>`;
+      document.getElementById('adminCount').textContent = `0 de ${ordenados.length} avaliação(ões)`;
+      return;
+    }
+    tabela.innerHTML = `
+      <div class="admin-table-wrap">
+        <table>
+          <tr>
+            <th>Data</th><th>Nome</th><th>E-mail</th><th>WhatsApp</th>
+            <th>Perfil primário</th><th>Perfil secundário</th><th>D</th><th>I</th><th>S</th><th>C</th><th></th>
+          </tr>
+          ${lista.map(r => {
+            const primary = r.primary_profile || (r.most ? Object.keys(r.most).sort((a,b) => r.most[b]-r.most[a])[0] : '?');
+            const secondary = r.secondary_profile || '?';
+            return `<tr>
+              <td>${new Date(r.created_at).toLocaleDateString('pt-BR')}</td>
+              <td>${r.name}</td>
+              <td>${r.email || '-'}</td>
+              <td>${r.phone || '-'}</td>
+              <td><span class="pill" style="background:${DIM[primary]?.color || '#999'}">${DIM[primary]?.name || primary}</span></td>
+              <td><span class="pill" style="background:${DIM[secondary]?.color || '#ccc'};opacity:0.85">${DIM[secondary]?.name || secondary}</span></td>
+              <td>${r.most?.D ?? '-'}</td><td>${r.most?.I ?? '-'}</td><td>${r.most?.S ?? '-'}</td><td>${r.most?.C ?? '-'}</td>
+              <td style="white-space:nowrap;">
+                <button class="pdf-btn" data-id="${r.id}">baixar PDF</button>
+                <button class="del-btn" data-id="${r.id}">remover</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </table>
+      </div>
+    `;
+    document.getElementById('adminCount').textContent =
+      lista.length === ordenados.length
+        ? `${ordenados.length} avaliação(ões) no total`
+        : `${lista.length} de ${ordenados.length} avaliação(ões)`;
+
+    // Emite o mesmo relatório que o candidato recebe ao terminar o teste.
+    // A ligação precisa vir DEPOIS da tabela ser montada: antes disso os botões
+    // ainda não existem na tela e o clique não faria nada.
+    tabela.querySelectorAll('.pdf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const linha = ordenados.find(x => String(x.id) === String(btn.dataset.id));
+        if (!linha) { alert('Não encontrei os dados dessa avaliação.'); return; }
+        try {
+          buildPDF(_registroParaPDF(linha));
+        } catch (e) {
+          console.error('Falha ao gerar o PDF:', e);
+          alert('Não foi possível gerar o PDF desta avaliação: ' + (e && e.message ? e.message : e));
+        }
+      });
+    });
+
+    tabela.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remover este candidato?')) return;
+        await deleteResult(btn.dataset.id);
+        renderAdmin();
+      });
+    });
+  }
+
   body.innerHTML = `
-    <div class="admin-table-wrap">
-      <table>
-        <tr>
-          <th>Data</th><th>Nome</th><th>E-mail</th><th>WhatsApp</th>
-          <th>Perfil primário</th><th>Perfil secundário</th><th>D</th><th>I</th><th>S</th><th>C</th><th></th>
-        </tr>
-        ${results.map(r => {
-          const primary = r.primary_profile || (r.most ? Object.keys(r.most).sort((a,b) => r.most[b]-r.most[a])[0] : '?');
-          const secondary = r.secondary_profile || '?';
-          return `<tr>
-            <td>${new Date(r.created_at).toLocaleDateString('pt-BR')}</td>
-            <td>${r.name}</td>
-            <td>${r.email || '-'}</td>
-            <td>${r.phone || '-'}</td>
-            <td><span class="pill" style="background:${DIM[primary]?.color || '#999'}">${DIM[primary]?.name || primary}</span></td>
-            <td><span class="pill" style="background:${DIM[secondary]?.color || '#ccc'};opacity:0.85">${DIM[secondary]?.name || secondary}</span></td>
-            <td>${r.most?.D ?? '-'}</td><td>${r.most?.I ?? '-'}</td><td>${r.most?.S ?? '-'}</td><td>${r.most?.C ?? '-'}</td>
-            <td style="white-space:nowrap;">
-              <button class="pdf-btn" data-id="${r.id}">baixar PDF</button>
-              <button class="del-btn" data-id="${r.id}">remover</button>
-            </td>
-          </tr>`;
-        }).join('')}
-      </table>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+      <input id="adminSearch" placeholder="🔍 Buscar por nome, e-mail ou telefone..." style="flex:1;min-width:220px;background:var(--bg,#fff);border:1px solid var(--border,#d8cfc4);border-radius:8px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink,#2c2620);outline:none;">
+      <span id="adminCount" style="font-size:12px;color:var(--ink-soft);white-space:nowrap;"></span>
     </div>
-    <p style="font-size:12px;color:var(--ink-soft);margin-top:16px;">${results.length} avaliação(ões) no total</p>
+    <div id="adminTabelaWrap"></div>
   `;
 
-  // Emite o mesmo relatório que o candidato recebe ao terminar o teste.
-  // A ligação precisa vir DEPOIS da tabela ser montada: antes disso os botões
-  // ainda não existem na tela e o clique não faria nada.
-  body.querySelectorAll('.pdf-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const linha = results.find(x => String(x.id) === String(btn.dataset.id));
-      if (!linha) { alert('Não encontrei os dados dessa avaliação.'); return; }
-      try {
-        buildPDF(_registroParaPDF(linha));
-      } catch (e) {
-        console.error('Falha ao gerar o PDF:', e);
-        alert('Não foi possível gerar o PDF desta avaliação: ' + (e && e.message ? e.message : e));
-      }
-    });
-  });
+  renderTabela(ordenados);
 
-  body.querySelectorAll('.del-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('Remover este candidato?')) return;
-      await deleteResult(btn.dataset.id);
-      renderAdmin();
-    });
+  document.getElementById('adminSearch').addEventListener('input', (e) => {
+    const termo = _norm(e.target.value.trim());
+    if (!termo) { renderTabela(ordenados); return; }
+    const filtrados = ordenados.filter(r =>
+      _norm(r.name).includes(termo) ||
+      _norm(r.email).includes(termo) ||
+      _norm(r.phone).includes(termo)
+    );
+    renderTabela(filtrados);
   });
 }
 
