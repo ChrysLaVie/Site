@@ -6,7 +6,6 @@
 <title>La Vie · R&S</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 
@@ -908,14 +907,18 @@ header {
   <div id="menu-msg-list"></div>
 </div></div>
 
-<div class="modal-bg" id="modal-arte"><div class="modal" style="max-width:560px;max-height:92vh;overflow:auto">
-  <div class="modal-header"><div class="modal-title">🎨 Arte de divulgação</div><button class="modal-close" onclick="closeModal('modal-arte')">✕</button></div>
-  <p style="font-size:12px;color:var(--mid);margin:-6px 0 12px">Formato 1080×1350 (Instagram / LinkedIn). Baixe em PNG e poste.</p>
-  <div style="display:flex;justify-content:center;margin-bottom:14px"><div style="width:455px;height:455px;overflow:hidden;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12)"><div id="arte-canvas-wrap" style="transform:scale(0.421);transform-origin:top left"></div></div></div>
-  <div style="display:flex;gap:10px;justify-content:flex-end">
-    <button class="btn btn-ghost" onclick="closeModal('modal-arte')">Fechar</button>
-    <button class="btn btn-primary" id="arte-dl-btn" onclick="baixarArte()">⬇ Baixar PNG</button>
+<div class="modal-bg" id="modal-imagens-vaga"><div class="modal" style="max-width:560px;max-height:92vh;overflow:auto">
+  <div class="modal-header"><div class="modal-title">🖼 Imagens da vaga</div><button class="modal-close" onclick="closeModal('modal-imagens-vaga')">✕</button></div>
+  <input type="hidden" id="iv-vaga-id">
+  <div style="font-size:12px;color:var(--mid);margin:-6px 0 12px" id="iv-vaga-titulo"></div>
+  <div class="form-field" style="margin-bottom:14px"><label>Legenda de divulgação</label><textarea id="iv-legenda" placeholder="Texto para usar junto com as imagens ao divulgar a vaga..." rows="4" oninput="_ivSalvarLegenda()"></textarea></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid)">Imagens (até 3)</label>
+    <label class="btn btn-ghost btn-sm" id="iv-add-btn" style="cursor:pointer;margin:0">+ Adicionar<input type="file" id="iv-file" accept="image/*" multiple style="display:none" onchange="_ivAdicionarImagens(event)"></label>
   </div>
+  <div id="iv-imagens-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+  <div id="iv-imagens-empty" style="font-size:12px;color:var(--light);font-style:italic;margin-top:6px">Nenhuma imagem enviada ainda.</div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px"><button class="btn btn-ghost" onclick="closeModal('modal-imagens-vaga')">Fechar</button></div>
 </div></div>
 
 <div class="modal-bg" id="modal-trocar-senha"><div class="modal" style="max-width:400px">
@@ -1606,11 +1609,11 @@ function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
+const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
@@ -2216,7 +2219,7 @@ function renderVagas() {
       <div class="vaga-actions">
         <button class="btn btn-ghost btn-sm" onclick="editVaga('${v.id}')">✏ Editar</button>
         <button class="btn btn-ghost btn-sm" onclick="verCandVaga('${v.id}')">👥 Candidatos</button>
-        <button class="btn btn-ghost btn-sm" onclick="gerarArte('${v.id}')">🎨 Arte</button>
+        <button class="btn btn-ghost btn-sm" onclick="abrirImagensVaga('${v.id}')">🖼 Imagens${(v.imagens&&v.imagens.length)?` (${v.imagens.length})`:''}</button>
       </div>
     </div>`;
   }).join('');
@@ -2486,133 +2489,79 @@ async function removerDoc(i){
   renderDocsList();
 }
 
-// ══ GERADOR DE ARTE DE DIVULGAÇÃO (Instagram / LinkedIn) ═══════════════════════
-let _arteVagaId=null;
-function _arteBullets(texto){
-  // quebra a obs em frases curtas para virar bullets — exclui a frase de
-  // benefícios, que já vira chips separados (ver _arteBeneficios)
-  const partes=(texto||'').split(/[.;]\s+/).map(s=>s.trim()).filter(s=>s.length>3 && !/^benef[ií]cios?:/i.test(s));
-  return partes.slice(0,6);
-}
-// Extrai a lista de benefícios (depois de "Benefícios:" na obs) pra virar
-// chips pequenos e escaneáveis, em vez de ficar perdida dentro de um parágrafo.
-function _arteBeneficios(texto){
-  const s = texto||'';
-  const m = s.match(/benef[ií]cios?:\s*([^.]+)\.?/i);
-  if(!m) return [];
-  // Só separa em vírgula quando ela vem seguida de espaço (item da lista) — uma
-  // vírgula colada em dois dígitos, como em "R$ 313,00", é separador decimal,
-  // não separador de lista, e não deve quebrar o benefício ao meio.
-  return m[1].split(/,\s+| e (?=[a-zà-ú])/i).map(x=>x.trim()).filter(x=>x.length>1).slice(0,8);
-}
-// Tenta separar "média de ganhos" (o número mais atraente) do resto da string
-// de salário, pra ele virar o número grande da arte em vez de ficar perdido
-// no meio do texto. Se não achar esse padrão, usa a string inteira mesmo.
-function _parseSalario(str){
-  const s = str||'';
-  if(!s.trim() || /a definir/i.test(s)){
-    return { hero:'A combinar', heroLabel:'Remuneração', sub:'' };
-  }
-  const m = s.match(/média\s+de\s+ganhos?[^R$]*?(R\$\s?[\d.,]+)\s*(?:a|e|até)\s*(R\$\s?[\d.,]+)/i);
-  if(m){
-    // Se a média de ganhos está dentro de parênteses, remove o parêntese
-    // inteiro. Recortar só o miolo deixava sobras como "(/mês" na arte.
-    const grupo = s.match(/\([^()]*média\s+de\s+ganhos?[^()]*\)/i);
-    const resto = (grupo ? s.replace(grupo[0],'') : s.replace(m[0],''))
-      .replace(/\s{2,}/g,' ')
-      .replace(/^[·\-–,\/\s+]+|[·\-–,\/\s+]+$/g,'')
-      .trim();
-    return { hero:`${m[1]} a ${m[2]}`, heroLabel:'Média de ganhos por mês', sub:resto };
-  }
-  return { hero: s, heroLabel:'Remuneração', sub:'' };
-}
-function gerarArte(id){
+// ══ IMAGENS E LEGENDA DE DIVULGAÇÃO DA VAGA ═════════════════════════════════
+// Sem geração automática de arte — a Chrys sobe as imagens prontas (até 3 por
+// vaga) e escreve a legenda que quer usar. Fica salvo na própria vaga
+// (v.imagens / v.legenda), como base64, no mesmo padrão dos documentos do
+// candidato (mais simples que um bucket separado pra um volume pequeno assim).
+const VAGA_IMG_MAX = 3;
+const VAGA_IMG_TAMANHO_MAX = 5*1024*1024; // 5 MB por imagem
+function abrirImagensVaga(id){
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  _arteVagaId=id;
-  const sal = _parseSalario(v.salario);
-  const beneficios = _arteBeneficios(v.obs);
-
-  // Ícones (mesmo traço, sempre na cor de destaque)
-  const icoArea=`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>`;
-  const icoTipo=`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="7" width="14" height="9"/><path d="M15 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="1.6"/><circle cx="18.5" cy="18" r="1.6"/></svg>`;
-
-  const fatos=[
-    v.setor ? {ico:icoArea, txt:`Área: <b>${v.setor}</b>`} : null,
-    v.tipo  ? {ico:icoTipo, txt:v.tipo} : null,
-  ].filter(Boolean);
-
-  // Nunca revelar o nome do cliente na arte pública — a vaga é divulgada em
-  // nome da La Vie, o candidato só sabe qual empresa é durante o processo.
-  const html=`
-  <div id="arte-poster" style="width:1080px;height:1080px;position:relative;overflow:hidden;background:#F2F1ED;font-family:'DM Sans',sans-serif;color:#3A3A3A;padding:76px 84px;box-sizing:border-box;display:flex;flex-direction:column">
-    <div style="position:absolute;top:-140px;left:-160px;width:420px;height:420px;border-radius:50%;background:#D8CFC4;opacity:.55"></div>
-    <div style="position:absolute;bottom:-180px;right:-160px;width:460px;height:460px;border-radius:50%;background:#D8CFC4;opacity:.4"></div>
-
-    <div style="position:relative;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:15px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#7A5C2E">Oportunidade<br>Profissional</div>
-      <img src="${LOGO_LAVIE}" style="height:110px;width:auto;object-fit:contain">
-    </div>
-
-    <div style="position:relative;font-family:'Playfair Display',serif;font-weight:700;font-size:${v.titulo.length>18?'86px':'108px'};line-height:0.98;color:#1a1917;margin-top:52px">${v.titulo}</div>
-
-    <!-- destaque do ganho — sempre o maior número da peça -->
-    <div style="position:relative;margin-top:50px;background:#1a1917;border-radius:14px;padding:36px 34px">
-      <div style="font-size:13px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#B8AFA4;margin-bottom:7px">${sal.heroLabel}</div>
-      <div style="font-family:'Playfair Display',serif;font-size:58px;font-weight:700;line-height:1;color:#F2F1ED">${sal.hero}</div>
-      ${sal.sub?`<div style="font-size:17px;color:rgba(242,241,237,.7);margin-top:11px">${sal.sub}</div>`:''}
-    </div>
-
-    ${fatos.length?`
-    <div style="position:relative;margin-top:44px;display:flex;flex-direction:column;gap:17px">
-      ${fatos.map(f=>`<div style="display:flex;align-items:center;gap:14px"><span style="color:#7A5C2E;flex-shrink:0;display:flex">${f.ico}</span><span style="font-size:21px;color:#3A3A3A">${f.txt}</span></div>`).join('')}
-    </div>`:''}
-
-    ${beneficios.length?`
-    <div style="position:relative;margin-top:40px;display:flex;flex-wrap:wrap;gap:11px">
-      ${beneficios.map(b=>`<div style="font-size:15px;font-weight:500;color:#3A3A3A;background:#FFFFFF;border:1px solid #B8AFA4;border-radius:20px;padding:9px 17px;display:flex;align-items:center;gap:6px"><span style="color:#7A5C2E;font-weight:700;font-size:13px">✓</span>${b}</div>`).join('')}
-    </div>`:''}
-
-    <!-- margin-top:44px fixo (não "auto") — mantém um respiro consistente
-         em vez de esticar e deixar um vão vazio quando o conteúdo é curto -->
-    <div style="position:relative;margin-top:56px;display:flex;align-items:center;gap:18px">
-      <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:22px;color:#3A3A3A">Candidate-se em</div>
-      <div style="background:#7A5C2E;color:#FFFFFF;font-size:19px;font-weight:700;padding:17px 28px;border-radius:10px">lavieconsultoria.com/vagas</div>
-    </div>
-
-    <div style="position:relative;margin-top:44px;padding-top:30px;border-top:1px solid #B8AFA4;display:flex;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:11px">
-        <div style="width:36px;height:36px;border-radius:50%;border:1px solid #7A5C2E;color:#7A5C2E;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></div>
-        <div><div style="font-size:15px;font-weight:700;color:#1a1917">Instagram</div><div style="font-size:14px;color:#7A7A7A">@lavie_consultoria</div></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:11px">
-        <div style="width:36px;height:36px;border-radius:50%;border:1px solid #7A5C2E;color:#7A5C2E;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
-        <div><div style="font-size:15px;font-weight:700;color:#1a1917">WhatsApp</div><div style="font-size:14px;color:#7A7A7A">(62) 99274-1488</div></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:11px">
-        <div style="width:36px;height:36px;border-radius:50%;border:1px solid #7A5C2E;color:#7A5C2E;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></div>
-        <div><div style="font-size:15px;font-weight:700;color:#1a1917">LinkedIn</div><div style="font-size:14px;color:#7A7A7A">/in/lavieconsultoria</div></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:11px">
-        <div style="width:36px;height:36px;border-radius:50%;border:1px solid #7A5C2E;color:#7A5C2E;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></div>
-        <div><div style="font-size:15px;font-weight:700;color:#1a1917">E-mail</div><div style="font-size:14px;color:#7A7A7A">chrys@lavieconsultoria.com</div></div>
-      </div>
-    </div>
-  </div>`;
-  document.getElementById('arte-canvas-wrap').innerHTML=html;
-  openModal('modal-arte');
+  document.getElementById('iv-vaga-id').value=id;
+  document.getElementById('iv-vaga-titulo').textContent=v.titulo||'';
+  document.getElementById('iv-legenda').value=v.legenda||'';
+  _ivRenderImagens();
+  openModal('modal-imagens-vaga');
 }
-async function baixarArte(){
-  const node=document.getElementById('arte-poster'); if(!node){alert('Gere a arte primeiro.');return;}
-  const btn=document.getElementById('arte-dl-btn');const txt=btn.textContent;btn.textContent='Gerando...';btn.disabled=true;
-  try{
-    const canvas=await html2canvas(node,{scale:1,useCORS:true,backgroundColor:null,width:1080,height:1080});
-    const v=getVagas().find(x=>x.id===_arteVagaId);
-    const nome=(v?v.titulo:'vaga').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-    const a=document.createElement('a');a.download='arte_'+nome+'.png';a.href=canvas.toDataURL('image/png');a.click();
-    showToast('✅ Arte baixada!');
-  }catch(e){alert('Erro ao gerar imagem: '+e.message);}
-  btn.textContent=txt;btn.disabled=false;
+function _ivRenderImagens(){
+  const id=document.getElementById('iv-vaga-id').value;
+  const v=getVagas().find(x=>x.id===id);
+  const imgs=Array.isArray(v&&v.imagens)?v.imagens:[];
+  const list=document.getElementById('iv-imagens-list');
+  const empty=document.getElementById('iv-imagens-empty');
+  const addBtn=document.getElementById('iv-add-btn');
+  if(addBtn) addBtn.style.display = imgs.length>=VAGA_IMG_MAX ? 'none' : '';
+  if(!imgs.length){ list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  list.innerHTML=imgs.map((img,i)=>`<div style="position:relative;border:1px solid var(--bege);border-radius:8px;overflow:hidden;aspect-ratio:1/1">
+      <img src="${img.data}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="_ivRemoverImagem(${i})" title="Remover" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;line-height:1">✕</button>
+    </div>`).join('');
 }
+async function _ivAdicionarImagens(ev){
+  const id=document.getElementById('iv-vaga-id').value;
+  const idx=_vagas.findIndex(v=>v.id===id); if(idx<0)return;
+  const atuais=Array.isArray(_vagas[idx].imagens)?_vagas[idx].imagens:[];
+  const files=Array.from(ev.target.files||[]);
+  ev.target.value='';
+  const vagas_livres=VAGA_IMG_MAX-atuais.length;
+  if(vagas_livres<=0){ alert('Você já enviou o máximo de '+VAGA_IMG_MAX+' imagens.'); return; }
+  const aUsar=files.slice(0,vagas_livres);
+  if(files.length>aUsar.length) alert('Só cabem mais '+vagas_livres+' imagem(ns) nessa vaga (máximo '+VAGA_IMG_MAX+'). As demais não foram enviadas.');
+  for(const f of aUsar){
+    if(f.size>VAGA_IMG_TAMANHO_MAX){ alert('"'+f.name+'" é maior que 5 MB e não foi enviada.'); continue; }
+    if(!f.type.startsWith('image/')){ alert('"'+f.name+'" não é uma imagem e não foi enviada.'); continue; }
+    const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
+    atuais.push({ nome:f.name, data:dataUrl });
+  }
+  _vagas[idx].imagens=atuais;
+  try{ await upsertVaga(_vagas[idx]); }catch(e){ alert('Erro ao salvar imagem: '+e.message); }
+  _ivRenderImagens();
+  renderVagas();
+  showToast('✅ Imagem(ns) adicionada(s)!');
+}
+async function _ivRemoverImagem(i){
+  const id=document.getElementById('iv-vaga-id').value;
+  const idx=_vagas.findIndex(v=>v.id===id); if(idx<0)return;
+  const atuais=Array.isArray(_vagas[idx].imagens)?_vagas[idx].imagens:[];
+  if(!confirm('Remover essa imagem?'))return;
+  _vagas[idx].imagens=atuais.filter((_,j)=>j!==i);
+  try{ await upsertVaga(_vagas[idx]); }catch(e){ alert('Erro ao remover imagem: '+e.message); }
+  _ivRenderImagens();
+  renderVagas();
+}
+let _ivSalvarTimeout=null;
+function _ivSalvarLegenda(){
+  clearTimeout(_ivSalvarTimeout);
+  _ivSalvarTimeout=setTimeout(async ()=>{
+    const id=document.getElementById('iv-vaga-id').value;
+    const idx=_vagas.findIndex(v=>v.id===id); if(idx<0)return;
+    _vagas[idx].legenda=document.getElementById('iv-legenda').value;
+    try{ await upsertVaga(_vagas[idx]); }catch(e){}
+  }, 600);
+}
+
 
 // ══ ROTEIROS ══════════════════════════════════════════════════════════════════
 const VAGAS_ROTEIRO = [
@@ -4174,6 +4123,14 @@ create table if not exists pagamentos (
 --   for update using (
 --     exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'lavie_master')
 --   );
+--
+-- ✨ NOVO: 05-imagens-e-legenda-vaga.sql — imagens e legenda de divulgação
+-- Guarda até 3 imagens (em base64) e a legenda de texto direto na própria
+-- vaga, pra usar na divulgação sem depender de gerador automático de arte.
+-- Rode isto UMA VEZ no seu projeto Supabase (SQL Editor).
+--
+-- alter table vagas add column if not exists imagens jsonb not null default '[]'::jsonb;
+-- alter table vagas add column if not exists legenda text;
 --
 ================================================================================
 -->
