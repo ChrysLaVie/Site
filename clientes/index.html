@@ -789,6 +789,7 @@ header {
     <div class="form-field"><label>Data de Abertura *</label><input id="nv-data" type="date"></div>
     <div class="form-field"><label>Qtd de vagas</label><input id="nv-qtd" type="number" min="1" value="1"></div>
     <div class="form-field"><label>Salário</label><input id="nv-salario" placeholder="R$ 0.000,00"></div>
+    <div class="form-field"><label>Honorário La Vie</label><input id="nv-honorario" placeholder="Ex: 70% · R$ 1.400"></div>
     <div class="form-field"><label>Tipo</label><select id="nv-tipo"><option>CLT</option><option>PJ</option><option>Estágio</option><option>Trainee</option><option>Jovem Aprendiz</option></select></div>
     <div class="form-field"><label>Motivo</label><select id="nv-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais de divulgação</label><input id="nv-canais"></div>
@@ -815,6 +816,7 @@ header {
       </select>
     </div>
     <div class="form-field"><label>Salário</label><input id="ev-salario"></div>
+    <div class="form-field"><label>Honorário La Vie</label><input id="ev-honorario" placeholder="Ex: 70% · R$ 1.400"></div>
     <div class="form-field"><label>Motivo</label><select id="ev-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais</label><input id="ev-canais"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="ev-obs"></textarea></div>
@@ -2232,12 +2234,12 @@ async function salvarVaga() {
   const dataEl = document.getElementById('nv-data');
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
-  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
+  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-nova-vaga');
-    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
+    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
@@ -2246,8 +2248,7 @@ async function salvarVaga() {
 
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  ['ev-id','ev-titulo','ev-setor','ev-gestor','ev-data','ev-salario','ev-canais','ev-obs'].forEach(f=>document.getElementById(f).value=v[f.replace('ev-','').replace('-','')]||'');
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -2274,6 +2275,7 @@ async function atualizarVaga() {
     dataEncerramento:dataEnc,
     dataDossieManual:document.getElementById('ev-data-dossie').value||null,
     salario:document.getElementById('ev-salario').value.trim(),
+    honorario:document.getElementById('ev-honorario').value.trim(),
     status:novoStatus,
     motivo:document.getElementById('ev-motivo').value,
     canais:document.getElementById('ev-canais').value.trim(),
