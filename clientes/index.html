@@ -3507,7 +3507,7 @@ async function sincronizarParcelas(){
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
   const idsValidos=new Set();
   vagas.forEach(v=>_parcelasDef().forEach(d=>idsValidos.add(v.id+'-p'+d.n)));
-  const remover=_pagamentos.filter(p=>!idsValidos.has(p.id));
+  const remover=_pagamentos.filter(p=>!idsValidos.has(p.id) && !/-saldo\d/.test(p.id));
   if(remover.length){
     for(const p of remover){ if(!(typeof DEMO_MODE!=='undefined'&&DEMO_MODE)){try{await sb.from('pagamentos').delete().eq('id',p.id);}catch(e){}} }
     _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id));
@@ -3537,10 +3537,16 @@ async function sincronizarParcelas(){
       }
       const novoValor=+(base*def.pct/100).toFixed(2);
       const novoVenc=_vencParcela(v,def);
-      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (ex.status!=='pago' && ex.status!=='cancelada' && ex.vencimento!==novoVenc);
+      // Vencimento ajustado à mão fica marcado na observação e a sincronização
+      // não mexe mais nele. Sem isso, a data corrigida voltava ao valor
+      // calculado automaticamente na próxima vez que o sistema abrisse.
+      const vencManual = /\[venc\. ajustado\]/.test(ex.obs||'');
+      const podeMexerNoVenc = ex.status!=='pago' && ex.status!=='cancelada' && !vencManual;
+      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (podeMexerNoVenc && ex.vencimento!==novoVenc);
       if(precisaAtualizar){
-        ex.pct=def.pct; ex.valor=novoValor; ex.obs=def.quando;
-        if(ex.status!=='pago' && ex.status!=='cancelada') ex.vencimento=novoVenc;
+        ex.pct=def.pct; ex.valor=novoValor;
+        if(!vencManual) ex.obs=def.quando;
+        if(podeMexerNoVenc) ex.vencimento=novoVenc;
         try{await upsertPagamento(ex);}catch(e){}
       }
     }
@@ -3596,9 +3602,10 @@ async function renderFinanceiro(){
     const v=vagas.find(x=>x.id===p.vagaId);
     if(!v) return; // parcela órfã (vaga excluída) não entra em nenhum total
     let s=_statusReal(p);
-    // Blindagem: vaga cancelada só mantém como devida a parcela já paga (entrada
-    // não reembolsável). Qualquer parcela em aberto de vaga cancelada não é devida.
-    if(v.status==='cancelada' && s!=='pago') s='cancelada';
+    // Blindagem: vaga cancelada só cancela a parcela de FECHAMENTO (parcela 2).
+    // A entrada (parcela 1) continua devida mesmo com a vaga cancelada — ela
+    // já foi cobrada quando a vaga abriu e não é reembolsável.
+    if(v.status==='cancelada' && p.parcela===2 && s!=='pago') s='cancelada';
     if(s==='cancelada'){ totalCancelado+=p.valor; return; } // nunca foi devida — não conta em nenhum total
     totalPrev+=p.valor;
     if(s==='pago')totalPago+=p.valor;
@@ -3623,7 +3630,7 @@ async function renderFinanceiro(){
   const rows=_pagamentos.map(p=>{
     const v=vagas.find(x=>x.id===p.vagaId); if(!v) return null;
     let s=_statusReal(p);
-    if(v.status==='cancelada' && s!=='pago') s='cancelada';
+    if(v.status==='cancelada' && p.parcela===2 && s!=='pago') s='cancelada';
     return {p,v,s};
   }).filter(Boolean)
     .filter(({s})=> souCliente ? (s==='pendente'||s==='atrasado') : true) // cliente só vê o que está em aberto
@@ -3638,11 +3645,13 @@ async function renderFinanceiro(){
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>`
       : s==='cancelada'
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
-      : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>`);
+      : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
+         <button class="btn btn-ghost btn-sm" onclick="registrarPagamentoParcial('${p.id}')">💰 Parcial</button>
+         <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
       <td style="font-size:12px"><strong>${v.titulo}</strong></td>
-      <td style="font-size:12px">${p.parcela}ª · ${p.obs||''}</td>
+      <td style="font-size:12px">${p.parcela}ª · ${(p.obs||'').replace(/\s*\[venc\. ajustado\]/,'')}</td>
       <td>${p.pct}%</td>
       <td style="font-weight:600">${_fmtBRL(p.valor)}</td>
       <td style="font-size:12px;color:var(--mid)">${venc}${pagoInfo}</td>
@@ -3656,6 +3665,75 @@ async function darBaixa(id){
   p.status='pago'; p.pagoEm=new Date().toISOString().slice(0,10);
   try{ await upsertPagamento(p); }catch(e){ alert('Erro: '+e.message); }
   renderFinanceiro(); showToast('✅ Baixa registrada!');
+}
+// Registra um pagamento parcial: baixa a parcela original pelo valor efetivamente
+// recebido e cria automaticamente uma nova parcela só com o saldo restante,
+// pendente, pra cobrar depois. Funciona em todas as empresas.
+async function registrarPagamentoParcial(id){
+  const p=_pagamentos.find(x=>x.id===id); if(!p)return;
+  const resp = prompt('Pagamento parcial · '+(p.obs||'')+'\nValor total da parcela: '+_fmtBRL(p.valor)+
+    '\n\nQuanto foi recebido agora? (ex.: 500,00)', '');
+  if(resp === null) return;
+  const valorRecebido = parseFloat(resp.trim().replace(/\./g,'').replace(',','.'));
+  if(isNaN(valorRecebido) || valorRecebido<=0){ alert('Valor inválido.'); return; }
+  if(valorRecebido >= p.valor){
+    alert('O valor recebido é igual ou maior que o valor da parcela. Use "✓ Dar baixa" para pagamento integral.');
+    return;
+  }
+  const saldo = +(p.valor - valorRecebido).toFixed(2);
+  const hoje = new Date().toISOString().slice(0,10);
+  const obsBase = (p.obs||'').replace(/\s*\[venc\. ajustado\]/,'');
+  const antes = { valor:p.valor, status:p.status, pagoEm:p.pagoEm, obs:p.obs };
+  p.valor = valorRecebido; p.status='pago'; p.pagoEm=hoje;
+  p.obs = obsBase + ' (pagamento parcial — saldo de '+_fmtBRL(saldo)+' gerado em nova parcela)';
+  const saldoParcela = {
+    id: p.id+'-saldo'+Date.now(), vagaId:p.vagaId, parcela:p.parcela, pct:p.pct,
+    valor:saldo, vencimento:p.vencimento, status:'pendente', pagoEm:null,
+    obs:'Saldo restante da '+p.parcela+'ª parcela ('+obsBase+') — pagamento parcial em '+hoje.split('-').reverse().join('/')
+  };
+  try{
+    await upsertPagamento(p);
+    _pagamentos.push(saldoParcela);
+    await upsertPagamento(saldoParcela);
+  }catch(e){
+    p.valor=antes.valor; p.status=antes.status; p.pagoEm=antes.pagoEm; p.obs=antes.obs;
+    _pagamentos=_pagamentos.filter(x=>x.id!==saldoParcela.id);
+    alert('NÃO FOI POSSÍVEL SALVAR O PAGAMENTO PARCIAL.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro(); showToast('✅ Pagamento parcial registrado — saldo de '+_fmtBRL(saldo)+' pendente.');
+}
+// Corrige o vencimento de uma parcela em aberto. Serve para acertar prazos
+// combinados com o cliente que não batem com o cálculo automático (funciona
+// em todas as empresas, não só na UniCambury).
+async function editarVencimento(id){
+  const p=_pagamentos.find(x=>x.id===id); if(!p)return;
+  const br = d => d ? d.split('-').reverse().join('/') : '';
+  const resp = prompt('Vencimento · ' + (p.obs||'') + ' · ' + _fmtBRL(p.valor) +
+    '\n\nData de vencimento (dd/mm/aaaa). Deixe em branco para remover a data:',
+    br(p.vencimento));
+  if(resp === null) return;
+  const t = resp.trim();
+  let iso = null;
+  if(t !== ''){
+    const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!m){ alert('Data inválida. Use o formato dd/mm/aaaa, por exemplo 22/07/2026.'); return; }
+    iso = m[3]+'-'+m[2]+'-'+m[1];
+    const dt = new Date(iso+'T12:00:00');
+    if(isNaN(dt.getTime()) || dt.toISOString().slice(0,10) !== iso){ alert('Essa data não existe no calendário.'); return; }
+  }
+  const antes = { vencimento:p.vencimento, obs:p.obs };
+  p.vencimento = iso;
+  // Marca como ajuste manual, para a sincronização automática não desfazer.
+  if(!/\[venc\. ajustado\]/.test(p.obs||'')) p.obs = (p.obs||'') + ' [venc. ajustado]';
+  try{
+    await upsertPagamento(p);
+  }catch(e){
+    p.vencimento=antes.vencimento; p.obs=antes.obs;
+    alert('O VENCIMENTO NÃO FOI SALVO.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro(); showToast('📆 Vencimento atualizado!');
 }
 async function estornarPagamento(id){
   const p=_pagamentos.find(x=>x.id===id); if(!p)return;
