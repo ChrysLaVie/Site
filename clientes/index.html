@@ -2748,9 +2748,30 @@ function abrirRoteiro(id){
   curRoteiro.sections.forEach((_,i)=>{secState[i]={done:false,checks:new Array(curRoteiro.sections[i].questions.length).fill(false),notes:[]};});
   document.getElementById('ev-home').style.display='none';document.getElementById('ev-interview').style.display='block';
   document.getElementById('ev-role').textContent=curRoteiro.nome;document.getElementById('ev-dept').textContent=curRoteiro.setor;document.getElementById('ev-dur').textContent='⏱ '+curRoteiro.duracao;
-  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field"><label>Nome do Candidato</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div><div class="cand-field"><label>Como soube da vaga</label><input id="f-como-soube" placeholder="Ex.: LinkedIn, indicação..."></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="14" max="100" placeholder="Ex.: 32"></div><div class="cand-field"><label>Estado civil</label><select id="f-estado-civil"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União estável</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select></div><div class="cand-field"><label>Naturalidade</label><input id="f-naturalidade" placeholder="Cidade/UF"></div><div class="cand-field"><label>Quantidade de filhos</label><input id="f-qtd-filhos" type="number" min="0" max="20" placeholder="Ex.: 2"></div><div class="cand-field"><label>Onde mora atualmente</label><input id="f-onde-mora" placeholder="Cidade/bairro"></div>`;
+  // Escolhe o candidato de uma lista (igual à Agenda) em vez de digitar o nome
+  // livre — isso evita duplicar o candidato no funil por causa de nome digitado
+  // diferente (typo, apelido, maiúscula/minúscula etc).
+  const candOptions = getCandsVisiveis().slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'})).map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
+  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field" style="grid-column:1/-1"><label>Candidato</label><select id="f-cand-select" onchange="onCandRoteiroChange()"><option value="">— selecione —</option>${candOptions}<option value="__novo__">+ Novo candidato (ainda não está no funil)</option></select></div><div class="cand-field" id="f-nome-wrap" style="display:none"><label>Nome completo</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div><div class="cand-field"><label>Como soube da vaga</label><input id="f-como-soube" placeholder="Ex.: LinkedIn, indicação..."></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="14" max="100" placeholder="Ex.: 32"></div><div class="cand-field"><label>Estado civil</label><select id="f-estado-civil"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União estável</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select></div><div class="cand-field"><label>Naturalidade</label><input id="f-naturalidade" placeholder="Cidade/UF"></div><div class="cand-field"><label>Quantidade de filhos</label><input id="f-qtd-filhos" type="number" min="0" max="20" placeholder="Ex.: 2"></div><div class="cand-field"><label>Onde mora atualmente</label><input id="f-onde-mora" placeholder="Cidade/bairro"></div>`;
   document.getElementById('ev-cond-card').innerHTML=`<div class="cond-title">Condições da Vaga</div><div class="cond-grid">${Object.entries(curRoteiro.conditions).map(([k,v])=>`<div class="cond-item"><label>${k}</label><span>${v}</span></div>`).join('')}</div>`;
   renderSections();renderEval();updateProg();window.scrollTo(0,0);
+}
+// Quando escolhe um candidato já existente, preenche nome/CPF automaticamente
+// e trava o campo de nome; quando escolhe "novo", libera o campo de texto.
+function onCandRoteiroChange(){
+  const sel=document.getElementById('f-cand-select');
+  const nomeWrap=document.getElementById('f-nome-wrap');
+  if(sel.value==='__novo__'){
+    nomeWrap.style.display='';
+    document.getElementById('f-nome').value='';
+    document.getElementById('f-nome').readOnly=false;
+  } else if(sel.value){
+    const c=getCandsVisiveis().find(x=>x.id===sel.value);
+    nomeWrap.style.display='none';
+    if(c){ document.getElementById('f-cpf').value=c.cpf||document.getElementById('f-cpf').value; }
+  } else {
+    nomeWrap.style.display='none';
+  }
 }
 function backToRoteiros(){document.getElementById('ev-interview').style.display='none';document.getElementById('ev-home').style.display='block';}
 function toggleSec(si){document.getElementById('sb-'+si).classList.toggle('active');}
@@ -2767,7 +2788,19 @@ function renderEval(){document.getElementById('ev-eval').innerHTML=`<div class="
 function setStar(c,n){evalState[c]=n;const k=c.replace(/\s/g,'_');for(let i=1;i<=5;i++)document.getElementById('star-'+k+'-'+i).classList.toggle('on',i<=n);}
 function setResult(r){resultado=r;document.getElementById('btn-ap').classList.toggle('sel',r==='approved');document.getElementById('btn-rp').classList.toggle('sel',r==='reprovado');}
 async function salvarEntrevista(){
-  const nome=(document.getElementById('f-nome')||{}).value||'';if(!nome.trim()){alert('Preencha o nome do candidato.');return;}
+  // Se um candidato existente foi selecionado, usa o nome dele (evita digitar
+  // errado e criar duplicata); só usa o campo de texto livre quando for
+  // "+ Novo candidato".
+  const candSel=(document.getElementById('f-cand-select')||{}).value||'';
+  let nome='', candidatoIdSelecionado=null;
+  if(candSel==='__novo__'){
+    nome=(document.getElementById('f-nome')||{}).value||'';
+  } else if(candSel){
+    const cSel=getCandsVisiveis().find(x=>x.id===candSel);
+    nome=cSel?cSel.nome:'';
+    candidatoIdSelecionado=candSel;
+  }
+  if(!nome.trim()){alert('Selecione o candidato (ou escolha "+ Novo candidato").');return;}
   const stars=Object.values(evalState).map(Number),avg=stars.length?(stars.reduce((a,b)=>a+b,0)/stars.length).toFixed(1):null;
   const cpf=(document.getElementById('f-cpf')||{}).value||'';
   // Guarda o roteiro respondido por completo (pergunta a pergunta, com marcação
@@ -2781,7 +2814,7 @@ async function salvarEntrevista(){
       nota: (secState[si] && secState[si].notes && secState[si].notes[qi]) || ''
     }))
   }));
-  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,
+  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,candidatoId:candidatoIdSelecionado,
     comoSoube:(document.getElementById('f-como-soube')||{}).value||'',
     idade:(document.getElementById('f-idade')||{}).value||'',
     estadoCivil:(document.getElementById('f-estado-civil')||{}).value||'',
@@ -2889,11 +2922,15 @@ async function syncCandidatoFromEntrevista(entrev){
   ) || vagas.find(v => v.setor === entrev.setor && v.status === 'aberta');
   if(vagaMatch) vagaId = vagaMatch.id;
 
-  // Verifica se candidato já existe (pelo nome + CPF ou só nome, ignorando acento/espaço/maiúscula)
-  const existe = _cands.find(c =>
-    normNome(c.nome) === normNome(entrev.nome) &&
-    (entrev.cpf ? c.cpf === entrev.cpf : true)
-  );
+  // Se a entrevista já veio vinculada a um candidato existente (selecionado
+  // no dropdown, não digitado), usa o ID direto — sem chute por nome, sem
+  // risco de duplicar.
+  const existe = entrev.candidatoId
+    ? _cands.find(c => c.id === entrev.candidatoId)
+    : _cands.find(c =>
+        normNome(c.nome) === normNome(entrev.nome) &&
+        (entrev.cpf ? c.cpf === entrev.cpf : true)
+      );
 
   if(existe){
     // Atualiza etapa se mudou
