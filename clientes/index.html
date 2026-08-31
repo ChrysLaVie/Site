@@ -2673,10 +2673,10 @@ const VAGAS_ROTEIRO = [
     avaliacao:['Produção de conteúdo','Domínio das plataformas','Design e edição','Métricas e captação','Criatividade','Organização e prazos','Execução prática'] },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // 7) VENDEDOR(A) JÚNIOR — DU CARMO
+  // 7) CONSULTOR(A) DE VENDAS — DU CARMO
   //    Roteiro guiado pela Solicitação de Vaga enviada pela cliente (Ayane)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'dc-vendedor-jr', empresaId:'ducarmo', nome:'Vendedor(a) Júnior', setor:'Comercial', duracao:'35 min',
+  { id:'dc-vendedor-jr', empresaId:'ducarmo', nome:'Consultor(a) de Vendas', setor:'Comercial', duracao:'35 min',
     conditions:{ 'Regime':'CLT', 'Salário':'R$ 2.000,00', 'Jornada':'Seg a sex 8h–17h · sábados 8h–12h', 'Local':'Goiânia · presencial (loja física)', 'Reporte':'Ayane Du Carmo', 'Canais':'Loja física · WhatsApp Business · Instagram Direct' },
     sections:[
       {name:'Abertura',time:'2 min',questions:['Apresente a vaga: atendimento e venda consultiva na loja física e pelos canais digitais (WhatsApp Business e Instagram Direct), com uso de CRM e ERP de estoque/PDV. CLT, R$ 2.000,00, seg-sex 8h-17h e sáb 8h-12h, reporte direto à Ayane.']},
@@ -3841,7 +3841,7 @@ function seedVagasDuCarmo(){
   if(getVagas().length > 0) return;
   const hoje = new Date().toISOString().slice(0,10);
   const vagas = [
-    { id:'ducarmo1', empresaId:'ducarmo', titulo:'Vendedor(a) Júnior', setor:'Comercial', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta',
+    { id:'ducarmo1', empresaId:'ducarmo', titulo:'Consultor(a) de Vendas', setor:'Comercial', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta',
       tipo:'CLT · Presencial', salario:'R$ 1.750,00 a R$ 2.000,00', gestor:'Ayane Du Carmo', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Atendimento via WhatsApp, Instagram Direct e loja física; preenchimento de CRM de atendimento; uso de ERP de estoque e PDV. Jornada seg-sex 08h-17h, sáb 08h-12h. Benefícios: vale-transporte, R$200 assiduidade, 1% de comissão, 2% batendo meta. Requisitos: comunicação assertiva e persuasiva, técnicas de vendas e negociação, proatividade e relacionamento com o cliente. Desejável: CRM/ferramentas digitais, resiliência, organização, atendimento consultivo. Formação mínima: ensino médio.',
