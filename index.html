@@ -342,23 +342,42 @@ nav.scrolled .nav-logo img { height:54px; }
   color:rgba(242,241,237,0.6); font-size:0.95rem;
   line-height:1.85; font-weight:300; margin-bottom:2rem;
 }
-.servico-items { display:flex; flex-direction:column; gap:0; }
+.servico-items { display:flex; flex-direction:column; gap:0.7rem; }
 .servico-item {
-  padding:1.2rem 0;
-  border-bottom:1px solid rgba(255,255,255,0.07);
-  display:flex; gap:1rem; align-items:flex-start;
+  padding:1.1rem 1.2rem;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:var(--radius);
+  display:flex; gap:0.9rem; align-items:flex-start;
+  transition:background 0.2s ease, border-color 0.2s ease;
 }
-.servico-item:last-child { border-bottom:none; }
-.servico-dot {
-  width:6px; height:6px; border-radius:50%;
-  background:var(--sand-dark); flex-shrink:0; margin-top:6px;
+.servico-item:hover { background:rgba(255,255,255,0.055); border-color:rgba(216,207,196,0.28); }
+.servico-icon {
+  flex-shrink:0; width:36px; height:36px; border-radius:50%;
+  background:rgba(216,207,196,0.09);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--sand-dark);
 }
+.servico-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.5; }
 .servico-item-text h4 {
   color:#F2F1ED; font-size:0.88rem; font-weight:500; margin-bottom:0.2rem;
 }
 .servico-item-text p {
   color:rgba(242,241,237,0.5); font-size:0.8rem; line-height:1.6; font-weight:300;
 }
+.servico-cta {
+  margin-top:2.2rem;
+}
+.servico-cta a {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  color:var(--sand); font-size:0.78rem; font-weight:500;
+  letter-spacing:0.08em; text-transform:uppercase;
+  text-decoration:none; border-bottom:1px solid var(--sand-dark);
+  padding-bottom:0.25rem; cursor:pointer;
+  background:none; border-top:none; border-left:none; border-right:none;
+  transition:color 0.2s ease, border-color 0.2s ease;
+}
+.servico-cta a:hover { color:#FFFFFF; border-color:#FFFFFF; }
 
 /* ── Portfólio ── */
 #portfolio {
@@ -418,46 +437,60 @@ nav.scrolled .nav-logo img { height:54px; }
 /* ── Equipe (card usado dentro de Institucional) ── */
 .equipe-grid {
   display:flex !important; flex-direction:column !important;
-  gap:1.5rem; margin-top:2.5rem; max-width:860px; margin-left:auto; margin-right:auto;
+  gap:1.5rem; margin-top:2.5rem; max-width:960px; margin-left:auto; margin-right:auto;
 }
 .equipe-card {
   background:var(--white); border-radius:var(--radius);
   border:1px solid var(--border); overflow:hidden;
-  display:flex !important; flex-direction:row !important;
+  display:grid !important; grid-template-columns:400px 1fr !important;
   align-items:stretch;
 }
 .equipe-foto {
-  flex:0 0 200px !important; width:200px !important; height:280px !important;
+  position:relative; min-height:560px !important;
   overflow:hidden !important; background:var(--bg-alt);
 }
 .equipe-foto img {
-  width:200px !important; height:280px !important; display:block;
-  object-fit:cover !important; object-position:center 15% !important;
-  filter:grayscale(15%);
-  transition:filter 0.3s;
+  width:100% !important; height:100% !important; display:block;
+  object-fit:cover !important; object-position:center 14% !important;
+  filter:grayscale(12%);
+  transition:filter 0.4s, transform 0.6s ease;
 }
-.equipe-card:hover .equipe-foto img { filter:grayscale(0%); }
-.equipe-info { padding:2rem 2.5rem; flex:1; min-width:0; }
+.equipe-card:hover .equipe-foto img { filter:grayscale(0%); transform:scale(1.03); }
+.equipe-info { padding:3.2rem 3rem; flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
 .equipe-role {
   font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase;
-  color:var(--sand-dark); font-weight:500; display:block; margin-bottom:0.5rem;
+  color:var(--sand-dark); font-weight:500; display:block; margin-bottom:0.6rem;
 }
 .equipe-name {
   font-family:'Cormorant Garamond',serif;
-  font-size:1.5rem; font-weight:400; color:var(--charcoal); margin-bottom:0.8rem;
+  font-size:1.85rem; font-weight:400; color:var(--charcoal); margin-bottom:1.3rem;
+}
+.equipe-quote {
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:1.35rem; line-height:1.5; color:var(--charcoal);
+  border-left:2px solid var(--sand-dark); padding-left:1.1rem;
+  margin-bottom:1.5rem;
 }
 .equipe-bio {
-  font-size:0.83rem; color:var(--muted); line-height:1.75;
-  font-weight:300; margin-bottom:1.2rem;
+  font-size:0.85rem; color:var(--muted); line-height:1.8;
+  font-weight:300; margin-bottom:1.6rem;
 }
 .equipe-tags {
-  display:flex; flex-wrap:wrap; gap:0.4rem;
+  display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1.8rem;
 }
 .equipe-tag {
   font-size:0.67rem; letter-spacing:0.1em; padding:0.25rem 0.7rem;
   border:1px solid var(--border); border-radius:20px;
   color:var(--muted); text-transform:uppercase;
 }
+.equipe-actions { display:flex; align-items:center; gap:1.3rem; }
+.equipe-linkedin {
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  background:var(--bg-alt); display:flex; align-items:center; justify-content:center;
+  color:var(--charcoal); transition:background 0.2s, color 0.2s;
+}
+.equipe-linkedin:hover { background:var(--sand); }
+.equipe-linkedin svg { width:16px; height:16px; }
 
 /* ── Banner citação ── */
 #banner {
@@ -739,9 +772,9 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   .portfolio-grid { grid-template-columns:1fr 1fr; }
   #galeria { grid-template-columns:1fr; height:auto; }
   .galeria-foto { height:280px; }
-  .equipe-card { flex-direction:column !important; }
-  .equipe-foto { flex:none !important; width:100% !important; height:240px !important; }
-  .equipe-foto img { width:100% !important; height:240px !important; }
+  .equipe-card { grid-template-columns:1fr !important; }
+  .equipe-foto { min-height:340px !important; }
+  .equipe-info { padding:2rem 1.6rem !important; }
   .contato-grid { grid-template-columns:1fr; gap:3rem; }
   .vagas-grid { grid-template-columns:1fr; gap:3rem; }
   .depoimentos-grid { grid-template-columns:1fr; }
@@ -870,13 +903,14 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
     </div>
   </div>
 
-  <div style="max-width:860px;margin:0 auto;" class="reveal">
+  <div style="max-width:960px;margin:0 auto;" class="reveal">
     <div class="equipe-card">
       <div class="equipe-foto"><img src="chrys.jpg" alt="Chrysthyan Kelly Ferreira Alves"></div>
       <div class="equipe-info">
         <span class="equipe-role">Fundadora &amp; Consultora</span>
         <h3 class="equipe-name">Chrysthyan Kelly Ferreira Alves</h3>
-        <p class="equipe-bio">17 anos transitando entre Financeiro, Pessoas e Processos, sendo 10 deles à frente de gestões seniores em empresas como Centro Universitário Cambury, TCL Transportes e Logística e Corretora Unimed Goiânia. Não entrego diagnóstico e vou embora: fico até a mudança estar implantada e a empresa andar com as próprias pernas.</p>
+        <p class="equipe-quote">"Não entrego diagnóstico e vou embora: fico até a mudança estar implantada e a empresa andar com as próprias pernas."</p>
+        <p class="equipe-bio">17 anos transitando entre Financeiro, Pessoas e Processos, sendo 10 deles à frente de gestões seniores em empresas como Centro Universitário Cambury, TCL Transportes e Logística e Corretora Unimed Goiânia.</p>
         <div class="equipe-tags">
           <span class="equipe-tag">Contadora (CFC)</span>
           <span class="equipe-tag">Auditora Líder ISO 9001</span>
@@ -884,9 +918,12 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
           <span class="equipe-tag">SUSEP</span>
           <span class="equipe-tag">Mestranda em Administração · UFG</span>
         </div>
-        <p style="margin-top:1.2rem;">
+        <div class="equipe-actions">
           <a href="https://lavieconsultoria.com/portfolio.html" target="_blank" rel="noopener noreferrer" class="btn-ghost">Conheça minha trajetória completa →</a>
-        </p>
+          <a href="https://www.linkedin.com/in/lavieconsultoria/" target="_blank" rel="noopener noreferrer" class="equipe-linkedin" aria-label="LinkedIn de Chrysthyan Kelly Ferreira Alves">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a2 2 0 1 1-4-.002 2 2 0 0 1 4 .002ZM7 8.48H3V21h4V8.48Zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-3.96 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.68-2.91V8.48Z"/></svg>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -908,45 +945,57 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   <div id="tab-rh" class="tab-panel active reveal">
     <div class="servico-intro">
       <p>Estruturamos a gestão de pessoas do zero ou reestruturamos o que não funciona, com metodologia aplicada e presença na execução.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Gestão de Pessoas')">Quero estruturar meu RH →</a>
+      </div>
     </div>
     <div class="servico-items">
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Recrutamento e Seleção</h4><p>Processo seletivo estruturado com perfil comportamental e técnico definido.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Cargos e Salários</h4><p>Plano de cargos com faixas salariais, critérios de progressão e equidade interna.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Avaliação de Desempenho</h4><p>Ciclos de avaliação com indicadores claros, feedbacks estruturados e planos de desenvolvimento.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Departamento Pessoal</h4><p>Gestão de folha, férias, 13º, ponto e rotinas trabalhistas com conformidade total.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.3 2.5-5.8 5.5-5.8s5.5 2.5 5.5 5.8"/><path d="M16 8.5a3 3 0 1 1 3.2 3"/><path d="M15.5 14.5c2.6.4 4.8 2.5 4.8 5.5"/></svg></div><div class="servico-item-text"><h4>Recrutamento e Seleção</h4><p>Processo seletivo estruturado com perfil comportamental e técnico definido.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="12" rx="1.5"/><path d="M3.5 10.5h17"/><path d="M8 6.5V5a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 5v1.5"/></svg></div><div class="servico-item-text"><h4>Cargos e Salários</h4><p>Plano de cargos com faixas salariais, critérios de progressão e equidade interna.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 20V4"/><path d="M4 16l4-4 3.5 3 5.5-6 3 3"/><circle cx="20" cy="12" r="0.9" fill="currentColor" stroke="none"/></svg></div><div class="servico-item-text"><h4>Avaliação de Desempenho</h4><p>Ciclos de avaliação com indicadores claros, feedbacks estruturados e planos de desenvolvimento.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7.5Z"/><path d="M8.5 6V4.8A1.8 1.8 0 0 1 10.3 3h3.4A1.8 1.8 0 0 1 15.5 4.8V6"/><path d="M4 12h16"/></svg></div><div class="servico-item-text"><h4>Departamento Pessoal</h4><p>Gestão de folha, férias, 13º, ponto e rotinas trabalhistas com conformidade total.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="M6.5 10.2V15c0 1.6 2.5 3 5.5 3s5.5-1.4 5.5-3v-4.8"/><path d="M20 8v6"/></svg></div><div class="servico-item-text"><h4>T&amp;D e Cultura</h4><p>Trilhas de desenvolvimento, treinamentos e programas de endomarketing.</p></div></div>
     </div>
   </div>
   <div id="tab-financeiro" class="tab-panel reveal">
     <div class="servico-intro">
       <p>Organizamos o financeiro para que os números sirvam à decisão estratégica, com visibilidade, controle e previsibilidade.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Financeiro e Indicadores')">Quero organizar meu financeiro →</a>
+      </div>
     </div>
     <div class="servico-items">
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Fluxo de Caixa</h4><p>Controle diário, projeções e cenários para antecipar riscos e oportunidades.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Orçamento Anual</h4><p>Planejamento orçamentário com metas por área, acompanhamento mensal e ajustes.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Indicadores Financeiros</h4><p>KPIs de rentabilidade, ponto de equilíbrio, margem e ROI integrados à gestão.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Gestão de Seguros e Fundos</h4><p>Carteira, renovação, auditoria de processos e estratégia comercial no mercado financeiro.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 18V9"/><path d="M9.5 18v-6"/><path d="M15 18V6"/><path d="M20 18v-9"/><path d="M3.5 21h17"/></svg></div><div class="servico-item-text"><h4>Fluxo de Caixa</h4><p>Controle diário, projeções e cenários para antecipar riscos e oportunidades.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9"/><path d="M15 9.8c0-1.3-1.3-2.3-3-2.3s-3 .9-3 2.2 1.3 1.9 3 2.1 3 .8 3 2.1-1.3 2.2-3 2.2-3-1-3-2.3"/></svg></div><div class="servico-item-text"><h4>Orçamento Anual</h4><p>Planejamento orçamentário com metas por área, acompanhamento mensal e ajustes.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3v9l7 4"/><path d="M12 3a9 9 0 1 0 9 9"/></svg></div><div class="servico-item-text"><h4>Indicadores Financeiros</h4><p>KPIs de rentabilidade, ponto de equilíbrio, margem e ROI integrados à gestão.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3.5 4.5 7v5.5C4.5 17 7.8 20 12 21c4.2-1 7.5-4 7.5-8.5V7L12 3.5Z"/><path d="M9 12l2 2 4-4.5"/></svg></div><div class="servico-item-text"><h4>Gestão de Seguros e Fundos</h4><p>Carteira, renovação, auditoria de processos e estratégia comercial no mercado financeiro.</p></div></div>
     </div>
   </div>
   <div id="tab-processos" class="tab-panel reveal">
     <div class="servico-intro">
       <p>Mapeamos, documentamos e implantamos processos que funcionam, com certificações reconhecidas pelo mercado nacional e internacional.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Certificações ISO / EcoVadis / SASSMAQ')">Quero estruturar processos →</a>
+      </div>
     </div>
     <div class="servico-items">
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>ISO 9001</h4><p>Implantação do SGQ, auditoria interna e preparação para certificação pela norma ISO 9001:2015.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>SASSMAQ</h4><p>Preparação e suporte para auditorias SASSMAQ, com adequação às normas de segurança, saúde, meio ambiente e qualidade exigidas pelo setor de transportes.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>EcoVadis</h4><p>Diagnóstico e estruturação para avaliação EcoVadis de sustentabilidade, com foco em ESG, ética, meio ambiente e práticas trabalhistas.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Mapeamento e Compliance</h4><p>Fluxogramas, POPs, código de conduta, políticas internas e controle de conformidade.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="9.5" r="6"/><path d="M9 22l3-4 3 4"/><path d="M9.3 9.6l1.7 1.7 3.7-3.9"/></svg></div><div class="servico-item-text"><h4>ISO 9001</h4><p>Implantação do SGQ, auditoria interna e preparação para certificação pela norma ISO 9001:2015.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="11" height="9" rx="1.2"/><path d="M14.5 11h2.3L20.5 14.3V17H14.5"/><circle cx="7.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg></div><div class="servico-item-text"><h4>SASSMAQ</h4><p>Preparação e suporte para auditorias SASSMAQ, com adequação às normas de segurança, saúde, meio ambiente e qualidade exigidas pelo setor de transportes.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 3 5 4 7.5 4-.3 6.5-3.2 10.5-7.5 13-4.3-2.5-7.2-6.5-7.5-13 2.5 0 4.5-1 7.5-4Z"/><path d="M9 12.3c2.5.2 3.6-1.6 5.5-3.6"/></svg></div><div class="servico-item-text"><h4>EcoVadis</h4><p>Diagnóstico e estruturação para avaliação EcoVadis de sustentabilidade, com foco em ESG, ética, meio ambiente e práticas trabalhistas.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="9" y="14" width="6" height="6" rx="1"/><path d="M7 10v2a2 2 0 0 0 2 2h.5"/><path d="M17 10v2a2 2 0 0 1-2 2h-.5"/></svg></div><div class="servico-item-text"><h4>Mapeamento e Compliance</h4><p>Fluxogramas, POPs, código de conduta, políticas internas e controle de conformidade.</p></div></div>
     </div>
   </div>
   <div id="tab-estrategia" class="tab-panel reveal">
     <div class="servico-intro">
       <p>Planejamento estratégico que sai do papel, com diagnóstico real, metas mensuráveis e acompanhamento da execução.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Gestão Integrada')">Quero um diagnóstico →</a>
+      </div>
     </div>
     <div class="servico-items">
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Diagnóstico Empresarial</h4><p>Análise completa das áreas críticas com mapa de prioridades e plano de ação.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Planejamento Estratégico</h4><p>Missão, visão, valores, metas SMART e desdobramento por área.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>Expansão Comercial</h4><p>Estratégia de mercado, desenvolvimento de canais e gestão de grandes contas.</p></div></div>
-      <div class="servico-item"><div class="servico-dot"></div><div class="servico-item-text"><h4>T&amp;D e Cultura</h4><p>Trilhas de desenvolvimento, treinamentos e programas de endomarketing.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 20 20"/><path d="M11 8v3l2 1.3"/></svg></div><div class="servico-item-text"><h4>Diagnóstico Empresarial</h4><p>Análise completa das áreas críticas com mapa de prioridades e plano de ação.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m14.5 9.5-2 5-5 2 2-5 5-2Z"/></svg></div><div class="servico-item-text"><h4>Planejamento Estratégico</h4><p>Missão, visão, valores, metas SMART e desdobramento por área.</p></div></div>
+      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 19V9.5L12 4l8 5.5V19"/><path d="M4 19h16"/><path d="M9.5 19v-5h5v5"/><path d="M15 8l3.5-2"/></svg></div><div class="servico-item-text"><h4>Expansão Comercial</h4><p>Estratégia de mercado, desenvolvimento de canais e gestão de grandes contas.</p></div></div>
     </div>
   </div>
 </section>
@@ -1084,7 +1133,7 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
         <div class="form-group"><label for="whatsapp" class="sr-only">WhatsApp</label><input type="tel" id="whatsapp" name="whatsapp" placeholder="WhatsApp"></div>
       </div>
       <div class="form-group">
-        <select><option value="" disabled selected>Principal desafio</option>
+        <select id="desafioSelect"><option value="" disabled selected>Principal desafio</option>
           <option>Gestão de Pessoas</option><option>Processos e Estrutura</option>
           <option>Financeiro e Indicadores</option><option>Certificações ISO / EcoVadis / SASSMAQ</option>
           <option>Contabilidade e Fiscal</option><option>Gestão Integrada</option>
@@ -1291,6 +1340,13 @@ function showTab(btn, id) {
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
   btn.setAttribute('aria-selected','true');
+}
+
+function irParaContato(desafio) {
+  const select = document.getElementById('desafioSelect');
+  if (select) select.value = desafio;
+  const contato = document.getElementById('contato');
+  if (contato) contato.scrollIntoView({ behavior: 'smooth' });
 }
 </script>
 </body>
