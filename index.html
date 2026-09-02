@@ -342,28 +342,18 @@ nav.scrolled .nav-logo img { height:54px; }
   color:rgba(242,241,237,0.6); font-size:0.95rem;
   line-height:1.85; font-weight:300; margin-bottom:2rem;
 }
-.servico-items { display:flex; flex-direction:column; gap:0.7rem; }
+.servico-items { display:flex; flex-direction:column; gap:0; }
 .servico-item {
-  padding:1.1rem 1.2rem;
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.07);
-  border-radius:var(--radius);
-  display:flex; gap:0.9rem; align-items:flex-start;
-  transition:background 0.2s ease, border-color 0.2s ease;
+  padding:1.3rem 0;
+  border-bottom:1px solid rgba(255,255,255,0.09);
 }
-.servico-item:hover { background:rgba(255,255,255,0.055); border-color:rgba(216,207,196,0.28); }
-.servico-icon {
-  flex-shrink:0; width:36px; height:36px; border-radius:50%;
-  background:rgba(216,207,196,0.09);
-  display:flex; align-items:center; justify-content:center;
-  color:var(--sand-dark);
-}
-.servico-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.5; }
+.servico-item:last-child { border-bottom:none; }
 .servico-item-text h4 {
-  color:#F2F1ED; font-size:0.88rem; font-weight:500; margin-bottom:0.2rem;
+  color:#F2F1ED; font-size:0.92rem; font-weight:500; margin-bottom:0.35rem;
+  letter-spacing:0.01em;
 }
 .servico-item-text p {
-  color:rgba(242,241,237,0.5); font-size:0.8rem; line-height:1.6; font-weight:300;
+  color:rgba(242,241,237,0.5); font-size:0.82rem; line-height:1.65; font-weight:300;
 }
 .servico-cta {
   margin-top:2.2rem;
@@ -912,14 +902,81 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
       <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Foco em resultados reais</p>
     </div>
   </div>
+</section>
 
+
+<!-- EMPRESAS -->
+<section id="servicos" style="padding:var(--section-pad);background:var(--dark);position:relative;overflow:hidden;">
+  <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto 4rem;">
+    <span class="eyebrow" style="color:var(--sand-dark);">La Vie Consultoria</span>
+    <h2 class="section-title section-title--light">Gestão Empresarial <em>Integrada</em></h2>
+    <p style="color:rgba(242,241,237,0.6);font-size:1rem;line-height:1.8;font-weight:300;max-width:480px;margin:0 auto;">Estruturamos empresas para crescer com controle, clareza e previsibilidade.</p>
+    <p style="margin-top:1.4rem;font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--sand-dark);">Finanças + Processos + Pessoas</p>
+  </div>
+  <div class="servicos-tabs reveal">
+    <button class="tab-btn active" onclick="showTab(this,'integrada')">Gestão Integrada</button>
+    <button class="tab-btn" onclick="showTab(this,'processos')">Processos e Qualidade</button>
+    <button class="tab-btn" onclick="showTab(this,'pessoas')">Pessoas e Lideranças</button>
+  </div>
+  <div id="tab-integrada" class="tab-panel active reveal">
+    <div class="servico-intro">
+      <p>Para empresas que precisam reorganizar o negócio como um todo: finanças, indicadores e direção estratégica em um só lugar.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Gestão Integrada')">Quero um diagnóstico →</a>
+      </div>
+    </div>
+    <div class="servico-items">
+      <div class="servico-item"><div class="servico-item-text"><h4>Previsibilidade Financeira</h4><p>Fluxo de caixa, orçamento anual e indicadores integrados para decisões seguras.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Diagnóstico e Direção Estratégica</h4><p>Raio-x do negócio, planejamento estratégico e metas claras por área.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Crescimento Estruturado</h4><p>Estratégia de mercado, novos canais e gestão de grandes contas.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Seguros e Fundos</h4><p>Carteira, renovação e estratégia comercial no mercado financeiro.</p></div></div>
+    </div>
+  </div>
+  <div id="tab-processos" class="tab-panel reveal">
+    <div class="servico-intro">
+      <p>Para empresas que precisam organizar, padronizar e controlar sua operação, com certificações reconhecidas pelo mercado.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Certificações ISO / EcoVadis / SASSMAQ')">Quero estruturar processos →</a>
+      </div>
+    </div>
+    <div class="servico-items">
+      <div class="servico-item"><div class="servico-item-text"><h4>Padrão de Qualidade Reconhecido</h4><p>Implantação do SGQ, auditoria interna e certificação ISO 9001:2015.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Conformidade para Transportes</h4><p>Preparação e suporte para auditorias SASSMAQ.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Reputação ESG Estruturada</h4><p>Diagnóstico e estruturação para avaliação EcoVadis de sustentabilidade.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Processos Sob Controle</h4><p>Fluxogramas, POPs, código de conduta e políticas internas.</p></div></div>
+    </div>
+  </div>
+  <div id="tab-pessoas" class="tab-panel reveal">
+    <div class="servico-intro">
+      <p>Para empresas que precisam estruturar equipes e desenvolver gestores, com metodologia aplicada e presença na execução.</p>
+      <div class="servico-cta">
+        <a onclick="irParaContato('Gestão de Pessoas')">Quero estruturar meu RH →</a>
+      </div>
+    </div>
+    <div class="servico-items">
+      <div class="servico-item"><div class="servico-item-text"><h4>Contratação Certeira</h4><p>Processo seletivo estruturado com perfil comportamental e técnico definido.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Equidade e Progressão Clara</h4><p>Plano de cargos com faixas salariais e critérios de progressão.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Gestão de Performance</h4><p>Ciclos de avaliação com indicadores e planos de desenvolvimento.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Rotina Trabalhista sem Riscos</h4><p>Folha, férias, 13º, ponto e conformidade total.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Lideranças Preparadas</h4><p>Trilhas de desenvolvimento, treinamentos e endomarketing.</p></div></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- EQUIPE -->
+<section id="equipe" style="padding:var(--section-pad);background:var(--bg);">
+  <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto 3rem;">
+    <span class="eyebrow">Quem está à frente</span>
+    <h2 class="section-title">Consultoria <em>com nome e rosto</em></h2>
+  </div>
   <div style="max-width:960px;margin:0 auto;" class="reveal">
     <div class="equipe-card">
       <div class="equipe-foto"><img src="chrys.jpg" alt="Chrysthyan Kelly Ferreira Alves"></div>
       <div class="equipe-info">
         <span class="equipe-role">Fundadora &amp; Consultora</span>
         <h3 class="equipe-name">Chrysthyan Kelly Ferreira Alves</h3>
-        <p class="equipe-quote">"Não entrego diagnóstico e vou embora: fico até a mudança estar implantada e a empresa andar com as próprias pernas."</p>
+        <p class="equipe-quote">"Não entrego diagnóstico e vou embora: fico até a mudança estar implantada e a empresa operar com autonomia."</p>
         <p class="equipe-bio">17 anos transitando entre Financeiro, Pessoas e Processos, sendo 10 deles à frente de gestões seniores em empresas como Centro Universitário Cambury, TCL Transportes e Logística e Corretora Unimed Goiânia.</p>
         <div class="equipe-tags">
           <span class="equipe-tag">Contadora (CFC)</span>
@@ -935,93 +992,6 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
           </a>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- GALERIA -->
-<section style="padding:var(--section-pad);background:var(--bg);">
-  <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 3rem;">
-    <span class="eyebrow">Bastidores</span>
-    <h2 class="section-title">Momentos e <em>projetos</em></h2>
-  </div>
-  <div id="galeria" class="reveal">
-    <div class="galeria-foto"><img src="galeria-1.jpg" alt="Palestra sobre gestão de rotina" loading="lazy"><div class="galeria-cap">Palestra sobre gestão de rotina</div></div>
-    <div class="galeria-foto"><img src="galeria-2.jpg" alt="Treinamento corporativo" loading="lazy"><div class="galeria-cap">Treinamento corporativo</div></div>
-    <div class="galeria-foto"><img src="galeria-3.jpg" alt="Treinamento de lideranças" loading="lazy"><div class="galeria-cap">Treinamento de lideranças</div></div>
-    <div class="galeria-foto"><img src="galeria-4.jpg" alt="Visita técnica TCL" loading="lazy"><div class="galeria-cap">Visita técnica TCL</div></div>
-    <div class="galeria-foto"><img src="galeria-5.jpg" alt="Equipe comercial · Unimed Goiânia" loading="lazy"><div class="galeria-cap">Equipe comercial · Unimed Goiânia</div></div>
-    <div class="galeria-foto"><img src="galeria-6.jpg" alt="Equipe · Grupo Mattos" loading="lazy"><div class="galeria-cap">Equipe · Grupo Mattos</div></div>
-  </div>
-</section>
-
-
-<!-- EMPRESAS -->
-<section id="servicos" style="padding:var(--section-pad);background:var(--dark);position:relative;overflow:hidden;">
-  <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 3rem;">
-    <span class="eyebrow" style="color:var(--sand-dark);">Para sua empresa</span>
-    <h2 class="section-title section-title--light">O que a La Vie <em>entrega</em></h2>
-  </div>
-  <div class="servicos-tabs reveal">
-    <button class="tab-btn active" onclick="showTab(this,'rh')">RH e Pessoas</button>
-    <button class="tab-btn" onclick="showTab(this,'financeiro')">Financeiro</button>
-    <button class="tab-btn" onclick="showTab(this,'processos')">Processos e Qualidade</button>
-    <button class="tab-btn" onclick="showTab(this,'estrategia')">Estratégia</button>
-  </div>
-  <div id="tab-rh" class="tab-panel active reveal">
-    <div class="servico-intro">
-      <p>Estruturamos a gestão de pessoas do zero ou reestruturamos o que não funciona, com metodologia aplicada e presença na execução.</p>
-      <div class="servico-cta">
-        <a onclick="irParaContato('Gestão de Pessoas')">Quero estruturar meu RH →</a>
-      </div>
-    </div>
-    <div class="servico-items">
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.3 2.5-5.8 5.5-5.8s5.5 2.5 5.5 5.8"/><path d="M16 8.5a3 3 0 1 1 3.2 3"/><path d="M15.5 14.5c2.6.4 4.8 2.5 4.8 5.5"/></svg></div><div class="servico-item-text"><h4>Recrutamento e Seleção</h4><p>Processo seletivo estruturado com perfil comportamental e técnico definido.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="12" rx="1.5"/><path d="M3.5 10.5h17"/><path d="M8 6.5V5a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 1 16 5v1.5"/></svg></div><div class="servico-item-text"><h4>Cargos e Salários</h4><p>Plano de cargos com faixas salariais, critérios de progressão e equidade interna.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 20V4"/><path d="M4 16l4-4 3.5 3 5.5-6 3 3"/><circle cx="20" cy="12" r="0.9" fill="currentColor" stroke="none"/></svg></div><div class="servico-item-text"><h4>Avaliação de Desempenho</h4><p>Ciclos de avaliação com indicadores claros, feedbacks estruturados e planos de desenvolvimento.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7.5Z"/><path d="M8.5 6V4.8A1.8 1.8 0 0 1 10.3 3h3.4A1.8 1.8 0 0 1 15.5 4.8V6"/><path d="M4 12h16"/></svg></div><div class="servico-item-text"><h4>Departamento Pessoal</h4><p>Gestão de folha, férias, 13º, ponto e rotinas trabalhistas com conformidade total.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="M6.5 10.2V15c0 1.6 2.5 3 5.5 3s5.5-1.4 5.5-3v-4.8"/><path d="M20 8v6"/></svg></div><div class="servico-item-text"><h4>T&amp;D e Cultura</h4><p>Trilhas de desenvolvimento, treinamentos e programas de endomarketing.</p></div></div>
-    </div>
-  </div>
-  <div id="tab-financeiro" class="tab-panel reveal">
-    <div class="servico-intro">
-      <p>Organizamos o financeiro para que os números sirvam à decisão estratégica, com visibilidade, controle e previsibilidade.</p>
-      <div class="servico-cta">
-        <a onclick="irParaContato('Financeiro e Indicadores')">Quero organizar meu financeiro →</a>
-      </div>
-    </div>
-    <div class="servico-items">
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 18V9"/><path d="M9.5 18v-6"/><path d="M15 18V6"/><path d="M20 18v-9"/><path d="M3.5 21h17"/></svg></div><div class="servico-item-text"><h4>Fluxo de Caixa</h4><p>Controle diário, projeções e cenários para antecipar riscos e oportunidades.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9"/><path d="M15 9.8c0-1.3-1.3-2.3-3-2.3s-3 .9-3 2.2 1.3 1.9 3 2.1 3 .8 3 2.1-1.3 2.2-3 2.2-3-1-3-2.3"/></svg></div><div class="servico-item-text"><h4>Orçamento Anual</h4><p>Planejamento orçamentário com metas por área, acompanhamento mensal e ajustes.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3v9l7 4"/><path d="M12 3a9 9 0 1 0 9 9"/></svg></div><div class="servico-item-text"><h4>Indicadores Financeiros</h4><p>KPIs de rentabilidade, ponto de equilíbrio, margem e ROI integrados à gestão.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3.5 4.5 7v5.5C4.5 17 7.8 20 12 21c4.2-1 7.5-4 7.5-8.5V7L12 3.5Z"/><path d="M9 12l2 2 4-4.5"/></svg></div><div class="servico-item-text"><h4>Gestão de Seguros e Fundos</h4><p>Carteira, renovação, auditoria de processos e estratégia comercial no mercado financeiro.</p></div></div>
-    </div>
-  </div>
-  <div id="tab-processos" class="tab-panel reveal">
-    <div class="servico-intro">
-      <p>Mapeamos, documentamos e implantamos processos que funcionam, com certificações reconhecidas pelo mercado nacional e internacional.</p>
-      <div class="servico-cta">
-        <a onclick="irParaContato('Certificações ISO / EcoVadis / SASSMAQ')">Quero estruturar processos →</a>
-      </div>
-    </div>
-    <div class="servico-items">
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="9.5" r="6"/><path d="M9 22l3-4 3 4"/><path d="M9.3 9.6l1.7 1.7 3.7-3.9"/></svg></div><div class="servico-item-text"><h4>ISO 9001</h4><p>Implantação do SGQ, auditoria interna e preparação para certificação pela norma ISO 9001:2015.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="11" height="9" rx="1.2"/><path d="M14.5 11h2.3L20.5 14.3V17H14.5"/><circle cx="7.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg></div><div class="servico-item-text"><h4>SASSMAQ</h4><p>Preparação e suporte para auditorias SASSMAQ, com adequação às normas de segurança, saúde, meio ambiente e qualidade exigidas pelo setor de transportes.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 3 5 4 7.5 4-.3 6.5-3.2 10.5-7.5 13-4.3-2.5-7.2-6.5-7.5-13 2.5 0 4.5-1 7.5-4Z"/><path d="M9 12.3c2.5.2 3.6-1.6 5.5-3.6"/></svg></div><div class="servico-item-text"><h4>EcoVadis</h4><p>Diagnóstico e estruturação para avaliação EcoVadis de sustentabilidade, com foco em ESG, ética, meio ambiente e práticas trabalhistas.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="9" y="14" width="6" height="6" rx="1"/><path d="M7 10v2a2 2 0 0 0 2 2h.5"/><path d="M17 10v2a2 2 0 0 1-2 2h-.5"/></svg></div><div class="servico-item-text"><h4>Mapeamento e Compliance</h4><p>Fluxogramas, POPs, código de conduta, políticas internas e controle de conformidade.</p></div></div>
-    </div>
-  </div>
-  <div id="tab-estrategia" class="tab-panel reveal">
-    <div class="servico-intro">
-      <p>Planejamento estratégico que sai do papel, com diagnóstico real, metas mensuráveis e acompanhamento da execução.</p>
-      <div class="servico-cta">
-        <a onclick="irParaContato('Gestão Integrada')">Quero um diagnóstico →</a>
-      </div>
-    </div>
-    <div class="servico-items">
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 20 20"/><path d="M11 8v3l2 1.3"/></svg></div><div class="servico-item-text"><h4>Diagnóstico Empresarial</h4><p>Análise completa das áreas críticas com mapa de prioridades e plano de ação.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m14.5 9.5-2 5-5 2 2-5 5-2Z"/></svg></div><div class="servico-item-text"><h4>Planejamento Estratégico</h4><p>Missão, visão, valores, metas SMART e desdobramento por área.</p></div></div>
-      <div class="servico-item"><div class="servico-icon"><svg viewBox="0 0 24 24"><path d="M4 19V9.5L12 4l8 5.5V19"/><path d="M4 19h16"/><path d="M9.5 19v-5h5v5"/><path d="M15 8l3.5-2"/></svg></div><div class="servico-item-text"><h4>Expansão Comercial</h4><p>Estratégia de mercado, desenvolvimento de canais e gestão de grandes contas.</p></div></div>
     </div>
   </div>
 </section>
@@ -1095,6 +1065,22 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   </div>
 
   </section>
+
+<!-- GALERIA -->
+<section style="padding:var(--section-pad);background:var(--bg);">
+  <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 3rem;">
+    <span class="eyebrow">Bastidores</span>
+    <h2 class="section-title">Momentos e <em>projetos</em></h2>
+  </div>
+  <div id="galeria" class="reveal">
+    <div class="galeria-foto"><img src="galeria-1.jpg" alt="Palestra sobre gestão de rotina" loading="lazy"><div class="galeria-cap">Palestra sobre gestão de rotina</div></div>
+    <div class="galeria-foto"><img src="galeria-2.jpg" alt="Treinamento corporativo" loading="lazy"><div class="galeria-cap">Treinamento corporativo</div></div>
+    <div class="galeria-foto"><img src="galeria-3.jpg" alt="Treinamento de lideranças" loading="lazy"><div class="galeria-cap">Treinamento de lideranças</div></div>
+    <div class="galeria-foto"><img src="galeria-4.jpg" alt="Visita técnica TCL" loading="lazy"><div class="galeria-cap">Visita técnica TCL</div></div>
+    <div class="galeria-foto"><img src="galeria-5.jpg" alt="Equipe comercial · Unimed Goiânia" loading="lazy"><div class="galeria-cap">Equipe comercial · Unimed Goiânia</div></div>
+    <div class="galeria-foto"><img src="galeria-6.jpg" alt="Equipe · Grupo Mattos" loading="lazy"><div class="galeria-cap">Equipe · Grupo Mattos</div></div>
+  </div>
+</section>
 
 <!-- DEPOIMENTOS -->
 <section id="depoimentos" style="border-top:1px solid var(--border);">
