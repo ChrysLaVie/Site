@@ -388,7 +388,7 @@ nav.scrolled .nav-logo img { height:54px; }
   padding:1.8rem 2rem 1.2rem;
   display:flex; align-items:center;
   border-bottom:1px solid var(--border); min-height:80px;
-  background:var(--bg);
+  background:transparent;
 }
 .portfolio-logo {
   max-height:48px; max-width:160px;
@@ -426,10 +426,10 @@ nav.scrolled .nav-logo img { height:54px; }
 }
 .logos-marquee-track img {
   height:34px; width:auto; max-width:120px; object-fit:contain;
-  filter:grayscale(100%); opacity:0.55;
-  transition:opacity 0.3s, filter 0.3s;
+  opacity:0.8;
+  transition:opacity 0.3s, transform 0.3s;
 }
-.logos-marquee-track img:hover { filter:grayscale(0%); opacity:1; }
+.logos-marquee-track img:hover { opacity:1; transform:scale(1.05); }
 @keyframes marquee-scroll {
   from { transform:translateX(0); }
   to { transform:translateX(-50%); }
