@@ -423,16 +423,24 @@ nav.scrolled .nav-logo img { height:54px; }
 /* ── Galeria ── */
 #galeria {
   display:grid; grid-template-columns:1fr 1fr 1fr;
-  height:460px; overflow:hidden;
+  gap:10px;
 }
 .galeria-foto {
-  overflow:hidden; position:relative; cursor:pointer;
+  overflow:hidden; position:relative; cursor:pointer; height:320px;
 }
 .galeria-foto img {
   width:100%; height:100%; object-fit:cover;
   filter:grayscale(20%); transition:filter 0.5s, transform 0.6s;
 }
 .galeria-foto:hover img { filter:grayscale(0%); transform:scale(1.05); }
+.galeria-cap {
+  position:absolute; bottom:0; left:0; right:0;
+  background:linear-gradient(to top, rgba(26,25,23,0.85), transparent);
+  padding:1.6rem 1rem 0.9rem;
+  font-size:0.68rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase;
+  color:rgba(255,255,255,0.85); opacity:0; transition:opacity 0.3s;
+}
+.galeria-foto:hover .galeria-cap { opacity:1; }
 
 /* ── Equipe (card usado dentro de Institucional) ── */
 .equipe-grid {
@@ -770,8 +778,8 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   .steps::before { display:none; }
   .tab-panel.active { grid-template-columns:1fr; gap:2rem; }
   .portfolio-grid { grid-template-columns:1fr 1fr; }
-  #galeria { grid-template-columns:1fr; height:auto; }
-  .galeria-foto { height:280px; }
+  #galeria { grid-template-columns:1fr 1fr; }
+  .galeria-foto { height:260px; }
   .equipe-card { grid-template-columns:1fr !important; }
   .equipe-foto { min-height:340px !important; }
   .equipe-info { padding:2rem 1.6rem !important; }
@@ -787,6 +795,8 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   .problema-cards { grid-template-columns:1fr; }
   .steps { grid-template-columns:1fr; }
   .hero-card-stats { grid-template-columns:1fr; }
+  #galeria { grid-template-columns:1fr; }
+  .galeria-foto { height:280px; }
 }
 </style>
 
@@ -926,6 +936,22 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- GALERIA -->
+<section style="padding:var(--section-pad);background:var(--bg);">
+  <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 3rem;">
+    <span class="eyebrow">Bastidores</span>
+    <h2 class="section-title">Momentos e <em>projetos</em></h2>
+  </div>
+  <div id="galeria" class="reveal">
+    <div class="galeria-foto"><img src="galeria-1.jpg" alt="Palestra sobre gestão de rotina" loading="lazy"><div class="galeria-cap">Palestra sobre gestão de rotina</div></div>
+    <div class="galeria-foto"><img src="galeria-2.jpg" alt="Treinamento corporativo" loading="lazy"><div class="galeria-cap">Treinamento corporativo</div></div>
+    <div class="galeria-foto"><img src="galeria-3.jpg" alt="Treinamento de lideranças" loading="lazy"><div class="galeria-cap">Treinamento de lideranças</div></div>
+    <div class="galeria-foto"><img src="galeria-4.jpg" alt="Visita técnica TCL" loading="lazy"><div class="galeria-cap">Visita técnica TCL</div></div>
+    <div class="galeria-foto"><img src="galeria-5.jpg" alt="Equipe comercial · Unimed Goiânia" loading="lazy"><div class="galeria-cap">Equipe comercial · Unimed Goiânia</div></div>
+    <div class="galeria-foto"><img src="galeria-6.jpg" alt="Equipe · Grupo Mattos" loading="lazy"><div class="galeria-cap">Equipe · Grupo Mattos</div></div>
   </div>
 </section>
 
