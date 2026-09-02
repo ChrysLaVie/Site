@@ -86,15 +86,17 @@ header {
 .kpi-hero-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:22px; }
 .kpi-hero {
   position:relative; background:var(--offwhite); border:1px solid rgba(216,207,196,0.35); border-radius:14px;
-  padding:20px 20px 18px; overflow:hidden; transition:box-shadow .2s, transform .2s;
+  padding:16px 18px 18px; overflow:hidden; transition:box-shadow .2s, transform .2s;
   box-shadow:0 1px 2px rgba(58,58,58,.04), 0 6px 20px rgba(58,58,58,.05);
 }
 .kpi-hero:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
-.kpi-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--charcoal); }
-.kpi-hero.g::before { background:var(--green); }
-.kpi-hero.r::before { background:var(--red); }
-.kpi-hero.a::before { background:var(--amber); }
-.kpi-hero-num { font-family:'Playfair Display',serif; font-size:clamp(28px,3vw,38px); font-weight:700; line-height:1; margin-bottom:8px; margin-top:6px; white-space:nowrap; }
+.kpi-hero-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.kpi-hero-icon { font-size:15px; opacity:.65; }
+.kpi-hero-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; background:var(--bege-lt); color:var(--mid); }
+.kpi-hero-badge.g { background:var(--green-lt); color:var(--green); }
+.kpi-hero-badge.r { background:var(--red-lt); color:var(--red); }
+.kpi-hero-badge.a { background:#FAEEDA; color:var(--amber); }
+.kpi-hero-num { font-family:'Playfair Display',serif; font-size:clamp(26px,3vw,34px); font-weight:700; line-height:1; white-space:nowrap; }
 .kpi-hero-num.g{ color:var(--green); } .kpi-hero-num.r{ color:var(--red); } .kpi-hero-num.a{ color:var(--amber); }
 .kpi-hero-lbl { font-size:10.5px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--mid); }
 .kpi-hero-sub { font-size:11px; color:var(--light); margin-top:5px; }
@@ -481,7 +483,7 @@ header {
     <div id="empresa-switcher-wrap" style="position:relative"></div>
     <div onclick="toggleUserMenu(event)" style="display:flex;align-items:center;gap:8px;background:rgba(242,241,237,.08);border:1px solid rgba(242,241,237,.15);border-radius:20px;padding:4px 12px 4px 5px;cursor:pointer">
       <div id="user-avatar" style="width:26px;height:26px;border-radius:50%;overflow:hidden;background:rgba(242,241,237,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#F2F1ED;flex-shrink:0">?</div>
-      <div id="user-name" style="font-size:11px;color:rgba(242,241,237,.7);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+      <div id="user-name" style="font-size:11px;color:rgba(242,241,237,.7);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">...</div>
     </div>
     <div id="user-menu" style="display:none;position:absolute;top:44px;right:0;background:var(--offwhite);border:1.5px solid var(--bege);border-radius:10px;box-shadow:var(--shadow-md);z-index:300;min-width:210px;overflow:hidden">
       <div style="padding:12px 16px;border-bottom:1px solid var(--bege-lt)">
@@ -521,7 +523,7 @@ header {
   <div class="card" style="margin-bottom:24px;padding:18px 22px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid)">Progresso Geral</div>
-      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700" id="dash-pct-label">—</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700" id="dash-pct-label">0%</div>
     </div>
     <div class="prog-track" style="height:10px;margin-bottom:0"><div class="prog-fill" id="dash-pct-bar" style="width:0%"></div></div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--light)"><span id="dash-pct-left"></span><span id="dash-pct-right"></span></div>
@@ -547,7 +549,7 @@ header {
           <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a aprovação final</div>
         </div>
         <div style="text-align:right">
-          <div class="chart-card-headline" id="dash-funil-taxa">—</div>
+          <div class="chart-card-headline" id="dash-funil-taxa">0%</div>
           <div class="chart-card-sub" style="margin-bottom:0">conversão total</div>
         </div>
       </div>
@@ -1058,9 +1060,9 @@ const LOGO_ROMA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAABpCAYAAACAn
 // (tabela profiles no Supabase), não por essa lista.
 const EMPRESAS = {
   lavie:   { nome:'La Vie Consultoria', empresaId:null, logo:LOGO_LAVIE, subtitulo:'Consultoria Empresarial · Acesso master' },
-  cambury: { nome:'UniCambury',  empresaId:'cambury', logo:LOGO_CAMBURY, subtitulo:'Centro Universitário · Direção' },
-  autoclub: { nome:'Auto Club Proteção Veicular', empresaId:'autoclub', logo:LOGO_AUTOCLUB, subtitulo:'Proteção Veicular · Comercial' },
-  ducarmo: { nome:'Du Carmo', empresaId:'ducarmo', logo:LOGO_DUCARMO, subtitulo:'Comércio · Direção' },
+  cambury: { nome:'UniCambury',  empresaId:'cambury', logo:LOGO_CAMBURY, subtitulo:'Centro Universitário · Direção', termoCliente:'Mantenedor' },
+  autoclub: { nome:'Auto Club Proteção Veicular', empresaId:'autoclub', logo:LOGO_AUTOCLUB, subtitulo:'Proteção Veicular · Comercial', termoCliente:'Cliente' },
+  ducarmo: { nome:'Du Carmo', empresaId:'ducarmo', logo:LOGO_DUCARMO, subtitulo:'Comércio · Direção', termoCliente:'Cliente' },
 };
 
 let currentUser=null;
@@ -2641,15 +2643,13 @@ const VAGAS_ROTEIRO = [
   // ══════════════════════════════════════════════════════════════════════════
   // 5) GERENTE DE MARKETING
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-ger-mkt', empresaId:'cambury', nome:'Gerente de Marketing', setor:'Marketing', duracao:'40 min',
+  { id:'cb-ger-mkt', empresaId:'cambury', nome:'Gerente de Marketing', setor:'Marketing', duracao:'27 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 6.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Diretoria', 'Equipe':'Marketing e Social Media', 'Foco':'Captação, retenção e marca' },
     sections:[
-      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, coordenar e executar as estratégias de marketing da IES — fortalecendo a marca, ampliando visibilidade e gerando demanda para os processos comerciais (captação e retenção de alunos). Regime PJ, R$ 6.000,00.']},
-      {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Marketing, Publicidade, Administração, Comunicação ou correlatas) e sua trajetória em gestão de marketing.','Qual sua experiência liderando equipes de marketing e fornecedores/agências?','Já trabalhou em Instituição de Ensino Superior, com captação e retenção de alunos? (diferencial)']},
-      {name:'Competência Técnica · Estratégia e Performance',time:'8 min',questions:['Como você elabora e executa um planejamento estratégico de marketing alinhado a metas comerciais?','Qual sua experiência com tráfego pago, geração de leads e funis de conversão?','Como trabalha CRM, automação de marketing, SEO e inbound?','Como mede ROI e desempenho de campanhas online e offline?']},
-      {name:'Competência Técnica · Marca, Site e Campanhas',time:'6 min',questions:['Como garante a padronização da identidade institucional e o posicionamento da marca?','Que experiência tem com gestão de site, produção de material de divulgação e campanhas de captação?','Como integra marketing e comercial para gerar leads qualificados e melhorar conversão?']},
-      {name:'Gestão de Equipe e Orçamento',time:'6 min',questions:['Como você gerencia a equipe de marketing promovendo produtividade e foco em resultado? (Obs.: a liderança atual foi avaliada como fraca na gestão e na qualidade dos materiais — o que você faria diferente?)','Como gere orçamento e planejamento anual de marketing?','Dê um exemplo de campanha que você liderou, com números de resultado.']},
-      {name:'Aspectos Comportamentais',time:'4 min',questions:['Descreva seu estilo de liderança e como desenvolve uma equipe com baixa performance.','Como concilia criatividade com visão de negócio e foco em resultado?','Como reage a críticas da diretoria sobre a qualidade das entregas?']},
+      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: planejar, coordenar e executar as estratégias de marketing da IES, fortalecendo a marca, ampliando visibilidade e gerando demanda para os processos comerciais (captação e retenção de alunos). Regime PJ, R$ 6.000,00.']},
+      {name:'Formação e Trajetória',time:'3 min',questions:['Conte sobre sua formação (Marketing, Publicidade, Administração, Comunicação ou correlatas) e sua trajetória em gestão de marketing.','Já trabalhou em Instituição de Ensino Superior, com captação e retenção de alunos? (diferencial)']},
+      {name:'Competência Técnica · Estratégia e Performance',time:'8 min',questions:['Como você elabora e executa um planejamento estratégico de marketing alinhado a metas comerciais?','Qual sua experiência com tráfego pago, geração de leads e funis de conversão? Como mede ROI?','Como garante a padronização da identidade institucional e integra marketing com o comercial para gerar leads qualificados?','Dê um exemplo de campanha que você liderou, do planejamento ao resultado em números.']},
+      {name:'Gestão de Equipe, Orçamento e Postura',time:'6 min',questions:['Como você gerencia a equipe de marketing e fornecedores/agências, promovendo produtividade e foco em resultado? (Obs.: a liderança atual foi avaliada como fraca na gestão e na qualidade dos materiais — o que você faria diferente?)','Como gere orçamento e planejamento anual de marketing?','Como reage a uma crítica da diretoria sobre a qualidade das entregas?']},
       {name:'Teste Prático · Avaliação de Material',time:'4 min',questions:['TESTE PRÁTICO: peça que o candidato critique rapidamente uma peça/campanha real da instituição (ou descreva como avaliaria) e proponha 3 melhorias concretas. → Avalie senso crítico, conhecimento técnico e capacidade de execução (e não só discurso).']},
       {name:'Pergunta Final',time:'2 min',questions:['Esta posição precisa elevar o nível do marketing e gerar demanda real para captação. Por que você é a pessoa certa para ela?']}
     ],
@@ -2996,7 +2996,7 @@ const ETAPA_SUBSTATUS = {
   entrevista_rh:      'Aguardando formulários e testes',
   entrevista_gestor:  'Aguardando Entrevista La Vie',
   vivencia:           'Em Entrevista Final com o cliente',
-  aprovacao:          'Dossiê enviado — aguardando contratante finalizar'
+  aprovacao:          'Dossiê enviado, aguardando contratante finalizar'
 };
 // Quantos dias o candidato está na etapa ATUAL (não desde a entrada no funil)
 function diasNaEtapaAtual(c){
@@ -3040,7 +3040,7 @@ function renderAcoesPendentes(){
     <div class="card" style="padding:14px 18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;border-left:4px solid ${cor[it.nivel]}" onclick="moverCandidato('${it.c.id}')">
       <div style="min-width:200px">
         <strong>${it.c.nome}</strong><br>
-        <span style="font-size:12px;color:var(--mid)">${it.vaga?it.vaga.titulo:'—'}${it.vaga&&it.vaga.gestor?' · '+it.vaga.gestor:''}</span>
+        <span style="font-size:12px;color:var(--mid)">${it.vaga?it.vaga.titulo:'Sem vaga vinculada'}${it.vaga&&it.vaga.gestor?' · '+it.vaga.gestor:''}</span>
       </div>
       <div style="flex:1;min-width:180px;font-size:13px">${it.sub}</div>
       <div style="text-align:right">
@@ -3099,7 +3099,7 @@ function renderIndicadoresFunil(){
   const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et])];
   const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map(et=>cands.filter(c=>visitou(c).has(et)).length)];
   const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
-  document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '—';
+  document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '0%';
   const funilCores = funilValores.map((_,i)=> i===0 ? CH.charcoal : i===funilValores.length-1 ? CH.green : CH.mid);
   renderChart('chart-funil', {
     type:'bar',
@@ -3167,7 +3167,7 @@ function renderIndicadoresFunil(){
     ? '<div style="color:var(--mid);font-size:13px">Sem vagas suficientes ainda.</div>'
     : lentas.map((it,i)=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i<lentas.length-1?'border-bottom:1px solid var(--bege-lt)':''}">
-        <div><strong style="font-size:13px">${i+1}. ${it.v.titulo}</strong><br><span style="font-size:11px;color:var(--mid)">${it.v.setor||'—'} · ${it.v.status==='aberta'?'em aberto':'fechada'}</span></div>
+        <div><strong style="font-size:13px">${i+1}. ${it.v.titulo}</strong><br><span style="font-size:11px;color:var(--mid)">${it.v.setor||'Sem setor'} · ${it.v.status==='aberta'?'em aberto':'fechada'}</span></div>
         <span style="font-weight:700;font-size:14px;color:${it.v.status==='aberta'?'var(--red)':'var(--mid)'}">${it.dias}d</span>
       </div>`).join('');
 }
@@ -3217,23 +3217,23 @@ function renderDashboard(){
     const linhas = vagas.map(v=>{
       const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
       let statusHtml, dias;
-      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='—'; }
+      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
-        dias = td ? td.corridos+'d' : '—';
-      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
-      else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'—'; }
-      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${aprovado?aprovado.nome:'—'}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
+        dias = td ? td.corridos+'d' : '-';
+      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'-'; }
+      else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = v.dataAbertura?diasCorridosCalendario(v.dataAbertura)+'d':'-'; }
+      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${aprovado?aprovado.nome:'-'}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
     });
     statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
 
   document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi-hero"><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
-    <div class="kpi-hero g"><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
-    <div class="kpi-hero a"><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
-    <div class="kpi-hero r"><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>`;
+    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">💼</span><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">✅</span><span class="kpi-hero-badge g">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">⏳</span><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">✕</span><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>`;
 
   // Banner dedicado La Vie x Cliente — separado do grid de KPIs pra ter destaque
   // próprio (era o que deixava o layout torto: um 6º card sobrando sozinho na linha)
@@ -3243,12 +3243,12 @@ function renderDashboard(){
       <div class="lv-banner-side lavie">
         <div class="lv-banner-lbl">Tempo La Vie</div>
         <div class="lv-banner-num">${mediaLaVieC}d</div>
-        <div class="lv-banner-desc">Média da abertura da vaga até a apresentação do dossiê/finalistas ao Mantenedor — ${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''} com dossiê registrado.</div>
+        <div class="lv-banner-desc">Média da abertura da vaga até a apresentação do dossiê/finalistas ao ${(EMPRESAS[currentEmpresa]&&EMPRESAS[currentEmpresa].termoCliente)||'Cliente'}. ${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''} com dossiê registrado.</div>
       </div>
       <div class="lv-banner-side cliente">
         <div class="lv-banner-lbl">Decisão do Cliente</div>
         <div class="lv-banner-num">${mediaClienteC}d</div>
-        <div class="lv-banner-desc">Média do dossiê entregue até o fechamento formal da vaga — tempo que depende da decisão do cliente, não da La Vie.</div>
+        <div class="lv-banner-desc">Média do dossiê entregue até o fechamento formal da vaga. Tempo que depende da decisão do cliente, não da La Vie.</div>
       </div>
     </div>`;
   } else {
@@ -3348,7 +3348,7 @@ function renderDashboard(){
         ${d.aberto>0?`<span style="color:var(--amber)">Em Aberto: ${d.aberto}</span>`:''}
         ${d.canc>0?`<span style="color:var(--red)">Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
   const tabEl=document.getElementById('dash-tabelas');tabEl.innerHTML='';
-  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'—'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'—':saldo}</td><td>${isCan?'<span style="color:var(--red)">● Cancelada</span>':isFech?'<span style="color:var(--green)">● Concluída</span>':'<span style="color:var(--amber)">● Em aberto</span>'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
+  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'-'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'-':saldo}</td><td>${isCan?'<span style="color:var(--red)">● Cancelada</span>':isFech?'<span style="color:var(--green)">● Concluída</span>':'<span style="color:var(--amber)">● Em aberto</span>'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
 }
 
 // ══ PAINEL ════════════════════════════════════════════════════════════════════
