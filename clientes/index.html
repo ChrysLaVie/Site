@@ -72,6 +72,9 @@ header {
    "parede de caixinhas" que uma borda sólida repetida em todo card cria. */
 .card { background:var(--offwhite); border:1px solid rgba(216,207,196,0.35); border-radius:12px; padding:22px; box-shadow:0 1px 2px rgba(58,58,58,.04), 0 6px 20px rgba(58,58,58,.05); }
 .card + .card { margin-top:14px; }
+.chart-card-title { font-size:13.5px; font-weight:600; color:var(--charcoal); letter-spacing:.2px; margin-bottom:3px; }
+.chart-card-sub { font-size:11.5px; color:var(--mid); margin-bottom:16px; line-height:1.4; }
+.chart-card-headline { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--charcoal); line-height:1; }
 
 /* ── STATS ROW ── */
 .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px; }
@@ -3230,10 +3233,10 @@ function renderDashboard(){
   }
 
   document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">💼</span><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">✅</span><span class="kpi-hero-badge g">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">⏳</span><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top"><span class="kpi-hero-icon">✕</span><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>`;
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge g">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>`;
 
   // Banner dedicado La Vie x Cliente — separado do grid de KPIs pra ter destaque
   // próprio (era o que deixava o layout torto: um 6º card sobrando sozinho na linha)
