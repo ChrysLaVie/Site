@@ -410,6 +410,34 @@ nav.scrolled .nav-logo img { height:54px; }
   line-height:1.65; font-weight:300;
 }
 
+/* ── Marquee de logos ── */
+.logos-marquee-wrap {
+  overflow:hidden; position:relative;
+  padding:2.2rem 0;
+  background:var(--bg-alt);
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  -webkit-mask-image:linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image:linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.logos-marquee-track {
+  display:flex; align-items:center; gap:5rem;
+  width:max-content;
+  animation:marquee-scroll 32s linear infinite;
+}
+.logos-marquee-track img {
+  height:34px; width:auto; max-width:120px; object-fit:contain;
+  filter:grayscale(100%); opacity:0.55;
+  transition:opacity 0.3s, filter 0.3s;
+}
+.logos-marquee-track img:hover { filter:grayscale(0%); opacity:1; }
+@keyframes marquee-scroll {
+  from { transform:translateX(0); }
+  to { transform:translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logos-marquee-track { animation:none; }
+}
+
 /* ── Galeria ── */
 #galeria {
   display:grid; grid-template-columns:1fr 1fr 1fr;
@@ -856,6 +884,28 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   </div>
   </section>
 
+<!-- MARQUEE DE LOGOS -->
+<div class="logos-marquee-wrap">
+  <div class="logos-marquee-track">
+    <img src="unicambury.jpg" alt="UniCambury">
+    <img src="grupo-mattos.jpg" alt="Grupo Mattos">
+    <img src="unimed-goiania.jpg" alt="Corretora Unimed Goiânia">
+    <img src="tcl-transportes.jpg" alt="TCL Transportes e Logística">
+    <img src="sotrigo.jpg" alt="Sotrigo Alimentos">
+    <img src="rbz.jpg" alt="RBZ Representações">
+    <img src="auto-club.png" alt="Auto Club Proteção Veicular">
+    <img src="ducarmo.png" alt="Du Carmo">
+    <img src="unicambury.jpg" alt="UniCambury">
+    <img src="grupo-mattos.jpg" alt="Grupo Mattos">
+    <img src="unimed-goiania.jpg" alt="Corretora Unimed Goiânia">
+    <img src="tcl-transportes.jpg" alt="TCL Transportes e Logística">
+    <img src="sotrigo.jpg" alt="Sotrigo Alimentos">
+    <img src="rbz.jpg" alt="RBZ Representações">
+    <img src="auto-club.png" alt="Auto Club Proteção Veicular">
+    <img src="ducarmo.png" alt="Du Carmo">
+  </div>
+</div>
+
 
 <!-- QUEM SOMOS -->
 <section id="quem-somos" style="padding:var(--section-pad);background:var(--bg);">
@@ -886,19 +936,19 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
 
   <div class="reveal" style="display:flex;justify-content:center;gap:3rem;margin:4rem 0 3rem;flex-wrap:wrap;">
     <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">17+</p>
+      <p class="stat-counter" data-target="17" data-suffix="+" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">0+</p>
       <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Anos de experiência</p>
     </div>
     <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">50+</p>
+      <p class="stat-counter" data-target="50" data-suffix="+" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">0+</p>
       <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Empresas atendidas</p>
     </div>
     <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">8</p>
+      <p class="stat-counter" data-target="8" data-suffix="" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">0</p>
       <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Setores de atuação</p>
     </div>
     <div style="text-align:center;">
-      <p style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">100%</p>
+      <p class="stat-counter" data-target="100" data-suffix="%" style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:500;color:var(--charcoal);line-height:1;">0%</p>
       <p style="font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.25rem;">Foco em resultados reais</p>
     </div>
   </div>
@@ -1113,6 +1163,36 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   </div>
 </section>
 
+<!-- METODOLOGIA -->
+<section id="metodologia">
+  <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto;">
+    <span class="eyebrow">Como funciona</span>
+    <h2 class="section-title">Do primeiro contato <em>ao resultado</em></h2>
+  </div>
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Conversa inicial</h3>
+      <p>Você apresenta o desafio da empresa. Entendemos o contexto para definir a melhor abordagem.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Diagnóstico</h3>
+      <p>Análise das áreas críticas, com mapa de prioridades e plano de ação claro.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Implementação</h3>
+      <p>Colocamos a mão na massa junto com sua equipe, não só entregamos um relatório.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Acompanhamento</h3>
+      <p>Ficamos até a mudança estar consolidada e a empresa operar com autonomia.</p>
+    </div>
+  </div>
+</section>
+
 <!-- CONTATO EMPRESAS -->
 <section id="contato" style="padding:var(--section-pad);background:var(--bg);">
   <div class="contato-grid">
@@ -1312,6 +1392,30 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.08 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 setTimeout(() => { document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible')); }, 600);
+
+function animateCounter(el) {
+  const target = parseInt(el.getAttribute('data-target'), 10);
+  const suffix = el.getAttribute('data-suffix') || '';
+  const duration = 1400;
+  const start = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const value = Math.round(target * eased);
+    el.textContent = value + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCounter(e.target);
+      counterObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.4 });
+document.querySelectorAll('.stat-counter').forEach(el => counterObserver.observe(el));
 
 const hamburgerBtn = document.getElementById('hamburgerBtn');
 const navLinks = document.getElementById('navLinks');
