@@ -785,6 +785,7 @@ header {
   <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
     <div><h1 class="page-title">Financeiro</h1><p class="page-sub" id="fin-subtitle" style="margin-bottom:20px">Honorários por vaga</p></div>
     <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
+    <button class="btn btn-ghost btn-sm" id="fin-manual-btn" onclick="novoLancamentoManual()">➕ Lançamento manual</button>
   </div>
   <div class="stats-row" id="fin-stats"></div>
   <div class="filters-bar" style="margin-top:20px">
@@ -3817,6 +3818,7 @@ async function renderFinanceiro(){
   const fStatus=document.getElementById('fin-filter-status')?.value||'';
   const souCliente = isClienteExterno();
   const csvBtn=document.getElementById('fin-csv-btn'); if(csvBtn) csvBtn.style.display=souCliente?'none':'';
+  const manualBtn=document.getElementById('fin-manual-btn'); if(manualBtn) manualBtn.style.display=souCliente?'none':'';
   const subEl=document.getElementById('fin-subtitle');
   if(subEl){
     const frases = {
@@ -3873,13 +3875,16 @@ async function renderFinanceiro(){
     const venc=p.vencimento?new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
     const acao = souCliente ? '' : (s==='pago'
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>
+         <button class="btn btn-ghost btn-sm" onclick="editarLancamento('${p.id}')">✏️ Editar</button>
          <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`
       : s==='cancelada'
       ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>
+         <button class="btn btn-ghost btn-sm" onclick="editarLancamento('${p.id}')">✏️ Editar</button>
          <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`
       : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
          <button class="btn btn-ghost btn-sm" onclick="registrarPagamentoParcial('${p.id}')">💰 Parcial</button>
          <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>
+         <button class="btn btn-ghost btn-sm" onclick="editarLancamento('${p.id}')">✏️ Editar</button>
          <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
@@ -3975,6 +3980,30 @@ async function estornarPagamento(id){
   try{ await upsertPagamento(p); }catch(e){ alert('Erro: '+e.message); }
   renderFinanceiro(); showToast('↩ Pagamento estornado.');
 }
+// Edita valor e/ou descrição de um lançamento já existente — cobre o caso de
+// corrigir uma parcela que foi dada baixa pelo valor cheio quando na verdade
+// só uma parte foi recebida (ex.: marcar R$1.000 como paga, mas só R$800
+// entraram e os R$200 restantes viraram outro lançamento pendente). Funciona
+// em qualquer status; não mexe em vencimento nem em status.
+async function editarLancamento(id){
+  const p=_pagamentos.find(x=>x.id===id); if(!p)return;
+  const valorResp = prompt('Editar lançamento\n\nValor atual: '+_fmtBRL(p.valor)+'\n\nNovo valor:', String(p.valor).replace('.',','));
+  if(valorResp === null) return;
+  const novoValor = parseFloat(valorResp.trim().replace(/\./g,'').replace(',','.'));
+  if(isNaN(novoValor) || novoValor<=0){ alert('Valor inválido.'); return; }
+  const obsResp = prompt('Descrição/observação:', p.obs||'');
+  if(obsResp === null) return;
+  const antes = { valor:p.valor, obs:p.obs };
+  p.valor = novoValor; p.obs = obsResp;
+  try{
+    await upsertPagamento(p);
+  }catch(e){
+    p.valor=antes.valor; p.obs=antes.obs;
+    alert('NÃO FOI POSSÍVEL SALVAR A EDIÇÃO.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro(); showToast('✏️ Lançamento atualizado!');
+}
 // Exclui um lançamento de pagamento definitivamente (ex.: um "saldo restante"
 // gerado errado por um "Parcial" clicado a mais). Diferente de "Estornar", que
 // só volta o status pra pendente — aqui a linha some de vez. Não mexe nas
@@ -3994,6 +4023,63 @@ async function excluirPagamento(id){
     renderFinanceiro(); return;
   }
   renderFinanceiro(); showToast('🗑 Lançamento excluído.');
+}
+// Lançamento manual: cobre casos fora do fluxo automático — por exemplo,
+// recriar uma parcela de saldo (pagamento parcial) que foi excluída por
+// engano. Pede a vaga por título (busca simples), depois os dados da parcela,
+// e insere como um pagamento avulso — não interfere na sincronização
+// automática das parcelas 1/2 de cada vaga.
+async function novoLancamentoManual(){
+  const vagas=getVagas();
+  const termo = prompt('Lançamento manual\n\nDigite parte do título da vaga para localizá-la:', '');
+  if(termo === null) return;
+  const achadas = vagas.filter(v=>v.titulo.toLowerCase().includes(termo.trim().toLowerCase()));
+  if(!achadas.length){ alert('Nenhuma vaga encontrada com esse título.'); return; }
+  let v;
+  if(achadas.length===1){
+    v = achadas[0];
+  } else {
+    const lista = achadas.map((x,i)=>(i+1)+'. '+x.titulo).join('\n');
+    const escolha = prompt('Mais de uma vaga encontrada. Digite o número:\n\n'+lista, '1');
+    if(escolha === null) return;
+    v = achadas[parseInt(escolha.trim(),10)-1];
+    if(!v){ alert('Opção inválida.'); return; }
+  }
+  const obs = prompt('Descrição da parcela (ex.: "Saldo restante da 2ª parcela (Fechamento (aprovado)) — pagamento parcial em 28/08/2026"):', 'Saldo restante — pagamento parcial');
+  if(obs === null) return;
+  const parcelaResp = prompt('Número da parcela (1 ou 2 — só pra referência/ordenação):', '2');
+  if(parcelaResp === null) return;
+  const parcela = parseInt(parcelaResp.trim(),10) || 2;
+  const pctResp = prompt('Percentual (%) — só informativo:', '50');
+  if(pctResp === null) return;
+  const pct = parseFloat(pctResp.trim().replace(',','.')) || 0;
+  const valorResp = prompt('Valor da parcela (ex.: 200,00):', '');
+  if(valorResp === null) return;
+  const valor = parseFloat(valorResp.trim().replace(/\./g,'').replace(',','.'));
+  if(isNaN(valor) || valor<=0){ alert('Valor inválido.'); return; }
+  const vencResp = prompt('Vencimento (dd/mm/aaaa). Deixe em branco para sem vencimento (ex.: parcela que só vence no fechamento da vaga):', '');
+  if(vencResp === null) return;
+  let vencimento = null;
+  const vt = vencResp.trim();
+  if(vt !== ''){
+    const m = vt.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!m){ alert('Data inválida. Use o formato dd/mm/aaaa.'); return; }
+    vencimento = m[3]+'-'+m[2]+'-'+m[1];
+  }
+  const statusResp = confirm('Essa parcela já está paga?\n\nOK = já paga (será marcada como PAGA hoje)\nCancelar = ainda pendente');
+  const hoje = new Date().toISOString().slice(0,10);
+  const p = {
+    id: v.id+'-manual'+Date.now(), vagaId:v.id, parcela, pct, valor,
+    vencimento, status: statusResp?'pago':'pendente', pagoEm: statusResp?hoje:null, obs
+  };
+  try{
+    await upsertPagamento(p);
+    _pagamentos.push(p);
+  }catch(e){
+    alert('NÃO FOI POSSÍVEL SALVAR O LANÇAMENTO.\n\nMotivo: '+(e && e.message ? e.message : e));
+    return;
+  }
+  renderFinanceiro(); showToast('✅ Lançamento manual criado!');
 }
 function exportFinanceiroCSV(){
   const vagas=getVagas();
