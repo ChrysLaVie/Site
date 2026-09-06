@@ -46,15 +46,16 @@ header {
 .logo-txt   { display:flex; flex-direction:column; }
 .logo-main  { font-family:'Playfair Display',serif; color:#F2F1ED; font-size:13px; letter-spacing:5px; text-transform:uppercase; line-height:1; }
 .logo-sub   { font-size:7px; letter-spacing:2.5px; text-transform:uppercase; color:rgba(242,241,237,.35); margin-top:3px; }
-.header-nav { display:flex; gap:3px; }
+.header-tabs { display:flex; align-items:center; gap:26px; background:var(--offwhite); border-bottom:1px solid rgba(216,207,196,.4); padding:0 24px; position:sticky; top:60px; z-index:199; }
+.header-tabs-divider { width:1px; align-self:center; height:18px; background:rgba(216,207,196,.7); }
 .nav-btn {
-  background:transparent; border:1px solid rgba(242,241,237,.18);
-  color:rgba(242,241,237,.45); font-family:'DM Sans',sans-serif;
-  font-size:11px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase;
-  padding:6px 14px; border-radius:5px; cursor:pointer; transition:all .2s;
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:var(--mid); font-family:'DM Sans',sans-serif;
+  font-size:12.5px; font-weight:500; letter-spacing:.2px;
+  padding:13px 0; cursor:pointer; transition:color .15s, border-color .15s;
 }
-.nav-btn:hover { color:#F2F1ED; border-color:rgba(242,241,237,.4); }
-.nav-btn.active { background:rgba(242,241,237,.1); color:#F2F1ED; border-color:rgba(242,241,237,.3); }
+.nav-btn:hover { color:var(--charcoal); }
+.nav-btn.active { color:var(--charcoal); font-weight:600; border-bottom-color:var(--charcoal); }
 
 /* ── LAYOUT ── */
 .page { display:none; animation:fadeUp .35s ease; }
@@ -75,6 +76,9 @@ header {
 .chart-card-title { font-size:13.5px; font-weight:600; color:var(--charcoal); letter-spacing:.2px; margin-bottom:3px; }
 .chart-card-sub { font-size:11.5px; color:var(--mid); margin-bottom:16px; line-height:1.4; }
 .chart-card-headline { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--charcoal); line-height:1; }
+.doc-filtro-pill { font-size:11.5px; font-weight:500; padding:6px 14px; border-radius:20px; background:var(--offwhite); color:var(--mid); border:1px solid rgba(216,207,196,.5); cursor:pointer; transition:all .15s; }
+.doc-filtro-pill:hover { border-color:var(--charcoal); }
+.doc-filtro-pill.active { background:var(--charcoal); color:#F2F1ED; border-color:var(--charcoal); font-weight:600; }
 
 /* ── STATS ROW ── */
 .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px; }
@@ -499,17 +503,19 @@ header {
       </div>
       <button onclick="logoutUser()" style="width:100%;text-align:left;padding:11px 16px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--red);border-top:1px solid var(--bege-lt)">→ Trocar usuário</button>
     </div>
-    <nav class="header-nav">
-      <button class="nav-btn" onclick="goPage('dashboard')">Dashboard</button>
-      <button class="nav-btn active" onclick="goPage('vagas')">Vagas</button>
-      <button class="nav-btn" onclick="goPage('candidatos')">Candidatos</button>
-      <button class="nav-btn" onclick="goPage('entrevistas')">Entrevistas</button>
-      <button class="nav-btn" onclick="goPage('agenda')">Agenda</button>
-      <button class="nav-btn" id="nav-financeiro" onclick="goPage('financeiro')">Financeiro</button>
-      <button class="nav-btn" onclick="goPage('painel')">Histórico</button>
-    </nav>
   </div>
 </header>
+<nav class="header-tabs">
+  <button class="nav-btn" onclick="goPage('dashboard')">Dashboard</button>
+  <button class="nav-btn active" onclick="goPage('vagas')">Vagas</button>
+  <button class="nav-btn" onclick="goPage('candidatos')">Candidatos</button>
+  <button class="nav-btn" onclick="goPage('documentos')">Documentos</button>
+  <div class="header-tabs-divider"></div>
+  <button class="nav-btn" onclick="goPage('entrevistas')">Entrevistas</button>
+  <button class="nav-btn" onclick="goPage('agenda')">Agenda</button>
+  <button class="nav-btn" id="nav-financeiro" onclick="goPage('financeiro')">Financeiro</button>
+  <button class="nav-btn" onclick="goPage('painel')">Histórico</button>
+</nav>
 
 <div class="wrapper">
 <div id="page-loading" class="page active" style="text-align:center;padding:80px 20px">
@@ -629,6 +635,40 @@ header {
   <div class="cand-table-wrap" style="margin-top:16px">
     <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Entrou em</th><th>Entrevistas</th><th>Ações</th></tr></thead>
     <tbody id="cand-tbody"></tbody></table>
+  </div>
+</div>
+<div id="page-documentos" class="page">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+    <h1 class="page-title">Documentos</h1>
+    <div style="font-size:11px;color:var(--light)" id="doc-cli-nome"></div>
+  </div>
+  <p style="font-size:12.5px;color:var(--mid);margin-bottom:18px">OS, propostas, comprovantes e outros arquivos deste cliente, num só lugar.</p>
+
+  <div id="doc-filtros" style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap"></div>
+
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
+    <div id="doc-lista"></div>
+    <div id="doc-vazio" style="display:none;padding:32px 20px;text-align:center;color:var(--light);font-size:12.5px">Nenhum documento nesta categoria ainda.</div>
+  </div>
+
+  <div class="card">
+    <div style="border:1.5px dashed var(--bege);border-radius:10px;padding:18px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="document.getElementById('doc-file-input').click()">
+      <div style="font-size:12.5px;font-weight:500;color:var(--charcoal);margin-bottom:2px">Clique para escolher um arquivo</div>
+      <div style="font-size:11px;color:var(--light)">PDF, Word ou imagem · até 10 MB</div>
+      <input type="file" id="doc-file-input" style="display:none" onchange="anexarDocCliente(this.files)" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <select id="doc-categoria-select" class="filter-input" style="flex:1;min-width:180px" onchange="document.getElementById('doc-outros-wrap').style.display=(this.value==='outros')?'block':'none'">
+        <option value="os">Ordem de Serviço</option>
+        <option value="proposta">Proposta</option>
+        <option value="comprovante">Comprovante</option>
+        <option value="apresentacao">Apresentação de Resultados</option>
+        <option value="outros">Outros</option>
+      </select>
+      <div id="doc-outros-wrap" style="display:none;flex:2;min-width:220px">
+        <input id="doc-outros-desc" class="filter-input" style="width:100%" placeholder="Descreva em poucas palavras (ex: Logo alta resolução)" />
+      </div>
+    </div>
   </div>
 </div>
 <div id="page-entrevistas" class="page">
@@ -1704,7 +1744,7 @@ function imprimirRoteiro(){
 
 // ══ NAV ═══════════════════════════════════════════════════════════════════════
 let _page = 'vagas';
-const PAGES = ['dashboard','vagas','candidatos','entrevistas','agenda','financeiro','painel'];
+const PAGES = ['dashboard','vagas','candidatos','documentos','entrevistas','agenda','financeiro','painel'];
 
 function goPage(name) {
   // Update context labels for gestores
@@ -1731,6 +1771,7 @@ function goPage(name) {
   if(name==='dashboard')   renderDashboard();
   if(name==='vagas')       { renderVagasStats(); renderVagas(); }
   if(name==='candidatos')  { renderFunil(); renderCandidatos(); }
+  if(name==='documentos')  renderDocumentosCliente();
   if(name==='entrevistas') renderRoteiros();
   if(name==='agenda')      renderAgenda();
   if(name==='financeiro')  renderFinanceiro();
@@ -2495,6 +2536,125 @@ async function removerDoc(i){
   _cands[idx].documentos=docsAtuais.filter((_,j)=>j!==i);
   try{ await upsertCand(_cands[idx]); }catch(e){}
   renderDocsList();
+}
+
+// ══ DOCUMENTOS DO CLIENTE (Supabase Storage — bucket PRIVADO) ═══════════════
+// Mesmo padrão de segurança dos documentos de candidato: bucket privado,
+// link gerado na hora (60s) e nunca uma URL fixa salva no banco.
+// Requer a tabela "documentos_cliente" e o bucket "documentos-clientes"
+// (ver 06-documentos-cliente.sql). Sem isso, a aba abre mas os botões
+// avisam que a conexão ainda não foi feita.
+const DOC_CLI_BUCKET='documentos-clientes';
+const CATEGORIAS_DOC=[
+  {id:'os',label:'Ordem de Serviço',labelPlural:'Ordens de Serviço'},
+  {id:'proposta',label:'Proposta',labelPlural:'Propostas'},
+  {id:'comprovante',label:'Comprovante',labelPlural:'Comprovantes'},
+  {id:'apresentacao',label:'Apresentação de Resultados',labelPlural:'Apresentações de Resultados'},
+  {id:'outros',label:'Outros',labelPlural:'Outros'},
+];
+let _docClienteFiltro='todos';
+let _docsClienteCache=[];
+
+async function renderDocumentosCliente(){
+  const nomeEl=document.getElementById('doc-cli-nome');
+  if(nomeEl) nomeEl.textContent=(EMPRESAS[currentEmpresa]&&EMPRESAS[currentEmpresa].nome)||'';
+  const filtrosEl=document.getElementById('doc-filtros');
+  filtrosEl.innerHTML=`<span class="doc-filtro-pill${_docClienteFiltro==='todos'?' active':''}" onclick="_docFiltrar('todos')">Todos</span>`
+    +CATEGORIAS_DOC.map(c=>`<span class="doc-filtro-pill${_docClienteFiltro===c.id?' active':''}" onclick="_docFiltrar('${c.id}')">${c.labelPlural}</span>`).join('');
+
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){
+    document.getElementById('doc-lista').innerHTML='';
+    document.getElementById('doc-vazio').style.display='block';
+    document.getElementById('doc-vazio').textContent='Documentos exigem conexão com o Supabase (tabela documentos_cliente + bucket documentos-clientes).';
+    return;
+  }
+  try{
+    const { data, error } = await sb.from('documentos_cliente').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false});
+    if(error) throw error;
+    _docsClienteCache = data||[];
+  }catch(e){
+    document.getElementById('doc-lista').innerHTML='';
+    document.getElementById('doc-vazio').style.display='block';
+    document.getElementById('doc-vazio').textContent='Não foi possível carregar os documentos. Confira se a tabela documentos_cliente já foi criada.';
+    return;
+  }
+  _docRenderLista();
+}
+function _docFiltrar(catId){ _docClienteFiltro=catId; renderDocumentosCliente(); }
+function _docRenderLista(){
+  const lista=_docClienteFiltro==='todos' ? _docsClienteCache : _docsClienteCache.filter(d=>d.categoria===_docClienteFiltro);
+  const listaEl=document.getElementById('doc-lista'), vazioEl=document.getElementById('doc-vazio');
+  if(!lista.length){ listaEl.innerHTML=''; vazioEl.style.display='block'; vazioEl.textContent='Nenhum documento nesta categoria ainda.'; return; }
+  vazioEl.style.display='none';
+  const sigla=cat=>({os:'OS',proposta:'PR',comprovante:'CO',apresentacao:'AR',outros:'OU'}[cat]||'DOC');
+  const rotulo=cat=>(CATEGORIAS_DOC.find(c=>c.id===cat)||{}).label||cat;
+  listaEl.innerHTML=lista.map(d=>`
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--bege-lt)">
+      <div style="width:34px;height:34px;border-radius:8px;background:var(--bege-lt);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:var(--mid);letter-spacing:.3px;flex-shrink:0">${sigla(d.categoria)}</div>
+      <div style="flex:1;min-width:0">
+        <a href="#" onclick="abrirDocumentoCliente('${d.path}','${(d.nome_arquivo||'').replace(/'/g,"\\'")}');return false" style="font-size:13px;font-weight:500;color:var(--charcoal);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.titulo||d.nome_arquivo}</a>
+        <div style="font-size:11px;color:var(--light)">${rotulo(d.categoria)}${d.descricao?' · "'+d.descricao+'"':''} · enviado por ${d.enviado_por||'—'}</div>
+      </div>
+      <div style="font-size:11px;color:var(--light);white-space:nowrap">${d.criado_em?new Date(d.criado_em).toLocaleDateString('pt-BR'):''}</div>
+      <button onclick="removerDocCliente('${d.id}')" title="Remover" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px">✕</button>
+    </div>`).join('');
+}
+
+async function anexarDocCliente(files){
+  const f=files&&files[0]; const input=document.getElementById('doc-file-input'); if(input)input.value='';
+  if(!f)return;
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){
+    alert('Para anexar arquivos de verdade, o sistema precisa estar conectado ao banco (Supabase), com a tabela documentos_cliente e o bucket documentos-clientes criados.');
+    return;
+  }
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(f.size > DOC_TAMANHO_MAX){ alert(`"${f.name}" tem mais de 10 MB e não foi enviado.`); return; }
+  if(!DOC_TIPOS_PERMITIDOS.includes(f.type) && !DOC_EXT_PERMITIDAS.includes(ext)){
+    alert(`"${f.name}" não é um tipo de arquivo permitido (só PDF, Word, PNG ou JPG).`); return;
+  }
+  const categoria=document.getElementById('doc-categoria-select').value;
+  const descricao=categoria==='outros' ? document.getElementById('doc-outros-desc').value.trim() : '';
+  if(categoria==='outros' && !descricao){ alert('Descreva em poucas palavras o que é esse documento antes de enviar.'); return; }
+  showToast('⏳ Enviando documento...');
+  try{
+    const safe=f.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
+    const path=currentEmpresa+'/'+Date.now()+'_'+safe;
+    const {error:upErr}=await sb.storage.from(DOC_CLI_BUCKET).upload(path,f,{upsert:false});
+    if(upErr) throw upErr;
+    const row={
+      empresa_id:currentEmpresa, categoria, titulo:f.name, descricao:descricao||null,
+      path, nome_arquivo:f.name, tipo:f.type||ext, tamanho:_fmtTam(f.size), enviado_por:getUserName()
+    };
+    const {error:insErr}=await sb.from('documentos_cliente').insert(row);
+    if(insErr) throw insErr;
+  }catch(e){ alert('Erro ao enviar "'+f.name+'": '+e.message); return; }
+  document.getElementById('doc-outros-desc').value='';
+  renderDocumentosCliente(); showToast('✅ Documento anexado!');
+}
+
+async function abrirDocumentoCliente(path, nome){
+  if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ alert('Abrir documentos exige conexão com o Supabase.'); return; }
+  try{
+    const { data, error } = await sb.storage.from(DOC_CLI_BUCKET).createSignedUrl(path, 60);
+    if(error || !data){ alert('Não foi possível abrir esse arquivo agora.'); return; }
+    try{
+      await sb.from('document_access_log').insert({
+        candidato_id:null, path, nome_arquivo:nome,
+        empresa_id:currentEmpresa, acessado_por:currentUser.id, acessado_por_nome:getUserName()
+      });
+    }catch(e){ /* log é best-effort */ }
+    window.open(data.signedUrl, '_blank', 'noopener');
+  }catch(e){ alert('Não foi possível abrir esse arquivo agora.'); }
+}
+
+async function removerDocCliente(id){
+  const doc=_docsClienteCache.find(d=>d.id===id); if(!doc)return;
+  if(!confirm('Remover "'+(doc.titulo||doc.nome_arquivo)+'"?'))return;
+  if(!(typeof DEMO_MODE!=='undefined' && DEMO_MODE) && doc.path){
+    try{ await sb.storage.from(DOC_CLI_BUCKET).remove([doc.path]); }catch(e){}
+  }
+  try{ await sb.from('documentos_cliente').delete().eq('id',id); }catch(e){}
+  renderDocumentosCliente();
 }
 
 // ══ IMAGENS E LEGENDA DE DIVULGAÇÃO DA VAGA ═════════════════════════════════
