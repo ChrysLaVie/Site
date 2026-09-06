@@ -4002,6 +4002,19 @@ async function editarLancamento(id){
   p.obs = /\[valor ajustado\]/.test(obsResp) ? obsResp : obsResp + ' [valor ajustado]';
   try{
     await upsertPagamento(p);
+    // Confirmação: relê o registro direto do banco pra garantir que o valor
+    // realmente foi gravado (e não só ficou certo na memória local). Se a
+    // gravação foi bloqueada silenciosamente (ex.: permissão/RLS), isso avisa
+    // na hora em vez de deixar a tela mostrar um valor que não foi salvo de verdade.
+    if(!(typeof DEMO_MODE!=='undefined' && DEMO_MODE)){
+      const {data:confere,error:erroConfere} = await sb.from('pagamentos').select('valor,obs').eq('id',p.id).single();
+      if(erroConfere){
+        alert('Aviso: não consegui confirmar se a gravação foi salva no banco.\n\nMotivo: '+erroConfere.message);
+      } else if(confere && Number(confere.valor)!==Number(novoValor)){
+        alert('ATENÇÃO: o sistema tentou salvar '+_fmtBRL(novoValor)+', mas o banco continua com '+_fmtBRL(confere.valor)+' depois de gravar.\n\nIsso indica que uma permissão (RLS) no Supabase está bloqueando a atualização silenciosamente — não é um problema deste código, é uma política de segurança na tabela "pagamentos" que precisa ser revista.');
+        p.valor = Number(confere.valor); p.obs = confere.obs;
+      }
+    }
   }catch(e){
     p.valor=antes.valor; p.obs=antes.obs;
     alert('NÃO FOI POSSÍVEL SALVAR A EDIÇÃO.\n\nMotivo: '+(e && e.message ? e.message : e));
