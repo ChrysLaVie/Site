@@ -3594,15 +3594,15 @@ let _pagamentos = [];
 const PARCELAS_DEF_POR_EMPRESA = {
   cambury: [
     { n:1, pct:50,  quando:'Entrada (abertura)',           gatilho:'abertura',   diasVenc:0  },
-    { n:2, pct:50,  quando:'Fechamento (aprovado)',        gatilho:'fechamento', diasVenc:45 },
+    { n:2, pct:50,  quando:'Fechamento (aprovado)',        gatilho:'fechamento', diasVenc:null },
   ],
   autoclub: [
     { n:1, pct:50,  quando:'Entrada (abertura)',           gatilho:'abertura',   diasVenc:0  },
-    { n:2, pct:50,  quando:'Fechamento (aprovado)',        gatilho:'fechamento', diasVenc:45 },
+    { n:2, pct:50,  quando:'Fechamento (aprovado)',        gatilho:'fechamento', diasVenc:null },
   ],
   ducarmo: [
     { n:1, pct:50,  quando:'Entrada (abertura)',           gatilho:'abertura',   diasVenc:0  },
-    { n:2, pct:50,  quando:'Fechamento (aprovado)',        gatilho:'fechamento', diasVenc:45 },
+    { n:2, pct:50,  quando:'Fechamento (aprovado)',        gatilho:'fechamento', diasVenc:null },
   ],
 };
 const PARCELAS_DEF_PADRAO = PARCELAS_DEF_POR_EMPRESA.cambury;
@@ -3673,7 +3673,7 @@ async function salvarNovoCliente(){
     ? bancosTexto.split(',').map(s=>s.trim()).filter(Boolean).map(label=>({id:'banco_talentos_'+_slugify(label), label:'Banco de Talentos '+label}))
     : [{id:'banco_talentos_geral', label:'Banco de Talentos'}];
   const presets = {
-    '5050': [{n:1,pct:50,quando:'Entrada (abertura)',gatilho:'abertura',diasVenc:0},{n:2,pct:50,quando:'Fechamento (aprovado)',gatilho:'fechamento',diasVenc:45}],
+    '5050': [{n:1,pct:50,quando:'Entrada (abertura)',gatilho:'abertura',diasVenc:0},{n:2,pct:50,quando:'Fechamento (aprovado)',gatilho:'fechamento',diasVenc:null}],
     '100f': [{n:1,pct:100,quando:'Entrega (candidato aprovado)',gatilho:'fechamento',diasVenc:null}],
     '100a': [{n:1,pct:100,quando:'Entrada (abertura)',gatilho:'abertura',diasVenc:0}],
   };
