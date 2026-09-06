@@ -486,6 +486,9 @@ header {
     <div style="display:flex;align-items:center;font-size:10px;color:rgba(242,241,237,.4)">
       <span class="sync-dot off" id="sync-dot"></span><span id="sync-label">conectando...</span>
     </div>
+    <div id="client-logo-badge" style="width:26px;height:26px;border-radius:50%;overflow:hidden;background:#F2F1ED;display:none;align-items:center;justify-content:center;flex-shrink:0">
+      <img id="client-logo-badge-img" style="width:100%;height:100%;object-fit:contain" alt="">
+    </div>
     <div id="empresa-switcher-wrap" style="position:relative"></div>
     <div onclick="toggleUserMenu(event)" style="display:flex;align-items:center;gap:8px;background:rgba(242,241,237,.08);border:1px solid rgba(242,241,237,.15);border-radius:20px;padding:4px 12px 4px 5px;cursor:pointer">
       <div id="user-avatar" style="width:26px;height:26px;border-radius:50%;overflow:hidden;background:rgba(242,241,237,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#F2F1ED;flex-shrink:0">?</div>
@@ -1866,14 +1869,20 @@ function _aplicarTerminologiaEmpresa(){
   getBancos().forEach(b=>{ ETAPA_LABEL[b.id]=b.label; if(!ETAPA_TAG[b.id]) ETAPA_TAG[b.id]='geral'; });
 }
 
-// Cabeçalho mostra a logo do cliente ativo, não sempre a da La Vie — cada
-// empresa vê sua própria marca no topo do sistema. masterAdmin sem empresa
-// selecionada (ou "lavie") continua vendo a logo da própria La Vie.
+// Bolinha pequena com a logo do cliente ativo, ao lado do indicador "ao vivo"
+// (mesmo estilo circular da foto de perfil). A logo grande do cabeçalho
+// continua sendo sempre a da La Vie — não muda por cliente.
 function _aplicarLogoHeader(){
-  const img = document.getElementById('header-logo-img');
-  if(!img) return;
+  const badge = document.getElementById('client-logo-badge');
+  const img = document.getElementById('client-logo-badge-img');
+  if(!badge || !img) return;
   const emp = EMPRESAS[currentEmpresa];
-  img.src = (emp && emp.logo) ? emp.logo : LOGO_LAVIE;
+  if(emp && emp.logo && emp.empresaId){
+    img.src = emp.logo;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 // Categorias do banco de talentos por cliente — cada cliente tem as suas
