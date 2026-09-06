@@ -509,14 +509,14 @@ header {
 </header>
 <nav class="header-tabs">
   <button class="nav-btn" onclick="goPage('dashboard')">Dashboard</button>
-  <button class="nav-btn active" onclick="goPage('vagas')">Vagas</button>
-  <button class="nav-btn" onclick="goPage('candidatos')">Candidatos</button>
-  <button class="nav-btn" onclick="goPage('documentos')">Documentos</button>
-  <div class="header-tabs-divider"></div>
-  <button class="nav-btn" onclick="goPage('entrevistas')">Entrevistas</button>
-  <button class="nav-btn" onclick="goPage('agenda')">Agenda</button>
+  <button class="nav-btn active" id="nav-vagas" onclick="goPage('vagas')">Vagas</button>
+  <button class="nav-btn" id="nav-candidatos" onclick="goPage('candidatos')">Candidatos</button>
+  <button class="nav-btn" id="nav-documentos" onclick="goPage('documentos')">Documentos</button>
+  <div class="header-tabs-divider" id="nav-divider-rs"></div>
+  <button class="nav-btn" id="nav-entrevistas" onclick="goPage('entrevistas')">Entrevistas</button>
+  <button class="nav-btn" id="nav-agenda" onclick="goPage('agenda')">Agenda</button>
   <button class="nav-btn" id="nav-financeiro" onclick="goPage('financeiro')">Financeiro</button>
-  <button class="nav-btn" onclick="goPage('painel')">Histórico</button>
+  <button class="nav-btn" id="nav-painel" onclick="goPage('painel')">Histórico</button>
 </nav>
 
 <div class="wrapper">
@@ -1107,8 +1107,8 @@ const EMPRESAS = {
   lavie:   { nome:'La Vie Consultoria', empresaId:null, logo:LOGO_LAVIE, subtitulo:'Consultoria Empresarial · Acesso master' },
   cambury: { nome:'UniCambury',  empresaId:'cambury', logo:LOGO_CAMBURY, subtitulo:'Centro Universitário · Direção', termoCliente:'Mantenedor', produtos:['rs'] },
   autoclub: { nome:'Auto Club Proteção Veicular', empresaId:'autoclub', logo:LOGO_AUTOCLUB, subtitulo:'Proteção Veicular · Comercial', termoCliente:'Cliente', produtos:['rs'] },
-  ducarmo: { nome:'Du Carmo', empresaId:'ducarmo', logo:LOGO_DUCARMO, subtitulo:'Comércio · Direção', termoCliente:'Cliente', produtos:['rs'] },
   avep: { nome:'AVEP Brasil', empresaId:'avep', logo:LOGO_AVEP, subtitulo:'Proteção Veicular Colaborativa · Mentoria', termoCliente:'Cliente', produtos:['mentoria'], grupo:'autoclub' },
+  ducarmo: { nome:'Du Carmo', empresaId:'ducarmo', logo:LOGO_DUCARMO, subtitulo:'Comércio · Direção', termoCliente:'Cliente', produtos:['rs'] },
 };
 
 // Retorna a lista de produtos contratados pela empresa ativa. Empresas
@@ -1158,6 +1158,7 @@ async function fazerLogin(){
     document.title = `La Vie · ${EMPRESAS[currentEmpresa].nome}`;
     _aplicarTerminologiaEmpresa();
     _aplicarLogoHeader();
+    _aplicarNavPorProduto();
     renderEmpresaSwitcher();
     initApp();
     return;
@@ -1288,6 +1289,7 @@ async function carregarPerfilEEntrar(user){
   document.title = `La Vie · ${currentEmpresa && EMPRESAS[currentEmpresa] ? EMPRESAS[currentEmpresa].nome : ''}`;
   _aplicarTerminologiaEmpresa();
     _aplicarLogoHeader();
+    _aplicarNavPorProduto();
   renderEmpresaSwitcher();
   initApp();
 }
@@ -1327,6 +1329,7 @@ async function switchEmpresa(id){
   document.title = `La Vie · ${EMPRESAS[id].nome}`;
   _aplicarTerminologiaEmpresa();
     _aplicarLogoHeader();
+    _aplicarNavPorProduto();
   renderEmpresaSwitcher();
   document.getElementById('page-loading').classList.add('active');
   await loadAll();
@@ -1883,6 +1886,20 @@ function _aplicarLogoHeader(){
   } else {
     badge.style.display = 'none';
   }
+}
+
+// Esconde as abas que só fazem sentido pra R&S (Vagas, Candidatos,
+// Documentos, Entrevistas, Agenda, Histórico) quando o cliente ativo não tem
+// R&S contratado — ex.: a AVEP, que só tem Mentoria, não deve ver "Vagas".
+const NAV_IDS_RS = ['nav-vagas','nav-candidatos','nav-documentos','nav-entrevistas','nav-agenda','nav-painel'];
+function _aplicarNavPorProduto(){
+  const temRS = empresaTemProduto('rs');
+  NAV_IDS_RS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = temRS ? '' : 'none';
+  });
+  const divider = document.getElementById('nav-divider-rs');
+  if(divider) divider.style.display = temRS ? '' : 'none';
 }
 
 // Categorias do banco de talentos por cliente — cada cliente tem as suas
