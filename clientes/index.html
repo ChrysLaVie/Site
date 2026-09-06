@@ -3872,12 +3872,15 @@ async function renderFinanceiro(){
   tbody.innerHTML=rows.map(({p,v,s})=>{
     const venc=p.vencimento?new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR'):'—';
     const acao = souCliente ? '' : (s==='pago'
-      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>`
+      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>
+         <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`
       : s==='cancelada'
-      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>`
+      ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>
+         <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`
       : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
          <button class="btn btn-ghost btn-sm" onclick="registrarPagamentoParcial('${p.id}')">💰 Parcial</button>
-         <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>`);
+         <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>
+         <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
       <td style="font-size:12px"><strong>${v.titulo}</strong></td>
@@ -3971,6 +3974,26 @@ async function estornarPagamento(id){
   p.status='pendente'; p.pagoEm=null;
   try{ await upsertPagamento(p); }catch(e){ alert('Erro: '+e.message); }
   renderFinanceiro(); showToast('↩ Pagamento estornado.');
+}
+// Exclui um lançamento de pagamento definitivamente (ex.: um "saldo restante"
+// gerado errado por um "Parcial" clicado a mais). Diferente de "Estornar", que
+// só volta o status pra pendente — aqui a linha some de vez. Não mexe nas
+// parcelas 1/2 "oficiais" da vaga (essas a sincronização recria sozinha se
+// forem excluídas por engano); serve principalmente para as parcelas de saldo.
+async function excluirPagamento(id){
+  const p=_pagamentos.find(x=>x.id===id); if(!p)return;
+  if(!confirm('Excluir este lançamento definitivamente?\n\n'+(p.obs||'')+' · '+_fmtBRL(p.valor)+'\n\nEssa ação não pode ser desfeita.'))return;
+  const antes = _pagamentos.slice();
+  _pagamentos = _pagamentos.filter(x=>x.id!==id);
+  try{
+    if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ demoSavePag(); }
+    else { const {error}=await sb.from('pagamentos').delete().eq('id',id); if(error)throw error; }
+  }catch(e){
+    _pagamentos = antes;
+    alert('NÃO FOI POSSÍVEL EXCLUIR.\n\nMotivo: '+(e && e.message ? e.message : e));
+    renderFinanceiro(); return;
+  }
+  renderFinanceiro(); showToast('🗑 Lançamento excluído.');
 }
 function exportFinanceiroCSV(){
   const vagas=getVagas();
