@@ -790,6 +790,9 @@ header {
   <div class="stats-row" id="fin-stats"></div>
   <div class="filters-bar" style="margin-top:20px">
     <input class="filter-input wide" id="fin-search" placeholder="🔍 Buscar vaga..." oninput="renderFinanceiro()">
+    <select class="filter-input" id="fin-filter-os" onchange="renderFinanceiro()">
+      <option value="">Todas as Ordens de Serviço</option>
+    </select>
     <select class="filter-input" id="fin-filter-status" onchange="renderFinanceiro()">
       <option value="">Todos os status</option>
       <option value="pendente">Pendentes</option>
@@ -831,6 +834,7 @@ header {
   <div class="modal-header"><div class="modal-title">Nova Vaga</div><button class="modal-close" onclick="closeModal('modal-nova-vaga')">✕</button></div>
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Título da Vaga *</label><input id="nv-titulo" placeholder="Ex: Auxiliar de Produção – Macarrão"></div>
+    <div class="form-field"><label>Ordem de Serviço</label><input id="nv-os" placeholder="Ex: OS Cambury Nº 02"></div>
     <div class="form-field"><label>Setor *</label><input id="nv-setor" placeholder="Ex: Produção"></div>
     <div class="form-field"><label>Gestor Solicitante</label><input id="nv-gestor"></div>
     <div class="form-field"><label>Data de Abertura *</label><input id="nv-data" type="date"></div>
@@ -850,6 +854,7 @@ header {
   <input type="hidden" id="ev-id">
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Título</label><input id="ev-titulo"></div>
+    <div class="form-field"><label>Ordem de Serviço</label><input id="ev-os" placeholder="Ex: OS Cambury Nº 02"></div>
     <div class="form-field"><label>Setor</label><input id="ev-setor"></div>
     <div class="form-field"><label>Gestor</label><input id="ev-gestor"></div>
     <div class="form-field"><label>Data Abertura</label><input id="ev-data" type="date"></div>
@@ -1695,11 +1700,11 @@ function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
+const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
@@ -2349,12 +2354,12 @@ async function salvarVaga() {
   const dataEl = document.getElementById('nv-data');
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
-  const v={id:Date.now().toString(),titulo,setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
+  const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-nova-vaga');
-    ['nv-titulo','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
+    ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
@@ -2363,7 +2368,7 @@ async function salvarVaga() {
 
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-os').value=v.ordemServico||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -2383,6 +2388,7 @@ async function atualizarVaga() {
   document.getElementById('ev-data-enc').value  = dataEnc||'';
   _vagas[idx]={..._vagas[idx],
     titulo:document.getElementById('ev-titulo').value.trim(),
+    ordemServico:document.getElementById('ev-os').value.trim(),
     setor:document.getElementById('ev-setor').value.trim(),
     gestor:document.getElementById('ev-gestor').value.trim(),
     dataAbertura:document.getElementById('ev-data').value||null,
@@ -3810,6 +3816,16 @@ function _statusReal(p){
 const FIN_TAG={pendente:'tag-rh',pago:'tag-aprovado',atrasado:'tag-reprovado',cancelada:'tag-closed'};
 const FIN_LBL={pendente:'Pendente',pago:'Pago',atrasado:'Atrasado',cancelada:'Cancelada'};
 
+// Vaga "quitada": todas as suas parcelas (incluindo saldos/lançamentos manuais)
+// já estão pagas ou canceladas — não sobra mais nada em aberto. Usado para
+// jogar essas vagas pro final da lista financeira, deixando as vagas em
+// aberto (e as mais novas) sempre visíveis primeiro.
+function _vagaQuitada(v){
+  const parcelas = _pagamentos.filter(p=>p.vagaId===v.id);
+  if(!parcelas.length) return false;
+  return parcelas.every(p=>p.status==='pago'||p.status==='cancelada');
+}
+
 // Qualquer usuário que não seja o masterAdmin da La Vie é "do lado do cliente"
 // (Cambury, Roma, Du Carmo ou o próximo) — vê só o que está em aberto e nunca vê o honorário.
 function isClienteExterno(){ return currentUser && !currentUser.masterAdmin; }
@@ -3820,6 +3836,16 @@ async function renderFinanceiro(){
   const vagas=getVagas();
   const search=(document.getElementById('fin-search')?.value||'').toLowerCase();
   const fStatus=document.getElementById('fin-filter-status')?.value||'';
+  const osSelect=document.getElementById('fin-filter-os');
+  const fOS=osSelect?.value||'';
+  // Popula o filtro de Ordem de Serviço dinamicamente com as OS presentes
+  // nas vagas deste cliente, preservando a seleção atual.
+  if(osSelect){
+    const oss=[...new Set(vagas.map(v=>v.ordemServico).filter(Boolean))].sort();
+    const atual=osSelect.value;
+    osSelect.innerHTML='<option value="">Todas as Ordens de Serviço</option>'+oss.map(os=>`<option value="${os}">${os}</option>`).join('');
+    osSelect.value = oss.includes(atual) ? atual : '';
+  }
   const souCliente = isClienteExterno();
   const csvBtn=document.getElementById('fin-csv-btn'); if(csvBtn) csvBtn.style.display=souCliente?'none':'';
   const manualBtn=document.getElementById('fin-manual-btn'); if(manualBtn) manualBtn.style.display=souCliente?'none':'';
@@ -3872,7 +3898,18 @@ async function renderFinanceiro(){
     .filter(({s})=> souCliente ? (s==='pendente'||s==='atrasado') : true) // cliente só vê o que está em aberto
     .filter(({v})=>!search||v.titulo.toLowerCase().includes(search))
     .filter(({s})=>!fStatus||s===fStatus)
-    .sort((a,b)=> (a.v.titulo+a.p.parcela).localeCompare(b.v.titulo+b.p.parcela));
+    .filter(({v})=>!fOS||(v.ordemServico||'')===fOS)
+    .sort((a,b)=>{
+      // 1) vagas quitadas (tudo pago/cancelado) vão pro final da lista
+      const qa=_vagaQuitada(a.v)?1:0, qb=_vagaQuitada(b.v)?1:0;
+      if(qa!==qb) return qa-qb;
+      // 2) entre o que ainda está em aberto, as vagas mais novas primeiro
+      const da=a.v.criadoEm||a.v.dataAbertura||'', db=b.v.criadoEm||b.v.dataAbertura||'';
+      if(da!==db) return da<db?1:-1;
+      // 3) mesma vaga: parcela 1 antes da 2, saldo depois
+      if(a.v.titulo!==b.v.titulo) return a.v.titulo.localeCompare(b.v.titulo);
+      return (a.p.parcela-b.p.parcela) || (a.p.id).localeCompare(b.p.id);
+    });
   const tbody=document.getElementById('fin-tbody');
   if(!rows.length){ tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💰</div><p>${souCliente?'Nenhuma pendência no momento.':'Nenhuma parcela encontrada.'}</p></div></td></tr>`; return; }
   tbody.innerHTML=rows.map(({p,v,s})=>{
@@ -3892,7 +3929,7 @@ async function renderFinanceiro(){
          <button class="btn-danger" onclick="excluirPagamento('${p.id}')">🗑 Excluir</button>`);
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
-      <td style="font-size:12px"><strong>${v.titulo}</strong></td>
+      <td style="font-size:12px"><strong>${v.titulo}</strong>${v.ordemServico?`<br><span style="font-size:10.5px;color:var(--light)">${v.ordemServico}</span>`:''}</td>
       <td style="font-size:12px">${p.parcela}ª · ${(p.obs||'').replace(/\s*\[venc\. ajustado\]/,'').replace(/\s*\[valor ajustado\]/,'')}</td>
       <td>${p.pct}%</td>
       <td style="font-weight:600">${_fmtBRL(p.valor)}</td>
@@ -4153,27 +4190,27 @@ function seedVagas(){
   const hoje = new Date().toISOString().slice(0,10);
   const vagas = [
     // ── 6 vagas da OS Cambury Nº 01 (assinada 23/06/2026) · PJ 100% home office ──
-    { id:'cb1', titulo:'Coordenador Financeiro / Gestão', setor:'Financeiro', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial (Goiânia)', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
+    { id:'cb1', titulo:'Coordenador Financeiro / Gestão', ordemServico:'OS Cambury Nº 01', setor:'Financeiro', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · Presencial (Goiânia)', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Coordena as rotinas financeiras da instituição (contabilidade, contas a pagar/receber, cobrança, tesouraria, fluxo de caixa, conciliações e relacionamento com instituições financeiras) e a gestão administrativa de áreas estratégicas: RH/DP, Jurídico, TI, Logística, Patrimônio, Compras e Suprimentos. Renegocia dívidas e contratos; monitora indicadores e elabora relatórios gerenciais; desenvolve processos, controles internos e políticas administrativas; assessora a Direção Executiva nas decisões estratégicas. Diferencial: experiência em Instituições de Ensino Superior e vivência com ERP/sistemas de gestão. Local: Goiânia, presencial. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:00:00Z' },
-    { id:'cb3', titulo:'Coordenador Geral de Ensino', setor:'Ensino', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
+    { id:'cb3', titulo:'Coordenador Geral de Ensino', ordemServico:'OS Cambury Nº 01', setor:'Ensino', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 10.000,00', honorario:'35% · R$ 3.500', gestor:'Direção Executiva', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Liderança acadêmica que garante qualidade de ensino, conformidade com o MEC e excelência na experiência do estudante. Coordena qualidade de ensino e atendimento ao estudante, atividades acadêmicas dos cursos, coordenadores e corpo docente, ENADE/avaliações, projetos pedagógicos. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:01:00Z' },
-    { id:'cb6', titulo:'Coordenador de Relacionamento e Experiência do Aluno', setor:'Relacionamento e Experiência do Aluno', dataAbertura:hoje, qtd:5, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 5.000,00 (PJ)', honorario:'40% · R$ 2.000', gestor:'Direção Executiva', motivo:'Nova posição',
+    { id:'cb6', titulo:'Coordenador de Relacionamento e Experiência do Aluno', ordemServico:'OS Cambury Nº 01', setor:'Relacionamento e Experiência do Aluno', dataAbertura:hoje, qtd:5, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 5.000,00 (PJ)', honorario:'40% · R$ 2.000', gestor:'Direção Executiva', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Conexão que acolhe, desenvolve e fideliza alunos, promovendo experiência acadêmica de excelência e apoiando captação e retenção. Gere relacionamento e experiência do aluno, Secretaria Acadêmica, rematrículas, bolsas/financiamentos, estágios, Ouvidoria e mediação de conflitos; monitora satisfação, retenção e evasão. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:02:00Z' },
-    { id:'cb7', titulo:'Gerente de Marketing', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 6.000,00', honorario:'40% · R$ 2.400', gestor:'Diretoria', motivo:'Nova posição',
+    { id:'cb7', titulo:'Gerente de Marketing', ordemServico:'OS Cambury Nº 01', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 6.000,00', honorario:'40% · R$ 2.400', gestor:'Diretoria', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Estratégia, criatividade e performance para fortalecer a marca, gerar demanda e impulsionar resultados. Planeja o plano de marketing, campanhas online/offline, tráfego pago (Google/Meta/LinkedIn Ads), CRM e automações, site institucional e SEO, redes sociais e KPIs. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:03:00Z' },
-    { id:'cb8', titulo:'Social Media', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 3.000,00', honorario:'50% · R$ 1.800', gestor:'Gerência de Marketing', motivo:'Nova posição',
+    { id:'cb8', titulo:'Social Media', ordemServico:'OS Cambury Nº 01', setor:'Marketing', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 3.000,00', honorario:'50% · R$ 1.800', gestor:'Gerência de Marketing', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Conteúdo, criatividade e conexão para fortalecer a presença digital e impulsionar a captação de alunos. Planeja calendário editorial, produz conteúdo para Instagram/Facebook/LinkedIn/TikTok/YouTube, cobre eventos, interage com seguidores, acompanha métricas e zela pela identidade visual da marca. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:04:00Z' },
-    { id:'cb2', titulo:'Coordenador de Comercialização', setor:'Comercial / Captação', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 5.000,00 + comissão', honorario:'40% · R$ 2.000', gestor:'Diretoria', motivo:'Nova posição',
+    { id:'cb2', titulo:'Coordenador de Comercialização', ordemServico:'OS Cambury Nº 01', setor:'Comercial / Captação', dataAbertura:hoje, qtd:1, qtdFechadas:0, status:'aberta', tipo:'PJ · 100% home office', salario:'R$ 5.000,00 + comissão', honorario:'40% · R$ 2.000', gestor:'Diretoria', motivo:'Nova posição',
       canais:'E-mail chrys@lavieconsultoria.com · WhatsApp (62) 99274-1488',
       obs:'Liderança estratégica para atrair, converter e fidelizar alunos, com gestão de equipes de televendas e foco em resultados. Lidera captação e televendas, CRM, funil de vendas, captação de novos alunos/transferências/evadidos/segunda graduação, indicadores comerciais, treinamentos e metas. Jornada: seg a sex 8h–18h e sábados alternados 8h–12h.',
       criadoPor:'Chrys Ferreira Alves', criadoEm:hoje+'T08:05:00Z' }
@@ -4650,6 +4687,14 @@ create table if not exists pagamentos (
 --
 -- alter table vagas add column if not exists imagens jsonb not null default '[]'::jsonb;
 -- alter table vagas add column if not exists legenda text;
+--
+================================================================================
+-- MIGRAÇÃO: campo "Ordem de Serviço" nas vagas
+-- Permite agrupar/filtrar vagas pela OS que as originou (ex.: "OS Cambury Nº
+-- 01"), e ordenar o financeiro com as OS já 100% pagas no final da lista.
+-- Rode isto UMA VEZ no seu projeto Supabase (SQL Editor).
+--
+-- alter table vagas add column if not exists ordem_servico text;
 --
 ================================================================================
 -->
