@@ -3768,15 +3768,19 @@ async function sincronizarParcelas(){
       }
       const novoValor=+(base*def.pct/100).toFixed(2);
       const novoVenc=_vencParcela(v,def);
-      // Vencimento ajustado à mão fica marcado na observação e a sincronização
-      // não mexe mais nele. Sem isso, a data corrigida voltava ao valor
-      // calculado automaticamente na próxima vez que o sistema abrisse.
+      // Vencimento ou valor ajustados à mão ficam marcados na observação e a
+      // sincronização não mexe mais neles. Sem isso, a correção manual voltava
+      // ao valor calculado automaticamente na próxima vez que o sistema abrisse
+      // — foi o que aconteceu com uma parcela dada como paga com valor parcial
+      // (ex.: R$800 de uma parcela de R$1.000): a sincronização resetava de
+      // volta pro valor cheio a cada recarregamento da tela.
       const vencManual = /\[venc\. ajustado\]/.test(ex.obs||'');
+      const valorManual = /\[valor ajustado\]/.test(ex.obs||'');
       const podeMexerNoVenc = ex.status!=='pago' && ex.status!=='cancelada' && !vencManual;
-      const precisaAtualizar = ex.pct!==def.pct || ex.valor!==novoValor || (podeMexerNoVenc && ex.vencimento!==novoVenc);
+      const podeMexerNoValor = ex.status!=='pago' && ex.status!=='cancelada' && !valorManual;
+      const precisaAtualizar = (podeMexerNoValor && (ex.pct!==def.pct || ex.valor!==novoValor)) || (podeMexerNoVenc && ex.vencimento!==novoVenc);
       if(precisaAtualizar){
-        ex.pct=def.pct; ex.valor=novoValor;
-        if(!vencManual) ex.obs=def.quando;
+        if(podeMexerNoValor){ ex.pct=def.pct; ex.valor=novoValor; if(!vencManual) ex.obs=def.quando; }
         if(podeMexerNoVenc) ex.vencimento=novoVenc;
         try{await upsertPagamento(ex);}catch(e){}
       }
@@ -3889,7 +3893,7 @@ async function renderFinanceiro(){
     const pagoInfo = s==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${new Date(p.pagoEm+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:'';
     return `<tr>
       <td style="font-size:12px"><strong>${v.titulo}</strong></td>
-      <td style="font-size:12px">${p.parcela}ª · ${(p.obs||'').replace(/\s*\[venc\. ajustado\]/,'')}</td>
+      <td style="font-size:12px">${p.parcela}ª · ${(p.obs||'').replace(/\s*\[venc\. ajustado\]/,'').replace(/\s*\[valor ajustado\]/,'')}</td>
       <td>${p.pct}%</td>
       <td style="font-weight:600">${_fmtBRL(p.valor)}</td>
       <td style="font-size:12px;color:var(--mid)">${venc}${pagoInfo}</td>
@@ -3920,7 +3924,7 @@ async function registrarPagamentoParcial(id){
   }
   const saldo = +(p.valor - valorRecebido).toFixed(2);
   const hoje = new Date().toISOString().slice(0,10);
-  const obsBase = (p.obs||'').replace(/\s*\[venc\. ajustado\]/,'');
+  const obsBase = (p.obs||'').replace(/\s*\[venc\. ajustado\]/,'').replace(/\s*\[valor ajustado\]/,'');
   const antes = { valor:p.valor, status:p.status, pagoEm:p.pagoEm, obs:p.obs };
   p.valor = valorRecebido; p.status='pago'; p.pagoEm=hoje;
   p.obs = obsBase + ' (pagamento parcial — saldo de '+_fmtBRL(saldo)+' gerado em nova parcela)';
@@ -3994,7 +3998,8 @@ async function editarLancamento(id){
   const obsResp = prompt('Descrição/observação:', p.obs||'');
   if(obsResp === null) return;
   const antes = { valor:p.valor, obs:p.obs };
-  p.valor = novoValor; p.obs = obsResp;
+  p.valor = novoValor;
+  p.obs = /\[valor ajustado\]/.test(obsResp) ? obsResp : obsResp + ' [valor ajustado]';
   try{
     await upsertPagamento(p);
   }catch(e){
