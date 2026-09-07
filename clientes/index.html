@@ -2546,9 +2546,9 @@ function _fmtTam(bytes){ if(bytes<1024)return bytes+' B'; if(bytes<1048576)retur
 // aparecem com "origem":"vagas" e um path sem pasta. Por isso o painel precisa
 // consultar o outro projeto pra abrir esses arquivos.
 const SITE_SUPABASE_URL   = 'https://doinfhruwdwctnuoujxl.supabase.co';
-const SITE_DOCS_BUCKET    = 'documentos'; // bucket do projeto do site (mesmo nome, outro projeto)
-const SITE_BUCKET_PUBLICO = true;         // bucket do site está público
-const SITE_SUPABASE_KEY   = '';           // ← anon key do site (só se for privado)
+const SITE_DOCS_BUCKET    = 'curriculos'; // bucket do projeto do site
+const SITE_BUCKET_PUBLICO = false;        // bucket do site é privado: usa link assinado de 60s
+const SITE_SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8'; // anon key do projeto do site
 let _sbSite=null;
 function sbSite(){
   if(!SITE_SUPABASE_KEY) return null;
