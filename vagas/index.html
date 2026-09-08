@@ -429,20 +429,41 @@ async function arquivarCandidatura(id, valor) { if (!db) return; try { await db.
 // bucket virar privado) quanto de um path novo já salvo puro — pra não
 // quebrar candidaturas que já existiam antes desta correção.
 function _pathDoCurriculo(v) {
-  v = (v || '').trim();
-  const marcador = '/curriculos/';
-  const i = v.indexOf(marcador);
-  if (v.startsWith('http') && i >= 0) return decodeURIComponent(v.slice(i + marcador.length));
-  return v;
+  return _pathsDoCurriculo(v)[0] || '';
+}
+// Candidaturas com mais de um anexo gravam os caminhos separados por quebra de
+// linha no mesmo campo cv_url. Esta função devolve todos, um por item, para que
+// nenhum arquivo fique inacessível.
+function _pathsDoCurriculo(v) {
+  return String(v || '')
+    .split(/[\r\n]+/)
+    .map(x => x.trim())
+    .filter(Boolean)
+    .map(x => {
+      const marcador = '/curriculos/';
+      const i = x.indexOf(marcador);
+      if (x.startsWith('http') && i >= 0) return decodeURIComponent(x.slice(i + marcador.length));
+      return x;
+    });
 }
 // Gera um link temporário pro currículo (60s, só pra abrir na hora). Usado
 // nos links clicáveis dentro do painel.
 async function abrirCurriculo(valor) {
-  const path = _pathDoCurriculo(valor);
+  const todos = _pathsDoCurriculo(valor);
+  const path = todos[0] || '';
   if (!db) { alert('Conexão indisponível.'); return; }
+  // Mais de um anexo: abre cada um em sua própria aba.
+  if (todos.length > 1) {
+    for (const p of todos.slice(1)) {
+      try {
+        const r = await db.storage.from('curriculos').createSignedUrl(p, 60);
+        if (r.data) window.open(r.data.signedUrl, '_blank', 'noopener');
+      } catch(e) { /* segue com os demais */ }
+    }
+  }
   try {
     const { data, error } = await db.storage.from('curriculos').createSignedUrl(path, 60);
-    if (error || !data) { alert('Não foi possível abrir o currículo agora.'); return; }
+    if (error || !data) { alert('Não foi possível abrir o currículo.\n\nCaminho: ' + path + '\nErro: ' + ((error && error.message) || 'objeto não encontrado')); return; }
     try {
       const { data: { user } } = await db.auth.getUser();
       await db.from('curriculo_access_log').insert({ path, acessado_por: user?.id || null, acessado_por_email: user?.email || null });
