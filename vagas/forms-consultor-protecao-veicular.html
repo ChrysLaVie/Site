@@ -196,7 +196,12 @@ const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
 // A senha fixa que ficava aqui foi removida: ela estava visível no
 // código-fonte da página. O acesso ao painel agora usa e-mail e senha reais
 // do Supabase Auth (mesma conta do vagas.html e do disc.html).
+// Titulo gravado no banco e enviado ao R&S. Precisa bater EXATAMENTE com o
+// campo title da vaga na tabela vagas, senao a resposta nao cruza com a candidatura.
 const VAGA_TITULO_PADRAO = 'Consultor Especialista';
+// Rotulo mostrado ao candidato na tela. Pode ser mais descritivo que o titulo
+// cadastrado, porque nao e usado em nenhuma gravacao.
+const VAGA_LABEL = 'Consultor Comercial · Proteção Veicular';
 
 // Banco do sistema de R&S, projeto Supabase separado.
 // Usado só para empurrar o candidato pro funil automaticamente ao final do formulário.
@@ -354,7 +359,9 @@ const prefill = {
   nome: params.get('nome') || '',
   email: params.get('email') || '',
   telefone: params.get('telefone') || '',
-  vaga: params.get('vaga') || VAGA_TITULO_PADRAO
+  vaga: params.get('vaga') || VAGA_TITULO_PADRAO,
+  // Se a URL trouxer ?vaga=, esse valor manda tambem na exibicao.
+  vagaLabel: params.get('vaga') || VAGA_LABEL
 };
 
 const app = document.getElementById('app');
@@ -392,7 +399,7 @@ function renderForm() {
   app.innerHTML = `
     <div class="hero">
       <span class="eyebrow">La Vie Consultoria · Processo Seletivo</span>
-      <h1 class="section-title">Formulário da vaga: <em>${esc(prefill.vaga)}</em></h1>
+      <h1 class="section-title">Formulário da vaga: <em>${esc(prefill.vagaLabel)}</em></h1>
       <p class="lead">Leia com atenção as informações abaixo antes de preencher o formulário. Suas respostas serão analisadas pela nossa equipe, e entraremos em contato para as próximas etapas do processo.</p>
     </div>
 
@@ -535,7 +542,7 @@ function renderForm() {
       app.innerHTML = `
         <div class="card success-card">
           <h2>Formulário recebido ✓</h2>
-          <p>Obrigado, ${esc(nome.value.trim())}. Suas respostas para a vaga de <strong>${esc(prefill.vaga)}</strong> foram recebidas. A equipe da La Vie Consultoria vai analisar seu perfil e entrará em contato pelos dados informados.</p>
+          <p>Obrigado, ${esc(nome.value.trim())}. Suas respostas para a vaga de <strong>${esc(prefill.vagaLabel)}</strong> foram recebidas. A equipe da La Vie Consultoria vai analisar seu perfil e entrará em contato pelos dados informados.</p>
         </div>
       `;
     } else {
