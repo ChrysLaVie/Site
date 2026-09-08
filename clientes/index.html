@@ -1789,7 +1789,17 @@ function imprimirRoteiro(){
 let _page = 'vagas';
 const PAGES = ['dashboard','vagas','candidatos','documentos','entrevistas','agenda','financeiro','painel'];
 
+// Páginas que só existem no produto R&S. Se a empresa ativa não tem R&S
+// (ex.: AVEP, que é mentoria), qualquer tentativa de abrir uma delas cai no
+// dashboard — senão o conteúdo antigo continua na tela mesmo com a aba oculta.
+const PAGES_RS = ['vagas','candidatos','documentos','entrevistas','agenda','painel'];
+function _paginaPermitida(name){
+  if(PAGES_RS.includes(name) && !empresaTemProduto('rs')) return false;
+  return true;
+}
+
 function goPage(name) {
+  if(!_paginaPermitida(name)) name = 'dashboard';
   // Update context labels for gestores
   if(currentUser && currentUser.role==='gestor') {
     const setLabel = currentUser.setores.join(' + ');
@@ -2594,7 +2604,13 @@ async function abrirDocumento(i){
   // 3) Currículo vindo do site → resolve no projeto do site.
   if(_docDoSite(d)){
     try{
-      const url = await _urlDoSite(d.path);
+      // Candidatura com mais de um anexo grava os caminhos separados por
+      // quebra de linha no mesmo campo. Abre todos, um por aba.
+      const paths = String(d.path).split(/[\r\n]+/).map(x=>x.trim()).filter(Boolean);
+      for(const p of paths.slice(1)){
+        try{ window.open(await _urlDoSite(p),'_blank','noopener'); }catch(e){}
+      }
+      const url = await _urlDoSite(paths[0]);
       _logAcessoDoc(d.path, nome, id);
       window.open(url,'_blank','noopener'); return;
     }catch(e){
