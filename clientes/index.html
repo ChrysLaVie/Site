@@ -1733,8 +1733,42 @@ function demoSave(){
     localStorage.setItem(_demoKey('cambury_entrev'), JSON.stringify(_entrevistas));
   }catch(e){}
 }
+// ── MENTORIA: estado em memória ──────────────────────────────────────────────
+let _mentContrato=null, _mentParticipantes=[], _mentEncontros=[], _mentMateriais=[];
+
+// Carrega o programa de mentoria da empresa ativa. O mentorado não enxerga o
+// contrato (RLS), então a ausência dele não é erro: só significa que quem está
+// logado é o próprio participante.
+async function loadMentoria(){
+  _mentContrato=null; _mentParticipantes=[]; _mentEncontros=[]; _mentMateriais=[];
+  if(DEMO_MODE) return;
+  try{
+    const [ct,pa,en] = await Promise.all([
+      sb.from('mentoria_contratos').select('*').eq('empresa_id',currentEmpresa),
+      sb.from('mentoria_participantes').select('*').eq('empresa_id',currentEmpresa),
+      sb.from('mentoria_encontros').select('*').eq('empresa_id',currentEmpresa).order('numero',{ascending:true})
+    ]);
+    if(ct.data && ct.data.length) _mentContrato = ct.data[0];
+    if(pa.data) _mentParticipantes = pa.data;
+    if(en.data) _mentEncontros = en.data;
+    const cid = _mentContrato ? _mentContrato.id : (_mentEncontros[0]||{}).contrato_id;
+    if(cid){
+      const mt = await sb.from('mentoria_materiais').select('*').eq('contrato_id',cid);
+      if(mt.data) _mentMateriais = mt.data;
+    }
+  }catch(err){ console.error('mentoria:', err); }
+}
+
 async function loadAll() {
   if(DEMO_MODE){ demoLoad(); setSyncOk(false); return; }
+  // Empresa de mentoria não tem vagas/candidatos/entrevistas: buscar essas
+  // tabelas aqui só geraria consulta vazia (ou bloqueada por RLS) a cada troca.
+  if(!empresaTemProduto('rs')){
+    _vagas=[]; _cands=[]; _entrevistas=[]; _agenda=[];
+    await loadMentoria();
+    setSyncOk(true);
+    return;
+  }
   try {
     const [v,c,e] = await Promise.all([
       sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}),
@@ -3496,16 +3530,101 @@ function renderIndicadoresFunil(){
       </div>`).join('');
 }
 
-// Dashboard do produto Mentoria. Enquanto as tabelas mentorados/
-// mentoria_encontros não estiverem populadas, mostra o estado vazio.
+// ── DASHBOARD DO PRODUTO MENTORIA ────────────────────────────────────────────
+// Só é chamado quando a empresa ativa não tem R&S. Mostra o participante, a
+// trilha de encontros e o material liberado. Valor e anotações privadas não
+// aparecem aqui: o mentorado usa a mesma tela.
+const _MENT_STATUS = {
+  previsto:  {rot:'Previsto',  cor:'var(--light)'},
+  agendado:  {rot:'Agendado',  cor:'#5C7A8B'},
+  realizado: {rot:'Realizado', cor:'#3E7A5E'},
+  cancelado: {rot:'Cancelado', cor:'#A8574F'},
+};
+function _mentDataBR(d){
+  if(!d) return 'A definir';
+  const p = String(d).slice(0,10).split('-');
+  return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+}
+function _mentHora(h){ return h ? String(h).slice(0,5) : ''; }
+function _mentHoje(){ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; }
+
 function renderDashboardMentoria(){
   const el = document.getElementById('dash-mentoria');
   if(!el) return;
-  el.innerHTML = `
-    <div class="card" style="padding:28px 24px;text-align:center">
+
+  if(!_mentEncontros.length){
+    el.innerHTML = `<div class="card" style="padding:28px 24px;text-align:center">
       <div style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px">Programa de Desenvolvimento</div>
-      <div style="font-size:13px;color:var(--mid);max-width:460px;margin:0 auto">
-        Nenhum mentorado cadastrado ainda. A trilha de encontros aparece aqui assim que o primeiro programa for criado.
+      <div style="font-size:13px;color:var(--mid)">Nenhum encontro cadastrado para esta empresa ainda.</div>
+    </div>`;
+    return;
+  }
+
+  const hoje = _mentHoje();
+  const realizados = _mentEncontros.filter(e=>e.status==='realizado').length;
+  const total = _mentEncontros.length;
+  const pct = total ? Math.round(realizados/total*100) : 0;
+  const proximo = _mentEncontros.find(e=>e.data_prevista && e.data_prevista>=hoje && e.status!=='realizado')
+               || _mentEncontros.find(e=>e.status!=='realizado');
+  const participante = _mentParticipantes[0];
+  const podeEditar = !!(currentUser && currentUser.masterAdmin);
+
+  const kpi = (rot,val,sub)=>`<div class="card" style="padding:16px 18px;flex:1;min-width:150px">
+      <div style="font-size:11px;text-transform:uppercase;color:var(--mid);letter-spacing:.5px">${rot}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-top:4px">${val}</div>
+      ${sub?`<div style="font-size:11px;color:var(--light);margin-top:2px">${sub}</div>`:''}
+    </div>`;
+
+  const destaque = proximo ? `
+    <div class="card" style="padding:18px 22px;margin-bottom:20px;border-left:3px solid var(--charcoal)">
+      <div style="font-size:11px;text-transform:uppercase;color:var(--mid);letter-spacing:.5px;margin-bottom:6px">
+        ${proximo.data_prevista===hoje ? 'Encontro de hoje' : 'Próximo encontro'}
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:6px">${proximo.tema||''}</div>
+      <div style="font-size:12px;color:var(--mid)">
+        Semana ${proximo.semana} · Encontro ${proximo.numero} de ${total} · ${proximo.modalidade||''}
+        ${proximo.data_prevista?` · ${_mentDataBR(proximo.data_prevista)}`:''}
+        ${proximo.hora_inicio?` às ${_mentHora(proximo.hora_inicio)}`:''}
+      </div>
+      ${proximo.link?`<div style="margin-top:8px"><a href="${proximo.link}" target="_blank" rel="noopener" style="font-size:12px;color:#5C7A8B">Entrar na sala</a></div>`:''}
+      ${proximo.local?`<div style="margin-top:8px;font-size:12px;color:var(--mid)">${proximo.local}</div>`:''}
+    </div>` : '';
+
+  const linha = e=>{
+    const st = _MENT_STATUS[e.status] || _MENT_STATUS.previsto;
+    const mats = _mentMateriais.filter(m=>m.encontro_id===e.id && (m.visivel||podeEditar));
+    const hojeFlag = e.data_prevista===hoje;
+    return `<tr style="${hojeFlag?'background:var(--bege-lt)':''}">
+      <td style="text-align:center;color:var(--light)">${e.numero}</td>
+      <td style="text-align:center">${e.semana}</td>
+      <td>
+        <div style="font-weight:600">${e.tema||''}</div>
+        <div style="font-size:11px;color:var(--light)">${e.categoria||''}</div>
+        ${mats.length?`<div style="font-size:11px;color:#5C7A8B;margin-top:3px">${mats.length} material(is)</div>`:''}
+      </td>
+      <td>${e.modalidade||''}</td>
+      <td>${_mentDataBR(e.data_prevista)}${e.hora_inicio?`<div style="font-size:11px;color:var(--light)">${_mentHora(e.hora_inicio)}</div>`:''}</td>
+      <td><span style="font-size:11px;font-weight:600;color:${st.cor}">${st.rot}</span></td>
+    </tr>`;
+  };
+
+  el.innerHTML = `
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+      ${kpi('Mentorado', participante?participante.nome:'—', participante?(participante.cargo||''):'')}
+      ${kpi('Progresso', pct+'%', `${realizados} de ${total} encontros`)}
+      ${kpi('Ciclo', (_mentContrato&&_mentContrato.data_inicio)?_mentDataBR(_mentContrato.data_inicio):'—', 'Início do programa')}
+    </div>
+    ${destaque}
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--bege)">
+        <div style="font-family:'Playfair Display',serif;font-size:17px">Trilha de encontros</div>
+        <div style="font-size:12px;color:var(--mid)">${_mentContrato?_mentContrato.titulo:'Programa de Desenvolvimento'}</div>
+      </div>
+      <div class="cand-table-wrap">
+        <table class="cand-table">
+          <thead><tr><th style="width:40px;text-align:center">#</th><th style="width:60px;text-align:center">Sem.</th><th>Tema</th><th>Modalidade</th><th>Data</th><th>Status</th></tr></thead>
+          <tbody>${_mentEncontros.map(linha).join('')}</tbody>
+        </table>
       </div>
     </div>`;
 }
