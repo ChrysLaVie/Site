@@ -526,8 +526,11 @@ header {
 </div>
 <div id="page-dashboard" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-    <div><h1 class="page-title">Dashboard</h1><p class="page-sub" id="dash-subtitle">Dados em tempo real</p></div>
+    <div><h1 class="page-title" id="dash-title">Dashboard</h1><p class="page-sub" id="dash-subtitle">Dados em tempo real</p></div>
   </div>
+  <!-- Dashboard de mentoria: só aparece para empresas sem R&S (ex.: AVEP). -->
+  <div id="dash-mentoria" style="display:none"></div>
+  <div id="dash-rs">
   <div class="kpi-hero-row" id="dash-kpis"></div>
   <div id="dash-lv-banner"></div>
   <div class="card" style="margin-bottom:24px;padding:18px 22px">
@@ -607,6 +610,7 @@ header {
   <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
   <div class="section-label" style="margin-bottom:12px">Detalhamento das Vagas</div>
   <div id="dash-tabelas"></div>
+  </div><!-- /dash-rs -->
 </div>
 <div id="page-vagas" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
@@ -3492,7 +3496,39 @@ function renderIndicadoresFunil(){
       </div>`).join('');
 }
 
+// Dashboard do produto Mentoria. Enquanto as tabelas mentorados/
+// mentoria_encontros não estiverem populadas, mostra o estado vazio.
+function renderDashboardMentoria(){
+  const el = document.getElementById('dash-mentoria');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="card" style="padding:28px 24px;text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px">Programa de Desenvolvimento</div>
+      <div style="font-size:13px;color:var(--mid);max-width:460px;margin:0 auto">
+        Nenhum mentorado cadastrado ainda. A trilha de encontros aparece aqui assim que o primeiro programa for criado.
+      </div>
+    </div>`;
+}
+
 function renderDashboard(){
+  // Empresa de mentoria (sem R&S) tem um dashboard próprio: nada de vagas,
+  // funil ou candidatos, que não existem nesse produto.
+  const _rs = document.getElementById('dash-rs');
+  const _mt = document.getElementById('dash-mentoria');
+  const _tt = document.getElementById('dash-title');
+  if(!empresaTemProduto('rs')){
+    if(_rs) _rs.style.display='none';
+    if(_mt) _mt.style.display='';
+    if(_tt) _tt.textContent='Mentoria';
+    const subM = document.getElementById('dash-subtitle');
+    if(subM) subM.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · Programa de Desenvolvimento`;
+    const kpi = document.getElementById('dash-kpis'); if(kpi) kpi.innerHTML='';
+    renderDashboardMentoria();
+    return;
+  }
+  if(_rs) _rs.style.display='';
+  if(_mt) _mt.style.display='none';
+  if(_tt) _tt.textContent='Dashboard';
   const vagas=getVagasVisiveis();
   // Show sector context for gestores
   const subEl = document.getElementById('dash-subtitle');
