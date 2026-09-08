@@ -381,7 +381,7 @@ let state = { view: 'form' };
 async function saveForm(payload) {
   if (!db) return { ok:false, err:'Banco não configurado' };
   try {
-    const { error } = await db.from('forms_generico').insert(payload);
+    const { error } = await db.from('forms_coord_instituto').insert(payload);
     if (error) return { ok:false, err:error.message };
     return { ok:true };
   } catch(e) { return { ok:false, err:e.message }; }
@@ -393,7 +393,7 @@ async function saveForm(payload) {
 async function loadSubmissions() {
   if (!db) return null;
   try {
-    const { data, error } = await db.from('forms_generico').select('*').order('created_at', { ascending:false });
+    const { data, error } = await db.from('forms_coord_instituto').select('*').order('created_at', { ascending:false });
     if (error) return null;
     return data || [];
   } catch(e) { return null; }
@@ -401,7 +401,7 @@ async function loadSubmissions() {
 
 async function deleteSubmission(id) {
   if (!db) return;
-  try { await db.from('forms_generico').delete().eq('id', id); } catch(e) {}
+  try { await db.from('forms_coord_instituto').delete().eq('id', id); } catch(e) {}
 }
 
 function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
