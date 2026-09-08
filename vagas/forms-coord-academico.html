@@ -431,7 +431,7 @@ function renderForm() {
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-remuneracao">
-        <label for="c-remuneracao">Estou ciente de que a <strong>remuneração é de R$ 7.000,00 (PJ)</strong> para esta vaga.</label>
+        <label for="c-remuneracao">Estou ciente de que a <strong>remuneração é de R$ 8.000,00 (PJ)</strong> para esta vaga.</label>
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-presencial">
@@ -715,7 +715,7 @@ function buildSubmissionPDF(s) {
   y += 16;
   const conds = [
     ['Contratação PJ', s.ciente_pj],
-    ['Remuneração R$ 7.000,00 (PJ)', s.ciente_remuneracao],
+    ['Remuneração R$ 8.000,00 (PJ)', s.ciente_remuneracao],
     ['Presencial em Goiânia/GO', s.ciente_presencial],
     ['Horário de funcionamento do departamento', s.ciente_horario]
   ];
