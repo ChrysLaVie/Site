@@ -788,10 +788,12 @@ header {
 <div id="page-financeiro" class="page">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
     <div><h1 class="page-title">Financeiro</h1><p class="page-sub" id="fin-subtitle" style="margin-bottom:20px">Honorários por vaga</p></div>
-  <div id="fin-rs">
-    <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
-    <button class="btn btn-ghost btn-sm" id="fin-manual-btn" onclick="novoLancamentoManual()">➕ Lançamento manual</button>
+    <div style="display:flex;gap:8px" id="fin-acoes">
+      <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
+      <button class="btn btn-ghost btn-sm" id="fin-manual-btn" onclick="novoLancamentoManual()">➕ Lançamento manual</button>
+    </div>
   </div>
+  <div id="fin-rs">
   <div class="stats-row" id="fin-stats"></div>
   <div class="filters-bar" style="margin-top:20px">
     <input class="filter-input wide" id="fin-search" placeholder="🔍 Buscar vaga..." oninput="renderFinanceiro()">
@@ -3023,16 +3025,15 @@ const VAGAS_ROTEIRO = [
   // CONSULTOR(A) DE VENDAS · EDUCACIONAL
   //    Condições espelhadas do formulário da vaga (PJ, R$ 2.500 + comissão)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-consultor-vendas', empresaId:'cambury', nome:'Consultor(a) de Vendas · Educacional', setor:'Comercial', duracao:'35 min',
-    conditions:{ 'Regime':'PJ', 'Remuneração':'R$ 2.500,00 + comissão', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h (funcionamento do setor)', 'Local':'Goiânia · presencial', '13º':'Via nota fiscal, no mês seguinte ao aniversário do contrato', 'Recesso':'30 dias após 1 ano, sem prejuízo do valor da NF', 'Bolsa de estudos':'60% · 70% após 1 ano · 80% após 2 anos (exceto Odontologia e Gastronomia)' },
+  { id:'cb-consultor-vendas', empresaId:'cambury', nome:'Consultor(a) de Vendas · Educacional', setor:'Comercial', duracao:'20 min',
+    conditions:{ 'Regime':'PJ', 'Remuneração':'R$ 2.500,00 + comissão', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h (funcionamento do setor)', 'Local':'Goiânia · presencial', 'Bolsa de estudos':'60% · 70% após 1 ano · 80% após 2 anos (exceto Odontologia e Gastronomia)' },
     sections:[
-      {name:'Abertura',time:'3 min',questions:['Apresente a vaga: captação e matrícula de alunos, atendimento consultivo a interessados, follow-up de leads e comercialização de parcerias educacionais com empresas. Regime PJ, R$ 2.500,00 mais comissão, presencial em Goiânia.','Confirme se o candidato leu e concordou com as condições no formulário: PJ, remuneração, presencial e horário do setor.']},
-      {name:'Formação e Trajetória',time:'4 min',questions:['Conte sua trajetória em vendas: que produtos ou serviços já vendeu e por quanto tempo.','Já atuou com captação no segmento educacional? Se sim, em que tipo de instituição e com quais cursos?','Como era sua meta no último trabalho e qual foi seu resultado frente a ela?']},
-      {name:'Competência Técnica · Funil e Qualificação',time:'7 min',questions:['Como você diferencia um lead quente de um lead frio na prática, e o que muda na sua abordagem para cada um?','Descreva seu processo desde o primeiro contato do interessado até a matrícula efetivada.','Como você prioriza a base quando tem mais leads do que consegue atender no dia?']},
-      {name:'Competência Técnica · Follow-up e CRM',time:'7 min',questions:['Um interessado recebe os valores pelo WhatsApp e para de responder. O que você faz, e em que prazo?','Que uso você faz do CRM no dia a dia, e o que registra a cada contato?','Como você trabalha uma objeção de preço sem partir direto para desconto?','Já recuperou uma venda que parecia perdida? Conte o caso.']},
-      {name:'Competência Técnica · Matrícula e Parcerias',time:'6 min',questions:['O aluno chega para matricular e falta documento. Como você conduz?','Na venda de parceria educacional para empresas, qual a sequência após o aceite do cliente até o contrato assinado?','Como você lida com a área Jurídica e com prazos de contrato sem perder o cliente no meio do caminho?']},
-      {name:'Competência Comportamental',time:'6 min',questions:['Meta apertada e fim de mês chegando: como você se organiza?','Conte uma situação em que você não bateu a meta. O que aconteceu e o que fez depois.','Como você reage quando um interessado é ríspido ou desconfiado no atendimento?','O que te motiva a permanecer em uma função com meta e pressão por resultado?']},
-      {name:'Encerramento',time:'2 min',questions:['Qual sua pretensão, caso o valor informado não atenda?','Disponibilidade para início e para os sábados alternados.','Dúvidas sobre a vaga ou sobre a instituição.']}
+      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: captação e matrícula de alunos, follow-up de leads e parcerias com empresas. PJ, R$ 2.500,00 mais comissão, presencial em Goiânia, sábados alternados.','Confirme que ele leu e aceitou essas condições no formulário.']},
+      {name:'Trajetória',time:'4 min',questions:['O que você já vendeu, por quanto tempo, e qual era sua meta no último trabalho?','Já captou aluno para instituição de ensino?']},
+      {name:'Processo comercial',time:'7 min',questions:['Como você diferencia lead quente de frio, e o que muda na abordagem?','O interessado recebe os valores e some. O que você faz, e em que prazo?','O que você registra no CRM a cada contato?','Como trabalha objeção de preço sem partir para desconto?']},
+      {name:'Matrícula e parcerias',time:'4 min',questions:['O aluno chega para matricular e falta documento. Como conduz?','Fechou uma parceria com empresa: qual a sequência até o contrato assinado?']},
+      {name:'Comportamental',time:'2 min',questions:['Conte uma vez em que não bateu a meta. O que fez depois?','Como reage a um interessado ríspido no atendimento?']},
+      {name:'Encerramento',time:'1 min',questions:['Pretensão, disponibilidade para início e para os sábados alternados, e dúvidas.']}
     ]
   },
   { id:'cb-social', empresaId:'cambury', nome:'Social Media', setor:'Marketing', duracao:'30 min',
