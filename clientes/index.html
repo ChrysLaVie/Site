@@ -788,6 +788,7 @@ header {
 <div id="page-financeiro" class="page">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
     <div><h1 class="page-title">Financeiro</h1><p class="page-sub" id="fin-subtitle" style="margin-bottom:20px">Honorários por vaga</p></div>
+  <div id="fin-rs">
     <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
     <button class="btn btn-ghost btn-sm" id="fin-manual-btn" onclick="novoLancamentoManual()">➕ Lançamento manual</button>
   </div>
@@ -810,6 +811,8 @@ header {
       <tbody id="fin-tbody"></tbody>
     </table>
   </div>
+  </div><!-- /fin-rs -->
+  <div id="fin-mentoria" style="display:none"></div>
 </div>
 
 <div id="page-painel" class="page">
@@ -3967,25 +3970,29 @@ function demoLoadPag(){ try{ _pagamentos=JSON.parse(localStorage.getItem('cambur
 function demoSavePag(){ try{ localStorage.setItem('cambury_pag_'+(currentEmpresa||'geral'), JSON.stringify(_pagamentos)); }catch(e){} }
 async function loadPagamentos(){
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ demoLoadPag(); return; }
-  try{ const {data}=await sb.from('pagamentos').select('*').eq('empresa_id',currentEmpresa); if(data) _pagamentos=data.map(r=>({id:r.id,empresaId:r.empresa_id,vagaId:r.vaga_id,parcela:r.parcela,pct:r.pct,valor:r.valor,vencimento:r.vencimento,status:r.status,pagoEm:r.pago_em,obs:r.obs})); }catch(e){ console.error(e); }
+  try{ const {data}=await sb.from('pagamentos').select('*').eq('empresa_id',currentEmpresa); if(data) _pagamentos=data.map(r=>({id:r.id,empresaId:r.empresa_id,vagaId:r.vaga_id,parcela:r.parcela,pct:r.pct,valor:r.valor,vencimento:r.vencimento,status:r.status,pagoEm:r.pago_em,obs:r.obs,origem:r.origem||'rs',contratoId:r.contrato_id||null,documentos:Array.isArray(r.documentos)?r.documentos:[]})); }catch(e){ console.error(e); }
 }
 async function upsertPagamento(p){
   if(!p.empresaId) p.empresaId=currentEmpresa;
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ const i=_pagamentos.findIndex(x=>x.id===p.id); if(i>=0)_pagamentos[i]=p; else _pagamentos.push(p); demoSavePag(); return; }
-  const row={id:p.id,empresa_id:p.empresaId,vaga_id:p.vagaId,parcela:p.parcela,pct:p.pct,valor:p.valor,vencimento:p.vencimento,status:p.status,pago_em:p.pagoEm||null,obs:p.obs||null};
+  const row={id:p.id,empresa_id:p.empresaId,vaga_id:p.vagaId,parcela:p.parcela,pct:p.pct,valor:p.valor,vencimento:p.vencimento,status:p.status,pago_em:p.pagoEm||null,obs:p.obs||null,origem:p.origem||'rs',contrato_id:p.contratoId||null,documentos:p.documentos||[]};
   const {error}=await sb.from('pagamentos').upsert(row); if(error)throw error;
 }
 // Garante que cada vaga tenha suas 3 parcelas geradas
 const OBS_FECH_CANCELADO = 'Fechamento não devido — vaga cancelada pelo cliente';
 async function sincronizarParcelas(){
+  // Só faz sentido em R&S: essa rotina gera e limpa parcelas a partir das vagas.
+  // Em empresa de mentoria não há vaga nenhuma, e rodar aqui apagaria os
+  // lançamentos do contrato como se fossem parcelas órfãs.
+  if(!empresaTemProduto('rs')) return;
   const vagas=getVagas();
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
   const idsValidos=new Set();
   vagas.forEach(v=>_parcelasDef().forEach(d=>idsValidos.add(v.id+'-p'+d.n)));
-  const remover=_pagamentos.filter(p=>!idsValidos.has(p.id) && !/-saldo\d/.test(p.id));
+  const remover=_pagamentos.filter(p=>!idsValidos.has(p.id) && !/-saldo\d/.test(p.id) && (p.origem||'rs')==='rs');
   if(remover.length){
     for(const p of remover){ if(!(typeof DEMO_MODE!=='undefined'&&DEMO_MODE)){try{await sb.from('pagamentos').delete().eq('id',p.id);}catch(e){}} }
-    _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id));
+    _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id) || (p.origem||'rs')!=='rs');
   }
   // Corrige pct/valor/vencimento de parcelas existentes se o honorário, o % ou a data de
   // encerramento da vaga mudou (mantém status/baixa; nunca mexe em parcela já paga)
@@ -4068,8 +4075,61 @@ function _vagaQuitada(v){
 // (Cambury, Roma, Du Carmo ou o próximo) — vê só o que está em aberto e nunca vê o honorário.
 function isClienteExterno(){ return currentUser && !currentUser.masterAdmin; }
 
+// Financeiro do produto Mentoria: lançamentos ligados ao contrato, não a vagas.
+function renderFinanceiroMentoria(){
+  const wrap = document.getElementById('page-financeiro');
+  if(!wrap) return;
+  const pags = _pagamentos.filter(p=>(p.origem||'rs')==='mentoria')
+                          .sort((a,b)=>(a.parcela||0)-(b.parcela||0));
+  const brl = n => 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const total = pags.reduce((s,p)=>s+Number(p.valor||0),0);
+  const pago  = pags.filter(p=>p.status==='pago').reduce((s,p)=>s+Number(p.valor||0),0);
+  const box = document.getElementById('fin-mentoria');
+  if(!box) return;
+  box.innerHTML = `
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+      <div class="card" style="padding:16px 18px;flex:1;min-width:150px">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--mid)">Contrato</div>
+        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700">${brl(total)}</div>
+      </div>
+      <div class="card" style="padding:16px 18px;flex:1;min-width:150px">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--mid)">Recebido</div>
+        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700">${brl(pago)}</div>
+      </div>
+      <div class="card" style="padding:16px 18px;flex:1;min-width:150px">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--mid)">Em aberto</div>
+        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700">${brl(total-pago)}</div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="cand-table-wrap">
+        <table class="cand-table">
+          <thead><tr><th>Parcela</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Documentos</th></tr></thead>
+          <tbody>${pags.map(p=>`<tr>
+            <td>${p.parcela||''}ª · ${p.pct||0}%</td>
+            <td>${p.obs||''}</td>
+            <td>${p.vencimento?_mentDataBR(p.vencimento):'A definir'}</td>
+            <td>${brl(p.valor)}</td>
+            <td>${p.status==='pago'?'Pago':'Pendente'}</td>
+            <td>${(p.documentos||[]).length? (p.documentos||[]).length+' anexo(s)' : '—'}</td>
+          </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--light);padding:20px">Nenhum lançamento</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
 async function renderFinanceiro(){
   if(!_pagamentos.length){ await loadPagamentos(); }
+  if(!empresaTemProduto('rs')){
+    const fr=document.getElementById('fin-rs'); if(fr) fr.style.display='none';
+    const fm=document.getElementById('fin-mentoria'); if(fm) fm.style.display='';
+    const fs=document.getElementById('fin-subtitle');
+    if(fs) fs.textContent='Programa de Desenvolvimento · 50% na entrada + 50% na conclusão';
+    renderFinanceiroMentoria();
+    return;
+  }
+  const fr=document.getElementById('fin-rs'); if(fr) fr.style.display='';
+  const fm=document.getElementById('fin-mentoria'); if(fm) fm.style.display='none';
   await sincronizarParcelas();
   const vagas=getVagas();
   const search=(document.getElementById('fin-search')?.value||'').toLowerCase();
