@@ -1220,6 +1220,9 @@ async function renderAdmin() {
   const arquivadas = candidaturas.filter(c => c.arquivada).length;
   let mostrarArquivados = false;
   let filtroCand = 'todas';
+  // Texto digitado na busca da aba Candidatos. Compara nome, e-mail e vaga,
+  // ignorando acento e caixa.
+  let buscaUnif = '';
 
   // ── cruzamento por e-mail para a aba "Candidatos" ──
   function normEmail(e) { return (e || '').trim().toLowerCase(); }
@@ -1320,7 +1323,11 @@ async function renderAdmin() {
         <p class="empty-note">Nenhum candidato encontrado ainda em nenhuma das etapas.</p>
       `;
     }
-    const listaUnif = mostrarArquivados ? candidatosUnificados.filter(c => c.arquivado) : candidatosUnificados.filter(c => !c.arquivado);
+    const semAcento = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const termo = semAcento(buscaUnif);
+    const casaBusca = c => !termo || semAcento(c.nome).includes(termo)
+      || semAcento(c.email).includes(termo) || semAcento(c.vaga_titulo).includes(termo);
+    const listaUnif = (mostrarArquivados ? candidatosUnificados.filter(c => c.arquivado) : candidatosUnificados.filter(c => !c.arquivado)).filter(casaBusca);
     const qtdArquivados = candidatosUnificados.filter(c => c.arquivado).length;
     return `
       <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Candidatos</h2></div>
@@ -1329,7 +1336,12 @@ async function renderAdmin() {
         <button class="filter-chip2 ${!mostrarArquivados?'active':''}" id="unifAtivos">Em análise (${candidatosUnificados.length - qtdArquivados})</button>
         <button class="filter-chip2 ${mostrarArquivados?'active':''}" id="unifArquivados">Arquivados (${qtdArquivados})</button>
       </div>
-      ${listaUnif.length === 0 ? `<p class="empty-note">${mostrarArquivados ? 'Nenhum candidato arquivado.' : 'Nenhum candidato em análise.'}</p>` : ''}
+      <div style="margin-bottom:1.4rem;">
+        <input type="search" id="buscaUnif" value="${esc(buscaUnif)}" placeholder="Buscar por nome, e-mail ou vaga"
+               style="width:100%;padding:0.75rem 1rem;border:1px solid var(--border, #ddd);border-radius:6px;font-size:0.95rem;font-family:inherit;">
+        ${termo ? `<p style="color:var(--muted);font-size:0.8rem;margin-top:0.5rem;">${listaUnif.length} resultado(s) para "${esc(buscaUnif)}"</p>` : ''}
+      </div>
+      ${listaUnif.length === 0 ? `<p class="empty-note">${termo ? 'Nenhum candidato encontrado para esta busca.' : (mostrarArquivados ? 'Nenhum candidato arquivado.' : 'Nenhum candidato em análise.')}</p>` : ''}
       ${listaUnif.map((c, idx) => `
         <div class="cand-row" data-idx="${candidatosUnificados.indexOf(c)}">
           <div class="cand-top">
@@ -1415,6 +1427,18 @@ async function renderAdmin() {
       candidatosUnificados.splice(candidatosUnificados.indexOf(c), 1);
       draw();
     }));
+    // A busca redesenha a aba inteira, entao o foco e a posicao do cursor sao
+    // devolvidos ao campo depois do redraw, senao o texto "pula" a cada letra.
+    const campoBusca = document.getElementById('buscaUnif');
+    if (campoBusca) {
+      campoBusca.addEventListener('input', async () => {
+        const pos = campoBusca.selectionStart;
+        buscaUnif = campoBusca.value;
+        await draw();
+        const novo = document.getElementById('buscaUnif');
+        if (novo) { novo.focus(); try { novo.setSelectionRange(pos, pos); } catch (e) {} }
+      });
+    }
     document.getElementById('unifAtivos')?.addEventListener('click', () => { mostrarArquivados = false; draw(); });
     document.getElementById('unifArquivados')?.addEventListener('click', () => { mostrarArquivados = true; draw(); });
     document.querySelectorAll('.cand-row').forEach(row => row.addEventListener('click', () => openDossieModal(candidatosUnificados[row.dataset.idx])));
