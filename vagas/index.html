@@ -845,7 +845,10 @@ function openDossieModal(c) {
   document.getElementById('dossieEnviarRS')?.addEventListener('click', (e) => enviarDocsParaRS(c, e.currentTarget));
 }
 
-async function buildDossiePDF(c) {
+// Monta o documento do dossie e devolve o objeto jsPDF, sem salvar. Usado
+// tanto pelo botao que baixa quanto pelo envio de anexo ao R&S, para os
+// dois produzirem exatamente o mesmo PDF.
+async function montarDossiePdfDoc(c) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
@@ -922,6 +925,11 @@ async function buildDossiePDF(c) {
     _drawFormsBody(doc, c.forms);
   }
 
+  return doc;
+}
+
+async function buildDossiePDF(c) {
+  const doc = await montarDossiePdfDoc(c);
   doc.save('dossie-' + (c.nome || 'candidato').toLowerCase().replace(/\s+/g,'-') + '.pdf');
 }
 
@@ -1154,29 +1162,19 @@ async function enviarDocsParaRS(c, btn) {
       return;
     }
 
+    // Um anexo unico com o dossie completo (capa, DISC e formulario), o mesmo
+    // documento que o botao "dossie completo" baixa. Antes iam dois arquivos
+    // separados; agora vai um so, para o R&S nao ficar com anexos soltos.
     const { jsPDF } = window.jspdf;
     const carimbo = Date.now();
     const novos = [];
 
-    if (c.disc) {
-      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      _drawDiscBody(doc, c.disc);
-      const path = `${achado.id}/${carimbo}-disc.pdf`;
-      const { error: upErr } = await rsDb.storage.from('documentos').upload(path, doc.output('blob'), { contentType: 'application/pdf', upsert: true });
-      if (upErr) throw new Error('Falha ao enviar o PDF do DISC: ' + upErr.message);
-      novos.push({ nome: 'Relatório DISC', path, tipo: 'application/pdf',
-        enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
-    }
-
-    if (c.forms) {
-      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      _drawFormsBody(doc, c.forms);
-      const path = `${achado.id}/${carimbo}-formulario.pdf`;
-      const { error: upErr } = await rsDb.storage.from('documentos').upload(path, doc.output('blob'), { contentType: 'application/pdf', upsert: true });
-      if (upErr) throw new Error('Falha ao enviar o PDF do formulário: ' + upErr.message);
-      novos.push({ nome: 'Formulário da vaga', path, tipo: 'application/pdf',
-        enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
-    }
+    const doc = await montarDossiePdfDoc(c);
+    const path = `${achado.id}/${carimbo}-dossie.pdf`;
+    const { error: upErr } = await rsDb.storage.from('documentos').upload(path, doc.output('blob'), { contentType: 'application/pdf', upsert: true });
+    if (upErr) throw new Error('Falha ao enviar o PDF do dossie: ' + upErr.message);
+    novos.push({ nome: 'Dossie do candidato (DISC + formulario)', path, tipo: 'application/pdf',
+      enviadoEm: new Date().toISOString(), enviadoPor: 'Painel do recrutador' });
 
     // Anexa os documentos ao registro do candidato no R&S.
     const { data: resultado, error: erroRpc } = await rsDb.rpc('anexar_documentos_por_email', {
@@ -1191,7 +1189,7 @@ async function enviarDocsParaRS(c, btn) {
       return;
     }
 
-    alert('Documentos enviados para o R&S: ' + novos.map(d => d.nome).join(' e ') +
+    alert('Documento enviado para o R&S: ' + novos.map(d => d.nome).join(' e ') +
           '.\nCandidato: ' + resultado.nome);
   } catch (e) {
     alert('Não foi possível enviar: ' + e.message);
