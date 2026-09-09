@@ -4145,15 +4145,29 @@ function renderFinanceiroMentoria(){
     <div class="card" style="padding:0;overflow:hidden">
       <div class="cand-table-wrap">
         <table class="cand-table">
-          <thead><tr><th>Parcela</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Documentos</th></tr></thead>
-          <tbody>${pags.map(p=>`<tr>
-            <td>${p.parcela||''}ª · ${p.pct||0}%</td>
-            <td>${p.obs||''}</td>
-            <td>${p.vencimento?_mentDataBR(p.vencimento):'A definir'}</td>
-            <td>${brl(p.valor)}</td>
-            <td>${p.status==='pago'?'Pago':'Pendente'}</td>
-            <td>${(p.documentos||[]).length? (p.documentos||[]).length+' anexo(s)' : '—'}</td>
-          </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--light);padding:20px">Nenhum lançamento</td></tr>'}</tbody>
+          <thead><tr><th>Parcela</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+          <tbody>${pags.map(p=>{
+            const st = p.status||'pendente';
+            const acoes = isClienteExterno() ? '' : (st==='pago'
+              ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Estornar</button>
+                 <button class="btn btn-ghost btn-sm" onclick="editarLancamento('${p.id}')">✏️ Editar</button>`
+              : st==='cancelada'
+              ? `<button class="btn btn-ghost btn-sm" onclick="estornarPagamento('${p.id}')">↩ Reativar</button>
+                 <button class="btn btn-ghost btn-sm" onclick="editarLancamento('${p.id}')">✏️ Editar</button>`
+              : `<button class="btn btn-primary btn-sm" onclick="darBaixa('${p.id}')">✓ Dar baixa</button>
+                 <button class="btn btn-ghost btn-sm" onclick="registrarPagamentoParcial('${p.id}')">💰 Parcial</button>
+                 <button class="btn btn-ghost btn-sm" onclick="editarVencimento('${p.id}')">📆 Vencimento</button>
+                 <button class="btn btn-ghost btn-sm" onclick="editarLancamento('${p.id}')">✏️ Editar</button>`);
+            const lbl = FIN_LBL[st]||st, tag = FIN_TAG[st]||'';
+            const pagoInfo = st==='pago'&&p.pagoEm?`<br><span style="font-size:10px;color:var(--light)">pago em ${_mentDataBR(p.pagoEm)}</span>`:'';
+            return `<tr>
+            <td style="font-size:12px"><strong>${p.parcela||''}ª · ${p.pct||0}%</strong></td>
+            <td style="font-size:12px">${p.obs||''}</td>
+            <td style="font-size:12px;color:var(--mid)">${p.vencimento?_mentDataBR(p.vencimento):'A definir'}${pagoInfo}</td>
+            <td style="font-weight:600">${brl(p.valor)}</td>
+            <td><span class="tag ${tag}">${lbl}</span></td>
+            <td>${acoes}</td>
+          </tr>`;}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--light);padding:20px">Nenhum lançamento</td></tr>'}</tbody>
         </table>
       </div>
     </div>`;
