@@ -2969,6 +2969,17 @@ const VAGAS_ROTEIRO = [
     ],
     avaliacao:['Captação e prospecção','Gestão de funil/CRM','Metas e indicadores','Gestão de equipe','Negociação','Liderança','Foco em resultado'] },
 
+  { id:'cb-consultor-vendas', empresaId:'cambury', nome:'Consultor(a) de Vendas · Educacional', setor:'Comercial', duracao:'20 min',
+    conditions:{ 'Regime':'PJ', 'Remuneração':'R$ 2.500,00 + comissão', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h (funcionamento do setor)', 'Local':'Goiânia · presencial', 'Bolsa de estudos':'60% · 70% após 1 ano · 80% após 2 anos (exceto Odontologia e Gastronomia)' },
+    sections:[
+      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: captação e matrícula de alunos, follow-up de leads e parcerias com empresas. PJ, R$ 2.500,00 mais comissão, presencial em Goiânia, sábados alternados.','Confirme que ele leu e aceitou essas condições no formulário.']},
+      {name:'Trajetória',time:'4 min',questions:['O que você já vendeu, por quanto tempo, e qual era sua meta no último trabalho?','Já captou aluno para instituição de ensino?']},
+      {name:'Processo comercial',time:'7 min',questions:['Como você diferencia lead quente de frio, e o que muda na abordagem?','O interessado recebe os valores e some. O que você faz, e em que prazo?','O que você registra no CRM a cada contato?','Como trabalha objeção de preço sem partir para desconto?']},
+      {name:'Matrícula e parcerias',time:'4 min',questions:['O aluno chega para matricular e falta documento. Como conduz?','Fechou uma parceria com empresa: qual a sequência até o contrato assinado?']},
+      {name:'Comportamental',time:'2 min',questions:['Conte uma vez em que não bateu a meta. O que fez depois?','Como reage a um interessado ríspido no atendimento?']},
+      {name:'Encerramento',time:'1 min',questions:['Pretensão, disponibilidade para início e para os sábados alternados, e dúvidas.']}
+    ],
+    avaliacao:['Experiência em vendas','Abordagem consultiva','Follow-up e persistência','Organização e uso de CRM','Comunicação','Resiliência sob meta','Aderência às condições'] },
   // ══════════════════════════════════════════════════════════════════════════
   // 3) COORDENADOR GERAL DE ENSINO  (URGENTE — preencher até 10/07)
   // ══════════════════════════════════════════════════════════════════════════
@@ -3025,17 +3036,6 @@ const VAGAS_ROTEIRO = [
   // CONSULTOR(A) DE VENDAS · EDUCACIONAL
   //    Condições espelhadas do formulário da vaga (PJ, R$ 2.500 + comissão)
   // ══════════════════════════════════════════════════════════════════════════
-  { id:'cb-consultor-vendas', empresaId:'cambury', nome:'Consultor(a) de Vendas · Educacional', setor:'Comercial', duracao:'20 min',
-    conditions:{ 'Regime':'PJ', 'Remuneração':'R$ 2.500,00 + comissão', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h (funcionamento do setor)', 'Local':'Goiânia · presencial', 'Bolsa de estudos':'60% · 70% após 1 ano · 80% após 2 anos (exceto Odontologia e Gastronomia)' },
-    sections:[
-      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: captação e matrícula de alunos, follow-up de leads e parcerias com empresas. PJ, R$ 2.500,00 mais comissão, presencial em Goiânia, sábados alternados.','Confirme que ele leu e aceitou essas condições no formulário.']},
-      {name:'Trajetória',time:'4 min',questions:['O que você já vendeu, por quanto tempo, e qual era sua meta no último trabalho?','Já captou aluno para instituição de ensino?']},
-      {name:'Processo comercial',time:'7 min',questions:['Como você diferencia lead quente de frio, e o que muda na abordagem?','O interessado recebe os valores e some. O que você faz, e em que prazo?','O que você registra no CRM a cada contato?','Como trabalha objeção de preço sem partir para desconto?']},
-      {name:'Matrícula e parcerias',time:'4 min',questions:['O aluno chega para matricular e falta documento. Como conduz?','Fechou uma parceria com empresa: qual a sequência até o contrato assinado?']},
-      {name:'Comportamental',time:'2 min',questions:['Conte uma vez em que não bateu a meta. O que fez depois?','Como reage a um interessado ríspido no atendimento?']},
-      {name:'Encerramento',time:'1 min',questions:['Pretensão, disponibilidade para início e para os sábados alternados, e dúvidas.']}
-    ],
-    avaliacao:['Experiência em vendas','Abordagem consultiva','Follow-up e persistência','Organização e uso de CRM','Comunicação','Resiliência sob meta','Aderência às condições'] },
   { id:'cb-social', empresaId:'cambury', nome:'Social Media', setor:'Marketing', duracao:'30 min',
     conditions:{ 'Regime':'PJ', 'Salário':'R$ 3.000,00', 'Jornada':'Horário comercial', 'Local':'Goiânia', 'Reporte':'Gerência de Marketing', 'Plataformas':'Instagram · Facebook · LinkedIn · TikTok · YouTube' },
     sections:[
@@ -3054,6 +3054,19 @@ const VAGAS_ROTEIRO = [
   // 7) CONSULTOR(A) DE VENDAS — DU CARMO
   //    Roteiro guiado pela Solicitação de Vaga enviada pela cliente (Ayane)
   // ══════════════════════════════════════════════════════════════════════════
+  { id:'cb-instituto', empresaId:'cambury', nome:'Coordenador de Instituto Tecnológico', setor:'Instituto Tecnológico', duracao:'40 min',
+    conditions:{ 'Regime':'PJ', 'Salário':'R$ 5.000,00 (PJ)', 'Jornada':'Seg a sex 8h–18h · sábados alternados 8h–12h', 'Local':'Goiânia · presencial', 'Reporte':'Direção Executiva', 'Foco':'Comercialização B2B de cursos técnicos e profissionalizantes para empresas' },
+    sections:[
+      {name:'Abertura',time:'2 min',questions:['Apresente a vaga: coordenação do Instituto Tecnológico, com foco na prospecção e comercialização de cursos técnicos e profissionalizantes para empresas (B2B), incluindo treinamentos corporativos e parcerias institucionais. Regime PJ, R$ 5.000,00, presencial em Goiânia, horário comercial.']},
+      {name:'Formação e Trajetória',time:'4 min',questions:['Conte sobre sua formação (Administração, Marketing, Gestão Comercial ou correlatas) e sua trajetória comercial.','Qual sua experiência com vendas B2B, prospecção ativa (outbound) ou negociação com empresas?','Já atuou no setor educacional ou vendendo treinamentos/cursos corporativos? (diferencial)']},
+      {name:'Competência Técnica · Prospecção e Vendas B2B',time:'8 min',questions:['Como você estrutura uma prospecção ativa de empresas, da geração do lead até o fechamento?','O que caracteriza, na sua visão, um lead qualificado — e como você prioriza sua carteira com base nisso?','Como você constrói uma proposta de valor para uma empresa, entendendo a dor e o objetivo dela, em vez de só apresentar preço?','Como você conduziria a comercialização de cursos técnicos e de pós-graduação junto a empresas parceiras?']},
+      {name:'Competência Técnica · Indicadores e Gestão da Carteira',time:'6 min',questions:['O que é ticket médio e como você usa esse indicador para orientar suas ações comerciais?','Quais outros indicadores comerciais você acompanha no dia a dia (conversão, ciclo de venda, etc.)?','Que experiência tem com CRM ou ferramentas de gestão de carteira e funil de vendas?']},
+      {name:'Compromisso com Resultados',time:'5 min',questions:['Sua carteira está grande, mas os negócios travam no meio do funil e as vendas não avançam. Qual é o seu primeiro passo?','Conte uma situação em que reverteu uma meta comercial em risco.','Como mantém o ritmo de prospecção mesmo em períodos de baixa resposta das empresas?']},
+      {name:'Aspectos Comportamentais',time:'4 min',questions:['Como é sua capacidade de negociação com tomadores de decisão em empresas (RH, gestores, diretoria)?','Como você organiza sua rotina para equilibrar prospecção, atendimento e fechamento?','Como lida com repetidas recusas ou silêncio de um prospect sem perder o ritmo?']},
+      {name:'Pergunta Final',time:'2 min',questions:['Esta posição depende de geração ativa de negócios e relacionamento institucional com empresas. Por que você é a pessoa certa para ela?']}
+    ],
+    avaliacao:['Prospecção B2B','Negociação','Construção de proposta de valor','Indicadores comerciais','Gestão de carteira/CRM','Resiliência comercial','Comunicação institucional'] },
+
   { id:'dc-vendedor-jr', empresaId:'ducarmo', nome:'Consultor(a) de Vendas', setor:'Comercial', duracao:'35 min',
     conditions:{ 'Regime':'CLT', 'Salário':'R$ 2.000,00', 'Jornada':'Seg a sex 8h–17h · sábados 8h–12h', 'Local':'Goiânia · presencial (loja física)', 'Reporte':'Ayane Du Carmo', 'Canais':'Loja física · WhatsApp Business · Instagram Direct' },
     sections:[
