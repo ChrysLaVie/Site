@@ -659,8 +659,8 @@ header {
   <div class="card">
     <div style="border:1.5px dashed var(--bege);border-radius:10px;padding:18px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="document.getElementById('doc-file-input').click()">
       <div style="font-size:12.5px;font-weight:500;color:var(--charcoal);margin-bottom:2px">Clique para escolher um arquivo</div>
-      <div style="font-size:11px;color:var(--light)">PDF, Word ou imagem · até 10 MB</div>
-      <input type="file" id="doc-file-input" style="display:none" onchange="anexarDocCliente(this.files)" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+      <div style="font-size:11px;color:var(--light)">Qualquer tipo de arquivo · até 10 MB cada · pode escolher vários</div>
+      <input type="file" id="doc-file-input" style="display:none" multiple onchange="anexarDocCliente(this.files)" />
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <select id="doc-categoria-select" class="filter-input" style="flex:1;min-width:180px" onchange="document.getElementById('doc-outros-wrap').style.display=(this.value==='outros')?'block':'none'">
@@ -2750,6 +2750,8 @@ const CATEGORIAS_DOC=[
   {id:'proposta',label:'Proposta',labelPlural:'Propostas'},
   {id:'comprovante',label:'Comprovante',labelPlural:'Comprovantes'},
   {id:'apresentacao',label:'Apresentação de Resultados',labelPlural:'Apresentações de Resultados'},
+  {id:'vagas_manuais',label:'Vagas/Manuais',labelPlural:'Vagas/Manuais'},
+  {id:'atas',label:'Ata',labelPlural:'Atas'},
   {id:'outros',label:'Outros',labelPlural:'Outros'},
 ];
 let _docClienteFiltro='todos';
@@ -2786,7 +2788,7 @@ function _docRenderLista(){
   const listaEl=document.getElementById('doc-lista'), vazioEl=document.getElementById('doc-vazio');
   if(!lista.length){ listaEl.innerHTML=''; vazioEl.style.display='block'; vazioEl.textContent='Nenhum documento nesta categoria ainda.'; return; }
   vazioEl.style.display='none';
-  const sigla=cat=>({os:'OS',proposta:'PR',comprovante:'CO',apresentacao:'AR',outros:'OU'}[cat]||'DOC');
+  const sigla=cat=>({os:'OS',proposta:'PR',comprovante:'CO',apresentacao:'AR',vagas_manuais:'VM',atas:'AT',outros:'OU'}[cat]||'DOC');
   const rotulo=cat=>(CATEGORIAS_DOC.find(c=>c.id===cat)||{}).label||cat;
   listaEl.innerHTML=lista.map(d=>`
     <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--bege-lt)">
@@ -2801,35 +2803,42 @@ function _docRenderLista(){
 }
 
 async function anexarDocCliente(files){
-  const f=files&&files[0]; const input=document.getElementById('doc-file-input'); if(input)input.value='';
-  if(!f)return;
+  const lista=Array.from(files||[]);
+  const input=document.getElementById('doc-file-input'); if(input) input.value='';
+  if(!lista.length) return;
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){
     alert('Para anexar arquivos de verdade, o sistema precisa estar conectado ao banco (Supabase), com a tabela documentos_cliente e o bucket documentos-clientes criados.');
     return;
   }
-  const ext=(f.name.split('.').pop()||'').toLowerCase();
-  if(f.size > DOC_TAMANHO_MAX){ alert(`"${f.name}" tem mais de 10 MB e não foi enviado.`); return; }
-  if(!DOC_TIPOS_PERMITIDOS.includes(f.type) && !DOC_EXT_PERMITIDAS.includes(ext)){
-    alert(`"${f.name}" não é um tipo de arquivo permitido (só PDF, Word, PNG ou JPG).`); return;
-  }
   const categoria=document.getElementById('doc-categoria-select').value;
   const descricao=categoria==='outros' ? document.getElementById('doc-outros-desc').value.trim() : '';
   if(categoria==='outros' && !descricao){ alert('Descreva em poucas palavras o que é esse documento antes de enviar.'); return; }
-  showToast('⏳ Enviando documento...');
-  try{
-    const safe=f.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
-    const path=currentEmpresa+'/'+Date.now()+'_'+safe;
-    const {error:upErr}=await sb.storage.from(DOC_CLI_BUCKET).upload(path,f,{upsert:false});
-    if(upErr) throw upErr;
-    const row={
-      empresa_id:currentEmpresa, categoria, titulo:f.name, descricao:descricao||null,
-      path, nome_arquivo:f.name, tipo:f.type||ext, tamanho:_fmtTam(f.size), enviado_por:getUserName()
-    };
-    const {error:insErr}=await sb.from('documentos_cliente').insert(row);
-    if(insErr) throw insErr;
-  }catch(e){ alert('Erro ao enviar "'+f.name+'": '+e.message); return; }
-  document.getElementById('doc-outros-desc').value='';
-  renderDocumentosCliente(); showToast('✅ Documento anexado!');
+
+  showToast(lista.length>1 ? `⏳ Enviando ${lista.length} arquivos...` : '⏳ Enviando documento...');
+  const falhas=[];
+  let enviados=0;
+  for(const f of lista){
+    // Único limite mantido é o de tamanho: qualquer extensão é aceita.
+    if(f.size > DOC_TAMANHO_MAX){ falhas.push(`${f.name}: acima de 10 MB`); continue; }
+    const ext=(f.name.split('.').pop()||'').toLowerCase();
+    try{
+      const safe=f.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
+      const path=currentEmpresa+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'_'+safe;
+      const {error:upErr}=await sb.storage.from(DOC_CLI_BUCKET).upload(path,f,{upsert:false});
+      if(upErr) throw upErr;
+      const row={
+        empresa_id:currentEmpresa, categoria, titulo:f.name, descricao:descricao||null,
+        path, nome_arquivo:f.name, tipo:f.type||ext, tamanho:_fmtTam(f.size), enviado_por:getUserName()
+      };
+      const {error:insErr}=await sb.from('documentos_cliente').insert(row);
+      if(insErr) throw insErr;
+      enviados++;
+    }catch(e){ falhas.push(`${f.name}: ${e.message}`); }
+  }
+  const descEl=document.getElementById('doc-outros-desc'); if(descEl) descEl.value='';
+  renderDocumentosCliente();
+  if(falhas.length) alert('Não foi possível enviar:\n\n'+falhas.join('\n'));
+  if(enviados) showToast(enviados>1 ? `✅ ${enviados} documentos anexados!` : '✅ Documento anexado!');
 }
 
 async function abrirDocumentoCliente(path, nome){
