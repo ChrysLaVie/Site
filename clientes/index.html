@@ -659,17 +659,11 @@ header {
   <div class="card">
     <div style="border:1.5px dashed var(--bege);border-radius:10px;padding:18px;text-align:center;margin-bottom:14px;cursor:pointer" onclick="document.getElementById('doc-file-input').click()">
       <div style="font-size:12.5px;font-weight:500;color:var(--charcoal);margin-bottom:2px">Clique para escolher um arquivo</div>
-      <div style="font-size:11px;color:var(--light)">Qualquer tipo de arquivo · até 10 MB cada · pode escolher vários</div>
+      <div style="font-size:11px;color:var(--light)" id="doc-upload-hint">Qualquer tipo de arquivo · até 10 MB cada · pode escolher vários</div>
       <input type="file" id="doc-file-input" style="display:none" multiple onchange="anexarDocCliente(this.files)" />
     </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <select id="doc-categoria-select" class="filter-input" style="flex:1;min-width:180px" onchange="document.getElementById('doc-outros-wrap').style.display=(this.value==='outros')?'block':'none'">
-        <option value="os">Ordem de Serviço</option>
-        <option value="proposta">Proposta</option>
-        <option value="comprovante">Comprovante</option>
-        <option value="apresentacao">Apresentação de Resultados</option>
-        <option value="outros">Outros</option>
-      </select>
+      <select id="doc-categoria-select" class="filter-input" style="flex:1;min-width:180px" onchange="_docCatMudou(this.value)"></select>
       <div id="doc-outros-wrap" style="display:none;flex:2;min-width:220px">
         <input id="doc-outros-desc" class="filter-input" style="width:100%" placeholder="Descreva em poucas palavras (ex: Logo alta resolução)" />
       </div>
@@ -2780,9 +2774,42 @@ async function renderDocumentosCliente(){
     document.getElementById('doc-vazio').textContent='Não foi possível carregar os documentos. Confira se a tabela documentos_cliente já foi criada.';
     return;
   }
+  _docMontarSeletor();
   _docRenderLista();
 }
 function _docFiltrar(catId){ _docClienteFiltro=catId; renderDocumentosCliente(); }
+
+// A categoria do upload segue a aba aberta. O seletor só aparece em "Todos",
+// onde não há como deduzir o destino do arquivo.
+function _docCatMudou(v){
+  const w=document.getElementById('doc-outros-wrap');
+  if(w) w.style.display = (v==='outros') ? 'block' : 'none';
+}
+function _docCategoriaAlvo(){
+  if(_docClienteFiltro!=='todos') return _docClienteFiltro;
+  const sel=document.getElementById('doc-categoria-select');
+  return sel ? sel.value : 'outros';
+}
+function _docMontarSeletor(){
+  const sel=document.getElementById('doc-categoria-select');
+  const wrap=sel?sel.parentElement:null;
+  const hint=document.getElementById('doc-upload-hint');
+  if(!sel) return;
+  sel.innerHTML=CATEGORIAS_DOC.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  const naAba=_docClienteFiltro!=='todos';
+  const outrosWrap=document.getElementById('doc-outros-wrap');
+  // Em "Outros" a descrição é obrigatória, então a linha continua visível:
+  // esconde só o seletor, não o campo de texto.
+  if(wrap) wrap.style.display = (naAba && _docClienteFiltro!=='outros') ? 'none' : 'flex';
+  sel.style.display = naAba ? 'none' : '';
+  if(outrosWrap) outrosWrap.style.display = (_docCategoriaAlvo()==='outros') ? 'block' : 'none';
+  if(naAba){
+    const cat=CATEGORIAS_DOC.find(c=>c.id===_docClienteFiltro);
+    if(hint) hint.textContent=`Vai para ${cat?cat.labelPlural:''} · qualquer tipo · até 10 MB cada · pode escolher vários`;
+  }else{
+    if(hint) hint.textContent='Qualquer tipo de arquivo · até 10 MB cada · pode escolher vários';
+  }
+}
 function _docRenderLista(){
   const lista=_docClienteFiltro==='todos' ? _docsClienteCache : _docsClienteCache.filter(d=>d.categoria===_docClienteFiltro);
   const listaEl=document.getElementById('doc-lista'), vazioEl=document.getElementById('doc-vazio');
@@ -2810,8 +2837,8 @@ async function anexarDocCliente(files){
     alert('Para anexar arquivos de verdade, o sistema precisa estar conectado ao banco (Supabase), com a tabela documentos_cliente e o bucket documentos-clientes criados.');
     return;
   }
-  const categoria=document.getElementById('doc-categoria-select').value;
-  const descricao=categoria==='outros' ? document.getElementById('doc-outros-desc').value.trim() : '';
+  const categoria=_docCategoriaAlvo();
+  const descricao=categoria==='outros' ? (document.getElementById('doc-outros-desc')||{}).value.trim() : '';
   if(categoria==='outros' && !descricao){ alert('Descreva em poucas palavras o que é esse documento antes de enviar.'); return; }
 
   showToast(lista.length>1 ? `⏳ Enviando ${lista.length} arquivos...` : '⏳ Enviando documento...');
