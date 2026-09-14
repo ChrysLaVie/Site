@@ -197,9 +197,6 @@ textarea.ta { min-height:76px; }
   background:var(--white); margin-bottom:0.7rem; transition:border-color 0.2s;
 }
 .entry-row:hover { border-color:var(--sand-dark); }
-.entry-row.dragging { opacity:0.4; border-style:dashed; border-color:var(--charcoal); }
-.drag-handle { cursor:grab; color:var(--sand-dark); font-size:1.15rem; line-height:1; padding:0.2rem 0.2rem 0.2rem 0; user-select:none; flex-shrink:0; }
-.drag-handle:active { cursor:grabbing; }
 .entry-info h4 { font-family:'Cormorant Garamond',serif; font-size:1.05rem; font-weight:500; color:var(--charcoal); margin-bottom:0.3rem; display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; }
 .entry-info p { font-size:0.78rem; color:var(--muted); }
 .status-dot2 { width:6px; height:6px; border-radius:50%; display:inline-block; }
@@ -340,43 +337,19 @@ const adminBtn = document.getElementById('adminBtn');
 // ── SUPABASE: VAGAS ──
 async function loadVagasPublicas() {
   if (!db) return [];
-  // Ordem manual (arrastar no painel) tem prioridade; vagas sem "ordem"
-  // definida (nunca reordenadas) caem pro fim, ordenadas pela mais recente.
-  try { const { data } = await db.from('vagas').select('*').eq('ativa', true).order('ordem', { ascending:true, nullsFirst:false }).order('created_at', { ascending:false }); return data || []; }
+  try { const { data } = await db.from('vagas').select('*').eq('ativa', true).order('created_at', { ascending:false }); return data || []; }
   catch(e) { return []; }
 }
 async function loadVagasAdmin() {
   if (!db) return [];
-  try { const { data } = await db.from('vagas').select('*').order('ordem', { ascending:true, nullsFirst:false }).order('created_at', { ascending:false }); return data || []; }
+  try { const { data } = await db.from('vagas').select('*').order('created_at', { ascending:false }); return data || []; }
   catch(e) { return []; }
 }
 async function saveVaga(payload, id) {
   if (!db) return { ok:false, err:'Banco não configurado' };
   try {
     if (id) { const { error } = await db.from('vagas').update(payload).eq('id', id); if (error) return { ok:false, err:error.message }; }
-    else {
-      // Vaga nova entra no fim da lista (maior "ordem"), pra não embaralhar
-      // a ordem que já foi ajustada manualmente arrastando no painel.
-      let novaOrdem = 1;
-      try {
-        const { data: maxRow } = await db.from('vagas').select('ordem').order('ordem', { ascending:false, nullsFirst:false }).limit(1).maybeSingle();
-        novaOrdem = (maxRow?.ordem || 0) + 1;
-      } catch(e) { /* sem vagas ainda ou sem nenhuma com ordem — usa 1 */ }
-      const { error } = await db.from('vagas').insert({ ...payload, ordem: novaOrdem });
-      if (error) return { ok:false, err:error.message };
-    }
-    return { ok:true };
-  } catch(e) { return { ok:false, err:e.message }; }
-}
-// Salva a nova ordem depois de soltar um item arrastado — grava a posição
-// (1, 2, 3...) de cada vaga na tabela, na ordem em que aparecem na tela.
-async function salvarNovaOrdemVagas(idsEmOrdem) {
-  if (!db) return { ok:false, err:'Banco não configurado' };
-  try {
-    const updates = idsEmOrdem.map((id, idx) => db.from('vagas').update({ ordem: idx + 1 }).eq('id', id));
-    const resultados = await Promise.all(updates);
-    const comErro = resultados.find(r => r.error);
-    if (comErro) return { ok:false, err:comErro.error.message };
+    else { const { error } = await db.from('vagas').insert(payload); if (error) return { ok:false, err:error.message }; }
     return { ok:true };
   } catch(e) { return { ok:false, err:e.message }; }
 }
@@ -521,7 +494,7 @@ async function loadCandidatosDisc() {
 // Lista de tabelas de formulário técnico — uma por vaga com forms próprio,
 // mais a genérica (vagas sem forms específico). Sempre que uma vaga nova ganhar
 // seu próprio formulário/tabela, adicionar o nome da tabela aqui.
-const FORMS_TABLES = ['forms_gerente_captacao', 'forms_coord_instituto', 'forms_gerente_marketing', 'forms_coord_relacionamento', 'forms_motorista', 'forms_consultor_protecao_veicular', 'forms_coord_academico', 'forms_ducarmo_vendedora', 'forms_coord_comercializacao', 'forms_consultor_vendas_educacional', 'forms_analista_marketing', 'forms_generico'];
+const FORMS_TABLES = ['forms_gerente_captacao', 'forms_coord_instituto', 'forms_gerente_marketing', 'forms_coord_relacionamento', 'forms_motorista', 'forms_consultor_protecao_veicular', 'forms_coord_academico', 'forms_ducarmo_vendedora', 'forms_coord_comercializacao', 'forms_consultor_vendas_educacional', 'forms_analista_marketing', 'forms_secretaria', 'forms_generico'];
 async function loadFormsRespostas() {
   if (!db) return [];
   const all = [];
@@ -1284,17 +1257,12 @@ async function renderAdmin() {
   function vagasTabHTML() {
     return `
       <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Vagas cadastradas</h2><button class="btn-primary" id="newVagaBtn">+ Nova vaga</button></div>
-      ${ADMIN_VAGAS.length === 0 ? `<div class="empty-admin">Nenhuma vaga cadastrada ainda.<div><button class="btn-primary" id="newVagaBtnEmpty">+ Cadastrar primeira vaga</button></div></div>` : `
-        <p style="color:var(--muted);font-size:0.78rem;margin-bottom:1rem;">Arraste pelo <strong>⠿</strong> para mudar a ordem em que as vagas aparecem no site.</p>
-        <div id="vagasOrdemList">
-        ${ADMIN_VAGAS.map(v => `
-          <div class="entry-row" draggable="true" data-id="${v.id}">
-            <div style="display:flex;align-items:flex-start;gap:0.7rem;flex:1;min-width:0;">
-              <span class="drag-handle" title="Arraste para reordenar">⠿</span>
-              <div class="entry-info">
-                <h4>${esc(v.title)} <span class="status-dot2 ${v.ativa ? 'on' : 'off'}"></span> <span style="font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:${v.ativa ? 'var(--ok)' : 'var(--muted)'};">${v.ativa ? 'Ativa' : 'Pausada'}</span></h4>
-                <p>${esc(v.area)} · ${esc(v.local)} · ${esc(v.tipo)}</p>
-              </div>
+      ${ADMIN_VAGAS.length === 0 ? `<div class="empty-admin">Nenhuma vaga cadastrada ainda.<div><button class="btn-primary" id="newVagaBtnEmpty">+ Cadastrar primeira vaga</button></div></div>` :
+        ADMIN_VAGAS.map(v => `
+          <div class="entry-row">
+            <div class="entry-info">
+              <h4>${esc(v.title)} <span class="status-dot2 ${v.ativa ? 'on' : 'off'}"></span> <span style="font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:${v.ativa ? 'var(--ok)' : 'var(--muted)'};">${v.ativa ? 'Ativa' : 'Pausada'}</span></h4>
+              <p>${esc(v.area)} · ${esc(v.local)} · ${esc(v.tipo)}</p>
             </div>
             <div class="entry-actions">
               <button class="edit-vaga" data-id="${v.id}">Editar</button>
@@ -1303,8 +1271,6 @@ async function renderAdmin() {
             </div>
           </div>
         `).join('')}
-        </div>
-      `}
     `;
   }
 
@@ -1419,45 +1385,6 @@ async function renderAdmin() {
       await draw();
     }));
     document.querySelectorAll('.del-vaga').forEach(btn => btn.addEventListener('click', async () => { if (!confirm('Remover esta vaga permanentemente? As candidaturas já recebidas continuam no histórico.')) return; await deleteVaga(btn.dataset.id); await draw(); }));
-
-    // ── Arrastar para reordenar (define a ordem de exibição no site) ──
-    const listaOrdem = document.getElementById('vagasOrdemList');
-    if (listaOrdem) {
-      let arrastando = null;
-
-      listaOrdem.querySelectorAll('.entry-row[draggable="true"]').forEach(row => {
-        row.addEventListener('dragstart', () => {
-          arrastando = row;
-          // Pequeno atraso pra classe só entrar depois que o navegador já
-          // capturou a imagem de arrasto — senão a linha some antes de mover.
-          setTimeout(() => row.classList.add('dragging'), 0);
-        });
-        row.addEventListener('dragend', async () => {
-          row.classList.remove('dragging');
-          arrastando = null;
-          const novaOrdemIds = [...listaOrdem.querySelectorAll('.entry-row')].map(r => r.dataset.id);
-          const ordemAnterior = ADMIN_VAGAS.map(v => v.id);
-          if (novaOrdemIds.join(',') === ordemAnterior.join(',')) return; // nada mudou
-          const r = await salvarNovaOrdemVagas(novaOrdemIds);
-          if (!r.ok) { alert('Não foi possível salvar a nova ordem: ' + (r.err || 'erro desconhecido')); }
-          await draw();
-        });
-      });
-
-      listaOrdem.addEventListener('dragover', e => {
-        e.preventDefault();
-        if (!arrastando) return;
-        const irmaos = [...listaOrdem.querySelectorAll('.entry-row:not(.dragging)')];
-        const alvo = irmaos.reduce((maisProximo, el) => {
-          const box = el.getBoundingClientRect();
-          const distancia = e.clientY - box.top - box.height / 2;
-          if (distancia < 0 && distancia > maisProximo.distancia) return { distancia, el };
-          return maisProximo;
-        }, { distancia: -Infinity, el: null }).el;
-        if (alvo == null) listaOrdem.appendChild(arrastando);
-        else listaOrdem.insertBefore(arrastando, alvo);
-      });
-    }
   }
   function bindCandTabEvents() {
     document.querySelectorAll('.filter-chip2').forEach(btn => btn.addEventListener('click', () => { filtroCand = btn.dataset.filter; draw(); }));
