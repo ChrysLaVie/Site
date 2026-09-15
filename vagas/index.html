@@ -413,8 +413,64 @@ async function saveCandidatura(data) {
     }
     const { error } = await db.from('candidaturas').insert({ nome:data.nome, email:data.email, whatsapp:data.whatsapp, vaga_id:data.vaga_id, vaga_titulo:data.vaga_titulo, cv_url, lida:false });
     if (error) return { ok:false, err:error.message };
+    // Manda o candidato para o R&S agora, mesmo sem DISC e sem formulário.
+    // Se isso falhar, a candidatura continua salva no site do mesmo jeito.
+    await pushCandidaturaParcialParaRS(data, cv_url);
     return { ok:true, cv_url };
   } catch(e) { return { ok:false, err:e.message }; }
+}
+// ── Envio da candidatura ao R&S, mesmo incompleta ────────────────────────────
+// Antes, o candidato só aparecia no painel de R&S depois de concluir o DISC e o
+// formulário técnico. Quem parava no meio sumia do radar. Agora o registro nasce
+// junto com a candidatura, marcado com as etapas pendentes, e vai sendo
+// completado conforme o candidato avança. A gravação usa a mesma função de banco
+// que o DISC já usa (lv_receber_candidato_do_site): ela descobre a empresa pela
+// vaga, não duplica e não rebaixa a etapa de quem já avançou no processo.
+async function pushCandidaturaParcialParaRS(data, cvUrl) {
+  if (!rsDb) return;
+  try {
+    const emailNorm = (data.email || '').trim().toLowerCase();
+
+    // O R&S abre anexo por "path" (link temporário, bucket privado), nunca por url.
+    const paths = String(cvUrl || '').split('\n').map(p => p.trim()).filter(Boolean);
+    const documentos = paths.map((p, i) => ({
+      nome: paths.length > 1 ? `Currículo ${i + 1}` : 'Currículo',
+      path: p, origem: 'vagas', bucket: 'curriculos', tipo: 'pdf',
+      enviadoEm: new Date().toISOString(), enviadoPor: 'Site (automático)'
+    }));
+
+    // Se a pessoa já fez o DISC antes (numa candidatura anterior, por exemplo),
+    // a observação já nasce dizendo isso, em vez de cobrar algo que ela já fez.
+    let discFeito = false;
+    try {
+      const { data: compl } = await db.rpc('lv_complementos_candidato', { p_email: emailNorm });
+      const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
+      discFeito = !!c.primary_profile;
+    } catch (e) { /* segue sem essa informação */ }
+
+    const obs =
+      `📥 CANDIDATURA RECEBIDA (automático)\n` +
+      `• Currículo: ${documentos.length ? 'anexado' : 'não anexado'}\n` +
+      `• Teste DISC: ${discFeito ? 'já realizado' : 'PENDENTE'}\n` +
+      `• Formulário técnico da vaga: PENDENTE\n` +
+      `Registro criado no momento da candidatura. Quando o candidato concluir as ` +
+      `etapas que faltam, este mesmo registro é atualizado com o dossiê de match.`;
+
+    const { data: resp, error: erroRpc } = await rsDb.rpc('lv_receber_candidato_do_site', {
+      p_nome: data.nome,
+      p_email: emailNorm,
+      p_telefone: data.whatsapp || null,
+      p_vaga_titulo: data.vaga_titulo,
+      p_obs: obs,
+      p_documentos: documentos
+    });
+    if (erroRpc) throw new Error('Banco do R&S recusou a gravação: ' + erroRpc.message);
+    const res = Array.isArray(resp) ? resp[0] : resp;
+    if (!res || res.ok !== true) throw new Error((res && res.motivo) || 'O R&S não confirmou o cadastro.');
+    console.info('Candidatura enviada ao R&S:', emailNorm);
+  } catch (e) {
+    console.warn('Não foi possível enviar a candidatura ao R&S:', e);
+  }
 }
 async function loadCandidaturas() {
   if (!db) return [];
