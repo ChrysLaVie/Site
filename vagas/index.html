@@ -414,8 +414,12 @@ async function saveCandidatura(data) {
     const { error } = await db.from('candidaturas').insert({ nome:data.nome, email:data.email, whatsapp:data.whatsapp, vaga_id:data.vaga_id, vaga_titulo:data.vaga_titulo, cv_url, lida:false });
     if (error) return { ok:false, err:error.message };
     // Manda o candidato para o R&S agora, mesmo sem DISC e sem formulário.
-    // Se isso falhar, a candidatura continua salva no site do mesmo jeito.
-    await pushCandidaturaParcialParaRS(data, cv_url);
+    // Se isso falhar, a candidatura continua salva no site do mesmo jeito —
+    // mas agora a falha NÃO é mais engolida: ela vira uma pendência visível no
+    // painel, com botão de reenvio. Antes, um erro aqui sumia num console.warn
+    // e o candidato simplesmente não existia do lado do R&S sem ninguém saber.
+    const envio = await enviarAoRSComRetentativa(data, cv_url);
+    if (!envio.ok) await registrarPendenciaRS(data, cv_url, envio.err);
     return { ok:true, cv_url };
   } catch(e) { return { ok:false, err:e.message }; }
 }
@@ -427,7 +431,7 @@ async function saveCandidatura(data) {
 // que o DISC já usa (lv_receber_candidato_do_site): ela descobre a empresa pela
 // vaga, não duplica e não rebaixa a etapa de quem já avançou no processo.
 async function pushCandidaturaParcialParaRS(data, cvUrl) {
-  if (!rsDb) return;
+  if (!rsDb) return { ok: false, err: 'Conexão com o banco do R&S não foi inicializada.' };
   try {
     const emailNorm = (data.email || '').trim().toLowerCase();
 
@@ -468,9 +472,78 @@ async function pushCandidaturaParcialParaRS(data, cvUrl) {
     const res = Array.isArray(resp) ? resp[0] : resp;
     if (!res || res.ok !== true) throw new Error((res && res.motivo) || 'O R&S não confirmou o cadastro.');
     console.info('Candidatura enviada ao R&S:', emailNorm);
+    return { ok: true };
   } catch (e) {
     console.warn('Não foi possível enviar a candidatura ao R&S:', e);
+    return { ok: false, err: (e && e.message) ? e.message : String(e) };
   }
+}
+
+// ── REDE DE SEGURANÇA DO ENVIO AO R&S ────────────────────────────────────────
+// Três tentativas com espera crescente antes de desistir. A maior parte das
+// falhas aqui é instabilidade momentânea de rede; repetir resolve sem que o
+// candidato perceba nada. O candidato nunca fica esperando por isso: a tela de
+// sucesso dele já apareceu, isso roda por trás.
+async function enviarAoRSComRetentativa(data, cvUrl, tentativas = 3) {
+  let ultimoErro = 'motivo não identificado';
+  for (let i = 0; i < tentativas; i++) {
+    const r = await pushCandidaturaParcialParaRS(data, cvUrl);
+    if (r && r.ok) return { ok: true };
+    ultimoErro = (r && r.err) || ultimoErro;
+    if (i < tentativas - 1) await new Promise(res => setTimeout(res, 1200 * (i + 1)));
+  }
+  return { ok: false, err: ultimoErro };
+}
+
+// Guarda a candidatura que não conseguiu chegar ao R&S numa tabela própria, com
+// tudo que é preciso para reenviar depois. Não depende do id da candidatura:
+// o registro é autossuficiente, então o reenvio funciona mesmo que algo tenha
+// falhado na gravação do site.
+async function registrarPendenciaRS(data, cvUrl, erro) {
+  if (!db) return;
+  try {
+    await db.from('rs_sync_pendentes').insert({
+      nome: data.nome || null,
+      email: (data.email || '').trim().toLowerCase(),
+      whatsapp: data.whatsapp || null,
+      vaga_titulo: data.vaga_titulo || null,
+      cv_url: cvUrl || null,
+      erro: String(erro || '').slice(0, 500)
+    });
+    console.warn('Candidatura registrada como PENDENTE de envio ao R&S.');
+  } catch (e) {
+    // Se nem a pendência puder ser gravada (tabela ainda não criada, por
+    // exemplo), pelo menos deixa rastro claro no console em vez de sumir.
+    console.error('FALHA CRÍTICA: candidatura não chegou ao R&S e a pendência não pôde ser registrada.', data.email, erro, e);
+  }
+}
+
+async function loadPendenciasRS() {
+  if (!db) return [];
+  try {
+    const { data, error } = await db.from('rs_sync_pendentes').select('*').order('created_at', { ascending: false });
+    if (error) return [];
+    return data || [];
+  } catch (e) { return []; }
+}
+
+// Reenvia uma pendência. Se der certo, o registro sai da fila. Se der errado de
+// novo, atualiza o contador e a mensagem de erro para dar pista do motivo.
+async function reenviarPendenciaRS(p) {
+  const payload = { nome: p.nome, email: p.email, whatsapp: p.whatsapp, vaga_titulo: p.vaga_titulo };
+  const r = await pushCandidaturaParcialParaRS(payload, p.cv_url);
+  if (r && r.ok) {
+    try { await db.from('rs_sync_pendentes').delete().eq('id', p.id); } catch (e) {}
+    return { ok: true };
+  }
+  try {
+    await db.from('rs_sync_pendentes').update({
+      tentativas: (p.tentativas || 1) + 1,
+      ultima_tentativa: new Date().toISOString(),
+      erro: String((r && r.err) || '').slice(0, 500)
+    }).eq('id', p.id);
+  } catch (e) {}
+  return { ok: false, err: r && r.err };
 }
 async function loadCandidaturas() {
   if (!db) return [];
@@ -1268,6 +1341,9 @@ async function renderAdmin() {
   const candidaturas = await loadCandidaturas();
   const discRows = await loadCandidatosDisc();
   const formsRows = await loadFormsRespostas();
+  // Candidaturas que não chegaram ao R&S. É o que garante que ninguém se perde
+  // em silêncio: se esta lista não estiver vazia, o painel avisa em toda aba.
+  let pendenciasRS = await loadPendenciasRS();
   if (state.view !== 'admin') return;
 
   const naoLidas = candidaturas.filter(c => !c.lida && !c.arquivada).length;
@@ -1330,6 +1406,64 @@ async function renderAdmin() {
     `;
   }
 
+  // ── AVISO DE CANDIDATURAS QUE NÃO CHEGARAM AO R&S ──────────────────────────
+  // Aparece no topo do painel, em qualquer aba, enquanto houver pendência.
+  // Some sozinho quando a fila zera.
+  function avisoPendenciasHTML() {
+    if (!pendenciasRS.length) return '';
+    const linhas = pendenciasRS.slice(0, 8).map(p => `
+      <li style="margin-bottom:0.35rem;">
+        <strong>${esc(p.nome) || '(sem nome)'}</strong> — ${esc(p.email)}
+        ${p.vaga_titulo ? ' · ' + esc(p.vaga_titulo) : ''}
+        <span style="opacity:0.75;">· ${p.tentativas || 1} tentativa(s)</span>
+        ${p.erro ? `<br><span style="opacity:0.7;font-size:0.72rem;">${esc(p.erro)}</span>` : ''}
+      </li>`).join('');
+    const resto = pendenciasRS.length > 8 ? `<li style="opacity:0.8;">e mais ${pendenciasRS.length - 8}…</li>` : '';
+    return `
+      <div id="avisoRS" style="border:1px solid #A8452F;background:#FBEFEC;border-radius:6px;padding:1rem 1.1rem;margin-bottom:1.6rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+          <strong style="color:#8C3B29;font-size:0.95rem;">
+            ${pendenciasRS.length} candidatura(s) não chegaram ao sistema de R&S
+          </strong>
+          <button id="reenviarRS" class="btn-primary" style="padding:0.45rem 0.9rem;font-size:0.75rem;margin-left:auto;">Reenviar agora</button>
+        </div>
+        <p style="color:#8C3B29;font-size:0.78rem;margin:0.5rem 0 0.6rem;">
+          O candidato foi salvo no site e recebeu a confirmação, mas o cadastro dele
+          não foi gravado no R&S. Use o botão para tentar de novo.
+        </p>
+        <ul style="color:#8C3B29;font-size:0.78rem;margin:0;padding-left:1.1rem;">${linhas}${resto}</ul>
+        <p id="reenvioStatus" style="font-size:0.78rem;margin:0.6rem 0 0;display:none;"></p>
+      </div>`;
+  }
+
+  function bindAvisoPendenciasEvents() {
+    const btn = document.getElementById('reenviarRS');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const st = document.getElementById('reenvioStatus');
+      st.style.display = 'block';
+      let ok = 0, falhou = 0;
+      for (let i = 0; i < pendenciasRS.length; i++) {
+        st.textContent = `Reenviando ${i + 1} de ${pendenciasRS.length}…`;
+        const r = await reenviarPendenciaRS(pendenciasRS[i]);
+        if (r.ok) ok++; else falhou++;
+      }
+      pendenciasRS = await loadPendenciasRS();
+      st.textContent = falhou === 0
+        ? `Pronto: ${ok} candidatura(s) enviadas ao R&S.`
+        : `${ok} enviada(s), ${falhou} ainda com erro. Veja o motivo na lista.`;
+      setTimeout(() => draw(), 1500);
+    });
+  }
+
+  // Verdadeiro quando a candidatura desta linha está na fila de pendências.
+  function estaPendenteNoRS(c) {
+    const e = (c.email || '').trim().toLowerCase();
+    return pendenciasRS.some(p => (p.email || '').trim().toLowerCase() === e
+      && (p.vaga_titulo || '') === (c.vaga_titulo || ''));
+  }
+
   function candListHTML(filter) {
     // Arquivadas ficam fora de todos os filtros, exceto o filtro "Arquivadas".
     const ativas = candidaturas.filter(c => !c.arquivada);
@@ -1341,7 +1475,7 @@ async function renderAdmin() {
       lista.map(c => `
         <div class="entry-row">
           <div class="entry-info">
-            <h4>${esc(c.nome)} ${!c.lida ? '<span class="new-dot"></span>' : ''}</h4>
+            <h4>${esc(c.nome)} ${!c.lida ? '<span class="new-dot"></span>' : ''}${estaPendenteNoRS(c) ? '<span style="margin-left:0.5rem;font-size:0.65rem;background:#A8452F;color:#fff;padding:0.15rem 0.45rem;border-radius:3px;letter-spacing:0.04em;">NÃO CHEGOU AO R&amp;S</span>' : ''}</h4>
             <p>${esc(c.email)} · ${esc(c.whatsapp) || '-'} · ${esc(c.vaga_titulo)} · ${new Date(c.created_at).toLocaleDateString('pt-BR')}</p>
           </div>
           <div class="entry-actions">
@@ -1522,11 +1656,13 @@ async function renderAdmin() {
           <button class="tab-btn2 ${state.adminTab==='candidaturas'?'active':''}" data-tab="candidaturas">Candidaturas ${naoLidas>0?`(${naoLidas} novas)`:''}</button>
           <button class="tab-btn2 ${state.adminTab==='candidatos'?'active':''}" data-tab="candidatos">Candidatos (${candidatosUnificados.length})</button>
         </div>
+        ${avisoPendenciasHTML()}
         <div id="tabContent">${state.adminTab === 'vagas' ? vagasTabHTML() : state.adminTab === 'candidaturas' ? candTabHTML() : unifTabHTML()}</div>
       </div>
     `;
     document.getElementById('backBtn').addEventListener('click', () => { state.view = 'vagas'; render(); });
     document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
+    bindAvisoPendenciasEvents();
     document.querySelectorAll('.tab-btn2').forEach(btn => btn.addEventListener('click', () => { state.adminTab = btn.dataset.tab; draw(); }));
     if (state.adminTab === 'vagas') bindVagasTabEvents();
     else if (state.adminTab === 'candidaturas') bindCandTabEvents();
