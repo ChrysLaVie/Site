@@ -518,13 +518,17 @@ async function registrarPendenciaRS(data, cvUrl, erro) {
   }
 }
 
+// Devolve {ok, lista, err}. O "ok" existe por um motivo: se a tabela não tiver
+// sido criada, ou a permissão estiver errada, uma lista vazia seria idêntica a
+// "está tudo em ordem" — e o painel mentiria dizendo que ninguém se perdeu.
+// Quando a própria fila não pode ser lida, o painel precisa gritar isso.
 async function loadPendenciasRS() {
-  if (!db) return [];
+  if (!db) return { ok: false, lista: [], err: 'Conexão com o banco do site não foi inicializada.' };
   try {
     const { data, error } = await db.from('rs_sync_pendentes').select('*').order('created_at', { ascending: false });
-    if (error) return [];
-    return data || [];
-  } catch (e) { return []; }
+    if (error) return { ok: false, lista: [], err: error.message };
+    return { ok: true, lista: data || [] };
+  } catch (e) { return { ok: false, lista: [], err: (e && e.message) ? e.message : String(e) }; }
 }
 
 // Reenvia uma pendência. Se der certo, o registro sai da fila. Se der errado de
@@ -1343,7 +1347,8 @@ async function renderAdmin() {
   const formsRows = await loadFormsRespostas();
   // Candidaturas que não chegaram ao R&S. É o que garante que ninguém se perde
   // em silêncio: se esta lista não estiver vazia, o painel avisa em toda aba.
-  let pendenciasRS = await loadPendenciasRS();
+  let filaRS = await loadPendenciasRS();
+  let pendenciasRS = filaRS.lista;
   if (state.view !== 'admin') return;
 
   const naoLidas = candidaturas.filter(c => !c.lida && !c.arquivada).length;
@@ -1410,6 +1415,20 @@ async function renderAdmin() {
   // Aparece no topo do painel, em qualquer aba, enquanto houver pendência.
   // Some sozinho quando a fila zera.
   function avisoPendenciasHTML() {
+    // A fila em si não pôde ser lida: tabela ausente, RLS bloqueando ou banco
+    // fora do ar. Silenciar isso seria dizer "ninguém se perdeu" sem ter olhado.
+    if (!filaRS.ok) {
+      return `
+        <div style="border:1px solid #B08A3E;background:#FBF6EA;border-radius:6px;padding:0.9rem 1.1rem;margin-bottom:1.6rem;">
+          <strong style="color:#7A5E1E;font-size:0.9rem;">Não foi possível conferir a fila de reenvio ao R&amp;S</strong>
+          <p style="color:#7A5E1E;font-size:0.78rem;margin:0.45rem 0 0;">
+            O painel não conseguiu ler a tabela <code>rs_sync_pendentes</code>, então
+            <strong>não dá para afirmar que nenhuma candidatura ficou para trás</strong>.
+            Verifique se a migração foi aplicada no projeto Supabase do site.
+          </p>
+          <p style="color:#7A5E1E;font-size:0.72rem;margin:0.4rem 0 0;opacity:0.85;">${esc(filaRS.err)}</p>
+        </div>`;
+    }
     if (!pendenciasRS.length) return '';
     const linhas = pendenciasRS.slice(0, 8).map(p => `
       <li style="margin-bottom:0.35rem;">
@@ -1449,7 +1468,8 @@ async function renderAdmin() {
         const r = await reenviarPendenciaRS(pendenciasRS[i]);
         if (r.ok) ok++; else falhou++;
       }
-      pendenciasRS = await loadPendenciasRS();
+      filaRS = await loadPendenciasRS();
+      pendenciasRS = filaRS.lista;
       st.textContent = falhou === 0
         ? `Pronto: ${ok} candidatura(s) enviadas ao R&S.`
         : `${ok} enviada(s), ${falhou} ainda com erro. Veja o motivo na lista.`;
