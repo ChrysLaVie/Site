@@ -3247,7 +3247,13 @@ async function salvarEntrevista(){
     nome=(document.getElementById('f-nome')||{}).value||'';
   } else if(candSel){
     const cSel=getCandsVisiveis().find(x=>x.id===candSel);
-    nome=cSel?cSel.nome:'';
+    // A lista em memória pode ter sido recarregada depois que o roteiro foi
+    // aberto (realtime, troca de aba, mudança de etapa). Nesse caso o candidato
+    // continua escolhido na tela, então o nome vem do próprio <option> em vez
+    // de bloquear o salvamento por não achá-lo na lista.
+    const el=document.getElementById('f-cand-select');
+    const textoOpcao=(el && el.selectedIndex>=0) ? (el.options[el.selectedIndex].textContent||'').trim() : '';
+    nome = cSel ? cSel.nome : textoOpcao;
     candidatoIdSelecionado=candSel;
   }
   if(!nome.trim()){alert('Selecione o candidato (ou escolha "+ Novo candidato").');return;}
