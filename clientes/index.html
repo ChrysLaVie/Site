@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 
 /* ── RESET & VARS ── */
@@ -694,7 +695,10 @@ header {
       <h1 class="page-title">Agenda</h1>
       <p class="page-sub" style="margin:0">Entrevistas marcadas · acompanhe os horários e links</p>
     </div>
-    <button class="btn btn-primary" onclick="abrirAgendaModal()">+ Nova entrevista</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span id="gcal-status" style="font-size:13px"></span>
+      <button class="btn btn-primary" onclick="abrirAgendaModal()">+ Nova entrevista</button>
+    </div>
   </div>
 
   <div style="background:#fff;border:1.5px solid var(--bege-lt);border-radius:12px;padding:14px 16px;margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -1407,6 +1411,7 @@ function agendaSetView(v){ _agendaView=v; renderAgenda(); }
 
 function renderAgenda(){
   carregarSalaPadrao();
+  renderGcalStatus();
   const mes=_agendaRef.getMonth(), ano=_agendaRef.getFullYear();
   document.getElementById('agenda-mes-label').textContent=AG_MESES[mes]+' '+ano;
   const calWrap=document.getElementById('agenda-cal-wrap'), listaWrap=document.getElementById('agenda-lista-wrap');
@@ -1523,6 +1528,108 @@ function gcalLink(a, versao){
     if(c&&c.email) p.append('add', c.email);
   }
   return 'https://calendar.google.com/calendar/render?'+p.toString();
+}
+
+// ══ INTEGRAÇÃO GOOGLE CALENDAR (criação automática de evento) ══════════════
+// Antes, agendar uma entrevista só gerava um link "adicionar ao Google
+// Calendar" pra clicar manualmente — e só depois de salvar e reabrir. Agora,
+// uma vez conectada, salvar a entrevista já cria (ou atualiza) o evento
+// direto na agenda do Google, sem esse retrabalho.
+const GCAL_CLIENT_ID = '777938564621-9kf6102dpckufeo41taikacass58iudl.apps.googleusercontent.com';
+const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+let _gcalToken = sessionStorage.getItem('gcal_token') || null;
+let _gcalTokenClient = null;
+
+function gcalConectado(){ return !!_gcalToken; }
+
+function gcalInitTokenClient(){
+  if(_gcalTokenClient || !window.google?.accounts?.oauth2) return;
+  _gcalTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: GCAL_SCOPE,
+    callback: (resp) => {
+      if(resp.error){ showToast('❌ Não foi possível conectar ao Google Calendar'); return; }
+      _gcalToken = resp.access_token;
+      sessionStorage.setItem('gcal_token', _gcalToken);
+      renderGcalStatus();
+      showToast('✅ Google Calendar conectado!');
+    }
+  });
+}
+
+function gcalConectar(){
+  gcalInitTokenClient();
+  if(!_gcalTokenClient){ showToast('Aguarde a página carregar por completo e tente de novo.'); return; }
+  _gcalTokenClient.requestAccessToken({ prompt: _gcalToken ? '' : 'consent' });
+}
+
+function gcalDesconectar(){
+  if(_gcalToken) google.accounts.oauth2.revoke(_gcalToken, ()=>{});
+  _gcalToken = null;
+  sessionStorage.removeItem('gcal_token');
+  renderGcalStatus();
+}
+
+function renderGcalStatus(){
+  const el = document.getElementById('gcal-status');
+  if(!el) return;
+  el.innerHTML = gcalConectado()
+    ? `<span style="color:var(--green)">🟢 Google Calendar conectado</span> <button class="btn btn-ghost btn-sm" onclick="gcalDesconectar()">Desconectar</button>`
+    : `<button class="btn btn-ghost btn-sm" onclick="gcalConectar()">🔗 Conectar Google Calendar</button>`;
+}
+
+// Monta o mesmo payload de evento que gcalLink já usa (título/horário/local/
+// convidado), só que envia direto pra API em vez de abrir um link.
+function _gcalEventoPayload(a){
+  const vaga = a.vaga ? ` — ${a.vaga}` : '';
+  const summary = `${a.titulo || 'Entrevista'} — ${a.candidato || ''}${vaga}`;
+  let description = `Candidato: ${a.candidato || '—'}\nEtapa: ${a.titulo || '—'}`;
+  if(a.link) description += `\nLink: ${a.link}`;
+  if(a.obs) description += `\nObs: ${a.obs}`;
+  const location = a.tipo === 'presencial' ? (a.local || '') : (a.link || 'Online');
+  const attendees = [];
+  const c = getCands().find(x => x.id === a.candidatoId);
+  if(c?.email) attendees.push({ email: c.email });
+
+  let start, end;
+  if(a.horaIni){
+    start = { dateTime: `${a.data}T${a.horaIni}:00`, timeZone: 'America/Sao_Paulo' };
+    let fim = a.horaFim;
+    if(!fim){ const d = new Date(`${a.data}T${a.horaIni}:00`); d.setMinutes(d.getMinutes()+40); fim = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+    end = { dateTime: `${a.data}T${fim}:00`, timeZone: 'America/Sao_Paulo' };
+  } else {
+    const d = new Date(a.data); d.setDate(d.getDate()+1);
+    start = { date: a.data };
+    end = { date: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` };
+  }
+  return { summary, description, location, start, end, attendees };
+}
+
+// Cria ou atualiza (se já existir googleEventId) o evento correspondente a
+// esta entrevista. Falha em silêncio com aviso — a entrevista já está salva
+// no sistema de qualquer forma, o Google Calendar é um espelho, não a fonte.
+async function gcalSincronizarEvento(a){
+  if(!gcalConectado() || !a.data) return null;
+  try{
+    const payload = _gcalEventoPayload(a);
+    const metodo = a.googleEventId ? 'PATCH' : 'POST';
+    const url = a.googleEventId
+      ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${a.googleEventId}?sendUpdates=all`
+      : `https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all`;
+    const resp = await fetch(url, {
+      method: metodo,
+      headers: { 'Authorization': `Bearer ${_gcalToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(resp.status === 401){ // token expirou — pede de novo silenciosamente não dá (precisa de interação), só avisa
+      showToast('⚠️ Sessão do Google Calendar expirou — clique em "Conectar Google Calendar" de novo.');
+      _gcalToken = null; sessionStorage.removeItem('gcal_token'); renderGcalStatus();
+      return null;
+    }
+    if(!resp.ok){ console.warn('Google Calendar recusou o evento:', await resp.text()); return null; }
+    const evento = await resp.json();
+    return evento.id;
+  } catch(e){ console.warn('Falha ao sincronizar com o Google Calendar:', e); return null; }
 }
 
 function copiarGcalCandidato(){
@@ -1670,6 +1777,7 @@ async function salvarAgenda(){
   const cand=_cands.find(c=>c.id===candId);
   const vaga=cand?getVagas().find(v=>v.id===cand.vagaId):null;
   const id=document.getElementById('ag-id').value||('ag-'+Date.now());
+  const idExistente=document.getElementById('ag-id').value;
   const a={
     id, titulo:etapa,
     candidatoId:candId||null, candidato:cand?cand.nome:null,
@@ -1677,7 +1785,8 @@ async function salvarAgenda(){
     data, horaIni:document.getElementById('ag-ini').value, horaFim:document.getElementById('ag-fim').value,
     tipo:document.getElementById('ag-tipo').value, link:document.getElementById('ag-link').value.trim(),
     local:document.getElementById('ag-local').value.trim(), status:document.getElementById('ag-status').value,
-    obs:document.getElementById('ag-obs').value.trim(), criadoPor:getUserName()
+    obs:document.getElementById('ag-obs').value.trim(), criadoPor:getUserName(),
+    googleEventId: idExistente ? (_agenda.find(x=>x.id===idExistente)||{}).googleEventId : null
   };
   try{
     await upsertAgenda(a);
@@ -1687,7 +1796,12 @@ async function salvarAgenda(){
     // falavam, e a etapa do candidato só mudava se alguém lembrasse de ir
     // no cadastro dele e trocar manualmente.
     await sincronizarEtapaComAgenda(cand, etapa);
-    closeModal('modal-agenda'); renderAgenda(); showToast('✅ Entrevista agendada!');
+    // Se estiver conectada ao Google Calendar, cria (ou atualiza, se já
+    // existir) o evento correspondente — antes isso exigia salvar, reabrir e
+    // clicar num link manual pra cada entrevista.
+    const eventId = await gcalSincronizarEvento(a);
+    if(eventId && eventId !== a.googleEventId){ a.googleEventId = eventId; await upsertAgenda(a); _localUpsert(_agenda,a); }
+    closeModal('modal-agenda'); renderAgenda(); showToast(eventId ? '✅ Entrevista agendada e sincronizada com o Google Calendar!' : '✅ Entrevista agendada!');
   }
   catch(e){ alert('Erro ao salvar: '+e.message); }
 }
@@ -1732,8 +1846,8 @@ const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cp
 const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
-const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em });
-const agendaToDb= a => ({ id:a.id, empresa_id:a.empresaId||currentEmpresa, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, atualizado_em:new Date().toISOString() });
+const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em, googleEventId:r.google_event_id });
+const agendaToDb= a => ({ id:a.id, empresa_id:a.empresaId||currentEmpresa, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, google_event_id:a.googleEventId||null, atualizado_em:new Date().toISOString() });
 
 // ══ CRUD ══════════════════════════════════════════════════════════════════════
 // Em DEMO_MODE, persiste localmente (no navegador) para a demonstração ser convincente.
