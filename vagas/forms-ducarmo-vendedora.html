@@ -380,7 +380,23 @@ async function deleteSubmission(id) {
 
 function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// Vaga encerrada: a Du Carmo nunca chegou a existir como vaga cadastrada no
+// R&S, então toda candidatura por aqui sempre caía em sync_rs_falhas sem
+// forma de entrar no funil. Em vez de deixar o formulário aberto gerando
+// falha automática, mostramos um aviso e paramos de aceitar candidaturas.
+const VAGA_ENCERRADA = true;
+
 function renderForm() {
+  if (VAGA_ENCERRADA) {
+    app.innerHTML = `
+      <div class="hero">
+        <span class="eyebrow">La Vie Consultoria · Processo Seletivo</span>
+        <h1 class="section-title">Vaga <em>encerrada</em></h1>
+        <p class="lead">Esta vaga não está mais recebendo candidaturas. Acompanhe nossas oportunidades abertas em <a href="https://lavieconsultoria.com/vagas/">lavieconsultoria.com/vagas</a>.</p>
+      </div>
+    `;
+    return;
+  }
   app.innerHTML = `
     <div class="hero">
       <span class="eyebrow">La Vie Consultoria · Processo Seletivo</span>
