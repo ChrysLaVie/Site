@@ -3362,9 +3362,13 @@ function gerarDossiePDF(id){
 function normNome(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toLowerCase(); }
 
 async function syncCandidatoFromEntrevista(entrev){
-  // Determina etapa baseado no resultado
+  // Determina etapa baseado no resultado.
+  // A entrevista com roteiro é a Entrevista La Vie (entrevista_gestor). Aprovar
+  // nela avança o candidato para a ENTREVISTA FINAL (id 'vivencia'), que é o
+  // próximo passo do fluxo — e não direto para 'aprovacao', que pulava duas
+  // etapas e dava o processo por encerrado antes da hora.
   let etapa = 'entrevista_rh';
-  if(entrev.resultado === 'approved') etapa = 'aprovacao';
+  if(entrev.resultado === 'approved') etapa = 'vivencia';
   if(entrev.resultado === 'reprovado') etapa = 'reprovado';
 
   // Encontra vaga real pelo vagaId do roteiro ou pelo nome
