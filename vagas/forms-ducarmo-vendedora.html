@@ -235,6 +235,41 @@ try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { pe
 let rsDb = null;
 try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
+// ── ENVIO AO R&S COM REDE DE SEGURANÇA ───────────────────────────────────────────────
+// Mesma lógica de retentativa e fila de pendências que o site já usa pra
+// candidatura inicial (vagas/index.html): tenta 3 vezes antes de desistir, e se
+// mesmo assim falhar, grava numa tabela pra aparecer no painel do recrutador
+// com botão de reenvio, em vez de sumir sem deixar rastro.
+async function _lvReceberComRetentativa(payload, tentativas = 3) {
+  let ultimoErro = 'motivo não identificado';
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const { data: resp, error } = await rsDb.rpc('lv_receber_candidato_do_site', payload);
+      if (error) throw new Error('Banco do R&S recusou a gravação: ' + error.message);
+      const r = Array.isArray(resp) ? resp[0] : resp;
+      if (!r || r.ok !== true) throw new Error((r && r.motivo) || 'O R&S não confirmou o cadastro.');
+      return { ok: true };
+    } catch (e) {
+      ultimoErro = (e && e.message) ? e.message : String(e);
+      if (i < tentativas - 1) await new Promise(res => setTimeout(res, 1200 * (i + 1)));
+    }
+  }
+  return { ok: false, err: ultimoErro };
+}
+async function _registrarPendenciaRS(payload, erro) {
+  if (!db) return;
+  try {
+    await db.from('rs_sync_pendentes').insert({
+      nome: payload.p_nome || null,
+      email: payload.p_email || null,
+      whatsapp: payload.p_telefone || null,
+      vaga_titulo: payload.p_vaga_titulo || null,
+      cv_url: (payload.p_documentos && payload.p_documentos[0] && payload.p_documentos[0].path) || null,
+      erro: String(erro || '').slice(0, 500)
+    });
+  } catch (e) { console.warn('Não foi possível registrar a pendência do R&S:', e); }
+}
+
 // Envia o candidato para o funil do sistema de R&S assim que ele termina
 // o formulário, busca o currículo e o DISC no banco das vagas, casa a vaga pelo
 // título no banco do R&S e cria (ou atualiza) o registro em "candidatos".
@@ -279,17 +314,16 @@ async function pushCandidatoParaRS(formPayload) {
     // e o candidato não tem login, então toda gravação era recusada em silêncio.
     // A função aceita só estes campos e descobre a empresa a partir da vaga, de
     // modo que o site nunca escolhe em qual cliente o candidato entra.
-    const { data: resp, error: erroRpc } = await rsDb.rpc('lv_receber_candidato_do_site', {
+    const payloadRS = {
       p_nome: formPayload.nome,
       p_email: emailNorm,
       p_telefone: formPayload.whatsapp,
       p_vaga_titulo: formPayload.vaga_titulo,
       p_obs: obs,
       p_documentos: documentos
-    });
-    if (erroRpc) throw new Error('Banco do R&S recusou a gravação: ' + erroRpc.message);
-    const r = Array.isArray(resp) ? resp[0] : resp;
-    if (!r || r.ok !== true) throw new Error((r && r.motivo) || 'O R&S não confirmou o cadastro.');
+    };
+    const envio = await _lvReceberComRetentativa(payloadRS);
+    if (!envio.ok) { await _registrarPendenciaRS(payloadRS, envio.err); throw new Error(envio.err); }
     console.info('Candidato enviado ao R&S:', emailNorm);
   } catch (e) {
     // A resposta do candidato já está salva na tabela do formulário, então nada
