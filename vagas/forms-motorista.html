@@ -638,6 +638,15 @@ async function pushCandidatoParaRS(formPayload) {
     const discSecondary = c.secondary_profile || null;
     const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
 
+    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
+    // currículo do site guardado em outro projeto Supabase, o R&S sabe abrir
+    // esse caminho porque tem acesso configurado ao bucket "curriculos" de lá.
+    const documentos = cvUrl ? [{
+      nome: 'Currículo (enviado no site)',
+      path: cvUrl,
+      origem: 'vagas'
+    }] : [];
+
     let obs = formPayload.resumo_prova || `Nota no questionário técnico: ${formPayload.technical_score ?? '-'}.`;
     if (discPrimary) {
       obs += ' ';
@@ -660,7 +669,7 @@ async function pushCandidatoParaRS(formPayload) {
     };
     const envio = await _lvReceberComRetentativa(payloadRS);
     if (!envio.ok) { await _registrarPendenciaRS(payloadRS, envio.err); throw new Error(envio.err); }
-    console.info('Candidato enviado ao R&S:', candidato.email);
+    console.info('Candidato enviado ao R&S:', emailNorm);
   } catch (e) {
     // A resposta do candidato já está salva na tabela do formulário, então nada
     // se perde: o que falhou foi só a cópia automática para o funil do R&S.
