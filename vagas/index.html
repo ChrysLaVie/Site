@@ -695,7 +695,10 @@ function _vagaCardHTML(v) {
           ${v.requisitos?.length ? `<div><h4>Requisitos</h4><ul>${v.requisitos.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
         </div>
         ${v.diferenciais?.length ? `<div style="margin-top:1.8rem;"><h4>Diferenciais</h4><ul>${v.diferenciais.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
-        <button class="btn-primary" style="margin-top:1.6rem;" data-id="${v.id}">Candidatar-me a esta vaga →</button>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:1.6rem;">
+          <button class="btn-primary" data-id="${v.id}">Candidatar-me a esta vaga →</button>
+          <button class="btn-secondary btn-copy-link" data-id="${v.id}" type="button" style="padding:0.85rem 1.2rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);font-family:inherit;font-size:0.85rem;cursor:pointer;">🔗 Copiar link da vaga</button>
+        </div>
       </div>
     </div>
   `;
@@ -722,11 +725,50 @@ function _renderVagasLista() {
   list.innerHTML = filtradas.map(_vagaCardHTML).join('');
 
   document.querySelectorAll('.vaga-card').forEach(card => {
-    card.addEventListener('click', e => { if (e.target.tagName === 'BUTTON') return; card.classList.toggle('open'); });
+    card.addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON') return;
+      const abrindo = !card.classList.contains('open');
+      card.classList.toggle('open');
+      _atualizarUrlDaVaga(abrindo ? card.dataset.id : null);
+    });
   });
   document.querySelectorAll('.vaga-card .btn-primary').forEach(btn => {
     btn.addEventListener('click', e => { e.stopPropagation(); openApplyModal(VAGAS.find(v => v.id === btn.dataset.id)); });
   });
+  document.querySelectorAll('.vaga-card .btn-copy-link').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const url = `${location.origin}${location.pathname}?vaga=${btn.dataset.id}`;
+      try { await navigator.clipboard.writeText(url); } catch (err) { window.prompt('Copie o link da vaga:', url); return; }
+      const original = btn.textContent;
+      btn.textContent = '✓ Link copiado!';
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    });
+  });
+}
+
+// Mantém a URL compartilhável em sincronia com a vaga aberta — assim dá pra
+// mandar o link de uma vaga específica (Instagram, LinkedIn, WhatsApp) e quem
+// abrir já cai direto nela, em vez de sempre cair na lista inteira.
+function _atualizarUrlDaVaga(vagaId) {
+  const url = new URL(location.href);
+  if (vagaId) url.searchParams.set('vaga', vagaId);
+  else url.searchParams.delete('vaga');
+  history.replaceState(null, '', url.pathname + url.search);
+  const vaga = vagaId && VAGAS.find(v => v.id === vagaId);
+  document.title = vaga ? `${vaga.title} · Vagas · La Vie Consultoria` : 'Vagas · La Vie Consultoria';
+}
+
+// Ao carregar a página já com ?vaga=ID na URL (link compartilhado), abre
+// direto o card correspondente em vez de deixar a pessoa procurar na lista.
+function _abrirVagaDaUrlSeExistir() {
+  const vagaId = new URLSearchParams(location.search).get('vaga');
+  if (!vagaId) return;
+  const card = document.querySelector(`.vaga-card[data-id="${CSS.escape(vagaId)}"]`);
+  if (!card) return;
+  card.classList.add('open');
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  _atualizarUrlDaVaga(vagaId);
 }
 
 async function renderVagas() {
@@ -764,6 +806,7 @@ async function renderVagas() {
   document.getElementById('vagasArea').addEventListener('change', e => { _vagasFiltro.area = e.target.value; _renderVagasLista(); });
 
   _renderVagasLista();
+  _abrirVagaDaUrlSeExistir();
 }
 
 // ── MODAL: CANDIDATURA ──
@@ -797,6 +840,10 @@ function openApplyModal(vaga) {
               <div class="file-name" id="fileName" style="display:none"></div>
             </div>
           </div>
+          <div class="form-group" style="display:flex;align-items:flex-start;gap:0.6rem;margin-top:0.4rem;">
+            <input type="checkbox" id="m-lgpd" style="width:16px;height:16px;margin-top:0.25rem;flex-shrink:0;accent-color:var(--charcoal);">
+            <label for="m-lgpd" style="flex:1;min-width:0;font-size:0.78rem;line-height:1.5;color:var(--muted);">Li e concordo com a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a> e autorizo o uso dos meus dados pessoais e do meu currículo para fins deste processo seletivo. *</label>
+          </div>
           <div id="formError" style="display:none"></div>
           <button class="btn-primary" id="submitBtn" style="width:100%;" disabled>Enviar candidatura</button>
         </div>
@@ -806,10 +853,11 @@ function openApplyModal(vaga) {
 
   const nome = document.getElementById('m-nome'), email = document.getElementById('m-email'), whatsapp = document.getElementById('m-whatsapp');
   const fileInput = document.getElementById('m-file'), fileArea = document.getElementById('fileArea'), fileName = document.getElementById('fileName');
+  const lgpd = document.getElementById('m-lgpd');
   const submitBtn = document.getElementById('submitBtn');
 
-  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length; }
-  nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check);
+  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length || !lgpd.checked; }
+  nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check); lgpd.addEventListener('change', check);
 
   function handleFiles(fileList) {
     const incoming = Array.from(fileList || []);
