@@ -1561,8 +1561,10 @@ async function salvarSalaPadrao(){
 function abrirAgendaModal(id,dataPre){
   const sel=document.getElementById('ag-cand');
   sel.innerHTML='<option value="">— selecione —</option>'+getCandsVisiveis().slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'})).map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}</option>`).join('');
+  // Só Entrevista La Vie e Entrevista Final envolvem agendar reunião de
+  // verdade (as outras etapas do funil não precisam de compromisso na agenda).
   const vivenciaLabel = (ETAPAS.find(e=>e.id==='vivencia')||{}).label || 'Entrevista Final';
-  document.getElementById('ag-etapa').innerHTML = ['Formulários e Testes','Entrevista La Vie',vivenciaLabel,'Devolutiva','Outro'].map(t=>`<option value="${t}">${t}</option>`).join('');
+  document.getElementById('ag-etapa').innerHTML = ['Entrevista La Vie',vivenciaLabel].map(t=>`<option value="${t}">${t}</option>`).join('');
   document.getElementById('ag-del-btn').style.display=id?'block':'none';
   if(id){
     const a=_agenda.find(x=>x.id===id); if(!a)return;
@@ -1586,7 +1588,7 @@ function abrirAgendaModal(id,dataPre){
     document.getElementById('ag-id').value='';
     document.getElementById('ag-cand').value='';
     document.getElementById('ag-data').value=dataPre||new Date().toISOString().slice(0,10);
-    document.getElementById('ag-etapa').value='Formulários e Testes';
+    document.getElementById('ag-etapa').value='Entrevista La Vie';
     document.getElementById('ag-ini').value=''; document.getElementById('ag-fim').value='';
     document.getElementById('ag-tipo').value='online';
     document.getElementById('ag-link').value=_salaPadrao||''; document.getElementById('ag-local').value='';
@@ -1677,8 +1679,28 @@ async function salvarAgenda(){
     local:document.getElementById('ag-local').value.trim(), status:document.getElementById('ag-status').value,
     obs:document.getElementById('ag-obs').value.trim(), criadoPor:getUserName()
   };
-  try{ await upsertAgenda(a); _localUpsert(_agenda,a); closeModal('modal-agenda'); renderAgenda(); showToast('✅ Entrevista agendada!'); }
+  try{
+    await upsertAgenda(a);
+    _localUpsert(_agenda,a);
+    // Agendar "Entrevista La Vie" ou "Entrevista Final" aqui também move o
+    // candidato pra essa etapa no funil — antes esses dois lados nunca se
+    // falavam, e a etapa do candidato só mudava se alguém lembrasse de ir
+    // no cadastro dele e trocar manualmente.
+    await sincronizarEtapaComAgenda(cand, etapa);
+    closeModal('modal-agenda'); renderAgenda(); showToast('✅ Entrevista agendada!');
+  }
   catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+
+async function sincronizarEtapaComAgenda(cand, etapaTitulo){
+  if(!cand) return;
+  const alvo = ETAPAS.find(e=>e.label===etapaTitulo);
+  if(!alvo || alvo.id===cand.etapa) return;
+  const idx=_cands.findIndex(c=>c.id===cand.id); if(idx<0) return;
+  const hist=[...(_cands[idx].historico||[]), {etapa:alvo.id, data:new Date().toISOString(), obs:'Movido automaticamente ao agendar '+etapaTitulo, usuario:getUserName()}];
+  _cands[idx]={..._cands[idx], etapa:alvo.id, historico:hist};
+  await upsertCand(_cands[idx]);
+  renderFunil(); renderCandidatos();
 }
 
 async function excluirAgenda(){
