@@ -879,6 +879,20 @@ function renderWelcome() {
   });
 }
 
+// `array.sort(() => Math.random()-0.5)` parece embaralhar, mas não é
+// uniforme — o algoritmo de sort do navegador favorece certas posições
+// finais dependendo da ordem original (medido: o último item do array
+// original caía na última posição quase metade das vezes, não 25% como
+// devia). Fisher-Yates é o jeito correto de embaralhar sem viés.
+function shuffleSemVies(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // ═══════════════════════════════════════════════════════
 // RENDER: TEST (drag-and-drop)
 // ═══════════════════════════════════════════════════════
@@ -886,7 +900,7 @@ function renderTest() {
   const roundData = rodadas()[state.round];
   const dims = ['D', 'I', 'S', 'C'];
   // Embaralhar ordem de exibição
-  let order = [...dims].sort(() => Math.random() - 0.5);
+  let order = shuffleSemVies(dims);
 
   const RANK_COLORS = ['#2C2B28', '#6B7A5E', '#B08A3E', '#C4BFB4'];
   const RANK_LABELS = ['Mais parecido comigo', '', '', 'Menos parecido comigo'];
@@ -1004,7 +1018,7 @@ function renderTest() {
 function renderTestSimples() {
   const roundData = rodadas()[state.round];
   const dims = ['D','I','S','C'];
-  const ordem = [...dims].sort(() => Math.random() - 0.5);
+  const ordem = shuffleSemVies(dims);
 
   function draw() {
     const total = totalRodadas();
