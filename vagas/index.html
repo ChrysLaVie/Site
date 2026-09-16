@@ -1268,6 +1268,28 @@ function buildDiscPDFFromRow(row) {
   doc.save('disc-' + (row.name || 'candidato').toLowerCase().replace(/\s+/g,'-') + '.pdf');
 }
 
+// Condições de cada vaga no PDF do formulário — precisa bater exatamente com o
+// texto que aparece no "Estou ciente de que..." de cada forms-*.html, senão o
+// recrutador vê uma remuneração/regime de outra vaga no dossiê do candidato.
+// Antes disso era um texto único fixo ("Remuneração R$5.000 + comissão") pra
+// todas as vagas, o que só estava certo por coincidência em uma ou duas.
+const CONDICOES_POR_VAGA = {
+  'Aux. de Departamento Pessoal': [['Contratação PJ','ciente_pj'],['Remuneração R$ 3.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Secretária': [['Contratação PJ','ciente_pj'],['Remuneração R$ 3.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Analista de Marketing': [['Contratação PJ','ciente_pj'],['Remuneração R$ 5.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Consultor(a) de Vendas · Educacional': [['Contratação PJ','ciente_pj'],['Remuneração R$ 2.500,00 (PJ) + comissão','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Coordenador(a) Acadêmico': [['Contratação PJ','ciente_pj'],['Remuneração R$ 8.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Coordenador(a) Geral de Comercialização': [['Contratação PJ','ciente_pj'],['Remuneração R$10.000 + comissão','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Coordenador de Instituto Tecnológico': [['Contratação PJ','ciente_pj'],['Remuneração R$ 5.000 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Coordenador(a) de Marketing e Comercial - Enseada dos Bacuris': [['Contratação PJ','ciente_pj'],['Remuneração R$ 3.000,00 (PJ)','ciente_remuneracao'],['Modelo híbrido, com deslocamentos pontuais ao Lago das Brisas/GO','ciente_presencial'],['Atendimento a hóspedes fora do horário comercial, incluindo fins de semana','ciente_horario']],
+  'Coordenador de Relacionamento e Experiência do Aluno': [['Contratação PJ','ciente_pj'],['Remuneração R$ 5.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Gerente de Captação de Alunos e Televendas': [['Contratação PJ','ciente_pj'],['Remuneração R$5.000 + comissão','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Gerente de Marketing': [['Contratação PJ','ciente_pj'],['Remuneração R$ 6.000,00','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Consultor Especialista': [['Contratação CLT','ciente_clt'],['Base R$1.900 + 50% por adesao + bonus ate R$4.000 + R$728 cartao','ciente_remuneracao'],['Presencial Goiania/GO, seg a sex 8h-17h30, sabados eventuais','ciente_presencial']],
+  'Consultor(a) de Vendas': [['Contratação CLT','ciente_clt'],['Base R$2.000 + R$200 assiduidade + VT + 1% comissao + 2% meta','ciente_remuneracao'],['Presencial Goiania/GO, loja + digital (WhatsApp/Instagram), sabados','ciente_presencial']],
+  'Motorista Carreteiro': [['Contratação CLT','ciente_pj'],['Remuneração R$ 2.018,00 base + variáveis','ciente_remuneracao'],['Viagens rodoviárias com pernoite','ciente_presencial'],['CNH E, MOPP e toxicológico em dia','ciente_horario']]
+};
+
 // -- PDF: resposta do formulario da vaga --
 function _drawFormsBody(doc, s) {
   const W = doc.internal.pageSize.getWidth();
@@ -1290,7 +1312,9 @@ function _drawFormsBody(doc, s) {
 
   doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...INK);
   doc.text('Condições da vaga', M, y); y += 16;
-  [['Contratação PJ', s.ciente_pj], ['Remuneração R$5.000 + comissão', s.ciente_remuneracao], ['Presencial em Goiânia/GO', s.ciente_presencial], ['Horário de funcionamento', s.ciente_horario]].forEach(([label, val]) => {
+  const condicoes = CONDICOES_POR_VAGA[s.vaga_titulo] ||
+    [['Contratação PJ', 'ciente_pj'], ['Remuneração', 'ciente_remuneracao'], ['Presencial em Goiânia/GO', 'ciente_presencial'], ['Horário de funcionamento', 'ciente_horario']];
+  condicoes.map(([label, campo]) => [label, s[campo]]).forEach(([label, val]) => {
     doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
     doc.setTextColor(...(val ? OK : ERR));
     doc.text(val ? 'SIM' : 'NAO', M, y);
