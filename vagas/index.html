@@ -59,6 +59,7 @@ body {
 nav {
   position:fixed; top:0; left:0; right:0; z-index:100;
   display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; row-gap:0.6rem;
   padding:0.85rem 5vw;
   background:rgba(26,25,23,0.97);
   backdrop-filter:blur(20px);
@@ -71,13 +72,26 @@ nav {
   padding:0.6rem 1.4rem; border-radius:var(--radius); text-decoration:none;
   font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; font-weight:500;
   cursor:pointer; transition:all 0.2s; font-family:inherit;
+  white-space:nowrap;
 }
 .nav-cta:hover { background:rgba(242,241,237,0.18); border-color:rgba(242,241,237,0.4); }
-.nav-right { display:flex; align-items:center; gap:1.2rem; }
+.nav-right { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:1.2rem; }
 .nav-socials { display:flex; align-items:center; gap:0.9rem; }
 .nav-socials a { color:rgba(242,241,237,0.6); display:flex; transition:color 0.2s; }
 .nav-socials a:hover { color:#F2F1ED; }
 .nav-socials svg { width:19px; height:19px; }
+/* Em telas estreitas o logo + ícones sociais + botão não cabem numa linha só
+   e empurravam a página inteira pra rolagem horizontal. Nesses casos os
+   ícones somem daqui (já existem no rodapé) pra sobrar espaço pro essencial:
+   logo e o botão de entrar/sair do painel. */
+@media (max-width:560px) {
+  .nav-socials { display:none; }
+}
+@media (max-width:360px) {
+  nav { padding-left:4vw; padding-right:4vw; }
+  .nav-logo img { height:52px; }
+  .nav-cta { padding:0.55rem 1rem; font-size:0.62rem; letter-spacing:0.08em; }
+}
 
 #app { padding-top:150px; }
 
@@ -1815,7 +1829,21 @@ function render() {
   adminBtn.textContent = state.view === 'admin' ? 'Voltar às vagas' : 'Painel do recrutador';
   if (state.view === 'vagas') renderVagas();
   else if (state.view === 'admin') renderAdmin();
+  ajustarEspacoDoNav();
 }
+
+// O nav é fixo no topo e pode quebrar em duas linhas em telas estreitas
+// (nome longo do botão "Painel do recrutador"/"Voltar às vagas"). Um
+// padding-top fixo no #app não acompanha essa mudança de altura e o
+// conteúdo fica escondido atrás do nav — aqui a altura real é medida e
+// aplicada, então funciona em qualquer largura de tela.
+function ajustarEspacoDoNav() {
+  requestAnimationFrame(() => {
+    const nav = document.querySelector('nav');
+    if (nav) app.style.paddingTop = `${nav.offsetHeight}px`;
+  });
+}
+window.addEventListener('resize', ajustarEspacoDoNav);
 
 adminBtn.addEventListener('click', async () => {
   if (state.view === 'admin') { state.view = 'vagas'; render(); return; }

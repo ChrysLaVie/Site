@@ -265,6 +265,15 @@ async function pushCandidatoParaRS(formPayload) {
     }
     if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
 
+    // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
+    // currículo do site guardado em outro projeto Supabase, o R&S sabe abrir
+    // esse caminho porque tem acesso configurado ao bucket "curriculos" de lá.
+    const documentos = cvUrl ? [{
+      nome: 'Currículo (enviado no site)',
+      path: cvUrl,
+      origem: 'vagas'
+    }] : [];
+
     // O candidato é entregue ao R&S por uma função do banco, não gravando na
     // tabela direto. Motivo: a tabela "candidatos" exige usuário logado e ativo,
     // e o candidato não tem login, então toda gravação era recusada em silêncio.
@@ -276,7 +285,7 @@ async function pushCandidatoParaRS(formPayload) {
       p_telefone: formPayload.whatsapp,
       p_vaga_titulo: formPayload.vaga_titulo,
       p_obs: obs,
-      p_documentos: cvUrl
+      p_documentos: documentos
     });
     if (erroRpc) throw new Error('Banco do R&S recusou a gravação: ' + erroRpc.message);
     const r = Array.isArray(resp) ? resp[0] : resp;
