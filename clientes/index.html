@@ -560,7 +560,7 @@ header {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:4px">
         <div>
           <div class="chart-card-title">Funil de Conversão</div>
-          <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a aprovação final</div>
+          <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a admissão (contratação)</div>
         </div>
         <div style="text-align:right">
           <div class="chart-card-headline" id="dash-funil-taxa">0%</div>
@@ -3726,11 +3726,19 @@ function renderIndicadoresFunil(){
     }
   });
 
-  // 2) Funil de conversão — total avaliado x quantos avançaram em cada etapa
+  // 2) Funil de conversão — total avaliado x quantos avançaram em cada etapa.
+  // "Aprovação" é só a decisão enviada ao cliente — nem todo aprovado vira
+  // contratação de fato (pode não ser o escolhido, por ex. quando há mais de
+  // um candidato aprovado pra mesma vaga). Por isso o funil vai até "Admissão".
+  // As etapas intermediárias usam "passou por ali alguma vez" (visitou), mas a
+  // Admissão usa a etapa ATUAL do candidato — é o único jeito de refletir quem
+  // está realmente contratado hoje (um candidato pode ter passado pela Admissão
+  // e depois sido corrigido/reprovado; "visitou" contaria ele errado).
   const visitou = c => new Set((c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa]));
   const totalAvaliados = cands.length;
-  const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et])];
-  const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map(et=>cands.filter(c=>visitou(c).has(et)).length)];
+  const admitidosAgora = cands.filter(c=>c.etapa==='admissao').length;
+  const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et]), ETAPA_LABEL.admissao];
+  const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map(et=>cands.filter(c=>visitou(c).has(et)).length), admitidosAgora];
   const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
   document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '0%';
   const funilCores = funilValores.map((_,i)=> i===0 ? CH.charcoal : i===funilValores.length-1 ? CH.green : CH.mid);
@@ -3990,10 +3998,15 @@ function renderDashboard(){
         ? `${v.titulo} <span title="Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}" style="cursor:help">🔄</span>`
         : v.titulo;
       // Garantia de reposição: conta a partir do fechamento da vaga (contratação),
-      // enquanto ainda estiver dentro do prazo (padrão 60 dias, configurável por vaga)
+      // enquanto ainda estiver dentro do prazo (padrão 60 dias, configurável por vaga).
+      // É só 1 reposição por vaga — se já foi reaberta uma vez, o contratado atual
+      // não gera uma nova garantia (senão o ciclo de reposição nunca acabaria).
+      const jaUsouReposicao = !!(v.historicoReaberturas && v.historicoReaberturas.length);
       const candidatoNome = admitido ? admitido.nome : '-';
       let garantiaHtml = '-';
-      if(v.status==='encerrada' && v.dataEncerramento){
+      if(jaUsouReposicao && v.status==='encerrada'){
+        garantiaHtml = '<span style="color:var(--light)" title="Garantia já usada nesta vaga — a substituição não gera novo prazo">Reposição já usada</span>';
+      } else if(v.status==='encerrada' && v.dataEncerramento){
         const prazo = v.garantiaDias || 60;
         const passados = diasCorridosCalendario(v.dataEncerramento);
         const restantes = prazo - passados;
@@ -4552,7 +4565,12 @@ async function renderFinanceiro(){
 }
 async function darBaixa(id){
   const p=_pagamentos.find(x=>x.id===id); if(!p)return;
-  p.status='pago'; p.pagoEm=new Date().toISOString().slice(0,10);
+  const hojeBR = new Date(hojeLocalISO()+'T12:00:00').toLocaleDateString('pt-BR');
+  const resp = prompt('Data em que o pagamento foi recebido (dd/mm/aaaa):', hojeBR);
+  if(resp === null) return; // cancelou
+  const m = resp.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!m){ alert('Data inválida. Use o formato dd/mm/aaaa.'); return; }
+  p.status='pago'; p.pagoEm=`${m[3]}-${m[2]}-${m[1]}`;
   try{ await upsertPagamento(p); }catch(e){ alert('Erro: '+e.message); }
   renderFinanceiro(); showToast('✅ Baixa registrada!');
 }
@@ -4571,7 +4589,12 @@ async function registrarPagamentoParcial(id){
     return;
   }
   const saldo = +(p.valor - valorRecebido).toFixed(2);
-  const hoje = new Date().toISOString().slice(0,10);
+  const hojeBR = new Date(hojeLocalISO()+'T12:00:00').toLocaleDateString('pt-BR');
+  const respData = prompt('Data em que esse valor foi recebido (dd/mm/aaaa):', hojeBR);
+  if(respData === null) return;
+  const md = respData.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!md){ alert('Data inválida. Use o formato dd/mm/aaaa.'); return; }
+  const hoje = `${md[3]}-${md[2]}-${md[1]}`;
   const obsBase = (p.obs||'').replace(/\s*\[venc\. ajustado\]/,'').replace(/\s*\[valor ajustado\]/,'');
   const antes = { valor:p.valor, status:p.status, pagoEm:p.pagoEm, obs:p.obs };
   p.valor = valorRecebido; p.status='pago'; p.pagoEm=hoje;
