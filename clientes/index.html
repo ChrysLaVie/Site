@@ -542,6 +542,8 @@ header {
     <div class="prog-track" style="height:10px;margin-bottom:0"><div class="prog-fill" id="dash-pct-bar" style="width:0%"></div></div>
     <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--light)"><span id="dash-pct-left"></span><span id="dash-pct-right"></span></div>
   </div>
+  <div class="section-label" style="margin-bottom:8px">Ações Pendentes</div>
+  <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Análise de Candidatos</div>
   <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-bottom:14px;align-items:start">
     <div class="card chart-card">
@@ -581,15 +583,11 @@ header {
       <div id="dash-metricas-tempo"></div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:14px;margin-bottom:24px;align-items:start">
+  <div style="margin-bottom:24px">
     <div class="card chart-card">
       <div class="chart-card-title">Tempo Médio por Etapa</div>
       <div class="chart-card-sub">Dias reais em cada etapa comparado à meta de SLA</div>
       <div class="chart-wrap" style="height:220px"><canvas id="chart-tempo-etapa"></canvas></div>
-    </div>
-    <div class="card">
-      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid);margin-bottom:12px">Vagas mais lentas</div>
-      <div id="dash-vagas-lentas"></div>
     </div>
   </div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:2px">Tempo de Fechamento</div>
@@ -605,8 +603,6 @@ header {
       <tbody id="dash-tempo-tbody"></tbody>
     </table>
   </div>
-  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:8px">Ações Pendentes</div>
-  <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Detalhamento por Setor</div>
   <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
   <div class="section-label" style="margin-bottom:12px">Detalhamento das Vagas</div>
@@ -3804,19 +3800,6 @@ function renderIndicadoresFunil(){
     return `<div class="chart-legend-item"><span class="chart-legend-dot" style="background:${d.cor}"></span>${d.label} · ${pct}%</div>`;
   }).join('');
 
-  // 5) Ranking das vagas mais lentas — dias corridos (abertas: até hoje; fechadas: até o fechamento)
-  const lentas = vagas.filter(v=>v.status!=='cancelada' && _inicioCicloVaga(v)).map(v=>{
-    const dataFim = (v.status==='encerrada' && v.dataEncerramento) ? v.dataEncerramento : null;
-    const dias = diasCorridosCalendario(_inicioCicloVaga(v), dataFim);
-    return {v,dias};
-  }).sort((a,b)=>b.dias-a.dias).slice(0,5);
-  document.getElementById('dash-vagas-lentas').innerHTML = lentas.length===0
-    ? '<div style="color:var(--mid);font-size:13px">Sem vagas suficientes ainda.</div>'
-    : lentas.map((it,i)=>`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i<lentas.length-1?'border-bottom:1px solid var(--bege-lt)':''}">
-        <div><strong style="font-size:13px">${i+1}. ${it.v.titulo}</strong><br><span style="font-size:11px;color:var(--mid)">${it.v.setor||'Sem setor'} · ${it.v.status==='aberta'?'em aberto':'fechada'}</span></div>
-        <span style="font-weight:700;font-size:14px;color:${it.v.status==='aberta'?'var(--red)':'var(--mid)'}">${it.dias}d</span>
-      </div>`).join('');
 }
 
 // ── DASHBOARD DO PRODUTO MENTORIA ────────────────────────────────────────────
@@ -3983,6 +3966,9 @@ function renderDashboard(){
   if(statusVagasEl){
     const linhas = vagas.map(v=>{
       const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
+      // Ordenação: fechadas ordenadas da mais rápida pra mais lenta primeiro,
+      // "Em Decisão" depois, e "Em Aberto" sempre por último (ainda não tem
+      // tempo de fechamento pra comparar, então não faz sentido misturar).
       // Quando a vaga já foi reaberta, pode existir mais de um candidato em
       // etapa avançada pra ela (o contratado anterior que saiu + o novo, já
       // que não há um status de "desligado"). Usamos o registro mais recente
@@ -3991,14 +3977,16 @@ function renderDashboard(){
       const avancadosCicloAtual = v.dataReabertura ? avancados.filter(c=>c.criadoEm && c.criadoEm >= v.dataReabertura) : avancados;
       const pool = avancadosCicloAtual.length ? avancadosCicloAtual : avancados;
       const admitido = pool.slice().sort((a,b)=>new Date(b.criadoEm||0)-new Date(a.criadoEm||0))[0];
-      let statusHtml, dias;
-      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; }
+      let statusHtml, dias, diasNum=null, grupo;
+      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; grupo=1; }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
-        dias = td ? td.corridos+'d' : '-';
-      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = _inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v))+'d':'-'; }
-      else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = _inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v))+'d':'-'; }
+        diasNum = td ? td.corridos : null;
+        dias = diasNum!==null ? diasNum+'d' : '-';
+        grupo=0;
+      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?diasNum+'d':'-'; grupo=1; }
+      else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?diasNum+'d':'-'; grupo=2; }
       // Reabertura/substituição: sinaliza na própria linha da posição, não só na aba Vagas
       const tituloHtml = v.dataReabertura
         ? `${v.titulo} <span title="Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}" style="cursor:help">🔄</span>`
@@ -4020,9 +4008,10 @@ function renderDashboard(){
           ? `<span style="color:var(--amber);font-weight:600">🛡 ${restantes}d restantes</span>`
           : `<span style="color:var(--mid)">Garantia encerrada</span>`;
       }
-      return `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
-    });
-    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
+      const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
+      return {html, grupo, diasNum};
+    }).sort((a,b)=> (a.grupo-b.grupo) || ((a.diasNum??999999)-(b.diasNum??999999)) );
+    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.map(l=>l.html).join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
 
   document.getElementById('dash-kpis').innerHTML=`
@@ -4066,12 +4055,24 @@ function renderDashboard(){
 
     const metricasEl = document.getElementById('dash-metricas-tempo');
     if(metricasEl){
-      const linha = (dias,texto,cor) => `<div style="padding:9px 0;border-bottom:1px solid var(--bege-lt);font-size:12.5px"><strong style="color:${cor};font-family:'Playfair Display',serif;font-size:15px">${dias}</strong> → ${texto}</div>`;
-      metricasEl.innerHTML = [
-        linha(minC.corridos+'d', `${minC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais rápida)</span>`, 'var(--green)'),
-        linha(maxC.corridos+'d', `${maxC.v.titulo.split('–')[0].trim()} <span style="color:var(--light)">(mais lenta)</span>`, 'var(--red)'),
-        linha(mediaC+'d', `Média do ciclo <span style="color:var(--light)">(${mediaT}d úteis)</span>`, 'var(--charcoal)')
-      ].join('');
+      // Ponteiro em formato de relógio (meio-círculo): a posição da média entre
+      // a vaga mais rápida e a mais lenta, em vez de 3 linhas de texto empilhadas.
+      const arco = 283; // π·90, comprimento do semicírculo usado no path abaixo
+      const faixa = Math.max(1, maxC.corridos - minC.corridos);
+      const frac = Math.min(1, Math.max(0, (mediaC - minC.corridos) / faixa));
+      const corPonteiro = frac<0.4 ? CH.green : frac<0.7 ? CH.amber : CH.red;
+      metricasEl.innerHTML = `
+        <svg viewBox="0 0 200 118" style="width:100%;max-width:220px;display:block;margin:0 auto">
+          <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="var(--bege-lt)" stroke-width="14" stroke-linecap="round"/>
+          <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="${corPonteiro}" stroke-width="14" stroke-linecap="round"
+            stroke-dasharray="${(frac*arco).toFixed(1)} ${arco}"/>
+          <text x="100" y="82" text-anchor="middle" font-family="'Playfair Display',serif" font-size="30" font-weight="700" fill="var(--charcoal)">${mediaC}d</text>
+          <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · ${mediaT}d úteis</text>
+        </svg>
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
+          <div style="font-size:11.5px"><strong style="color:var(--green)">⚡ ${minC.corridos}d</strong><br><span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
+          <div style="font-size:11.5px;text-align:right"><strong style="color:var(--red)">🐢 ${maxC.corridos}d</strong><br><span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
+        </div>`;
     }
 
     // Gráfico "Divisão do Tempo por Vaga" — barras horizontais empilhadas
