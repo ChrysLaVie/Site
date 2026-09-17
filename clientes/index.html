@@ -2490,9 +2490,15 @@ function renderVagas() {
   grid.innerHTML=fi.map(v=>{
     const n=cands.filter(c=>c.vagaId===v.id).length;
     const dias=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null;
+    // Vaga com mais de 1 posição (qtd>1) pode ir sendo preenchida aos poucos
+    // sem fechar de vez — sem isso, "1 de 5 preenchida" ficava indistinguível
+    // de "0 de 5", porque as duas mostram só a tag genérica "Aberta".
+    const statusLabel = (v.status==='aberta' && v.qtd>1 && v.qtdFechadas>0)
+      ? `Aberta (${v.qtdFechadas}/${v.qtd} preenchidas)`
+      : (SL[v.status]||v.status);
     return `<div class="vaga-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div class="vaga-name">${v.titulo}</div><span class="tag ${ST[v.status]||'tag-closed'}">${SL[v.status]||v.status}</span>
+        <div class="vaga-name">${v.titulo}</div><span class="tag ${ST[v.status]||'tag-closed'}">${statusLabel}</span>
       </div>
       <div class="vaga-meta">
         ${v.setor?`<span>📂 ${v.setor}</span>`:''}${v.gestor?`<span>👤 ${v.gestor}</span>`:''}
@@ -3967,7 +3973,14 @@ function renderDashboard(){
         dias = diasNum!==null ? diasNum+'d' : '-';
         grupo=0;
       } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?diasNum+'d':'-'; grupo=1; }
-      else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?diasNum+'d':'-'; grupo=2; }
+      else {
+        // Vaga com qtd>1 preenchida parcialmente (ex.: 1 de 5) continua "aberta"
+        // até fechar todas — sem isso, ficava idêntica visualmente a uma vaga
+        // com zero contratações ainda.
+        const progressoTxt = (v.qtd>1 && v.qtdFechadas>0) ? ` (${v.qtdFechadas}/${v.qtd})` : '';
+        statusHtml=`<span style="color:var(--mid)">● Em Aberto${progressoTxt}</span>`;
+        diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?diasNum+'d':'-'; grupo=2;
+      }
       // Reabertura/substituição: sinaliza na própria linha da posição, não só na aba Vagas
       const tituloHtml = v.dataReabertura
         ? `${v.titulo} <span title="Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}" style="cursor:help;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:1px 5px;vertical-align:middle">reaberta</span>`
