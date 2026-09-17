@@ -1845,11 +1845,11 @@ function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[] });
+const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60 });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em, googleEventId:r.google_event_id });
@@ -2528,6 +2528,13 @@ function renderVagas() {
       </div>
       ${v.honorario&&!isClienteExterno()?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${v.honorario}</span></div>`:''}
       ${v.dataReabertura?`<div class="vaga-meta" style="margin-top:2px"><span style="background:#FFF3CD;border-radius:6px;padding:2px 8px;font-weight:600;color:#7A5C00">🔄 Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}</span></div>`:''}
+      ${(v.historicoReaberturas&&v.historicoReaberturas.length)?`<div class="vaga-meta" style="margin-top:2px;flex-direction:column;align-items:flex-start;gap:2px">${v.historicoReaberturas.map((h,i)=>{
+        if(!h.cicloAnteriorAbertura||!h.cicloAnteriorEncerramento) return `<span style="font-size:11px;color:var(--mid)">📋 Ciclo ${i+1}: dados do período não registrados</span>`;
+        const abr=new Date(h.cicloAnteriorAbertura+'T12:00:00').toLocaleDateString('pt-BR');
+        const enc=new Date(h.cicloAnteriorEncerramento+'T12:00:00').toLocaleDateString('pt-BR');
+        const dur=diasCorridosCalendario(h.cicloAnteriorAbertura,h.cicloAnteriorEncerramento)+'d';
+        return `<span style="font-size:11px;color:var(--mid)">📋 Ciclo ${i+1}: ${abr} → ${enc} (${dur})</span>`;
+      }).join('')}</div>`:''}
       <div class="vaga-actions">
         <button class="btn btn-ghost btn-sm" onclick="editVaga('${v.id}')">✏ Editar</button>
         <button class="btn btn-ghost btn-sm" onclick="verCandVaga('${v.id}')">👥 Candidatos</button>
@@ -2566,7 +2573,10 @@ async function reabrirVaga(id){
   const motivo = prompt('Motivo da reabertura (ex.: "Reposição — colaborador pediu demissão dentro da garantia de 60 dias"):', v.motivoReabertura||'');
   if(motivo === null) return; // cancelou
   const hoje = hojeLocalISO();
-  const hist = [...(v.historicoReaberturas||[]), { data: hoje, motivo: motivo.trim(), usuario: getUserName() }];
+  // Preserva o ciclo que está sendo encerrado (abertura + encerramento dele)
+  // dentro do histórico, antes de zerar dataEncerramento — senão a data do
+  // 1º fechamento se perde e não dá mais pra saber quanto durou aquele ciclo.
+  const hist = [...(v.historicoReaberturas||[]), { data: hoje, motivo: motivo.trim(), usuario: getUserName(), cicloAnteriorAbertura: _inicioCicloVaga(v), cicloAnteriorEncerramento: v.dataEncerramento||null }];
   const atualizada = { ...v, status:'aberta', dataReabertura: hoje, motivoReabertura: motivo.trim(), historicoReaberturas: hist, dataEncerramento:null };
   try{
     await upsertVaga(atualizada);
@@ -3959,6 +3969,14 @@ function renderDashboard(){
   if(statusVagasEl){
     const linhas = vagas.map(v=>{
       const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
+      // Quando a vaga já foi reaberta, pode existir mais de um candidato em
+      // etapa avançada pra ela (o contratado anterior que saiu + o novo, já
+      // que não há um status de "desligado"). Usamos o registro mais recente
+      // (e, se houve reabertura, só os posteriores a ela) como o vigente.
+      const avancados = candsParaCalc.filter(c=>c.vagaId===v.id && (c.etapa==='admissao'||c.etapa==='aprovacao'));
+      const avancadosCicloAtual = v.dataReabertura ? avancados.filter(c=>c.criadoEm && c.criadoEm >= v.dataReabertura) : avancados;
+      const pool = avancadosCicloAtual.length ? avancadosCicloAtual : avancados;
+      const admitido = pool.slice().sort((a,b)=>new Date(b.criadoEm||0)-new Date(a.criadoEm||0))[0];
       let statusHtml, dias;
       if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; }
       else if(v.status==='encerrada'){
@@ -3967,9 +3985,25 @@ function renderDashboard(){
         dias = td ? td.corridos+'d' : '-';
       } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; dias = _inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v))+'d':'-'; }
       else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; dias = _inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v))+'d':'-'; }
-      return `<tr><td style="font-size:12px;font-weight:500">${v.titulo}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${aprovado?aprovado.nome:'-'}</td><td style="font-size:12px;text-align:center">${dias}</td></tr>`;
+      // Reabertura/substituição: sinaliza na própria linha da posição, não só na aba Vagas
+      const tituloHtml = v.dataReabertura
+        ? `${v.titulo} <span title="Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}" style="cursor:help">🔄</span>`
+        : v.titulo;
+      // Garantia de reposição: conta a partir do fechamento da vaga (contratação),
+      // enquanto ainda estiver dentro do prazo (padrão 60 dias, configurável por vaga)
+      const candidatoNome = admitido ? admitido.nome : '-';
+      let garantiaHtml = '-';
+      if(v.status==='encerrada' && v.dataEncerramento){
+        const prazo = v.garantiaDias || 60;
+        const passados = diasCorridosCalendario(v.dataEncerramento);
+        const restantes = prazo - passados;
+        garantiaHtml = restantes > 0
+          ? `<span style="color:var(--amber);font-weight:600">🛡 ${restantes}d restantes</span>`
+          : `<span style="color:var(--mid)">Garantia encerrada</span>`;
+      }
+      return `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
     });
-    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
+    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
 
   document.getElementById('dash-kpis').innerHTML=`
