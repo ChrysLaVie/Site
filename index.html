@@ -51,9 +51,9 @@ body {
   --bg-alt:    #E8E4DE;
   --dark:      #1a1917;
   --charcoal:  #3A3A3A;
-  --muted:     #7A7A7A;
+  --muted:     #626262;
   --sand:      #D8CFC4;
-  --sand-dark: #B8AFA4;
+  --sand-dark: #71665A;
   --white:     #FFFFFF;
   --border:    rgba(58,58,58,0.1);
   --radius:    4px;
@@ -112,7 +112,7 @@ nav.scrolled .nav-logo img { height:54px; }
   font-size:0.7rem !important; letter-spacing:0.14em !important;
   transition:all 0.2s !important;
 }
-.nav-cta:hover { background:rgba(242,241,237,0.18) !important; border-color:rgba(242,241,237,0.4) !important; }
+.nav-cta:hover { background:rgba(242,241,237,0.18) !important; border-color:rgba(242,241,237,0.8) !important; }
 .nav-hamburger {
   display:none; flex-direction:column; gap:5px;
   background:none; border:none; cursor:pointer; padding:4px;
@@ -201,7 +201,7 @@ nav.scrolled .nav-logo img { height:54px; }
   font-size:2rem; font-weight:300; color:#F2F1ED; line-height:1;
 }
 .hero-stat-label {
-  font-size:0.72rem; color:rgba(242,241,237,0.5);
+  font-size:0.72rem; color:rgba(242,241,237,0.8);
   letter-spacing:0.1em; text-transform:uppercase; margin-top:0.3rem;
 }
 .scroll-indicator {
@@ -252,7 +252,7 @@ nav.scrolled .nav-logo img { height:54px; }
   margin-bottom:0.5rem; letter-spacing:0.02em;
 }
 .problema-card p {
-  font-size:0.82rem; color:rgba(242,241,237,0.5);
+  font-size:0.82rem; color:rgba(242,241,237,0.8);
   line-height:1.65; font-weight:300;
 }
 
@@ -278,7 +278,7 @@ nav.scrolled .nav-logo img { height:54px; }
   margin-bottom:0.6rem;
 }
 .mvv-card p {
-  font-size:0.83rem; color:rgba(242,241,237,0.6);
+  font-size:0.83rem; color:rgba(242,241,237,0.8);
   line-height:1.7; font-weight:300; font-style:italic;
 }
 
@@ -331,7 +331,7 @@ nav.scrolled .nav-logo img { height:54px; }
   background:none; border:none; cursor:pointer;
   font-family:'DM Sans',sans-serif;
   font-size:0.78rem; font-weight:400; letter-spacing:0.1em;
-  text-transform:uppercase; color:rgba(242,241,237,0.4);
+  text-transform:uppercase; color:rgba(242,241,237,0.8);
   padding:0.8rem 1.5rem; transition:color 0.2s;
   border-bottom:2px solid transparent; margin-bottom:-1px;
 }
@@ -339,7 +339,7 @@ nav.scrolled .nav-logo img { height:54px; }
 .tab-panel { display:none; }
 .tab-panel.active { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:start; }
 .servico-intro p {
-  color:rgba(242,241,237,0.6); font-size:0.95rem;
+  color:rgba(242,241,237,0.8); font-size:0.95rem;
   line-height:1.85; font-weight:300; margin-bottom:2rem;
 }
 .servico-items { display:flex; flex-direction:column; gap:0; }
@@ -353,7 +353,7 @@ nav.scrolled .nav-logo img { height:54px; }
   letter-spacing:0.01em;
 }
 .servico-item-text p {
-  color:rgba(242,241,237,0.5); font-size:0.82rem; line-height:1.65; font-weight:300;
+  color:rgba(242,241,237,0.8); font-size:0.82rem; line-height:1.65; font-weight:300;
 }
 .servico-cta {
   margin-top:2.2rem;
@@ -638,7 +638,7 @@ footer {
   height:56px; width:auto;
 }
 footer p {
-  font-size:0.75rem; color:rgba(242,241,237,0.35);
+  font-size:0.75rem; color:rgba(242,241,237,0.8);
   letter-spacing:0.05em; text-align:center;
 }
 footer p a { color:inherit; text-decoration:none; opacity:0.8; }
@@ -646,7 +646,7 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   display:flex; gap:1.5rem; align-items:center;
 }
 .footer-links a {
-  color:rgba(242,241,237,0.35); font-size:0.72rem;
+  color:rgba(242,241,237,0.8); font-size:0.72rem;
   letter-spacing:0.12em; text-transform:uppercase; text-decoration:none;
   transition:color 0.2s;
 }
@@ -817,6 +817,58 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   #galeria { grid-template-columns:1fr; }
   .galeria-foto { height:280px; }
 }
+
+/* Ajustes de contraste e navegação responsiva — setembro de 2026 */
+section[style*="background:var(--dark)"], #servicos, #vagas, #banner, footer {
+  --sand-dark:#C6BBAE;
+}
+footer { gap:1.5rem; flex-wrap:wrap; }
+footer > *, .footer-links { min-width:0; max-width:100%; }
+footer p { overflow-wrap:anywhere; }
+footer p a { opacity:1; }
+.footer-links { flex-wrap:wrap; justify-content:center; gap:0.75rem 1.25rem; }
+.footer-links a { display:inline-flex; align-items:center; min-height:44px; }
+.servicos-tabs { flex-wrap:wrap; }
+.tab-btn { max-width:100%; min-height:48px; }
+.hero-left, .contato-grid > *, .form-row > *, .tab-panel > * { min-width:0; }
+.form-group input, .form-group select, .form-group textarea { min-width:0; }
+.form-group input::placeholder, .form-group textarea::placeholder { color:#626262; opacity:1; }
+.wa-bubble-name { color:#626262; }
+.wa-bubble a { background:#087F3E; }
+.wa-bubble-close { color:#555; width:32px; height:32px; top:4px; right:4px; }
+.wa-bubble-name { padding-right:20px; }
+.wa-bubble { max-width:min(280px, calc(100vw - 32px)); max-height:calc(100dvh - 120px); overflow-y:auto; }
+:where(a, button, input, select, textarea):focus-visible { outline:3px solid #987746; outline-offset:4px; }
+@media (min-width:961px) and (max-width:1200px) {
+  nav { padding-inline:2vw; }
+  .nav-links { gap:0.7rem; }
+  .nav-cta { padding-inline:0.75rem; }
+}
+@media (max-width:960px) {
+  .social-float { display:none; }
+  .wa-widget { left:auto; right:16px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); align-items:flex-end; }
+  .wa-bubble { border-radius:16px 16px 4px 16px; }
+  .nav-overlay { z-index:350; }
+  nav { z-index:400; }
+  .nav-links { max-height:calc(100dvh - 100px); overflow-y:auto; overscroll-behavior:contain; }
+  .nav-hamburger { min-width:44px; min-height:44px; align-items:center; justify-content:center; }
+  .tab-btn { flex:1 1 180px; padding-inline:0.8rem; }
+  .contato-link { flex-wrap:wrap; gap:0.5rem; padding:1.25rem; }
+  .contato-link-value { overflow-wrap:anywhere; min-width:0; }
+  footer { padding-bottom:calc(6rem + env(safe-area-inset-bottom, 0px)); }
+  .form-group input, .form-group select, .form-group textarea { font-size:1rem; }
+}
+@media (max-width:480px) {
+  .hero-left { width:100%; padding-inline:6vw; }
+  .hero-actions { flex-wrap:wrap; gap:1rem; }
+  .hero-actions .btn-primary { text-align:center; }
+  .hero-eyebrow { letter-spacing:0.15em; }
+  .form-row { grid-template-columns:minmax(0, 1fr); gap:0; }
+  .servicos-tabs { flex-direction:column; }
+  .tab-btn { flex:0 0 auto; width:100%; text-align:left; }
+  .footer-links { gap:0.4rem 1rem; }
+}
+
 </style>
 
 <!-- Dados Estruturados JSON-LD -->
@@ -964,10 +1016,10 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
   <div class="reveal" style="text-align:center;max-width:640px;margin:0 auto 3rem;">
     <span class="eyebrow" style="color:var(--sand-dark);">La Vie Consultoria</span>
     <h2 class="section-title section-title--light">Gestão Empresarial <em>Integrada</em></h2>
-    <p style="color:rgba(242,241,237,0.6);font-size:1rem;line-height:1.8;font-weight:300;max-width:480px;margin:0 auto;">Estruturamos empresas para crescer com controle, clareza e previsibilidade.</p>
+    <p style="color:rgba(242,241,237,0.8);font-size:1rem;line-height:1.8;font-weight:300;max-width:480px;margin:0 auto;">Estruturamos empresas para crescer com controle, clareza e previsibilidade.</p>
   </div>
   <div class="reveal" style="text-align:center;max-width:680px;margin:0 auto 4rem;">
-    <p style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(242,241,237,0.35);margin-bottom:1rem;">4 pilares de atuação, um único sistema de gestão</p>
+    <p style="font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(242,241,237,0.8);margin-bottom:1rem;">4 pilares de atuação, um único sistema de gestão</p>
     <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:0.9rem;">
       <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;color:var(--sand);">Pessoas</span>
       <span style="color:rgba(242,241,237,0.25);font-size:0.9rem;">+</span>
@@ -1281,14 +1333,14 @@ footer p a { color:inherit; text-decoration:none; opacity:0.8; }
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:var(--radius);padding:2.4rem 2rem;text-align:center;">
       <p style="color:var(--sand-dark);font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin-bottom:0.9rem;">Sou candidato</p>
       <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:#F2F1ED;margin-bottom:1rem;">Vagas &amp; Oportunidades</h3>
-      <p style="color:rgba(242,241,237,0.55);font-size:0.85rem;line-height:1.7;margin-bottom:1.6rem;">Processos seletivos conduzidos pela La Vie para empresas parceiras.</p>
+      <p style="color:rgba(242,241,237,0.8);font-size:0.85rem;line-height:1.7;margin-bottom:1.6rem;">Processos seletivos conduzidos pela La Vie para empresas parceiras.</p>
       <a href="/vagas/" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-block;text-decoration:none;">Ver vagas abertas →</a>
     </div>
     <div id="mentorias" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.09);border-radius:var(--radius);padding:2.4rem 2rem;text-align:center;">
       <p style="color:var(--sand-dark);font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin-bottom:0.9rem;">Sou profissional</p>
       <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:#F2F1ED;margin-bottom:1rem;">Mentorias</h3>
-      <p style="color:rgba(242,241,237,0.55);font-size:0.85rem;line-height:1.7;margin-bottom:1.6rem;">Para profissionais que querem transformar experiência em estratégia.</p>
-      <a href="/mentorias/" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-block;text-decoration:none;">Conhecer mentorias →</a>
+      <p style="color:rgba(242,241,237,0.8);font-size:0.85rem;line-height:1.7;margin-bottom:1.6rem;">Para profissionais que querem transformar experiência em estratégia.</p>
+      <a href="https://wa.me/5562992741488?text=Ol%C3%A1%21%20Vim%20pelo%20site%20e%20gostaria%20de%20conhecer%20as%20mentorias%20da%20La%20Vie." target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-block;text-decoration:none;">Conhecer mentorias →</a>
     </div>
   </div>
 </section>
