@@ -2020,7 +2020,7 @@ document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', 
 // cliente está logado.
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
 const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
-const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista'};
+const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista',banco_talentos_vagas_canceladas:'Banco de Talentos (vaga cancelada)'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
 const ETAPA_PROXIMA={triagem:'entrevista_rh',entrevista_rh:'entrevista_gestor',entrevista_gestor:'vivencia',vivencia:'aprovacao',aprovacao:'aprovacao'};
@@ -2688,7 +2688,15 @@ function abrirNovoCandidatoModal(){
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
-  const selE=document.getElementById('mc-etapa');selE.innerHTML=[...ETAPAS,{id:'reprovado',label:'Reprovado'},...getBancos()].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
+  const selE=document.getElementById('mc-etapa');
+  const opcoesEtapa=[...ETAPAS,{id:'reprovado',label:'Reprovado'},...getBancos()];
+  // Etapas internas automáticas (ex.: "banco_talentos_vagas_canceladas", usada
+  // quando a vaga original é excluída) não aparecem nessa lista de opções —
+  // sem isso, o <select> ficava sem nenhuma opção correspondente e resetava
+  // pra etapa vazia ao salvar, fazendo o candidato sumir do funil. Se a etapa
+  // atual do candidato não estiver na lista, adiciona ela igual pra não perder.
+  if(c.etapa && !opcoesEtapa.some(e=>e.id===c.etapa)) opcoesEtapa.push({id:c.etapa, label:ETAPA_LABEL[c.etapa]||c.etapa});
+  selE.innerHTML=opcoesEtapa.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
