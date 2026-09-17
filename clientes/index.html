@@ -538,19 +538,12 @@ header {
   <div class="section-label" style="margin-bottom:8px">Ações Pendentes</div>
   <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Análise de Candidatos</div>
-  <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:14px;margin-bottom:14px;align-items:start">
-    <div class="card chart-card">
-      <div class="chart-card-title">Status das Vagas</div>
-      <div class="chart-card-sub">Panorama rápido de todas as posições do ciclo</div>
-      <div id="dash-status-vagas" style="overflow:auto"></div>
-    </div>
-    <div class="card chart-card">
-      <div class="chart-card-title">Candidatos por Vaga</div>
-      <div class="chart-card-sub">Total avaliado em cada posição, do maior para o menor volume</div>
-      <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
-    </div>
+  <div class="card chart-card" style="margin-bottom:14px">
+    <div class="chart-card-title">Status das Vagas</div>
+    <div class="chart-card-sub">Panorama rápido de todas as posições do ciclo</div>
+    <div id="dash-status-vagas" style="overflow:auto"></div>
   </div>
-  <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr;gap:14px;margin-bottom:24px;align-items:start">
+  <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr;gap:14px;margin-bottom:14px;align-items:start">
     <div class="card chart-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:4px">
         <div>
@@ -576,20 +569,20 @@ header {
       <div id="dash-metricas-tempo"></div>
     </div>
   </div>
-  <div style="margin-bottom:24px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;align-items:start">
+    <div class="card chart-card">
+      <div class="chart-card-title">Candidatos por Vaga</div>
+      <div class="chart-card-sub">Total avaliado em cada posição, do maior para o menor volume</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
+    </div>
     <div class="card chart-card">
       <div class="chart-card-title">Tempo Médio por Etapa</div>
       <div class="chart-card-sub">Dias reais em cada etapa comparado à meta de SLA</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="chart-tempo-etapa"></canvas></div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-tempo-etapa"></canvas></div>
     </div>
   </div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:2px">Tempo de Fechamento</div>
   <div style="font-size:11px;color:var(--light);margin-bottom:10px">O resumo geral está em "Métricas de Tempo", mais acima. Cada vaga abaixo separa o que é responsabilidade da La Vie (até o dossiê) do que é decisão do Cliente.</div>
-  <div class="card chart-card" style="margin-bottom:16px">
-    <div class="chart-card-title">Divisão do Tempo por Vaga</div>
-    <div class="chart-card-sub">Dias sob responsabilidade da La Vie (até o dossiê) vs. dias de decisão do Cliente, por posição fechada</div>
-    <div class="chart-wrap" id="dash-divisao-wrap" style="height:220px"><canvas id="chart-divisao-tempo"></canvas></div>
-  </div>
   <div class="card" style="overflow:auto;margin-bottom:24px">
     <table class="cand-table" style="min-width:700px">
       <thead><tr><th>Cargo</th><th style="text-align:center">Qtd</th><th>Abertura</th><th>Fechamento</th><th>Divisão do Tempo</th><th style="text-align:center">Total</th></tr></thead>
@@ -1081,7 +1074,9 @@ function dataDossieVaga(vagaId, cands){
 }
 
 // ── Gráficos do Dashboard (Chart.js) ───────────────────────────────────────
-const CH = { charcoal:'#3A3A3A', mid:'#7A7A7A', light:'#A8A8A8', bege:'#D8CFC4', bege_lt:'#EAE7E1', green:'#3A6B4A', red:'#8B3A3A', amber:'#7A5C2E' };
+// Paleta dos gráficos do dashboard — o vermelho é o mesmo terracota usado como
+// acento no site (lavieconsultoria.com), em vez dos tons apagados de antes.
+const CH = { charcoal:'#3A3A3A', mid:'#7A7A7A', light:'#A8A8A8', bege:'#D8CFC4', bege_lt:'#EAE7E1', green:'#2F8A55', red:'#C0392B', amber:'#C08A2E', gold:'#B8860B' };
 const CH_FONT = "'DM Sans',sans-serif";
 window._dashCharts = window._dashCharts || {};
 function renderChart(id, config){
@@ -3706,18 +3701,20 @@ function renderIndicadoresFunil(){
   });
   const temposReal = ETAPAS.map(e=>cont[e.id]?+(soma[e.id]/cont[e.id]).toFixed(1):0);
   const temposMeta = ETAPAS.map(e=>ETAPA_SLA[e.id]);
-  const temposCores = ETAPAS.map((e,i)=> cont[e.id]===0 ? CH.bege : (temposReal[i]>temposMeta[i] ? CH.red : CH.green));
+  // Radar em vez de barra horizontal — dá pra ver de relance em qual etapa o
+  // real "estoura" a meta (o polígono vermelho sai pra fora do cinza) sem
+  // repetir o mesmo tipo de gráfico de barra usado em quase tudo mais.
   renderChart('chart-tempo-etapa', {
-    type:'bar',
+    type:'radar',
     data:{ labels:ETAPAS.map(e=>e.short), datasets:[
-      { label:'Real (dias)', data:temposReal, backgroundColor:temposCores, borderRadius:5, barThickness:16 },
-      { label:'Meta SLA (dias)', data:temposMeta, backgroundColor:CH.bege_lt, borderRadius:5, barThickness:16 }
+      { label:'Real (dias)', data:temposReal, backgroundColor:'rgba(192,57,43,.15)', borderColor:CH.red, pointBackgroundColor:CH.red, borderWidth:2 },
+      { label:'Meta SLA (dias)', data:temposMeta, backgroundColor:'rgba(122,122,122,.06)', borderColor:CH.light, pointBackgroundColor:CH.light, borderWidth:1.5, borderDash:[4,3] }
     ]},
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    options:{ responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid } },
-        tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x}d` } } },
-      scales:{ x:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
-                y:{ ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
+        tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.r}d` } } },
+      scales:{ r:{ beginAtZero:true, angleLines:{color:CH.bege_lt}, grid:{color:CH.bege_lt},
+        pointLabels:{color:CH.charcoal,font:{size:11}}, ticks:{ color:CH.mid, backdropColor:'transparent', font:{size:9} } } }
     }
   });
 
@@ -4071,42 +4068,18 @@ function renderDashboard(){
         </div>`;
     }
 
-    // Gráfico "Divisão do Tempo por Vaga" — barras horizontais empilhadas
-    // (La Vie x Cliente), só com vagas que têm dossiê registrado no funil.
-    const comSplitChart = temposDetalhe.filter(t=>t.diasLaVie!==null);
-    const divisaoWrap = document.getElementById('dash-divisao-wrap');
-    if(comSplitChart.length>0){
-      if(divisaoWrap) divisaoWrap.style.display='';
-      divisaoWrap.style.height = Math.max(140, comSplitChart.length*38+40)+'px';
-      renderChart('chart-divisao-tempo', {
-        type:'bar',
-        data:{ labels:comSplitChart.map(t=>t.v.titulo.split('–')[0].trim()), datasets:[
-          { label:'La Vie (até o dossiê)', data:comSplitChart.map(t=>t.diasLaVie), backgroundColor:CH.green, borderRadius:4, stack:'s' },
-          { label:'Cliente (decisão)', data:comSplitChart.map(t=>t.diasCliente), backgroundColor:CH.amber, borderRadius:4, stack:'s' }
-        ]},
-        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid } },
-            tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x}d` } } },
-          scales:{ x:{ stacked:true, beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
-                    y:{ stacked:true, ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
-        }
-      });
-    } else if(divisaoWrap) {
-      divisaoWrap.style.display='none';
-    }
-
     document.getElementById('dash-tempo-tbody').innerHTML = temposDetalhe.map((t,i) => { const v=t.v;
       const temSplit = t.diasLaVie!==null && (t.diasLaVie+t.diasCliente)>0;
       const pctLaVie = temSplit ? Math.round(t.diasLaVie/(t.diasLaVie+t.diasCliente)*100) : (t.diasLaVie!==null?100:0);
       const divisaoHtml = t.diasLaVie===null
         ? '<span style="font-size:11px;color:var(--light)">sem dossiê registrado</span>'
         : `<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--bege-lt);margin-bottom:4px;min-width:110px">
-             <div style="width:${pctLaVie}%;background:var(--green)"></div>
-             <div style="width:${100-pctLaVie}%;background:var(--amber)"></div>
+             <div style="width:${pctLaVie}%;background:${CH.green}"></div>
+             <div style="width:${100-pctLaVie}%;background:${CH.amber}"></div>
            </div>
            <div style="font-size:10.5px;color:var(--mid)">${t.diasLaVie}d La Vie · ${t.diasCliente}d Cliente</div>`;
-      const destaque = t.corridos===minC.corridos&&minC.v.id===v.id ? '<div style="font-size:9.5px;color:var(--green)">mais rápida</div>'
-                      : t.corridos===maxC.corridos&&maxC.v.id===v.id ? '<div style="font-size:9.5px;color:var(--red)">mais lenta</div>' : '';
+      const destaque = t.corridos===minC.corridos&&minC.v.id===v.id ? `<div style="font-size:9.5px;color:${CH.green}">mais rápida</div>`
+                      : t.corridos===maxC.corridos&&maxC.v.id===v.id ? `<div style="font-size:9.5px;color:${CH.red}">mais lenta</div>` : '';
       return `
       <tr style="${i%2===0?'':'background:var(--cream)'}">
         <td style="font-size:12px;font-weight:500">${v.titulo} <span style="color:var(--light);font-size:11px">(${v.setor})</span></td>
@@ -4117,8 +4090,6 @@ function renderDashboard(){
         <td style="font-size:12px;font-weight:500;text-align:center">${t.corridos}d<div style="font-size:10px;color:var(--light)">${t.trabalhados}d úteis</div>${destaque}</td>
       </tr>`;}).join('');
   } else {
-    const divisaoWrap2 = document.getElementById('dash-divisao-wrap');
-    if(divisaoWrap2) divisaoWrap2.style.display='none';
     document.getElementById('dash-tempo-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mid);padding:24px">
       <div style="font-size:13px;margin-bottom:6px">Nenhuma vaga com data de encerramento registrada ainda.</div>
       <div style="font-size:11px;color:var(--light)">Ao fechar uma vaga, preencha a <strong>Data de Encerramento</strong> no modal de edição para gerar os indicadores automaticamente.</div>
