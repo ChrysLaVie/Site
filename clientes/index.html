@@ -3963,7 +3963,15 @@ function renderDashboard(){
       const avancados = candsParaCalc.filter(c=>c.vagaId===v.id && (c.etapa==='admissao'||c.etapa==='aprovacao'));
       const avancadosCicloAtual = v.dataReabertura ? avancados.filter(c=>c.criadoEm && c.criadoEm >= v.dataReabertura) : avancados;
       const pool = avancadosCicloAtual.length ? avancadosCicloAtual : avancados;
-      const admitido = pool.slice().sort((a,b)=>new Date(b.criadoEm||0)-new Date(a.criadoEm||0))[0];
+      // Prioriza quem já está em Admissão (contratado de fato) sobre quem só
+      // está em Aprovação (decisão ainda pendente) — sem isso, um candidato
+      // parado em aprovação com registro mais recente ganhava de quem
+      // realmente foi contratado (ex.: Samara em aprovação vs. Murilo admitido).
+      const poolOrdenado = pool.slice().sort((a,b)=>{
+        if(a.etapa!==b.etapa){ if(a.etapa==='admissao') return -1; if(b.etapa==='admissao') return 1; }
+        return new Date(b.criadoEm||0)-new Date(a.criadoEm||0);
+      });
+      const admitido = poolOrdenado[0];
       let statusHtml, dias, diasNum=null, grupo;
       if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; grupo=1; }
       else if(v.status==='encerrada'){
