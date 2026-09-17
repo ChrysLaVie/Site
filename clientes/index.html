@@ -110,13 +110,6 @@ header {
 .kpi-hero-sub { font-size:11px; color:var(--light); margin-top:5px; }
 
 /* ── BANNER LA VIE x CLIENTE (destaque do tempo que é responsabilidade da La Vie) ── */
-.lv-banner { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--bege); border-radius:12px; overflow:hidden; margin-bottom:22px; background:var(--offwhite); }
-.lv-banner-side { padding:16px 22px; }
-.lv-banner-side.lavie { border-right:1px solid var(--bege); }
-.lv-banner-lbl { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; color:var(--light); }
-.lv-banner-num { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; line-height:1; margin-bottom:4px; color:var(--charcoal); }
-.lv-banner-desc { font-size:11px; line-height:1.4; color:var(--mid); }
-@media (max-width:640px){ .lv-banner{ grid-template-columns:1fr; } .lv-banner-side.lavie{ border-right:none; border-bottom:1px solid var(--bege); } }
 
 /* ── BUTTONS ── */
 .btn { display:inline-flex; align-items:center; gap:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; border-radius:8px; padding:9px 18px; cursor:pointer; border:none; transition:all .18s; }
@@ -526,14 +519,17 @@ header {
   <div id="dash-mentoria" style="display:none"></div>
   <div id="dash-rs">
   <div class="kpi-hero-row" id="dash-kpis"></div>
-  <div id="dash-lv-banner"></div>
-  <div class="card" style="margin-bottom:24px;padding:18px 22px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--mid)">Progresso Geral</div>
-      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700" id="dash-pct-label">0%</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;align-items:start">
+    <div class="card chart-card">
+      <div class="chart-card-title">Tempo La Vie x Decisão do Cliente</div>
+      <div class="chart-card-sub" id="dash-lv-sub">Divisão média do ciclo de fechamento</div>
+      <div id="dash-lv-banner"></div>
     </div>
-    <div class="prog-track" style="height:10px;margin-bottom:0"><div class="prog-fill" id="dash-pct-bar" style="width:0%"></div></div>
-    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--light)"><span id="dash-pct-left"></span><span id="dash-pct-right"></span></div>
+    <div class="card chart-card">
+      <div class="chart-card-title">Progresso Geral</div>
+      <div class="chart-card-sub">Vagas resolvidas (fechadas + canceladas) do total</div>
+      <div id="dash-progresso"></div>
+    </div>
   </div>
   <div class="section-label" style="margin-bottom:8px">Ações Pendentes</div>
   <div id="dash-acoes-pendentes" style="margin-bottom:24px"></div>
@@ -580,14 +576,6 @@ header {
       <div class="chart-card-sub">Dias reais em cada etapa comparado à meta de SLA</div>
       <div class="chart-wrap" style="height:260px"><canvas id="chart-tempo-etapa"></canvas></div>
     </div>
-  </div>
-  <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:2px">Tempo de Fechamento</div>
-  <div style="font-size:11px;color:var(--light);margin-bottom:10px">O resumo geral está em "Métricas de Tempo", mais acima. Cada vaga abaixo separa o que é responsabilidade da La Vie (até o dossiê) do que é decisão do Cliente.</div>
-  <div class="card" style="overflow:auto;margin-bottom:24px">
-    <table class="cand-table" style="min-width:700px">
-      <thead><tr><th>Cargo</th><th style="text-align:center">Qtd</th><th>Abertura</th><th>Fechamento</th><th>Divisão do Tempo</th><th style="text-align:center">Total</th></tr></thead>
-      <tbody id="dash-tempo-tbody"></tbody>
-    </table>
   </div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Detalhamento por Setor</div>
   <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
@@ -4001,10 +3989,21 @@ function renderDashboard(){
           ? `<span style="color:var(--amber);font-weight:600">${restantes}d restantes</span>`
           : `<span style="color:var(--mid)">Garantia encerrada</span>`;
       }
-      const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
+      // Divisão do tempo (La Vie x Cliente) — só existe pra vaga já fechada
+      // com dossiê registrado; é o mesmo dado que antes vivia numa tabela
+      // separada ("Tempo de Fechamento"), duplicando os "dias" já mostrados aqui.
+      const td2 = temposDetalhe.find(t=>t.v.id===v.id);
+      const divisaoHtml = (td2 && td2.diasLaVie!==null)
+        ? `<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bege-lt);min-width:90px">
+             <div style="width:${Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100)}%;background:${CH.green}"></div>
+             <div style="width:${100-Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100)}%;background:${CH.gold}"></div>
+           </div>
+           <div style="font-size:10px;color:var(--light);margin-top:2px">${td2.diasLaVie}d La Vie · ${td2.diasCliente}d Cliente</div>`
+        : '<span style="font-size:11px;color:var(--light)">—</span>';
+      const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td>${divisaoHtml}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
       return {html, grupo, diasNum};
     }).sort((a,b)=> (a.grupo-b.grupo) || ((a.diasNum??999999)-(b.diasNum??999999)) );
-    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:420px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.map(l=>l.html).join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
+    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:560px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th><th>Divisão do Tempo</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.map(l=>l.html).join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
 
   document.getElementById('dash-kpis').innerHTML=`
@@ -4013,30 +4012,54 @@ function renderDashboard(){
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>`;
 
-  // Banner dedicado La Vie x Cliente — separado do grid de KPIs pra ter destaque
-  // próprio (era o que deixava o layout torto: um 6º card sobrando sozinho na linha)
+  // Tempo La Vie x Cliente e Progresso Geral viram donuts (em vez de banner de
+  // texto e barra reta) — mesma linguagem visual dos outros gráficos e dá pra
+  // ver a proporção de relance, não só o número.
   const bannerEl = document.getElementById('dash-lv-banner');
+  const lvSubEl = document.getElementById('dash-lv-sub');
   if(mediaLaVieC!==null){
-    bannerEl.innerHTML = `<div class="lv-banner">
-      <div class="lv-banner-side lavie">
-        <div class="lv-banner-lbl">Tempo La Vie</div>
-        <div class="lv-banner-num">${mediaLaVieC}d</div>
-        <div class="lv-banner-desc">Média da abertura da vaga até a apresentação do dossiê/finalistas ao ${(EMPRESAS[currentEmpresa]&&EMPRESAS[currentEmpresa].termoCliente)||'Cliente'}. ${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''} com dossiê registrado.</div>
+    lvSubEl.textContent = `${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''} com dossiê registrado · ${(EMPRESAS[currentEmpresa]&&EMPRESAS[currentEmpresa].termoCliente)||'Cliente'}`;
+    bannerEl.innerHTML = `<div style="position:relative;height:160px">
+        <canvas id="chart-lv-split"></canvas>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none">
+          <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal)">${mediaLaVieC+mediaClienteC}d</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">ciclo total</div>
+        </div>
       </div>
-      <div class="lv-banner-side cliente">
-        <div class="lv-banner-lbl">Decisão do Cliente</div>
-        <div class="lv-banner-num">${mediaClienteC}d</div>
-        <div class="lv-banner-desc">Média do dossiê entregue até o fechamento formal da vaga. Tempo que depende da decisão do cliente, não da La Vie.</div>
-      </div>
-    </div>`;
+      <div style="display:flex;justify-content:space-around;margin-top:10px;font-size:12px">
+        <div><strong style="color:${CH.green}">${mediaLaVieC}d</strong> <span style="color:var(--light)">Tempo La Vie</span></div>
+        <div><strong style="color:${CH.gold}">${mediaClienteC}d</strong> <span style="color:var(--light)">Decisão do Cliente</span></div>
+      </div>`;
+    renderChart('chart-lv-split', {
+      type:'doughnut',
+      data:{ labels:['Tempo La Vie','Decisão do Cliente'], datasets:[{ data:[mediaLaVieC,mediaClienteC], backgroundColor:[CH.green,CH.gold], borderWidth:2, borderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'70%',
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.label}: ${ctx.parsed}d` } } } }
+    });
   } else {
-    bannerEl.innerHTML = '';
+    lvSubEl.textContent = 'Sem vagas fechadas com dossiê registrado ainda';
+    bannerEl.innerHTML = '<div style="color:var(--mid);font-size:13px;padding:32px 0;text-align:center">Sem dados suficientes ainda.</div>';
   }
 
-  setTimeout(()=>document.getElementById('dash-pct-bar').style.width=pct+'%',50);
-  document.getElementById('dash-pct-label').textContent=pct+'%';
-  document.getElementById('dash-pct-left').textContent=`${fechadas} fechadas + ${canceladas} canceladas = ${resolvidas} resolvidas`;
-  document.getElementById('dash-pct-right').textContent=`${emAberto} em aberto de ${totalQtd} total`;
+  const progEl = document.getElementById('dash-progresso');
+  progEl.innerHTML = `<div style="position:relative;height:160px">
+      <canvas id="chart-progresso"></canvas>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none">
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal)">${pct}%</div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">resolvido</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-around;margin-top:10px;font-size:12px">
+      <div><strong style="color:${CH.green}">${resolvidas}</strong> <span style="color:var(--light)">${fechadas} fechadas + ${canceladas} canceladas</span></div>
+      <div><strong style="color:${CH.bege}">${emAberto}</strong> <span style="color:var(--light)">em aberto de ${totalQtd}</span></div>
+    </div>`;
+  renderChart('chart-progresso', {
+    type:'doughnut',
+    data:{ labels:['Resolvidas','Em aberto'], datasets:[{ data:[resolvidas, emAberto], backgroundColor:[CH.green, CH.bege], borderWidth:2, borderColor:'#fff' }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'70%',
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.label}: ${ctx.parsed}` } } } }
+  });
+
   renderAcoesPendentes();
   renderIndicadoresFunil();
 
@@ -4068,32 +4091,7 @@ function renderDashboard(){
         </div>`;
     }
 
-    document.getElementById('dash-tempo-tbody').innerHTML = temposDetalhe.map((t,i) => { const v=t.v;
-      const temSplit = t.diasLaVie!==null && (t.diasLaVie+t.diasCliente)>0;
-      const pctLaVie = temSplit ? Math.round(t.diasLaVie/(t.diasLaVie+t.diasCliente)*100) : (t.diasLaVie!==null?100:0);
-      const divisaoHtml = t.diasLaVie===null
-        ? '<span style="font-size:11px;color:var(--light)">sem dossiê registrado</span>'
-        : `<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--bege-lt);margin-bottom:4px;min-width:110px">
-             <div style="width:${pctLaVie}%;background:${CH.green}"></div>
-             <div style="width:${100-pctLaVie}%;background:${CH.amber}"></div>
-           </div>
-           <div style="font-size:10.5px;color:var(--mid)">${t.diasLaVie}d La Vie · ${t.diasCliente}d Cliente</div>`;
-      const destaque = t.corridos===minC.corridos&&minC.v.id===v.id ? `<div style="font-size:9.5px;color:${CH.green}">mais rápida</div>`
-                      : t.corridos===maxC.corridos&&maxC.v.id===v.id ? `<div style="font-size:9.5px;color:${CH.red}">mais lenta</div>` : '';
-      return `
-      <tr style="${i%2===0?'':'background:var(--cream)'}">
-        <td style="font-size:12px;font-weight:500">${v.titulo} <span style="color:var(--light);font-size:11px">(${v.setor})</span></td>
-        <td style="text-align:center;font-size:12px">${v.qtdFechadas||v.qtd||1}</td>
-        <td style="font-size:12px;color:var(--mid)">${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</td>
-        <td style="font-size:12px;color:var(--green)">${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</td>
-        <td>${divisaoHtml}</td>
-        <td style="font-size:12px;font-weight:500;text-align:center">${t.corridos}d<div style="font-size:10px;color:var(--light)">${t.trabalhados}d úteis</div>${destaque}</td>
-      </tr>`;}).join('');
   } else {
-    document.getElementById('dash-tempo-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--mid);padding:24px">
-      <div style="font-size:13px;margin-bottom:6px">Nenhuma vaga com data de encerramento registrada ainda.</div>
-      <div style="font-size:11px;color:var(--light)">Ao fechar uma vaga, preencha a <strong>Data de Encerramento</strong> no modal de edição para gerar os indicadores automaticamente.</div>
-    </td></tr>`;
     const metricasEl2 = document.getElementById('dash-metricas-tempo');
     if(metricasEl2) metricasEl2.innerHTML = '<div style="color:var(--mid);font-size:12.5px;padding:8px 0">Sem vagas fechadas ainda.</div>';
   }
