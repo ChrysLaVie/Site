@@ -1840,6 +1840,11 @@ function autoEncerramento(status){
 
 // ══ CACHE ═════════════════════════════════════════════════════════════════════
 let _vagas = [], _cands = [], _entrevistas = [], _agenda = [];
+// Distingue "vagas.length===0 porque o cliente é novo" de "ficou 0 porque o
+// carregamento falhou" (rede instável, etc.) — sem isso, uma falha temporária
+// dispara o seed de vagas-modelo e SOBRESCREVE dados reais já editados (foi o
+// que aconteceu com as datas de abertura da Cambury).
+let _vagasCarregouOk = false;
 function getVagas()       { return _vagas; }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
@@ -1920,8 +1925,9 @@ async function loadAll() {
     if (c.data) _cands       = c.data.map(dbToCand);
     if (e.data) _entrevistas = e.data.map(dbToEntrev);
     try { const a = await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(a.data) _agenda = a.data.map(dbToAgenda); } catch(_){}
+    _vagasCarregouOk = !v.error;
     setSyncOk(true);
-  } catch(err) { setSyncOk(false); console.error(err); }
+  } catch(err) { setSyncOk(false); _vagasCarregouOk=false; console.error(err); }
 }
 
 function _localUpsert(arr,obj){ const i=arr.findIndex(x=>x.id===obj.id); if(i>=0)arr[i]=obj; else arr.unshift(obj); }
@@ -5065,12 +5071,12 @@ async function initApp(){
   // dela). Um cliente novo (ex.: Du Carmo) começa sempre vazio, pronto pra
   // receber as vagas reais pelo botão "+ Nova vaga" — nunca herda dados de
   // outro cliente.
-  if(_vagas.length===0 && currentEmpresa==='cambury'){
+  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='cambury'){
     seedVagas();
     for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
     await loadAll();
   }
-  if(_vagas.length===0 && currentEmpresa==='autoclub'){
+  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='autoclub'){
     seedVagasAutoClub();
     for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
     await loadAll();
@@ -5086,7 +5092,7 @@ async function initApp(){
       }
     }catch(e){}
   }
-  if(_vagas.length===0 && currentEmpresa==='ducarmo'){
+  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='ducarmo'){
     seedVagasDuCarmo();
     for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
     await loadAll();
