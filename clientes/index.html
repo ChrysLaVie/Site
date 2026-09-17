@@ -4270,6 +4270,12 @@ async function sincronizarParcelas(){
   // lançamentos do contrato como se fossem parcelas órfãs.
   if(!empresaTemProduto('rs')) return;
   const vagas=getVagas();
+  // Se o carregamento das vagas falhou (rede instável) e o app ainda não tem
+  // nenhuma vaga em memória, NUNCA trata as parcelas existentes como órfãs —
+  // senão essa rotina apaga (e depois recria do zero, perdendo baixa e data
+  // de pagamento) todas as parcelas reais. Mesmo bug que resetou as vagas da
+  // Cambury, só que aqui em cima da tabela de pagamentos.
+  if(vagas.length===0 && (!_vagasCarregouOk || _pagamentos.length>0)) return;
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
   const idsValidos=new Set();
   vagas.forEach(v=>_parcelasDef().forEach(d=>idsValidos.add(v.id+'-p'+d.n)));
