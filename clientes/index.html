@@ -110,20 +110,13 @@ header {
 .kpi-hero-sub { font-size:11px; color:var(--light); margin-top:5px; }
 
 /* ── BANNER LA VIE x CLIENTE (destaque do tempo que é responsabilidade da La Vie) ── */
-.lv-banner { display:grid; grid-template-columns:1fr 1fr; border-radius:14px; overflow:hidden; margin-bottom:22px; box-shadow:var(--shadow-md); }
-.lv-banner-side { padding:22px 24px; }
-.lv-banner-side.lavie { background:var(--charcoal); color:#F2F1ED; }
-.lv-banner-side.cliente { background:var(--offwhite); }
-.lv-banner-lbl { font-size:10.5px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; }
-.lv-banner-side.lavie .lv-banner-lbl { color:rgba(242,241,237,.55); }
-.lv-banner-side.cliente .lv-banner-lbl { color:var(--mid); }
-.lv-banner-num { font-family:'Playfair Display',serif; font-size:clamp(34px,4vw,46px); font-weight:700; line-height:1; margin-bottom:8px; }
-.lv-banner-side.lavie .lv-banner-num { color:#fff; }
-.lv-banner-side.cliente .lv-banner-num { color:var(--amber); }
-.lv-banner-desc { font-size:12px; line-height:1.4; }
-.lv-banner-side.lavie .lv-banner-desc { color:rgba(242,241,237,.75); }
-.lv-banner-side.cliente .lv-banner-desc { color:var(--mid); }
-@media (max-width:640px){ .lv-banner{ grid-template-columns:1fr; } }
+.lv-banner { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--bege); border-radius:12px; overflow:hidden; margin-bottom:22px; background:var(--offwhite); }
+.lv-banner-side { padding:16px 22px; }
+.lv-banner-side.lavie { border-right:1px solid var(--bege); }
+.lv-banner-lbl { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; color:var(--light); }
+.lv-banner-num { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; line-height:1; margin-bottom:4px; color:var(--charcoal); }
+.lv-banner-desc { font-size:11px; line-height:1.4; color:var(--mid); }
+@media (max-width:640px){ .lv-banner{ grid-template-columns:1fr; } .lv-banner-side.lavie{ border-right:none; border-bottom:1px solid var(--bege); } }
 
 /* ── BUTTONS ── */
 .btn { display:inline-flex; align-items:center; gap:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; border-radius:8px; padding:9px 18px; cursor:pointer; border:none; transition:all .18s; }
@@ -604,7 +597,7 @@ header {
     </table>
   </div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Detalhamento por Setor</div>
-  <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
+  <div id="dash-setores" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:24px;align-items:stretch"></div>
   <div class="section-label" style="margin-bottom:12px">Detalhamento das Vagas</div>
   <div id="dash-tabelas"></div>
   </div><!-- /dash-rs -->
@@ -2529,19 +2522,19 @@ function renderVagas() {
         ${v.criadoPor?`<span style="color:var(--light)">por ${v.criadoPor.split(' ')[0]}</span>`:''}
       </div>
       ${v.honorario&&!isClienteExterno()?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${v.honorario}</span></div>`:''}
-      ${v.dataReabertura?`<div class="vaga-meta" style="margin-top:2px"><span style="background:#FFF3CD;border-radius:6px;padding:2px 8px;font-weight:600;color:#7A5C00">🔄 Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}</span></div>`:''}
+      ${v.dataReabertura?`<div class="vaga-meta" style="margin-top:2px"><span style="background:#FFF3CD;border-radius:6px;padding:2px 8px;font-weight:600;color:#7A5C00">Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}</span></div>`:''}
       ${(v.historicoReaberturas&&v.historicoReaberturas.length)?`<div class="vaga-meta" style="margin-top:2px;flex-direction:column;align-items:flex-start;gap:2px">${v.historicoReaberturas.map((h,i)=>{
-        if(!h.cicloAnteriorAbertura||!h.cicloAnteriorEncerramento) return `<span style="font-size:11px;color:var(--mid)">📋 Ciclo ${i+1}: dados do período não registrados</span>`;
+        if(!h.cicloAnteriorAbertura||!h.cicloAnteriorEncerramento) return `<span style="font-size:11px;color:var(--mid)">Ciclo ${i+1}: dados do período não registrados</span>`;
         const abr=new Date(h.cicloAnteriorAbertura+'T12:00:00').toLocaleDateString('pt-BR');
         const enc=new Date(h.cicloAnteriorEncerramento+'T12:00:00').toLocaleDateString('pt-BR');
         const dur=diasCorridosCalendario(h.cicloAnteriorAbertura,h.cicloAnteriorEncerramento)+'d';
-        return `<span style="font-size:11px;color:var(--mid)">📋 Ciclo ${i+1}: ${abr} → ${enc} (${dur})</span>`;
+        return `<span style="font-size:11px;color:var(--mid)">Ciclo ${i+1}: ${abr} → ${enc} (${dur})</span>`;
       }).join('')}</div>`:''}
       <div class="vaga-actions">
         <button class="btn btn-ghost btn-sm" onclick="editVaga('${v.id}')">✏ Editar</button>
         <button class="btn btn-ghost btn-sm" onclick="verCandVaga('${v.id}')">👥 Candidatos</button>
         <button class="btn btn-ghost btn-sm" onclick="abrirImagensVaga('${v.id}')">🖼 Imagens${(v.imagens&&v.imagens.length)?` (${v.imagens.length})`:''}</button>
-        ${v.status==='encerrada'?`<button class="btn btn-ghost btn-sm" onclick="reabrirVaga('${v.id}')">🔄 Reabrir</button>`:''}
+        ${v.status==='encerrada'?`<button class="btn btn-ghost btn-sm" onclick="reabrirVaga('${v.id}')">Reabrir</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -2584,7 +2577,7 @@ async function reabrirVaga(id){
     await upsertVaga(atualizada);
     _localUpsert(_vagas, atualizada);
     renderVagasStats(); renderVagas(); renderDashboard();
-    showToast('🔄 Vaga reaberta! Os indicadores de tempo contam a partir de hoje pra esse novo ciclo.');
+    showToast('Vaga reaberta! Os indicadores de tempo contam a partir de hoje pra esse novo ciclo.');
   } catch(e){ alert('Erro ao reabrir: '+e.message); }
 }
 
@@ -3593,7 +3586,7 @@ async function syncCandidatoFromEntrevista(entrev){
     obs: entrev.observacoes||'',
     historico: [
       {etapa:'entrevista_rh', data:entrev.data||new Date().toISOString(), obs:'Cadastrado automaticamente via roteiro de entrevista', usuario:entrev.registradoPor||getUserName()},
-      ...(etapa!=='entrevista_rh'?[{etapa, data:new Date().toISOString(), obs:`Resultado: ${etapa==='aprovacao'?'Aprovado':'Reprovado'}`, usuario:getUserName()}]:[])
+      ...(etapa!=='entrevista_rh'?[{etapa, data:new Date().toISOString(), obs:`Resultado: ${entrev.resultado==='approved'?'Aprovado':'Reprovado'}`, usuario:getUserName()}]:[])
     ],
     criadoPor: entrev.registradoPor||getUserName()
   };
@@ -3772,13 +3765,16 @@ function renderIndicadoresFunil(){
     }
   });
 
-  // 4) Destino dos candidatos — donut com as categorias finais do funil
-  const nAprovados = cands.filter(c=>c.etapa==='aprovacao').length;
+  // 4) Destino dos candidatos — donut com as categorias finais do funil.
+  // "Contratados" usa a etapa Admissão (quem foi de fato efetivado), não
+  // Aprovação (que é só a decisão enviada ao cliente, ainda pendente) — senão
+  // todo mundo já contratado cai errado dentro de "Em Andamento".
+  const nAdmitidos = cands.filter(c=>c.etapa==='admissao').length;
   const nBanco = cands.filter(c=>(c.etapa||'').startsWith('banco_talentos')).length;
   const nReprovados = cands.filter(c=>c.etapa==='reprovado').length;
-  const nAndamento = cands.length - nAprovados - nBanco - nReprovados;
+  const nAndamento = cands.length - nAdmitidos - nBanco - nReprovados;
   const destino = [
-    { label:'Aprovados / Vagas Fechadas', n:nAprovados, cor:CH.green },
+    { label:'Contratados', n:nAdmitidos, cor:CH.green },
     { label:'Banco de Talentos', n:nBanco, cor:CH.amber },
     { label:'Em Andamento', n:nAndamento, cor:CH.charcoal },
     { label:'Reprovados', n:nReprovados, cor:CH.red }
@@ -3989,7 +3985,7 @@ function renderDashboard(){
       else { statusHtml='<span style="color:var(--mid)">● Em Aberto</span>'; diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?diasNum+'d':'-'; grupo=2; }
       // Reabertura/substituição: sinaliza na própria linha da posição, não só na aba Vagas
       const tituloHtml = v.dataReabertura
-        ? `${v.titulo} <span title="Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}" style="cursor:help">🔄</span>`
+        ? `${v.titulo} <span title="Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}" style="cursor:help;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:1px 5px;vertical-align:middle">reaberta</span>`
         : v.titulo;
       // Garantia de reposição: conta a partir do fechamento da vaga (contratação),
       // enquanto ainda estiver dentro do prazo (padrão 60 dias, configurável por vaga).
@@ -4005,7 +4001,7 @@ function renderDashboard(){
         const passados = diasCorridosCalendario(v.dataEncerramento);
         const restantes = prazo - passados;
         garantiaHtml = restantes > 0
-          ? `<span style="color:var(--amber);font-weight:600">🛡 ${restantes}d restantes</span>`
+          ? `<span style="color:var(--amber);font-weight:600">${restantes}d restantes</span>`
           : `<span style="color:var(--mid)">Garantia encerrada</span>`;
       }
       const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
@@ -4070,8 +4066,8 @@ function renderDashboard(){
           <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · ${mediaT}d úteis</text>
         </svg>
         <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
-          <div style="font-size:11.5px"><strong style="color:var(--green)">⚡ ${minC.corridos}d</strong><br><span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
-          <div style="font-size:11.5px;text-align:right"><strong style="color:var(--red)">🐢 ${maxC.corridos}d</strong><br><span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
+          <div style="font-size:11.5px"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais rápida</span><br><strong style="color:var(--green)">${minC.corridos}d</strong> <span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
+          <div style="font-size:11.5px;text-align:right"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais lenta</span><br><strong style="color:var(--red)">${maxC.corridos}d</strong> <span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
         </div>`;
     }
 
