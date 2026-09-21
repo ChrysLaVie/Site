@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 
@@ -3561,7 +3562,8 @@ async function salvarEntrevista(){
     await upsertEntrev(rec);
     _entrevistas.unshift(rec);
     // ── Auto-criar candidato no funil se não existir ──
-    await syncCandidatoFromEntrevista(rec);
+    const candidatoIdFinal = await syncCandidatoFromEntrevista(rec);
+    anexarDossiePDFAutomatico(rec, candidatoIdFinal);
     const btn=document.getElementById('save-btn');
     btn.textContent='✓ Salvo!';btn.classList.add('saved');
     setTimeout(()=>{btn.textContent='💾 Salvar no histórico';btn.classList.remove('saved');},3000);
@@ -3572,11 +3574,7 @@ async function salvarEntrevista(){
 // Reimprime o dossiê de uma entrevista já salva, a qualquer momento — usa só
 // o que ficou gravado no registro (respostas, dados pessoais, avaliações),
 // então funciona mesmo que o roteiro original tenha mudado ou sumido depois.
-function gerarDossiePDF(id){
-  const e = _entrevistas.find(x=>x.id===id) || (typeof getEntrevistas==='function' ? getEntrevistas().find(x=>x.id===id) : null);
-  if(!e){ alert('Entrevista não encontrada.'); return; }
-  if(!e.respostas){ alert('Esta entrevista foi salva antes da função de reimpressão existir, então não temos o roteiro completo guardado — não é possível gerar o dossiê.'); return; }
-
+function montarHtmlDossie(e){
   const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const dados = [
     ['Nome', e.nome], ['CPF', e.cpf], ['Idade', e.idade], ['Estado civil', e.estadoCivil],
@@ -3626,6 +3624,14 @@ function gerarDossiePDF(id){
 
       <div style="margin-top:30px;font-size:11px;color:#999">Gerado por La Vie · R&S em ${new Date().toLocaleString('pt-BR')}</div>
     </div>`;
+  return html;
+}
+
+function gerarDossiePDF(id){
+  const e = _entrevistas.find(x=>x.id===id) || (typeof getEntrevistas==='function' ? getEntrevistas().find(x=>x.id===id) : null);
+  if(!e){ alert('Entrevista não encontrada.'); return; }
+  if(!e.respostas){ alert('Esta entrevista foi salva antes da função de reimpressão existir, então não temos o roteiro completo guardado — não é possível gerar o dossiê.'); return; }
+  const html = montarHtmlDossie(e);
 
   document.getElementById('dossie-print-area').innerHTML = html;
   document.querySelectorAll('.toast').forEach(t=>t.remove());
@@ -3637,7 +3643,46 @@ function gerarDossiePDF(id){
   }, 50);
 }
 
-// Normaliza nome pra comparação (ignora acento, espaço duplo, maiúscula/minúscula)
+// Normaliza nome pra comparação (ignora acento, espaço duplo, maiúscula/minúscula)// Gera o dossiê da entrevista como PDF de verdade (não a caixa de impressão)
+// e anexa direto no cadastro do candidato, no mesmo bucket/lista usada pelo
+// upload manual (anexarDocs). Roda sozinha ao salvar a entrevista; qualquer
+// falha aqui é só um aviso no console e nunca trava o salvamento em si.
+async function anexarDossiePDFAutomatico(entrev, candidatoId){
+  try{
+    if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) return;
+    if(!candidatoId) return;
+    if(typeof html2pdf==='undefined'){ console.warn('html2pdf.js não carregou; dossiê não foi anexado automaticamente.'); return; }
+
+    const html = montarHtmlDossie(entrev);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:24px';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+    let blob;
+    try{
+      blob = await html2pdf().from(wrap).set({margin:10, filename:'dossie.pdf', jsPDF:{unit:'pt', format:'a4'}}).outputPdf('blob');
+    } finally {
+      wrap.remove();
+    }
+
+    const idx = _cands.findIndex(c=>c.id===candidatoId);
+    if(idx<0){ console.warn('Candidato '+candidatoId+' não encontrado; dossiê não anexado.'); return; }
+
+    const safe = ('dossie-entrevista_'+(entrev.nome||'')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
+    const path = candidatoId+'/'+Date.now()+'_'+safe+'.pdf';
+    const {error} = await sb.storage.from(DOCS_BUCKET).upload(path, blob, {upsert:false, contentType:'application/pdf'});
+    if(error) throw error;
+
+    const doc = {nome:'Dossiê de entrevista - '+(entrev.nome||''), path, tipo:'application/pdf', tamanho:_fmtTam(blob.size), enviadoEm:new Date().toISOString(), enviadoPor:getUserName()};
+    const docsAtuais = Array.isArray(_cands[idx].documentos) ? _cands[idx].documentos : [];
+    _cands[idx].documentos = [...docsAtuais, doc];
+    await upsertCand(_cands[idx]);
+    showToast('📎 Dossiê da entrevista anexado ao candidato!');
+  }catch(err){
+    console.warn('Não foi possível anexar o dossiê automaticamente:', err);
+  }
+}
+
 function normNome(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toLowerCase(); }
 
 async function syncCandidatoFromEntrevista(entrev){
@@ -3680,7 +3725,7 @@ async function syncCandidatoFromEntrevista(entrev){
       _cands[idx] = {...existe, etapa, historico:hist};
       await upsertCand(_cands[idx]);
     }
-    return;
+    return existe.id;
   }
 
   // Cria novo candidato
@@ -3703,6 +3748,7 @@ async function syncCandidatoFromEntrevista(entrev){
   };
   _cands.unshift(cand);
   await upsertCand(cand);
+  return cand.id;
 }
 
 // Sincroniza entrevistas antigas do Gabriel para o funil (roda uma vez no initApp)
