@@ -3134,6 +3134,56 @@ function _ivSalvarLegenda(){
 
 // ══ ROTEIROS ══════════════════════════════════════════════════════════════════
 const VAGAS_ROTEIRO = [
+  {
+  "id": "cb-secretaria",
+  "empresaId": "cambury",
+  "nome": "Secretária",
+  "setor": "Gabinete",
+  "duracao": "15 min",
+  "conditions": {
+    "Atuação": "Apoio ao Gabinete e ao Mantenedor",
+    "Condições": "Conferir remuneração, regime, horário e benefícios na vaga vigente antes da entrevista"
+  },
+  "sections": [
+    {
+      "name": "Experiência",
+      "time": "3 min",
+      "questions": [
+        "Conte brevemente sua experiência como secretária ou no apoio a gestores. O que fazia no dia a dia?"
+      ]
+    },
+    {
+      "name": "Organização e prioridades",
+      "time": "4 min",
+      "questions": [
+        "Como organiza agenda, documentos e prazos para não esquecer uma entrega? Que ferramentas usa?",
+        "Se chegar uma visita enquanto o gestor está em reunião e houver um documento urgente para assinatura, o que faz primeiro?"
+      ]
+    },
+    {
+      "name": "Comunicação e sigilo",
+      "time": "4 min",
+      "questions": [
+        "Como responderia a alguém que insiste em saber um assunto confidencial do Gabinete?",
+        "Conte um atendimento difícil e como resolveu."
+      ]
+    },
+    {
+      "name": "Alinhamento e encerramento",
+      "time": "4 min",
+      "questions": [
+        "Confirme as condições atuais da vaga e a disponibilidade para início. Elas atendem sua expectativa?",
+        "Você tem alguma dúvida? Explique as próximas etapas e a previsão de retorno."
+      ]
+    }
+  ],
+  "avaliacao": [
+    "Organização",
+    "Comunicação e atendimento",
+    "Discrição",
+    "Priorização e responsabilidade"
+  ]
+},
   // ══════════════════════════════════════════════════════════════════════════
   // 1) COORDENADOR(A) FINANCEIRO E DE GESTÃO
   //    Roteiro guiado pelo Modelo de Competências Cambury (Técnica + Comportamental)
