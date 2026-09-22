@@ -652,14 +652,15 @@ async function _lvReceberComRetentativa(payload, tentativas = 3) {
 async function _registrarPendenciaRS(payload, erro) {
   if (!db) return;
   try {
-    await db.from('rs_sync_pendentes').insert({
+    const {error: erroFila} = await db.from('rs_sync_pendentes').insert({
       nome: payload.p_nome || null,
       email: payload.p_email || null,
       whatsapp: payload.p_telefone || null,
       vaga_titulo: payload.p_vaga_titulo || null,
-      cv_url: (payload.p_documentos && payload.p_documentos[0] && payload.p_documentos[0].path) || null,
+      cv_url: (payload.p_documentos || []).map(d => d.path).filter(Boolean).join('\n') || null,
       erro: String(erro || '').slice(0, 500)
     });
+    if(erroFila)throw erroFila;
   } catch (e) { console.warn('Não foi possível registrar a pendência do R&S:', e); }
 }
 
@@ -704,11 +705,6 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
     const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
     const cvUrl = c.cv_url || null;
 
-    const norm = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                       .toLowerCase().replace(/\s+/g, ' ').trim();
-    const vagaRes = { data: await _acharVagaNoRS(rsDb, vagaTitulo) };
-    const vagaId = vagaRes?.data?.id || null;
-
     const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
     // ═ DOSSIÊ DE MATCH AUTOMÁTICO (Nível 1) — versão parcial ═══════════════
     // Chega aqui um candidato que só tem o DISC (o formulário técnico da vaga
@@ -717,17 +713,17 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
     // "parcial" pra deixar isso explícito pra quem for revisar no R&S.
     const perfilTxt = r.primary ? `${DISC_NOMES[r.primary] || r.primary}${r.secondary ? ' / ' + (DISC_NOMES[r.secondary] || r.secondary) : ''}` : 'não disponível';
     let obs = `🎯 DOSSIÊ DE MATCH (automático) — Nível geral: Parcial (só DISC)\n`
-      + `• Perfil comportamental: ${perfilTxt}\n`
-      + `• Componente técnico/comercial: ainda não disponível — formulário da vaga não identificado\n`
-      + `Formulário técnico da vaga "${vagaTitulo}" não foi identificado automaticamente — verifique/cadastre o mapeamento e complete a etapa manualmente.\n\n`;
+      + `• Teste DISC: concluído — ${perfilTxt}\n`
+      + `• Formulário técnico da vaga: PENDENTE\n`
+      + `Resultado do DISC recebido. A etapa técnica será atualizada quando o formulário for enviado.\n\n`;
     obs += `Perfil DISC: ${perfilTxt}.`;
 
     // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
     // campo gravado como "url", o clique no arquivo dava "não foi possível abrir".
-    const documentos = cvUrl ? [{
-      nome:'Currículo', path:cvUrl, origem:'vagas', bucket:'curriculos',
-      tipo:'pdf', enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
-    }] : [];
+    const documentos = String(cvUrl || '').split('\n').map(p=>p.trim()).filter(Boolean).map(path=>({
+      nome:'Currículo (enviado no site)', path, origem:'vagas', bucket:'curriculos',
+      enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
+    }));
     // O candidato é entregue ao R&S por uma função do banco, não gravando na
     // tabela direto. A tabela "candidatos" exige usuário logado e ativo, e o
     // candidato não tem login, então toda gravação era recusada em silêncio.
@@ -752,14 +748,13 @@ const LOGO_PDF_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAFACAYA
 // SUPABASE
 // ═══════════════════════════════════════════════════════
 async function saveResult(r) {
-  if (!db) return;
-  try {
-    await db.from('candidatos_disc').insert({
-      name: r.name, email: r.email || null, phone: r.phone || null,
-      most: r.scores, least: null, pdf_url: null,
-      primary_profile: r.primary, secondary_profile: r.secondary
-    });
-  } catch(e) { console.error(e); }
+  if(!db)throw new Error('Conexão indisponível');
+  const {error}=await db.from('candidatos_disc').insert({
+    name:r.name, email:r.email || null, phone:r.phone || null,
+    most:r.scores, least:null, pdf_url:null,
+    primary_profile:r.primary, secondary_profile:r.secondary
+  });
+  if(error)throw error;
 }
 
 // Retorna null quando a leitura falha (por exemplo, sessão expirada e o banco
@@ -1118,10 +1113,21 @@ async function finishTest() {
     timestamp: Date.now()
   };
 
-  state.lastResult = result;
-  state.view = 'result';
-  render();
-  await saveResult(result);
+  if(state.savingResult)return;
+  state.savingResult=true;
+  app.innerHTML='<div class="card"><h2>Salvando sua avaliação...</h2><p>Aguarde antes de fechar esta página.</p></div>';
+  try{
+    // Não liberar o link para o formulário antes de o DISC estar salvo.
+    await saveResult(result);
+    const vaga=(incoming.vaga || '').trim();
+    if(vaga)await pushCandidatoSemFormsParaRS(result,vaga);
+    state.lastResult = result;
+    state.view = 'result';
+    render();
+  }catch(e){
+    console.error('Erro ao salvar DISC:',e);
+    app.innerHTML='<div class="card"><h2>Não foi possível salvar a avaliação</h2><p>Suas respostas continuam nesta página.</p><button class="btn-primary" onclick="finishTest()">Tentar novamente</button></div>';
+  }finally{state.savingResult=false;}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1218,7 +1224,7 @@ function renderResult() {
     document.getElementById('confirmBox').textContent = '✓ Avaliação concluída e enviada!';
     document.getElementById('savedNote').textContent = 'Seu resultado foi registrado. Nossa equipe entrará em contato pelos dados informados. Se quiser, baixe uma cópia do seu perfil.';
     document.getElementById('btnRow').innerHTML = '<button class="btn-ghost" id="pdfBtn">Baixar PDF</button>';
-    pushCandidatoSemFormsParaRS(r, vagaParam);
+    // O envio acontece em finishTest, antes da confirmação, e não ao redesenhar a tela.
   }
 
   document.getElementById('pdfBtn').addEventListener('click', () => buildPDF(r));

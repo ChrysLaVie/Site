@@ -295,14 +295,15 @@ async function _lvReceberComRetentativa(payload, tentativas = 3) {
 async function _registrarPendenciaRS(payload, erro) {
   if (!db) return;
   try {
-    await db.from('rs_sync_pendentes').insert({
+    const {error: erroFila} = await db.from('rs_sync_pendentes').insert({
       nome: payload.p_nome || null,
       email: payload.p_email || null,
       whatsapp: payload.p_telefone || null,
       vaga_titulo: payload.p_vaga_titulo || null,
-      cv_url: (payload.p_documentos && payload.p_documentos[0] && payload.p_documentos[0].path) || null,
+      cv_url: (payload.p_documentos || []).map(d => d.path).filter(Boolean).join('\n') || null,
       erro: String(erro || '').slice(0, 500)
     });
+    if(erroFila)throw erroFila;
   } catch (e) { console.warn('Não foi possível registrar a pendência do R&S:', e); }
 }
 
@@ -387,27 +388,11 @@ async function pushCandidatoParaRS(formPayload) {
     if (linhas.length) obs += `\n[Declarado no formulário, conferir contra o CV] ` + linhas.join('; ') + '.';
     if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
 
-    // Vincula pelo ID fixo da vaga no R&S. Não depende do título, que pode divergir
-    // entre o site e o sistema. Se o ID não existir, tenta o título como plano B.
-    let vagaId = null;
-    const porId = await rsDb.from('vagas').select('id').eq('id', RS_VAGA_ID).limit(1).maybeSingle();
-    if (porId?.data?.id) {
-      vagaId = porId.data.id;
-    } else {
-      const porTitulo = await rsDb.from('vagas').select('id').ilike('titulo', formPayload.vaga_titulo).limit(1).maybeSingle();
-      vagaId = porTitulo?.data?.id || null;
-    }
-    if (!vagaId) obs = `[Vaga "${formPayload.vaga_titulo}" (id ${RS_VAGA_ID}) não encontrada no R&S, cadastre-a para vincular automaticamente] ` + obs;
-
-    const documentos = cvUrl ? [{
-      nome: 'Currículo',
-      path: cvUrl,            // caminho no bucket, o R&S gera link temporário a partir daqui
-      origem: 'vagas',        // o arquivo mora no bucket do banco das vagas, não no do R&S
-      bucket: 'curriculos',
-      tipo: 'pdf',
-      enviadoEm: new Date().toISOString(),
-      enviadoPor: 'Site (automático)'
-    }] : [];
+    // A função receptora identifica a vaga pelo título, sem leitura pública das vagas.
+    const documentos = String(cvUrl || '').split('\n').map(p=>p.trim()).filter(Boolean).map(path=>({
+      nome:'Currículo (enviado no site)', path, origem:'vagas', bucket:'curriculos',
+      enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
+    }));
     // O candidato é entregue ao R&S por uma função do banco, não gravando na
     // tabela direto. Motivo: a tabela "candidatos" exige usuário logado e ativo,
     // e o candidato não tem login, então toda gravação era recusada em silêncio.
@@ -431,13 +416,14 @@ async function pushCandidatoParaRS(formPayload) {
     // O erro fica registrado para dar para descobrir o motivo depois.
     console.error('FALHA ao enviar candidato para o R&S:', e && e.message ? e.message : e);
     try {
-      await db.from('sync_rs_falhas').insert({
+      const {error: erroLog} = await db.from('sync_rs_falhas').insert({
         email: (formPayload.email || '').trim().toLowerCase(),
         nome: formPayload.nome || null,
         vaga_titulo: formPayload.vaga_titulo || null,
         erro: String(e && e.message ? e.message : e).slice(0, 500)
       });
-    } catch (e2) { /* se nem isso gravar, resta o console */ }
+      if(erroLog)throw erroLog;
+    } catch (e2) { console.error('Falha ao registrar erro da integração:', e2); }
   }
 }
 
@@ -801,7 +787,7 @@ function renderForm() {
     });
 
     if (result.ok) {
-      pushCandidatoParaRS({
+      await pushCandidatoParaRS({
         nome: nome.value.trim(),
         email: email.value.trim(),
         whatsapp: whatsapp.value.trim(),

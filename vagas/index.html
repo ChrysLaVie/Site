@@ -516,7 +516,7 @@ async function enviarAoRSComRetentativa(data, cvUrl, tentativas = 3) {
 async function registrarPendenciaRS(data, cvUrl, erro) {
   if (!db) return;
   try {
-    await db.from('rs_sync_pendentes').insert({
+    const {error: erroFila} = await db.from('rs_sync_pendentes').insert({
       nome: data.nome || null,
       email: (data.email || '').trim().toLowerCase(),
       whatsapp: data.whatsapp || null,
@@ -524,6 +524,7 @@ async function registrarPendenciaRS(data, cvUrl, erro) {
       cv_url: cvUrl || null,
       erro: String(erro || '').slice(0, 500)
     });
+    if(erroFila)throw erroFila;
     console.warn('Candidatura registrada como PENDENTE de envio ao R&S.');
   } catch (e) {
     // Se nem a pendência puder ser gravada (tabela ainda não criada, por
@@ -551,7 +552,7 @@ async function reenviarPendenciaRS(p) {
   const payload = { nome: p.nome, email: p.email, whatsapp: p.whatsapp, vaga_titulo: p.vaga_titulo };
   const r = await pushCandidaturaParcialParaRS(payload, p.cv_url);
   if (r && r.ok) {
-    try { await db.from('rs_sync_pendentes').delete().eq('id', p.id); } catch (e) {}
+    try { const {error}=await db.from('rs_sync_pendentes').delete().eq('id', p.id); if(error)throw error; } catch (e) { return {ok:false,err:'Enviado ao R&S, mas não foi possível atualizar a fila: '+e.message}; }
     return { ok: true };
   }
   try {
