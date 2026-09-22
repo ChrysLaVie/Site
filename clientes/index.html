@@ -5286,47 +5286,16 @@ async function initApp(){
   document.getElementById('page-loading').classList.add('active');
   PAGES.forEach(p=>document.getElementById('page-'+p).classList.remove('active'));
   await loadAll();
-  // Vagas-semente: só fazem sentido pro cliente Cambury (são o histórico real
-  // dela). Um cliente novo (ex.: Du Carmo) começa sempre vazio, pronto pra
-  // receber as vagas reais pelo botão "+ Nova vaga" — nunca herda dados de
-  // outro cliente.
-  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='cambury'){
-    seedVagas();
-    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
-    await loadAll();
-  }
-  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='autoclub'){
-    seedVagasAutoClub();
-    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
-    await loadAll();
-    // Entrada já paga (fechamento do contrato) — marca a parcela 1 como paga
-    // assim que ela é gerada, para não aparecer pendente à toa.
-    try{
-      await loadPagamentos();
-      await sincronizarParcelas();
-      const p1 = _pagamentos.find(p=>p.id==='autoclub1-p1');
-      if(p1 && p1.status!=='pago'){
-        p1.status='pago'; p1.pagoEm=new Date().toISOString().slice(0,10); p1.obs='Entrada — pago no fechamento do contrato';
-        await upsertPagamento(p1);
-      }
-    }catch(e){}
-  }
-  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='ducarmo'){
-    seedVagasDuCarmo();
-    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
-    await loadAll();
-    // Entrada já paga (Ordem de Serviço + comprovante) — marca a parcela 1
-    // como paga assim que ela é gerada, para não aparecer pendente à toa.
-    try{
-      await loadPagamentos();
-      await sincronizarParcelas();
-      const p1 = _pagamentos.find(p=>p.id==='ducarmo1-p1');
-      if(p1 && p1.status!=='pago'){
-        p1.status='pago'; p1.pagoEm=new Date().toISOString().slice(0,10); p1.obs='Entrada (abertura) — pago conforme comprovante';
-        await upsertPagamento(p1);
-      }
-    }catch(e){}
-  }
+  // As vagas-semente (seedVagas/seedVagasAutoClub/seedVagasDuCarmo, mais abaixo)
+  // faziam esse backfill histórico automaticamente toda vez que _vagas vinha
+  // vazio. Isso rodava a CADA login/troca de empresa — 6+ upserts sequenciais
+  // ao Supabase (um esperando o outro) seguidos de mais um loadAll(), deixando
+  // o Dashboard/Vagas visivelmente lentos — e, pior, com o erro do upsert
+  // silenciado (catch vazio), uma falha de gravação nunca aparecia, só ficava
+  // tentando de novo a cada carregamento. Foi esse mesmo mecanismo que já
+  // sobrescreveu dados reais editados da Cambury antes. Removido: se algum
+  // desses clientes precisar do backfill de novo, rode a função seed
+  // correspondente manualmente (uma vez, pelo console) em vez de automático.
   document.getElementById('page-loading').classList.remove('active');
   try{ setupRealtime(); }catch(e){ console.error('realtime:', e); }
   try{await syncEntrevistasExistentes();}catch(e){}
