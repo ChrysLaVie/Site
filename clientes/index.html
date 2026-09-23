@@ -1052,21 +1052,10 @@ function _inicioCicloVaga(v){ return v.dataReabertura || v.dataAbertura; }
 // ou seja, o momento em que o candidato entrou na etapa "Aprovação" (dossiê
 // enviado, aguardando decisão do contratante). A partir daqui o tempo que passa
 // é decisão do CLIENTE, não da La Vie — por isso separamos os dois indicadores.
-function _candidatoNoCicloVaga(c,v){
-  if(c.vagaId!==v.id)return false;
-  if(!v.dataReabertura)return true;
-  const inicio=v.dataReabertura.slice(0,10);
-  // Cadastro antigo pode avançar numa reposição; vale a data da etapa atual.
-  const etapas=(Array.isArray(c.historico)?c.historico:[])
-    .filter(h=>h.etapa===c.etapa && h.data).map(h=>h.data.slice(0,10));
-  const ultima=etapas.sort().at(-1);
-  return (ultima || (c.criadoEm||'').slice(0,10))>=inicio;
-}
-function dataDossieVaga(vagaId, cands, inicio=null, fim=null){
+function dataDossieVaga(vagaId, cands){
   const datas=[];
   cands.filter(c=>c.vagaId===vagaId).forEach(c=>{
-    (Array.isArray(c.historico)?c.historico:[]).filter(h=>h.etapa==='aprovacao' && h.data)
-      .forEach(h=>{const dia=h.data.slice(0,10);if((!inicio || dia>=inicio.slice(0,10)) && (!fim || dia<=fim.slice(0,10)))datas.push(h.data);});
+    (c.historico||[]).filter(h=>h.etapa==='aprovacao').forEach(h=>datas.push(h.data));
   });
   if(!datas.length) return null;
   datas.sort((a,b)=>new Date(a)-new Date(b));
@@ -1335,10 +1324,9 @@ async function switchEmpresa(id){
     _aplicarNavPorProduto();
   renderEmpresaSwitcher();
   document.getElementById('page-loading').classList.add('active');
-  mostrarCargaDados();
-  if(!await loadAll())return;
-  document.getElementById('page-loading').classList.remove('active');
+  await loadAll();
   try{await loadPagamentos();}catch(e){}
+  document.getElementById('page-loading').classList.remove('active');
   goPage(_page||'dashboard');
   showToast(`🏢 Exibindo dados de ${EMPRESAS[id].nome}`);
 }
@@ -1829,15 +1817,13 @@ let _vagas = [], _cands = [], _entrevistas = [], _agenda = [];
 // carregamento falhou" (rede instável, etc.) — sem isso, uma falha temporária
 // dispara o seed de vagas-modelo e SOBRESCREVE dados reais já editados (foi o
 // que aconteceu com as datas de abertura da Cambury).
-let _vagasCarregouOk = false, _dadosCarregouOk = false, _dadosCarregando = false, _loadSeq = 0;
-// As artes são carregadas apenas ao abrir Imagens, nunca na listagem.
-const VAGAS_COLUNAS = 'id,titulo,setor,data_abertura,data_encerramento,qtd,qtd_fechadas,status,tipo,salario,honorario,gestor,motivo,canais,obs,criado_por,atualizado_por,criado_em,atualizado_em,data_dossie_manual,empresa_id,legenda,ordem_servico,data_reabertura,motivo_reabertura,historico_reaberturas,garantia_dias';
+let _vagasCarregouOk = false;
 function getVagas()       { return _vagas; }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60 });
+const dbToVaga  = r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60 });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
@@ -1892,66 +1878,33 @@ async function loadMentoria(){
   }catch(err){ console.error('mentoria:', err); }
 }
 
-function mostrarCargaDados(erro=false){
-  PAGES.forEach(p=>document.getElementById('page-'+p).classList.remove('active'));
-  const el=document.getElementById('page-loading');
-  el.classList.add('active');
-  el.innerHTML=erro
-    ? '<h2>Não foi possível carregar os dados</h2><p>Verifique a conexão e tente novamente. Seus dados não foram apagados.</p><button class="btn btn-primary" onclick="initApp()">Tentar novamente</button>'
-    : '<h2>Carregando dados...</h2><p>Aguarde um instante.</p>';
-}
 async function loadAll() {
-  const empresa=currentEmpresa, seq=++_loadSeq;
-  _dadosCarregando=true; _dadosCarregouOk=false; _vagasCarregouOk=false;
-  setSyncOk(false);
-  if(DEMO_MODE){ demoLoad(); _dadosCarregando=false; _dadosCarregouOk=true; setSyncOk(false); return true; }
+  if(DEMO_MODE){ demoLoad(); setSyncOk(false); return; }
+  // Empresa de mentoria não tem vagas/candidatos/entrevistas: buscar essas
+  // tabelas aqui só geraria consulta vazia (ou bloqueada por RLS) a cada troca.
   if(!empresaTemProduto('rs')){
     _vagas=[]; _cands=[]; _entrevistas=[]; _agenda=[];
     await loadMentoria();
-    if(seq!==_loadSeq || empresa!==currentEmpresa)return false;
-    _dadosCarregando=false; _dadosCarregouOk=true; setSyncOk(true); return true;
+    setSyncOk(true);
+    return;
   }
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),15000);
   try {
-    const results=await Promise.all([
-      sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',empresa).order('criado_em',{ascending:false}).abortSignal(controller.signal),
-      sb.from('candidatos').select('*').eq('empresa_id',empresa).order('criado_em',{ascending:false}).abortSignal(controller.signal),
-      sb.from('entrevistas').select('*').eq('empresa_id',empresa).order('criado_em',{ascending:false}).abortSignal(controller.signal),
-      sb.from('agenda').select('*').eq('empresa_id',empresa).order('data',{ascending:true}).abortSignal(controller.signal)
+    const [v,c,e] = await Promise.all([
+      sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}),
+      sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}),
+      sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false})
     ]);
-    if(seq!==_loadSeq || empresa!==currentEmpresa)return false;
-    for(const r of results)if(r.error || !Array.isArray(r.data))throw r.error || new Error('Resposta inválida');
-    const [v,c,e,a]=results;
-    _vagas=v.data.map(dbToVaga); _cands=c.data.map(dbToCand);
-    _entrevistas=e.data.map(dbToEntrev); _agenda=a.data.map(dbToAgenda);
-    _vagasCarregouOk=true; _dadosCarregouOk=true;
-    return true;
-  } catch(err) {
-    if(seq===_loadSeq && empresa===currentEmpresa){console.error('Carregamento:',err); mostrarCargaDados(true);}
-    return false;
-  } finally {
-    clearTimeout(timer);
-    if(seq===_loadSeq && empresa===currentEmpresa){_dadosCarregando=false; setSyncOk(_dadosCarregouOk);}
-  }
+    if (v.data) _vagas       = v.data.map(dbToVaga);
+    if (c.data) _cands       = c.data.map(dbToCand);
+    if (e.data) _entrevistas = e.data.map(dbToEntrev);
+    try { const a = await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(a.data) _agenda = a.data.map(dbToAgenda); } catch(_){}
+    _vagasCarregouOk = !v.error;
+    setSyncOk(true);
+  } catch(err) { setSyncOk(false); _vagasCarregouOk=false; console.error(err); }
 }
 
 function _localUpsert(arr,obj){ const i=arr.findIndex(x=>x.id===obj.id); if(i>=0)arr[i]=obj; else arr.unshift(obj); }
-async function upsertVaga(v, salvarImagens=false) {
-  if(!v.empresaId)v.empresaId=currentEmpresa;
-  if(DEMO_MODE){_localUpsert(_vagas,v);demoSave();return;}
-  const row=vagaToDb(v);
-  // Atualizações comuns não enviam nem sobrescrevem artes não carregadas.
-  const existente=v._persistida || _vagas.some(x=>x.id===v.id && x._persistida);
-  if(existente && !salvarImagens)delete row.imagens;
-  const query=existente
-    ? sb.from('vagas').update(row).eq('id',v.id).eq('empresa_id',v.empresaId)
-    : sb.from('vagas').upsert(row);
-  const {data,error}=await query.select('id');
-  if(error)throw error;
-  if(!data || !data.length)throw new Error('Vaga não foi salva. Verifique seu acesso.');
-  v._persistida=true;
-}
+async function upsertVaga(v)   { if(!v.empresaId) v.empresaId=currentEmpresa; if(DEMO_MODE){_localUpsert(_vagas,v);demoSave();return;} const {error} = await sb.from('vagas').upsert(vagaToDb(v));   if(error) throw error; }
 async function deleteVaga(id)  { if(DEMO_MODE){_vagas=_vagas.filter(x=>x.id!==id);demoSave();return;} await sb.from('vagas').delete().eq('id',id); }
 async function upsertCand(c)   { if(!c.empresaId) c.empresaId=currentEmpresa; if(DEMO_MODE){_localUpsert(_cands,c);demoSave();return;} const {error} = await sb.from('candidatos').upsert(candToDb(c)); if(error) throw error; }
 async function deleteCand(id)  { if(DEMO_MODE){_cands=_cands.filter(x=>x.id!==id);demoSave();return;} await sb.from('candidatos').delete().eq('id',id); }
@@ -1966,7 +1919,7 @@ async function deleteAgenda(id){ if(DEMO_MODE){_agenda=_agenda.filter(x=>x.id!==
 function setupRealtime() {
   if(DEMO_MODE) return;
   sb.channel('rs')
-    .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=r.data.map(dbToVaga); refreshPage(); showToast('🔄 Vagas atualizadas');} })
+    .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=r.data.map(dbToVaga); refreshPage(); showToast('🔄 Vagas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); showToast('🔄 Candidatos atualizados');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
@@ -1974,9 +1927,8 @@ function setupRealtime() {
 }
 
 function setSyncOk(ok) {
-  ok=ok && _dadosCarregouOk && !_dadosCarregando;
   document.getElementById('sync-dot').className   = 'sync-dot'+(ok?'':' off');
-  document.getElementById('sync-label').textContent = (typeof DEMO_MODE!=='undefined'&&DEMO_MODE)?'demonstração':(_dadosCarregando?'carregando...':(!_dadosCarregouOk?'falha ao carregar':(ok?'ao vivo':'offline')));
+  document.getElementById('sync-label').textContent = (typeof DEMO_MODE!=='undefined'&&DEMO_MODE)?'demonstração':(ok?'ao vivo':'offline');
 }
 
 function showToast(msg) {
@@ -2005,7 +1957,6 @@ function _paginaPermitida(name){
 }
 
 function goPage(name) {
-  if(!_dadosCarregouOk){mostrarCargaDados(!_dadosCarregando);return;}
   if(!_paginaPermitida(name)) name = 'dashboard';
   // Update context labels for gestores
   if(currentUser && currentUser.role==='gestor') {
@@ -2040,7 +1991,6 @@ function goPage(name) {
 }
 
 function refreshPage() {
-  if(!_dadosCarregouOk)return;
   if(_page==='dashboard')  renderDashboard();
   if(_page==='vagas')      { renderVagasStats(); renderVagas(); }
   if(_page==='candidatos') { renderFunil(); renderCandidatos(); }
@@ -2590,7 +2540,7 @@ async function salvarVaga() {
   const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
-    if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
+    if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-nova-vaga');
     ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
@@ -2611,8 +2561,8 @@ async function reabrirVaga(id){
   // Preserva o ciclo que está sendo encerrado (abertura + encerramento dele)
   // dentro do histórico, antes de zerar dataEncerramento — senão a data do
   // 1º fechamento se perde e não dá mais pra saber quanto durou aquele ciclo.
-  const hist = [...(v.historicoReaberturas||[]), { data: hoje, motivo: motivo.trim(), usuario: getUserName(), cicloAnteriorAbertura: _inicioCicloVaga(v), cicloAnteriorEncerramento: v.dataEncerramento||null, cicloAnteriorQtdFechadas:v.qtdFechadas||0, cicloAnteriorDossie:v.dataDossieManual||null }];
-  const atualizada = { ...v, status:'aberta', dataReabertura: hoje, motivoReabertura: motivo.trim(), historicoReaberturas: hist, dataEncerramento:null, dataDossieManual:null, qtdFechadas:0 };
+  const hist = [...(v.historicoReaberturas||[]), { data: hoje, motivo: motivo.trim(), usuario: getUserName(), cicloAnteriorAbertura: _inicioCicloVaga(v), cicloAnteriorEncerramento: v.dataEncerramento||null }];
+  const atualizada = { ...v, status:'aberta', dataReabertura: hoje, motivoReabertura: motivo.trim(), historicoReaberturas: hist, dataEncerramento:null };
   try{
     await upsertVaga(atualizada);
     _localUpsert(_vagas, atualizada);
@@ -2662,7 +2612,7 @@ async function atualizarVaga() {
     await upsertVaga(_vagas[idx]);
     // Recarrega do Supabase para garantir dados atualizados (em modo demo, os
     // dados locais já foram atualizados por upsertVaga acima)
-    if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
+    if(!DEMO_MODE){ const r = await sb.from('vagas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-edit-vaga');
     renderVagasStats();
     renderVagas();
@@ -3116,34 +3066,13 @@ async function removerDocCliente(id){
 // candidato (mais simples que um bucket separado pra um volume pequeno assim).
 const VAGA_IMG_MAX = 3;
 const VAGA_IMG_TAMANHO_MAX = 5*1024*1024; // 5 MB por imagem
-async function abrirImagensVaga(id){
+function abrirImagensVaga(id){
   const v=getVagas().find(x=>x.id===id); if(!v)return;
   document.getElementById('iv-vaga-id').value=id;
   document.getElementById('iv-vaga-titulo').textContent=v.titulo||'';
   document.getElementById('iv-legenda').value=v.legenda||'';
-  openModal('modal-imagens-vaga');
-  const empresa=currentEmpresa;
-  if(!DEMO_MODE && !v._imagensCarregadas){
-    document.getElementById('iv-imagens-list').innerHTML='';
-    document.getElementById('iv-imagens-empty').style.display='block';
-    document.getElementById('iv-imagens-empty').textContent='Carregando imagens...';
-    document.getElementById('iv-add-btn').style.display='none';
-    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),30000);
-    try{
-      const {data,error}=await sb.from('vagas').select('imagens').eq('id',id).eq('empresa_id',empresa).single().abortSignal(controller.signal);
-      if(error || !data)throw error || new Error('Vaga não encontrada');
-      if(currentEmpresa!==empresa || document.getElementById('iv-vaga-id').value!==id)return;
-      const atual=getVagas().find(x=>x.id===id); if(!atual)return;
-      atual.imagens=Array.isArray(data.imagens)?data.imagens:[];
-      atual._imagensCarregadas=true;
-    }catch(e){
-      if(currentEmpresa===empresa && document.getElementById('iv-vaga-id').value===id)
-        document.getElementById('iv-imagens-empty').textContent='Não foi possível carregar. Feche e abra Imagens para tentar novamente.';
-      return;
-    }finally{clearTimeout(timer);}
-  }
-  document.getElementById('iv-imagens-empty').textContent='Nenhuma imagem enviada ainda.';
   _ivRenderImagens();
+  openModal('modal-imagens-vaga');
 }
 function _ivRenderImagens(){
   const id=document.getElementById('iv-vaga-id').value;
@@ -3163,9 +3092,7 @@ function _ivRenderImagens(){
 async function _ivAdicionarImagens(ev){
   const id=document.getElementById('iv-vaga-id').value;
   const idx=_vagas.findIndex(v=>v.id===id); if(idx<0)return;
-  if(!DEMO_MODE && !_vagas[idx]._imagensCarregadas)return;
-  const anteriores=_vagas[idx].imagens;
-  const atuais=Array.isArray(anteriores)?[...anteriores]:[];
+  const atuais=Array.isArray(_vagas[idx].imagens)?_vagas[idx].imagens:[];
   const files=Array.from(ev.target.files||[]);
   ev.target.value='';
   const vagas_livres=VAGA_IMG_MAX-atuais.length;
@@ -3179,7 +3106,7 @@ async function _ivAdicionarImagens(ev){
     atuais.push({ nome:f.name, data:dataUrl });
   }
   _vagas[idx].imagens=atuais;
-  try{ await upsertVaga(_vagas[idx],true); }catch(e){ _vagas[idx].imagens=anteriores; alert('Erro ao salvar imagem: '+e.message); return; }
+  try{ await upsertVaga(_vagas[idx]); }catch(e){ alert('Erro ao salvar imagem: '+e.message); }
   _ivRenderImagens();
   renderVagas();
   showToast('✅ Imagem(ns) adicionada(s)!');
@@ -3187,12 +3114,10 @@ async function _ivAdicionarImagens(ev){
 async function _ivRemoverImagem(i){
   const id=document.getElementById('iv-vaga-id').value;
   const idx=_vagas.findIndex(v=>v.id===id); if(idx<0)return;
-  if(!DEMO_MODE && !_vagas[idx]._imagensCarregadas)return;
-  const anteriores=_vagas[idx].imagens;
-  const atuais=Array.isArray(anteriores)?[...anteriores]:[];
+  const atuais=Array.isArray(_vagas[idx].imagens)?_vagas[idx].imagens:[];
   if(!confirm('Remover essa imagem?'))return;
   _vagas[idx].imagens=atuais.filter((_,j)=>j!==i);
-  try{ await upsertVaga(_vagas[idx],true); }catch(e){ _vagas[idx].imagens=anteriores; alert('Erro ao remover imagem: '+e.message); return; }
+  try{ await upsertVaga(_vagas[idx]); }catch(e){ alert('Erro ao remover imagem: '+e.message); }
   _ivRenderImagens();
   renderVagas();
 }
@@ -3790,7 +3715,14 @@ async function anexarDossiePDFAutomatico(entrev, candidatoId){
     document.body.appendChild(wrap);
     let blob;
     try{
-      blob = await html2pdf().from(wrap).set({margin:10, filename:'dossie.pdf', jsPDF:{unit:'pt', format:'a4'}}).outputPdf('blob');
+      const larguraPdf = wrap.scrollWidth, alturaPdf = wrap.scrollHeight;
+      blob = await html2pdf().from(wrap).set({
+        margin:10, filename:'dossie.pdf', jsPDF:{unit:'pt', format:'a4'},
+        // Sem isso, o wrapper fora da tela (position:fixed;left:-9999px) faz o
+        // html2canvas medir altura 0 e o PDF sai em branco.
+        html2canvas:{width:larguraPdf, height:alturaPdf, windowWidth:larguraPdf, windowHeight:alturaPdf, scrollX:0, scrollY:0}
+      }).outputPdf('blob');
+      if(!blob || blob.size < 2000){ throw new Error('PDF gerado ficou vazio/pequeno demais ('+(blob?blob.size:0)+' bytes)'); }
     } finally {
       wrap.remove();
     }
@@ -4239,9 +4171,7 @@ function renderDashboard(){
   const temposDetalhe = vagasEncerradas.map(v=>{
     const corridos = diasCorridosCalendario(_inicioCicloVaga(v), v.dataEncerramento);
     const trabalhados = Math.round(corridos*5/7);
-    const inicio=_inicioCicloVaga(v), fim=v.dataEncerramento;
-    const manual=v.dataDossieManual;
-    const dDossie = manual && manual>=inicio && manual<=fim ? manual : dataDossieVaga(v.id,candsParaCalc,inicio,fim);
+    const dDossie = v.dataDossieManual ? v.dataDossieManual : dataDossieVaga(v.id, candsParaCalc);
     const diasLaVie = dDossie ? diasCorridosCalendario(_inicioCicloVaga(v), dDossie) : null;
     const diasCliente = dDossie ? diasCorridosCalendario(dDossie, v.dataEncerramento) : null;
     return {v, corridos, trabalhados, dDossie, diasLaVie, diasCliente};
@@ -4255,7 +4185,7 @@ function renderDashboard(){
   const statusVagasEl = document.getElementById('dash-status-vagas');
   if(statusVagasEl){
     const linhas = vagas.map(v=>{
-      const aprovado = candsParaCalc.find(c=>_candidatoNoCicloVaga(c,v) && c.etapa==='aprovacao');
+      const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
       // Ordenação: fechadas ordenadas da mais rápida pra mais lenta primeiro,
       // "Em Decisão" depois, e "Em Aberto" sempre por último (ainda não tem
       // tempo de fechamento pra comparar, então não faz sentido misturar).
@@ -4264,7 +4194,8 @@ function renderDashboard(){
       // que não há um status de "desligado"). Usamos o registro mais recente
       // (e, se houve reabertura, só os posteriores a ela) como o vigente.
       const avancados = candsParaCalc.filter(c=>c.vagaId===v.id && (c.etapa==='admissao'||c.etapa==='aprovacao'));
-      const pool = avancados.filter(c=>_candidatoNoCicloVaga(c,v));
+      const avancadosCicloAtual = v.dataReabertura ? avancados.filter(c=>c.criadoEm && c.criadoEm >= v.dataReabertura) : avancados;
+      const pool = avancadosCicloAtual.length ? avancadosCicloAtual : avancados;
       // Prioriza quem já está em Admissão (contratado de fato) sobre quem só
       // está em Aprovação (decisão ainda pendente) — sem isso, um candidato
       // parado em aprovação com registro mais recente ganhava de quem
@@ -4275,7 +4206,7 @@ function renderDashboard(){
       });
       const admitido = poolOrdenado[0];
       let statusHtml, dias, diasNum=null, grupo;
-      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Cancelada</span>'; dias='-'; grupo=1; }
+      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; grupo=1; }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
@@ -4318,8 +4249,8 @@ function renderDashboard(){
       const td2 = temposDetalhe.find(t=>t.v.id===v.id);
       const divisaoHtml = (td2 && td2.diasLaVie!==null)
         ? `<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bege-lt);min-width:90px">
-             <div style="width:${((td2.diasLaVie+td2.diasCliente)>0?Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100):0)}%;background:${CH.green}"></div>
-             <div style="width:${100-((td2.diasLaVie+td2.diasCliente)>0?Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100):0)}%;background:${CH.gold}"></div>
+             <div style="width:${Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100)}%;background:${CH.green}"></div>
+             <div style="width:${100-Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100)}%;background:${CH.gold}"></div>
            </div>
            <div style="font-size:10px;color:var(--light);margin-top:2px">${td2.diasLaVie}d La Vie · ${td2.diasCliente}d Cliente</div>`
         : '<span style="font-size:11px;color:var(--light)">—</span>';
@@ -5361,18 +5292,48 @@ async function trocarSenha() {
 async function initApp(){
   document.getElementById('page-loading').classList.add('active');
   PAGES.forEach(p=>document.getElementById('page-'+p).classList.remove('active'));
-  mostrarCargaDados();
-  if(!await loadAll())return;
-  // As vagas-semente (seedVagas/seedVagasAutoClub/seedVagasDuCarmo, mais abaixo)
-  // faziam esse backfill histórico automaticamente toda vez que _vagas vinha
-  // vazio. Isso rodava a CADA login/troca de empresa — 6+ upserts sequenciais
-  // ao Supabase (um esperando o outro) seguidos de mais um loadAll(), deixando
-  // o Dashboard/Vagas visivelmente lentos — e, pior, com o erro do upsert
-  // silenciado (catch vazio), uma falha de gravação nunca aparecia, só ficava
-  // tentando de novo a cada carregamento. Foi esse mesmo mecanismo que já
-  // sobrescreveu dados reais editados da Cambury antes. Removido: se algum
-  // desses clientes precisar do backfill de novo, rode a função seed
-  // correspondente manualmente (uma vez, pelo console) em vez de automático.
+  await loadAll();
+  // Vagas-semente: só fazem sentido pro cliente Cambury (são o histórico real
+  // dela). Um cliente novo (ex.: Du Carmo) começa sempre vazio, pronto pra
+  // receber as vagas reais pelo botão "+ Nova vaga" — nunca herda dados de
+  // outro cliente.
+  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='cambury'){
+    seedVagas();
+    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
+    await loadAll();
+  }
+  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='autoclub'){
+    seedVagasAutoClub();
+    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
+    await loadAll();
+    // Entrada já paga (fechamento do contrato) — marca a parcela 1 como paga
+    // assim que ela é gerada, para não aparecer pendente à toa.
+    try{
+      await loadPagamentos();
+      await sincronizarParcelas();
+      const p1 = _pagamentos.find(p=>p.id==='autoclub1-p1');
+      if(p1 && p1.status!=='pago'){
+        p1.status='pago'; p1.pagoEm=new Date().toISOString().slice(0,10); p1.obs='Entrada — pago no fechamento do contrato';
+        await upsertPagamento(p1);
+      }
+    }catch(e){}
+  }
+  if(_vagas.length===0 && _vagasCarregouOk && currentEmpresa==='ducarmo'){
+    seedVagasDuCarmo();
+    for(const v of getVagas()){try{await upsertVaga(v);}catch(e){}}
+    await loadAll();
+    // Entrada já paga (Ordem de Serviço + comprovante) — marca a parcela 1
+    // como paga assim que ela é gerada, para não aparecer pendente à toa.
+    try{
+      await loadPagamentos();
+      await sincronizarParcelas();
+      const p1 = _pagamentos.find(p=>p.id==='ducarmo1-p1');
+      if(p1 && p1.status!=='pago'){
+        p1.status='pago'; p1.pagoEm=new Date().toISOString().slice(0,10); p1.obs='Entrada (abertura) — pago conforme comprovante';
+        await upsertPagamento(p1);
+      }
+    }catch(e){}
+  }
   document.getElementById('page-loading').classList.remove('active');
   try{ setupRealtime(); }catch(e){ console.error('realtime:', e); }
   try{await syncEntrevistasExistentes();}catch(e){}
