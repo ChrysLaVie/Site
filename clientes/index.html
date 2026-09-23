@@ -1052,10 +1052,21 @@ function _inicioCicloVaga(v){ return v.dataReabertura || v.dataAbertura; }
 // ou seja, o momento em que o candidato entrou na etapa "Aprovação" (dossiê
 // enviado, aguardando decisão do contratante). A partir daqui o tempo que passa
 // é decisão do CLIENTE, não da La Vie — por isso separamos os dois indicadores.
-function dataDossieVaga(vagaId, cands){
+function _candidatoNoCicloVaga(c,v){
+  if(c.vagaId!==v.id)return false;
+  if(!v.dataReabertura)return true;
+  const inicio=v.dataReabertura.slice(0,10);
+  // Cadastro antigo pode avançar numa reposição; vale a data da etapa atual.
+  const etapas=(Array.isArray(c.historico)?c.historico:[])
+    .filter(h=>h.etapa===c.etapa && h.data).map(h=>h.data.slice(0,10));
+  const ultima=etapas.sort().at(-1);
+  return (ultima || (c.criadoEm||'').slice(0,10))>=inicio;
+}
+function dataDossieVaga(vagaId, cands, inicio=null, fim=null){
   const datas=[];
   cands.filter(c=>c.vagaId===vagaId).forEach(c=>{
-    (c.historico||[]).filter(h=>h.etapa==='aprovacao').forEach(h=>datas.push(h.data));
+    (Array.isArray(c.historico)?c.historico:[]).filter(h=>h.etapa==='aprovacao' && h.data)
+      .forEach(h=>{const dia=h.data.slice(0,10);if((!inicio || dia>=inicio.slice(0,10)) && (!fim || dia<=fim.slice(0,10)))datas.push(h.data);});
   });
   if(!datas.length) return null;
   datas.sort((a,b)=>new Date(a)-new Date(b));
@@ -2600,8 +2611,8 @@ async function reabrirVaga(id){
   // Preserva o ciclo que está sendo encerrado (abertura + encerramento dele)
   // dentro do histórico, antes de zerar dataEncerramento — senão a data do
   // 1º fechamento se perde e não dá mais pra saber quanto durou aquele ciclo.
-  const hist = [...(v.historicoReaberturas||[]), { data: hoje, motivo: motivo.trim(), usuario: getUserName(), cicloAnteriorAbertura: _inicioCicloVaga(v), cicloAnteriorEncerramento: v.dataEncerramento||null }];
-  const atualizada = { ...v, status:'aberta', dataReabertura: hoje, motivoReabertura: motivo.trim(), historicoReaberturas: hist, dataEncerramento:null };
+  const hist = [...(v.historicoReaberturas||[]), { data: hoje, motivo: motivo.trim(), usuario: getUserName(), cicloAnteriorAbertura: _inicioCicloVaga(v), cicloAnteriorEncerramento: v.dataEncerramento||null, cicloAnteriorQtdFechadas:v.qtdFechadas||0, cicloAnteriorDossie:v.dataDossieManual||null }];
+  const atualizada = { ...v, status:'aberta', dataReabertura: hoje, motivoReabertura: motivo.trim(), historicoReaberturas: hist, dataEncerramento:null, dataDossieManual:null, qtdFechadas:0 };
   try{
     await upsertVaga(atualizada);
     _localUpsert(_vagas, atualizada);
@@ -4228,7 +4239,9 @@ function renderDashboard(){
   const temposDetalhe = vagasEncerradas.map(v=>{
     const corridos = diasCorridosCalendario(_inicioCicloVaga(v), v.dataEncerramento);
     const trabalhados = Math.round(corridos*5/7);
-    const dDossie = v.dataDossieManual ? v.dataDossieManual : dataDossieVaga(v.id, candsParaCalc);
+    const inicio=_inicioCicloVaga(v), fim=v.dataEncerramento;
+    const manual=v.dataDossieManual;
+    const dDossie = manual && manual>=inicio && manual<=fim ? manual : dataDossieVaga(v.id,candsParaCalc,inicio,fim);
     const diasLaVie = dDossie ? diasCorridosCalendario(_inicioCicloVaga(v), dDossie) : null;
     const diasCliente = dDossie ? diasCorridosCalendario(dDossie, v.dataEncerramento) : null;
     return {v, corridos, trabalhados, dDossie, diasLaVie, diasCliente};
@@ -4242,7 +4255,7 @@ function renderDashboard(){
   const statusVagasEl = document.getElementById('dash-status-vagas');
   if(statusVagasEl){
     const linhas = vagas.map(v=>{
-      const aprovado = candsParaCalc.find(c=>c.vagaId===v.id && c.etapa==='aprovacao');
+      const aprovado = candsParaCalc.find(c=>_candidatoNoCicloVaga(c,v) && c.etapa==='aprovacao');
       // Ordenação: fechadas ordenadas da mais rápida pra mais lenta primeiro,
       // "Em Decisão" depois, e "Em Aberto" sempre por último (ainda não tem
       // tempo de fechamento pra comparar, então não faz sentido misturar).
@@ -4251,8 +4264,7 @@ function renderDashboard(){
       // que não há um status de "desligado"). Usamos o registro mais recente
       // (e, se houve reabertura, só os posteriores a ela) como o vigente.
       const avancados = candsParaCalc.filter(c=>c.vagaId===v.id && (c.etapa==='admissao'||c.etapa==='aprovacao'));
-      const avancadosCicloAtual = v.dataReabertura ? avancados.filter(c=>c.criadoEm && c.criadoEm >= v.dataReabertura) : avancados;
-      const pool = avancadosCicloAtual.length ? avancadosCicloAtual : avancados;
+      const pool = avancados.filter(c=>_candidatoNoCicloVaga(c,v));
       // Prioriza quem já está em Admissão (contratado de fato) sobre quem só
       // está em Aprovação (decisão ainda pendente) — sem isso, um candidato
       // parado em aprovação com registro mais recente ganhava de quem
@@ -4263,7 +4275,7 @@ function renderDashboard(){
       });
       const admitido = poolOrdenado[0];
       let statusHtml, dias, diasNum=null, grupo;
-      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Encerrada</span>'; dias='-'; grupo=1; }
+      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Cancelada</span>'; dias='-'; grupo=1; }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
@@ -4306,8 +4318,8 @@ function renderDashboard(){
       const td2 = temposDetalhe.find(t=>t.v.id===v.id);
       const divisaoHtml = (td2 && td2.diasLaVie!==null)
         ? `<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bege-lt);min-width:90px">
-             <div style="width:${Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100)}%;background:${CH.green}"></div>
-             <div style="width:${100-Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100)}%;background:${CH.gold}"></div>
+             <div style="width:${((td2.diasLaVie+td2.diasCliente)>0?Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100):0)}%;background:${CH.green}"></div>
+             <div style="width:${100-((td2.diasLaVie+td2.diasCliente)>0?Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100):0)}%;background:${CH.gold}"></div>
            </div>
            <div style="font-size:10px;color:var(--light);margin-top:2px">${td2.diasLaVie}d La Vie · ${td2.diasCliente}d Cliente</div>`
         : '<span style="font-size:11px;color:var(--light)">—</span>';
