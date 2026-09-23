@@ -49,7 +49,7 @@ test('todos os formulários aguardam envio, separam arquivos e detectam erro da 
  for(const f of fs.readdirSync(path.join(root,'vagas')).filter(f=>f.startsWith('forms-'))){
   const src=read('vagas/'+f);assert.match(src,/await pushCandidatoParaRS\(/,f);
   let docs;const c=ctx({rsDb:{},db:{rpc:async()=>({data:{cv_url:'a.pdf\nb.pdf'}})},montarDossieMatch:()=>'',_lvReceberComRetentativa:async p=>{docs=p.p_documentos;return {ok:true}}});
-  vm.runInContext(fn(src,'pushCandidatoParaRS'),c);await c.pushCandidatoParaRS({email:'teste@example.invalid',nome:'Teste',vaga_titulo:'Teste'});assert.ok(docs,f+' não enviou payload');assert.equal(docs.length,2,f);assert.equal(docs[1].path,'b.pdf');
+  vm.runInContext(read('resultados-rs.js'),c);vm.runInContext(fn(src,'pushCandidatoParaRS'),c);await c.pushCandidatoParaRS({email:'teste@example.invalid',nome:'Teste',vaga_titulo:'Teste'});assert.ok(docs,f+' não enviou payload');assert.equal(docs.length,3,f);assert.equal(docs[2].resultadoSite,'formulario');assert.equal(docs[1].path,'b.pdf');
   assert.match(fn(src,'_registrarPendenciaRS'),/if\(erroFila\)throw erroFila/,f);
  }
 });

@@ -550,7 +550,14 @@ async function loadPendenciasRS() {
 // novo, atualiza o contador e a mensagem de erro para dar pista do motivo.
 async function reenviarPendenciaRS(p) {
   const payload = { nome: p.nome, email: p.email, whatsapp: p.whatsapp, vaga_titulo: p.vaga_titulo };
-  const r = await pushCandidaturaParcialParaRS(payload, p.cv_url);
+  let r;
+  if(p.payload_rs){
+    try{
+      const {data,error}=await rsDb.rpc('lv_receber_candidato_do_site',p.payload_rs);
+      const resposta=Array.isArray(data)?data[0]:data;
+      r=error?{ok:false,err:error.message}:{ok:resposta?.ok===true,err:resposta?.motivo};
+    }catch(e){r={ok:false,err:e.message};}
+  }else r=await pushCandidaturaParcialParaRS(payload,p.cv_url);
   if (r && r.ok) {
     try { const {error}=await db.from('rs_sync_pendentes').delete().eq('id', p.id); if(error)throw error; } catch (e) { return {ok:false,err:'Enviado ao R&S, mas não foi possível atualizar a fila: '+e.message}; }
     return { ok: true };

@@ -217,6 +217,7 @@ td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align:
 .pdf-btn:hover { border-color: #8C7F6C; color: #302F2C; }
 .del-btn:hover { border-color: #c0392b; color: #c0392b; }
 </style>
+<script src="/resultados-rs.js?v=1"></script>
 </head>
 <body>
 
@@ -653,6 +654,7 @@ async function _registrarPendenciaRS(payload, erro) {
   if (!db) return;
   try {
     const {error: erroFila} = await db.from('rs_sync_pendentes').insert({
+      payload_rs: payload,
       nome: payload.p_nome || null,
       email: payload.p_email || null,
       whatsapp: payload.p_telefone || null,
@@ -729,6 +731,7 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
     // candidato não tem login, então toda gravação era recusada em silêncio.
     // A função descobre a empresa a partir da vaga, cuida de não duplicar e
     // não rebaixa a etapa de quem já avançou no processo.
+    documentos.push(lvResultadoDocumento('disc', {...r, vaga_titulo:vagaTitulo}));
     const payloadRS = {
       p_nome: r.name,
       p_email: emailNorm,

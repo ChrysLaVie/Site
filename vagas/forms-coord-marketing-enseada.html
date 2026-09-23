@@ -154,6 +154,7 @@ textarea:focus { border-color: var(--charcoal); }
   .nav-tag { font-size: 0.55rem; }
 }
 </style>
+<script src="/resultados-rs.js?v=1"></script>
 </head>
 <body>
 
@@ -264,6 +265,7 @@ async function _registrarPendenciaRS(payload, erro) {
   if (!db) return;
   try {
     const {error: erroFila} = await db.from('rs_sync_pendentes').insert({
+      payload_rs: payload,
       nome: payload.p_nome || null,
       email: payload.p_email || null,
       whatsapp: payload.p_telefone || null,
@@ -328,6 +330,7 @@ async function pushCandidatoParaRS(formPayload) {
       enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
     }));
 
+    documentos.push(lvResultadoDocumento('formulario', formPayload));
     const payloadRS = {
       p_nome: formPayload.nome,
       p_email: emailNorm,
@@ -369,7 +372,7 @@ async function saveForm(payload) {
   try {
     const { error } = await db.from('forms_enseada_bacuris').insert(payload);
     if (error) return { ok:false, err:error.message };
-    return { ok:true };
+    return { ok:true, payload };
   } catch(e) { return { ok:false, err:e.message }; }
 }
 
@@ -519,6 +522,7 @@ function renderForm() {
 
     if (result.ok) {
       await pushCandidatoParaRS({
+        ...result.payload,
         nome: nome.value.trim(),
         email: email.value.trim(),
         whatsapp: whatsapp.value.trim(),
