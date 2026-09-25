@@ -135,6 +135,14 @@ input:focus { outline: none; border-color: var(--charcoal); }
 .sort-tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
 .sort-handle { color: var(--sand-dark); font-size: 18px; flex-shrink: 0; margin-left: 4px; }
 .sort-tip { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; letter-spacing: 0.04em; }
+.sort-move { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.sort-move button {
+  width: 30px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--white); color: var(--charcoal); font-size: 11px; cursor: pointer; line-height: 1;
+}
+.sort-move button:disabled { opacity: .3; cursor: default; }
+.sort-warn { display: none; margin-top: 14px; }
+.sort-warn.show { display: block; }
 
 /* RESULT */
 .result-header { margin-bottom: 28px; }
@@ -191,6 +199,14 @@ td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align:
   .bar-row { grid-template-columns: 100px 1fr 40px; }
   .two-col { grid-template-columns: 1fr; }
   .title { font-size: 28px; }
+  /* No celular o selo "Mais/Menos parecido comigo" disputava a linha com a
+     frase e deixava uma palavra por linha. Ele desce para baixo da frase. */
+  .sort-item { flex-wrap: wrap; gap: 8px 12px; padding: 14px; }
+  .sort-phrase { flex: 1 1 0; min-width: 0; }
+  .sort-tag { order: 5; flex-basis: 100%; padding-left: 38px; font-size: 9px; }
+  .sort-tag:empty { display: none; }
+  .sort-handle { display: none; }
+  .sort-move button { width: 36px; height: 30px; font-size: 13px; }
 }
 
 /* ── Cabeçalho no celular ─────────────────────────────────────
@@ -901,6 +917,9 @@ function renderTest() {
   const dims = ['D', 'I', 'S', 'C'];
   // Embaralhar ordem de exibição
   let order = shuffleSemVies(dims);
+  // Só libera "Próxima" depois que a pessoa mexer na ordem pelo menos uma vez.
+  // Sem isso dava para clicar 24 vezes seguidas e gerar um perfil sem valor.
+  let mexeu = false;
 
   const RANK_COLORS = ['#2C2B28', '#6B7A5E', '#B08A3E', '#C4BFB4'];
   const RANK_LABELS = ['Mais parecido comigo', '', '', 'Menos parecido comigo'];
@@ -922,11 +941,16 @@ function renderTest() {
               <span class="sort-rank" style="background:${RANK_COLORS[rankIdx]}">${rankIdx + 1}</span>
               <span class="sort-phrase">${roundData[dim]}</span>
               <span class="sort-tag">${RANK_LABELS[rankIdx]}</span>
+              <span class="sort-move">
+                <button type="button" class="mv-up" aria-label="Subir" ${rankIdx === 0 ? 'disabled' : ''}>▲</button>
+                <button type="button" class="mv-down" aria-label="Descer" ${rankIdx === 3 ? 'disabled' : ''}>▼</button>
+              </span>
               <span class="sort-handle">⠿</span>
             </div>
           `).join('')}
         </div>
-        <p class="sort-tip">No celular: segure e arraste para reordenar</p>
+        <p class="sort-tip">Arraste as frases ou use as setas ▲▼ para reordenar</p>
+        <div class="warning-box sort-warn" id="sortWarn">Organize as frases antes de continuar: coloque em 1º a que mais combina com você e em 4º a que menos combina.</div>
         <div class="btn-row">
           <button class="btn-ghost" id="backBtn" ${state.round === 0 ? 'disabled' : ''}>← Voltar</button>
           <button class="btn-primary" id="nextBtn">${state.round === ROUNDS_N - 1 ? 'Ver meu resultado →' : 'Próxima →'}</button>
@@ -959,13 +983,18 @@ function renderTest() {
         if (items.indexOf(dragSrc) < items.indexOf(item)) item.after(dragSrc);
         else item.before(dragSrc);
         order = [...list.querySelectorAll('.sort-item')].map(el => el.dataset.dim);
+        mexeu = true;
         draw();
       });
 
       // Touch
       let ty0 = 0;
-      item.addEventListener('touchstart', e => { ty0 = e.touches[0].clientY; item.classList.add('dragging'); }, { passive: true });
+      // Toque nas setas ▲▼ não é arraste: sem isso o touchend redesenhava a
+      // lista antes do clique chegar ao botão.
+      const noBotao = e => e.target.closest && e.target.closest('.sort-move');
+      item.addEventListener('touchstart', e => { if (noBotao(e)) return; ty0 = e.touches[0].clientY; item.classList.add('dragging'); }, { passive: true });
       item.addEventListener('touchmove', e => {
+        if (noBotao(e)) return;
         e.preventDefault();
         const y = e.touches[0].clientY;
         const els = [...list.querySelectorAll('.sort-item')];
@@ -975,12 +1004,26 @@ function renderTest() {
           if (y > r.top && y < r.bottom) {
             if (els.indexOf(item) < els.indexOf(el)) el.after(item);
             else el.before(item);
+            mexeu = true;
           }
         });
       }, { passive: false });
-      item.addEventListener('touchend', () => {
+      item.addEventListener('touchend', e => {
+        if (noBotao(e)) return;
         item.classList.remove('dragging');
         order = [...list.querySelectorAll('.sort-item')].map(el => el.dataset.dim);
+        draw();
+      });
+    });
+
+    list.querySelectorAll('.mv-up, .mv-down').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const i = order.indexOf(btn.closest('.sort-item').dataset.dim);
+        const j = btn.classList.contains('mv-up') ? i - 1 : i + 1;
+        if (j < 0 || j > 3) return;
+        [order[i], order[j]] = [order[j], order[i]];
+        mexeu = true;
         draw();
       });
     });
@@ -999,6 +1042,10 @@ function renderTest() {
     });
 
     document.getElementById('nextBtn').addEventListener('click', () => {
+      if (!mexeu) {
+        document.getElementById('sortWarn').classList.add('show');
+        return;
+      }
       // Pontuação: 1o = +3, 2o = +1, 3o = -1, 4o = -3
       const pts = [3, 1, -1, -3];
       order.forEach((dim, i) => { state.scores[dim] += pts[i]; });

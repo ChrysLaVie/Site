@@ -217,8 +217,16 @@ const PERFIL_QUESTIONS = [
   { id: 'p5', q: 'Onde você se vê em sua carreira daqui a um ano?' },
   { id: 'p6', q: 'Você mora em qual bairro e cidade? Isso pode impactar sua rotina de deslocamento até a filial Parque Amazônia?' },
   { id: 'p7', q: 'Você tem algum relacionamento (amigos, familiares, parceiros) com alguém da empresa?' },
-  { id: 'p8', q: 'Cite dois pontos positivos e dois aspectos que você gostaria de desenvolver em si mesma(o).' },
-  { id: 'p9', q: 'Qual o seu valor ideal de ganho mensal?' }
+  { id: 'p8', q: 'Cite dois pontos positivos e dois aspectos que você gostaria de desenvolver em si mesma(o).' }
+];
+
+// Perguntas de múltipla escolha no topo do formulário: filtram a triagem sem
+// depender de ler texto livre. As respostas vão junto com as de perfil.
+const TRIAGEM_QUESTIONS = [
+  { id: 't1', q: 'Quanto tempo de experiência você tem com vendas?', opcoes: ['Nenhuma', 'Menos de 1 ano', 'De 1 a 2 anos', 'Mais de 2 anos'] },
+  { id: 't2', q: 'Você já vendeu produtos de segurança eletrônica (CFTV, alarmes, cercas elétricas, controle de acesso ou automação de portões)?', opcoes: ['Sim', 'Não'] },
+  { id: 't3', q: 'Você já usou CRM ou sistema de vendas (ERP) no trabalho?', opcoes: ['Sim', 'Não'] },
+  { id: 't4', q: 'Se aprovado(a), quando pode começar?', opcoes: ['Imediatamente', 'Em até 15 dias', 'Em até 30 dias', 'Mais de 30 dias'] }
 ];
 
 const COMERCIAL_QUESTIONS = [
@@ -226,7 +234,7 @@ const COMERCIAL_QUESTIONS = [
   { id: 'c2', q: 'Qual é o seu nível de experiência com computadores, sistemas de vendas (ERP), controle de pedidos e emissão de notas fiscais?' },
   { id: 'c3', q: 'Hoje em dia parte da venda acontece pelo WhatsApp e redes sociais, além do atendimento em loja. Qual é o seu nível de facilidade para negociar e atender clientes por WhatsApp, vídeo ou áudio?' },
   { id: 'c4', q: 'Imagine a seguinte situação: um cliente entra em contato (loja ou WhatsApp) buscando um kit de câmeras de segurança para o comércio dele, mas está em dúvida sobre qual solução escolher e negociando prazo e forma de pagamento. O que você faria para fechar essa venda?' },
-  { id: 'c5', q: 'Qual foi o seu melhor resultado trabalhando com vendas?' },
+  { id: 'c5', q: 'Qual foi o seu melhor resultado trabalhando com vendas, em números? (ex.: meta batida, volume vendido no mês, ticket médio)' },
   { id: 'c6', q: 'Em até 8 linhas, convença o recrutador a contratar você para esta vaga. Considere que ele tem apenas 1 minuto para tomar a decisão.' },
   { id: 'c7', q: 'Um cliente diz: "Gostei do produto, confio em você, mas vou comprar em outro fornecedor porque ficou mais barato." Você terá apenas uma mensagem de WhatsApp para responder. Escreva exatamente o que enviaria.' }
 ];
@@ -302,6 +310,8 @@ async function pushCandidatoParaRS(formPayload) {
     if (discPrimary) {
       obs += ` Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
     }
+    const triagem = (formPayload.respostas_perfil || []).filter(r => String(r.pergunta || '').startsWith('[Triagem]'));
+    if (triagem.length) obs += ` Triagem: ${triagem.map(r => String(r.pergunta).replace('[Triagem] ', '').replace(/\?.*$/, '?') + ' ' + r.resposta).join(' | ')}.`;
     if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
 
     // O R&S abre documentos por "path" (link temporário, bucket privado). Com o
@@ -432,6 +442,12 @@ function renderForm() {
     </div>
 
     <div class="card">
+      <h3>Triagem rápida</h3>
+      <p class="body-text" style="margin-bottom:1.2rem;">Marque a opção que melhor descreve você.</p>
+      <div id="triagemList"></div>
+    </div>
+
+    <div class="card">
       <h3>Sobre você</h3>
       <p class="body-text" style="margin-bottom:1.2rem;">Responda com atenção e da forma mais completa possível. Não existem respostas certas ou erradas; use exemplos reais sempre que puder.</p>
       <div id="perfilList"></div>
@@ -447,16 +463,8 @@ function renderForm() {
       <h3>Seus dados</h3>
       <label class="field-label">Nome completo *</label>
       <input type="text" id="f-nome" placeholder="Seu nome completo" value="${esc(prefill.nome)}">
-      <div class="field-row">
-        <div>
-          <label class="field-label">Idade *</label>
-          <input type="text" id="f-idade" placeholder="Ex: 28 anos">
-        </div>
-        <div>
-          <label class="field-label">WhatsApp *</label>
-          <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
-        </div>
-      </div>
+      <label class="field-label">WhatsApp *</label>
+      <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
       <label class="field-label">E-mail *</label>
       <input type="email" id="f-email" placeholder="seu@email.com" value="${esc(prefill.email)}">
       <div id="formError" style="display:none"></div>
@@ -474,11 +482,19 @@ function renderForm() {
       </div>
     `).join('');
   }
+  document.getElementById('triagemList').innerHTML = TRIAGEM_QUESTIONS.map((item, i) => `
+    <div class="quiz-q" data-id="${item.id}">
+      <div class="quiz-q-title"><span class="quiz-num">${i + 1}.</span>${esc(item.q)}</div>
+      <select id="ans-${item.id}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.95rem;color:var(--ink);">
+        <option value="">Selecione...</option>
+        ${item.opcoes.map(o => `<option>${esc(o)}</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
   renderQuestionBlock('perfilList', PERFIL_QUESTIONS);
   renderQuestionBlock('comercialList', COMERCIAL_QUESTIONS);
 
   const nome = document.getElementById('f-nome');
-  const idade = document.getElementById('f-idade');
   const email = document.getElementById('f-email');
   const whatsapp = document.getElementById('f-whatsapp');
   const cClt = document.getElementById('c-clt');
@@ -487,7 +503,7 @@ function renderForm() {
   const submitBtn = document.getElementById('submitBtn');
 
   function allQuestionsAnswered() {
-    return [...PERFIL_QUESTIONS, ...COMERCIAL_QUESTIONS].every(item => {
+    return [...TRIAGEM_QUESTIONS, ...PERFIL_QUESTIONS, ...COMERCIAL_QUESTIONS].every(item => {
       const el = document.getElementById(`ans-${item.id}`);
       return el && el.value.trim().length > 0;
     });
@@ -496,14 +512,14 @@ function renderForm() {
   function check() {
     submitBtn.disabled = !(
       nome.value.trim() &&
-      idade.value.trim() &&
       email.value.includes('@') &&
       whatsapp.value.trim() &&
       cClt.checked && cRem.checked && cPres.checked &&
       allQuestionsAnswered()
     );
   }
-  [nome, idade, email, whatsapp, cClt, cRem, cPres].forEach(el => el.addEventListener('input', check));
+  [nome, email, whatsapp, cClt, cRem, cPres].forEach(el => el.addEventListener('input', check));
+  document.getElementById('triagemList').addEventListener('change', check);
   document.getElementById('perfilList').addEventListener('input', check);
   document.getElementById('comercialList').addEventListener('input', check);
 
@@ -516,12 +532,13 @@ function renderForm() {
       pergunta: item.q,
       resposta: (document.getElementById(`ans-${item.id}`).value || '').trim()
     }));
-    const respostasPerfil = collectAnswers(PERFIL_QUESTIONS);
+    const respostasPerfil = collectAnswers(TRIAGEM_QUESTIONS).map(r => ({ ...r, pergunta: '[Triagem] ' + r.pergunta }))
+      .concat(collectAnswers(PERFIL_QUESTIONS));
     const respostasComerciais = collectAnswers(COMERCIAL_QUESTIONS);
 
     const result = await saveForm({
       nome: nome.value.trim(),
-      idade: idade.value.trim(),
+      idade: null,
       email: email.value.trim(),
       whatsapp: whatsapp.value.trim(),
       vaga_titulo: prefill.vaga,
@@ -694,7 +711,7 @@ function buildSubmissionPDF(s) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(...SOFT);
-  doc.text(pdfSafe(`${s.email || ''} · ${s.whatsapp || ''} · Idade: ${s.idade || '-'} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`), M, y);
+  doc.text(pdfSafe(`${s.email || ''} · ${s.whatsapp || ''}${s.idade ? ' · Idade: ' + s.idade : ''} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`), M, y);
   y += 12;
   doc.text(pdfSafe(`Vaga: ${s.vaga_titulo || ''}`), M, y);
   y += 26;
