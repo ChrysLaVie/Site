@@ -447,16 +447,8 @@ function renderForm() {
       <h3>Seus dados</h3>
       <label class="field-label">Nome completo *</label>
       <input type="text" id="f-nome" placeholder="Seu nome completo" value="${esc(prefill.nome)}">
-      <div class="field-row">
-        <div>
-          <label class="field-label">Idade *</label>
-          <input type="text" id="f-idade" placeholder="Ex: 28 anos">
-        </div>
-        <div>
-          <label class="field-label">WhatsApp *</label>
-          <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
-        </div>
-      </div>
+      <label class="field-label">WhatsApp *</label>
+      <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
       <label class="field-label">E-mail *</label>
       <input type="email" id="f-email" placeholder="seu@email.com" value="${esc(prefill.email)}">
       <div id="formError" style="display:none"></div>
@@ -478,7 +470,6 @@ function renderForm() {
   renderQuestionBlock('comercialList', COMERCIAL_QUESTIONS);
 
   const nome = document.getElementById('f-nome');
-  const idade = document.getElementById('f-idade');
   const email = document.getElementById('f-email');
   const whatsapp = document.getElementById('f-whatsapp');
   const cClt = document.getElementById('c-clt');
@@ -496,14 +487,13 @@ function renderForm() {
   function check() {
     submitBtn.disabled = !(
       nome.value.trim() &&
-      idade.value.trim() &&
       email.value.includes('@') &&
       whatsapp.value.trim() &&
       cClt.checked && cRem.checked && cPres.checked &&
       allQuestionsAnswered()
     );
   }
-  [nome, idade, email, whatsapp, cClt, cRem, cPres].forEach(el => el.addEventListener('input', check));
+  [nome, email, whatsapp, cClt, cRem, cPres].forEach(el => el.addEventListener('input', check));
   document.getElementById('perfilList').addEventListener('input', check);
   document.getElementById('comercialList').addEventListener('input', check);
 
@@ -521,7 +511,7 @@ function renderForm() {
 
     const result = await saveForm({
       nome: nome.value.trim(),
-      idade: idade.value.trim(),
+      idade: null,
       email: email.value.trim(),
       whatsapp: whatsapp.value.trim(),
       vaga_titulo: prefill.vaga,
@@ -694,7 +684,7 @@ function buildSubmissionPDF(s) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(...SOFT);
-  doc.text(pdfSafe(`${s.email || ''} · ${s.whatsapp || ''} · Idade: ${s.idade || '-'} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`), M, y);
+  doc.text(pdfSafe(`${s.email || ''} · ${s.whatsapp || ''}${s.idade ? ' · Idade: ' + s.idade : ''} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`), M, y);
   y += 12;
   doc.text(pdfSafe(`Vaga: ${s.vaga_titulo || ''}`), M, y);
   y += 26;

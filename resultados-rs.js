@@ -30,3 +30,67 @@ function lvAbrirResultado(doc){
   tela.document.write(lvResultadoHtml(doc));
   tela.document.close();
 }
+
+// Mapa vaga -> formulário, usado pelo DISC (redireciona para o formulário) e
+// pelo R&S (link nos avisos de etapa pendente). Fica dentro de uma função
+// para as constantes não colidirem com as páginas que carregam este arquivo.
+const lvFormsUrlParaVaga = (() => {
+  // Cada vaga tem seu próprio formulário, com perguntas técnicas do cargo.
+  // Vaga sem formulário cadastrado NÃO é redirecionada: o candidato encerra aqui,
+  // para não responder um questionário técnico de outro cargo e receber uma nota
+  // que não é dele.
+  const FORMS_GERENTE_CAPTACAO  = 'https://lavieconsultoria.com/vagas/forms-gerente-captacao.html';
+  const FORMS_COORD_INSTITUTO   = 'https://lavieconsultoria.com/vagas/forms-coord-instituto.html';
+  const FORMS_GERENTE_MARKETING = 'https://lavieconsultoria.com/vagas/forms-gerente-marketing.html';
+  const FORMS_COORD_RELACIONAMENTO = 'https://lavieconsultoria.com/vagas/forms-coord-relacionamento.html';
+  const FORMS_MOTORISTA = 'https://lavieconsultoria.com/vagas/forms-motorista.html';
+  const FORMS_COORD_COMERCIALIZACAO = 'https://lavieconsultoria.com/vagas/forms-coord-comercializacao.html';
+  const FORMS_COORD_ACADEMICO = 'https://lavieconsultoria.com/vagas/forms-coord-academico.html';
+  const FORMS_DUCARMO_VENDEDORA = 'https://lavieconsultoria.com/vagas/forms-ducarmo-vendedora.html';
+  const FORMS_CONSULTOR_ESPECIALISTA = 'https://lavieconsultoria.com/vagas/forms-consultor-protecao-veicular.html';
+  const FORMS_VENDAS_EDUCACIONAL = 'https://lavieconsultoria.com/vagas/forms-consultor-vendas-educacional.html';
+  const FORMS_ANALISTA_MARKETING = 'https://lavieconsultoria.com/vagas/forms-analista-marketing.html';
+  const FORMS_SECRETARIA = 'https://lavieconsultoria.com/vagas/forms-secretaria.html';
+  const FORMS_ENSEADA_BACURIS = 'https://lavieconsultoria.com/vagas/forms-coord-marketing-enseada.html';
+  const FORMS_AUX_DP = 'https://lavieconsultoria.com/vagas/forms-aux-dp.html';
+  const FORMS_ROMA_CONSULTOR_VENDAS = 'https://lavieconsultoria.com/vagas/forms-roma-consultor-vendas.html';
+
+  const VAGAS_COM_FORMS_PROPRIO = {
+    'Gerente de Captação de Alunos e Televendas':            FORMS_GERENTE_CAPTACAO,
+    'Coordenador de Instituto Tecnológico':                  FORMS_COORD_INSTITUTO,
+    'Gerente de Marketing':                                  FORMS_GERENTE_MARKETING,
+    'Coordenador de Relacionamento e Experiência do Aluno':  FORMS_COORD_RELACIONAMENTO,
+    'Motorista Carreteiro':                                 FORMS_MOTORISTA,
+    'Coordenador(a) Geral de Comercialização':               FORMS_COORD_COMERCIALIZACAO,
+    'Coordenador(a) Acadêmico':                              FORMS_COORD_ACADEMICO,
+    'Consultor(a) de Vendas':                                FORMS_DUCARMO_VENDEDORA,
+    'Consultor(a) de Vendas · Educacional':                  FORMS_VENDAS_EDUCACIONAL,
+    'Consultor Especialista':                                FORMS_CONSULTOR_ESPECIALISTA,
+    'Analista de Marketing':                                 FORMS_ANALISTA_MARKETING,
+    'Secretária':                                            FORMS_SECRETARIA,
+    'Coordenador(a) de Marketing e Comercial - Enseada dos Bacuris': FORMS_ENSEADA_BACURIS,
+    'Aux. de Departamento Pessoal':                          FORMS_AUX_DP,
+    'Consultor(a) de Vendas Interno':                        FORMS_ROMA_CONSULTOR_VENDAS
+  };
+
+  // Retorna a URL do formulário da vaga, ou null se a vaga não tiver um.
+  function formsUrlParaVaga(titulo) {
+    const t = (titulo || '').trim();
+    if (VAGAS_COM_FORMS_PROPRIO[t]) return VAGAS_COM_FORMS_PROPRIO[t];
+    // Comparação tolerante a acento, caixa e espaço extra
+    const norm = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                       .toLowerCase().replace(/\s+/g, ' ').trim();
+    const alvo = norm(t);
+    const achado = Object.keys(VAGAS_COM_FORMS_PROPRIO).find(k => norm(k) === alvo);
+    if (achado) return VAGAS_COM_FORMS_PROPRIO[achado];
+    // Comparação por aproximação (contém): cobre título cadastrado com sufixo/prefixo
+    // extra no site das vagas (ex.: "Gerente de Marketing - Home Office"), evitando que
+    // uma pequena diferença de cadastro derrube o candidato do fluxo silenciosamente.
+    const parecido = Object.keys(VAGAS_COM_FORMS_PROPRIO).find(k => {
+      const nk = norm(k);
+      return nk.length > 3 && (alvo.includes(nk) || nk.includes(alvo));
+    });
+    return parecido ? VAGAS_COM_FORMS_PROPRIO[parecido] : null;
+  }
+  return formsUrlParaVaga;
+})();
