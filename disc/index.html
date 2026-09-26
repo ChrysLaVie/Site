@@ -583,6 +583,17 @@ const incoming = {
 // compartilhado com o R&S para montar o link nos avisos de etapa pendente.
 const formsUrlParaVaga = lvFormsUrlParaVaga;
 
+// Link do e-mail de etapa pendente para quem já fez o DISC (?ir=formulario):
+// segue direto para o formulário da vaga, sem refazer o teste. O e-mail é
+// montado no banco, que não conhece o mapa vaga -> formulário.
+if (urlParams.get('ir') === 'formulario') {
+  const destino = formsUrlParaVaga(incoming.vaga);
+  if (destino) {
+    const p = new URLSearchParams({ nome: incoming.nome, email: incoming.email, telefone: incoming.telefone, vaga: incoming.vaga });
+    window.location.replace(`${destino}?${p.toString()}`);
+  }
+}
+
 // ── REDE DE SEGURANÇA ──────────────────────────────────────────────────────────
 // Se a vaga não tiver formulário técnico próprio nem for reconhecida por
 // aproximação, o candidato ainda assim NÃO deve sumir: registramos no painel do
