@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Formulário da Vaga · Coordenador(a) Financeiro e de Gestão · La Vie Consultoria</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 17.5px; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--charcoal); font-weight: 300; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+:root {
+  --bg: #F2F1ED; --bg-alt: #E8E4DE; --dark: #1a1917; --charcoal: #302F2C; --muted: #58554E;
+  --sand: #D8CFC4; --sand-dark: #8C7F6C; --white: #FFFFFF; --border: rgba(58,58,58,0.14);
+  --radius: 4px; --ok: #4A7A42; --ok-bg: #e8ece2; --err: #c0392b; --err-bg: #fbeae7;
+}
+.eyebrow { display: block; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.25em; text-transform: uppercase; color: var(--sand-dark); margin-bottom: 1rem; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem,3.4vw,2.6rem); font-weight: 300; line-height: 1.15; margin-bottom: 1rem; color: var(--charcoal); }
+.section-title em { font-style: italic; color: var(--dark); }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 5vw; background: rgba(26,25,23,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.07); }
+.nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+.nav-logo img { height: 46px; width: 46px; border-radius: 50%; object-fit: cover; }
+.nav-logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: #F2F1ED; line-height: 1.2; }
+.nav-logo-text em { font-style: italic; }
+.nav-tag { font-family: 'DM Sans', sans-serif; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242,241,237,0.55); }
+.nav-admin-btn { background: rgba(242,241,237,0.1); border: 1px solid rgba(242,241,237,0.2); color: #F2F1ED; font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; padding: 8px 16px; border-radius: var(--radius); cursor: pointer; transition: all .15s; }
+.nav-admin-btn:hover { background: rgba(242,241,237,0.18); border-color: rgba(242,241,237,0.4); }
+.admin-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.4rem; flex-wrap: wrap; gap: 1rem; }
+.back-link { font-size: 0.78rem; color: var(--muted); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 1.4rem; font-family: inherit; }
+.back-link:hover { color: var(--charcoal); }
+.admin-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.2rem; padding: 1.3rem 1.6rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--white); margin-bottom: 0.7rem; transition: border-color 0.2s; }
+.admin-row:hover { border-color: var(--sand-dark); }
+.admin-row-info h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 500; color: var(--charcoal); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.admin-row-info p { font-size: 0.78rem; color: var(--muted); }
+.score-pill { font-family: 'DM Sans', sans-serif; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.6rem; border-radius: 99px; background: var(--bg-alt); color: var(--charcoal); }
+.score-pill.high { background: var(--ok-bg); color: var(--ok); }
+.score-pill.low { background: var(--err-bg); color: var(--err); }
+.admin-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.admin-row-actions button { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.45rem 0.8rem; border-radius: var(--radius); border: none; background: none; cursor: pointer; color: var(--sand-dark); font-family: inherit; transition: color 0.15s; white-space: nowrap; }
+.admin-row-actions button:hover { color: var(--charcoal); }
+.admin-row-actions button.danger:hover { color: var(--err); }
+#app { max-width: 720px; margin: 0 auto; padding: 150px 20px 90px; }
+.hero { margin-bottom: 2.4rem; }
+.hero p.lead { color: var(--muted); font-size: 0.95rem; line-height: 1.85; font-weight: 300; }
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.2rem; margin-bottom: 1.4rem; }
+.card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 500; color: var(--charcoal); margin-bottom: 1rem; }
+.card p.body-text { font-size: 0.92rem; line-height: 1.85; color: var(--charcoal); font-weight: 300; }
+.scope-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.scope-list li { font-size: 0.86rem; color: var(--charcoal); line-height: 1.6; padding: 0.6rem 0.9rem; background: var(--bg); border-radius: var(--radius); }
+.check-block { display: flex; gap: 0.7rem; align-items: flex-start; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.check-block:last-of-type { border-bottom: none; }
+.check-block input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--charcoal); cursor: pointer; flex-shrink: 0; }
+.check-block label { font-size: 0.88rem; color: var(--charcoal); line-height: 1.6; font-weight: 300; cursor: pointer; }
+.check-block label strong { font-weight: 500; }
+.quiz-q { padding: 1.1rem 0; border-bottom: 1px solid var(--border); }
+.quiz-q:last-child { border-bottom: none; }
+.quiz-q-title { font-size: 0.9rem; color: var(--charcoal); font-weight: 500; margin-bottom: 0.7rem; line-height: 1.5; }
+.quiz-opt { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0; cursor: pointer; }
+.quiz-opt input[type=radio] { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--charcoal); cursor: pointer; flex-shrink: 0; }
+.quiz-opt label { font-size: 0.85rem; color: var(--charcoal); font-weight: 300; line-height: 1.5; cursor: pointer; }
+.quiz-num { display: inline-block; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; color: var(--sand-dark); margin-right: 0.4rem; }
+.open-q { padding: 1.1rem 0; border-bottom: 1px solid var(--border); }
+.open-q:last-child { border-bottom: none; }
+.open-q .quiz-q-title { margin-bottom: 0.3rem; }
+.open-q .field-hint { margin: 0 0 0.6rem; }
+.field-label { display: block; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sand-dark); font-weight: 600; margin-bottom: 0.5rem; margin-top: 1.1rem; }
+.field-label:first-of-type { margin-top: 0; }
+.field-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; font-weight: 300; }
+input[type=text], input[type=email], input[type=tel] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--charcoal); outline: none; transition: border-color 0.2s; }
+input:focus { border-color: var(--charcoal); }
+textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--charcoal); outline: none; resize: vertical; }
+textarea:focus { border-color: var(--charcoal); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.btn-primary { display: inline-block; background: var(--charcoal); color: var(--white); padding: 0.95rem 2.2rem; border: none; border-radius: var(--radius); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.15s; width: 100%; font-family: inherit; }
+.btn-primary:hover { background: var(--dark); transform: translateY(-2px); }
+.btn-primary:disabled { background: var(--sand-dark); cursor: not-allowed; transform: none; }
+.pending-hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.7rem; text-align: center; }
+.loading-spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box { background: var(--err-bg); border-radius: var(--radius); padding: 0.8rem 1rem; font-size: 0.8rem; color: var(--err); margin-top: 1rem; }
+.success-card { text-align: center; padding: 3rem 2rem; }
+.success-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: var(--ok); margin-bottom: 0.8rem; }
+.success-card p { color: var(--muted); font-size: 0.92rem; line-height: 1.7; max-width: 46ch; margin: 0 auto; }
+@media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } .card { padding: 1.6rem; } }
+@media (max-width: 760px) {
+  nav { padding: 0.6rem 4vw; gap: 0.6rem; }
+  .nav-logo img { height: 36px; width: 36px; }
+  .nav-logo-text { display: none; }
+  .nav-admin-btn { display: none; }
+  .nav-tag { font-size: 0.6rem; letter-spacing: 0.08em; line-height: 1.35; text-align: right; max-width: 60vw; }
+  #app { padding-top: 110px; }
+}
+@media (max-width: 400px) { .nav-tag { font-size: 0.55rem; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://lavieconsultoria.com" class="nav-logo">
+    <img src="data:image/png;base64,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" alt="La Vie Consultoria">
+    <span class="nav-logo-text">La Vie <em>Consultoria</em></span>
+  </a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span class="nav-tag" id="navTag">Formulário da vaga</span>
+    <button class="nav-admin-btn" id="adminBtn">Painel do recrutador</button>
+  </div>
+</nav>
+
+<div id="app"></div>
+
+<script>
+(function(){
+
+const SUPABASE_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
+const TABELA = 'forms_coord_financeiro';
+// Precisa ser idêntico ao título da vaga no R&S (vaga cb1) para o candidato cair sozinho no sistema.
+const VAGA_TITULO_PADRAO = 'Coordenador Financeiro / Gestão';
+const VAGA_TITULO_EXIBICAO = 'Coordenador(a) Financeiro e de Gestão';
+
+const QUIZ = [
+  {
+    q: 'As mensalidades de dezembro foram faturadas em dezembro, mas parte dos alunos só pagou em janeiro. Como isso aparece nos relatórios de dezembro?',
+    options: [
+      'Só entra na DRE de janeiro, quando o dinheiro cai na conta',
+      'Entra como receita na DRE de dezembro (regime de competência) e o valor não pago aparece em contas a receber; no fluxo de caixa, a entrada só acontece em janeiro',
+      'Não entra em nenhum relatório até o aluno quitar a dívida',
+      'Entra no fluxo de caixa de dezembro e na DRE de janeiro'
+    ],
+    correct: 1
+  },
+  {
+    q: 'A Direção pede para reestruturar o plano de contas da instituição. Qual é o principal objetivo desse trabalho?',
+    options: [
+      'Reduzir o número de contas bancárias da instituição',
+      'Atender apenas uma exigência do contador externo',
+      'Padronizar a classificação de receitas e despesas, com centros de custo, para que DRE, orçamento e relatórios gerenciais sejam confiáveis e comparáveis mês a mês',
+      'Trocar o sistema de gestão (ERP) da instituição'
+    ],
+    correct: 2
+  },
+  {
+    q: 'O prazo médio de recebimento (PMR) subiu de 30 para 50 dias, com o faturamento estável. O que isso indica?',
+    options: [
+      'Que a instituição passou a ter mais lucro',
+      'Que o dinheiro está demorando mais para entrar, aumentando a necessidade de capital de giro e a pressão sobre o caixa; é sinal de que cobrança e inadimplência precisam de atenção',
+      'Que os fornecedores estão sendo pagos com mais atraso',
+      'Nada relevante, já que o faturamento não caiu'
+    ],
+    correct: 1
+  },
+  {
+    q: 'A instituição tem vários empréstimos bancários com taxas diferentes e o caixa está apertado. Qual o primeiro passo mais adequado para renegociar?',
+    options: [
+      'Parar de pagar as parcelas até o banco chamar para negociar',
+      'Contratar um novo empréstimo para quitar todos os outros, sem comparar custos',
+      'Levantar todo o endividamento (saldo, taxa, prazo e garantias), projetar o fluxo de caixa e priorizar a renegociação ou portabilidade das dívidas mais caras, propondo prazos que o caixa consiga honrar',
+      'Negociar primeiro a dívida de menor valor, por ser mais fácil'
+    ],
+    correct: 2
+  },
+  {
+    q: 'O módulo financeiro do sistema de gestão teve a implantação iniciada e parou no meio. A Direção cobra relatórios mensais de receita e despesa. Qual a conduta mais adequada?',
+    options: [
+      'Esperar a implantação terminar para só então entregar os relatórios',
+      'Informar à Direção que sem sistema não é possível gerar relatórios',
+      'Montar um controle provisório (planilha estruturada pelo plano de contas) para entregar os relatórios já no mês, reportar à Direção o status da implantação e combinar com TI e fornecedor um cronograma para concluir o módulo',
+      'Pedir a troca do sistema por outro imediatamente'
+    ],
+    correct: 2
+  }
+];
+
+// Perguntas abertas: o foco é entender escopo real, entrega e forma de reportar à Direção.
+const PERGUNTAS_ABERTAS = [
+  {
+    q: 'Conte sobre sua experiência mais recente em coordenação ou gerência administrativa e financeira: porte da empresa, tamanho da equipe que você liderou e quais áreas estavam sob sua responsabilidade.',
+    hint: 'Cite as áreas além do financeiro que você já coordenou (RH/DP, Jurídico, TI, Compras, Patrimônio, Logística), se houver.'
+  },
+  {
+    q: 'Você já estruturou ou reestruturou plano de contas, orçamento anual, previsão de receitas e despesas ou implantação de sistema de gestão (ERP)? Conte um caso: o que encontrou, o que fez, em quanto tempo e qual foi o resultado.',
+    hint: 'Queremos entender um caso real, com começo, meio e fim.'
+  },
+  {
+    q: 'Como você mantém a Direção informada sobre o andamento do seu trabalho? Com que frequência, em que formato e quais números você costuma apresentar?',
+    hint: ''
+  },
+  {
+    q: 'Imagine seus primeiros 30 dias na função. O que você faria primeiro e o que a Direção já teria em mãos ao final desse período?',
+    hint: ''
+  },
+  {
+    q: 'Você já atuou em instituição de ensino (superior ou básico)? Se sim, conte como era a gestão de mensalidades, inadimplência, bolsas e financiamentos. Se não, como você se prepararia para entender essa rotina?',
+    hint: ''
+  }
+];
+
+const SITUACAO_PROBLEMA = 'Situação-problema: o caixa da instituição está apertado e, na mesma semana, vencem a folha de pagamento, um fornecedor crítico e uma parcela de empréstimo bancário. Não há recurso para os três. Ao mesmo tempo, a inadimplência dos alunos subiu. Como você prioriza, o que negocia e o que leva à Direção?';
+
+const RS_SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
+const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
+
+let db = null;
+try { db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
+let rsDb = null;
+try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
+
+const DISC_NOMES = { D:'Dominância', I:'Influência', S:'Estabilidade', C:'Conformidade' };
+
+// Perfil buscado: rigor técnico e controle (C) com iniciativa e ritmo de entrega (D).
+const DISC_IDEAL = ['C', 'D'];
+function montarDossieMatch(discPrimary, discSecondary, technicalScore) {
+  let pontos = 0;
+  const linhas = [];
+  if (technicalScore !== null && technicalScore !== undefined) {
+    const nivelTec = technicalScore >= 4 ? 'Alto' : (technicalScore >= 2 ? 'Médio' : 'Baixo');
+    pontos += technicalScore >= 4 ? 2 : (technicalScore >= 2 ? 1 : 0);
+    linhas.push(`• Técnico: ${technicalScore}/5 no questionário (${nivelTec})`);
+  }
+  if (discPrimary) {
+    const idxPrim = DISC_IDEAL.indexOf(discPrimary);
+    const idxSec = discSecondary ? DISC_IDEAL.indexOf(discSecondary) : -1;
+    let nivelDisc, pontosDisc;
+    if (idxPrim >= 0 && idxSec >= 0) { nivelDisc = 'Alto'; pontosDisc = 2; }
+    else if (idxPrim >= 0 || idxSec >= 0) { nivelDisc = 'Médio'; pontosDisc = 1; }
+    else { nivelDisc = 'Baixo'; pontosDisc = 0; }
+    pontos += pontosDisc;
+    const perfilTxt = discSecondary ? `${DISC_NOMES[discPrimary]} / ${DISC_NOMES[discSecondary]}` : DISC_NOMES[discPrimary];
+    linhas.push(`• Perfil comportamental: ${perfilTxt}. Perfil buscado para a vaga: ${DISC_IDEAL.map(d=>DISC_NOMES[d]).join('/')} (${nivelDisc})`);
+  }
+  if (!linhas.length) return '';
+  const nivelGeral = pontos >= 3 ? 'Alto' : (pontos >= 1 ? 'Médio' : 'Baixo');
+  return `🎯 DOSSIÊ DE MATCH (automático). Nível geral: ${nivelGeral}\n${linhas.join('\n')}\nGerado a partir do DISC e do questionário técnico. Pré-filtro, com revisão humana antes da entrevista. Respostas abertas no painel do formulário.`;
+}
+
+async function pushCandidatoParaRS(formPayload) {
+  if (!rsDb || !db) return;
+  try {
+    const emailNorm = (formPayload.email || '').trim().toLowerCase();
+    const { data: compl, error: erroCompl } = await db.rpc('lv_complementos_candidato', { p_email: emailNorm });
+    if (erroCompl) console.error('Função lv_complementos_candidato falhou:', erroCompl.message);
+    const c = Array.isArray(compl) ? (compl[0] || {}) : (compl || {});
+    const cvUrl = c.cv_url || null;
+    const discPrimary = c.primary_profile || null;
+    const discSecondary = c.secondary_profile || null;
+
+    const dossie = montarDossieMatch(discPrimary, discSecondary, formPayload.technical_score);
+    let obs = dossie ? dossie + '\n\n' : '';
+    if (discPrimary) obs += `Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
+    else obs += 'DISC ainda não encontrado para este e-mail.';
+    if (formPayload.pretensao_salarial) obs += ` Pretensão salarial: ${formPayload.pretensao_salarial}.`;
+    if (formPayload.observacoes) obs += ` Observações do candidato: ${formPayload.observacoes}`;
+
+    const documentos = cvUrl ? [{ nome: 'Currículo (enviado no site)', path: cvUrl, origem: 'vagas' }] : [];
+
+    const { data: resp, error: erroRpc } = await rsDb.rpc('lv_receber_candidato_do_site', {
+      p_nome: formPayload.nome,
+      p_email: emailNorm,
+      p_telefone: formPayload.whatsapp,
+      p_vaga_titulo: formPayload.vaga_titulo,
+      p_obs: obs,
+      p_documentos: documentos
+    });
+    if (erroRpc) throw new Error('Banco do R&S recusou a gravação: ' + erroRpc.message);
+    const r = Array.isArray(resp) ? resp[0] : resp;
+    if (!r || r.ok !== true) throw new Error((r && r.motivo) || 'O R&S não confirmou o cadastro.');
+  } catch (e) {
+    console.error('FALHA ao enviar candidato para o R&S:', e && e.message ? e.message : e);
+    try {
+      await db.from('sync_rs_falhas').insert({
+        email: (formPayload.email || '').trim().toLowerCase(),
+        nome: formPayload.nome || null,
+        vaga_titulo: formPayload.vaga_titulo || null,
+        erro: String(e && e.message ? e.message : e).slice(0, 500)
+      });
+    } catch (e2) {}
+  }
+}
+
+const params = new URLSearchParams(window.location.search);
+const prefill = {
+  nome: params.get('nome') || '',
+  email: params.get('email') || '',
+  telefone: params.get('telefone') || ''
+};
+
+const app = document.getElementById('app');
+let state = { view: 'form' };
+
+async function saveForm(payload) {
+  if (!db) return { ok:false, err:'Banco não configurado' };
+  try {
+    const { error } = await db.from(TABELA).insert(payload);
+    if (error) return { ok:false, err:error.message };
+    return { ok:true };
+  } catch(e) { return { ok:false, err:e.message }; }
+}
+async function loadSubmissions() {
+  if (!db) return null;
+  try {
+    const { data, error } = await db.from(TABELA).select('*').order('created_at', { ascending:false });
+    if (error) return null;
+    return data || [];
+  } catch(e) { return null; }
+}
+async function deleteSubmission(id) {
+  if (!db) return;
+  try { await db.from(TABELA).delete().eq('id', id); } catch(e) {}
+}
+
+function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderForm() {
+  app.innerHTML = `
+    <div class="hero">
+      <span class="eyebrow">La Vie Consultoria · Processo Seletivo</span>
+      <h1 class="section-title">Formulário da vaga: <em>${esc(VAGA_TITULO_EXIBICAO)}</em></h1>
+      <p class="lead">Este formulário faz parte de um processo seletivo conduzido pela La Vie Consultoria para uma instituição de ensino superior em Goiânia. Leia as informações com atenção e responda com calma. As respostas abertas são a parte mais importante: queremos entender como você trabalha, com exemplos reais.</p>
+    </div>
+
+    <div class="card">
+      <h3>Sobre a vaga</h3>
+      <p class="body-text">Posição de coordenação que responde diretamente à Direção Executiva. Cuida das rotinas financeiras da instituição e da gestão administrativa de áreas estratégicas.</p>
+      <ul class="scope-list">
+        <li><strong>Financeiro:</strong> contas a pagar e a receber, cobrança, tesouraria, fluxo de caixa, conciliações, interface com a contabilidade e relacionamento com instituições financeiras.</li>
+        <li><strong>Gestão:</strong> coordenação administrativa de RH/DP, Jurídico, TI, Logística, Patrimônio, Compras e Suprimentos.</li>
+        <li><strong>Direção:</strong> renegociação de dívidas e contratos, indicadores e relatórios gerenciais, estruturação de processos, controles internos e políticas administrativas.</li>
+      </ul>
+      <p class="body-text" style="margin-top:1rem;">Diferenciais: experiência em Instituição de Ensino Superior e vivência com implantação de ERP ou sistemas de gestão.</p>
+    </div>
+
+    <div class="card">
+      <h3>Condições da vaga: ciência e concordância</h3>
+      <div class="check-block">
+        <input type="checkbox" id="c-pj">
+        <label for="c-pj">Estou ciente de que a contratação é no modelo <strong>PJ</strong>.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-remuneracao">
+        <label for="c-remuneracao">Estou ciente de que a <strong>remuneração é de R$ 10.000,00 (PJ)</strong> para esta vaga.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-presencial">
+        <label for="c-presencial">Estou ciente de que a atuação é <strong>presencial em Goiânia/GO</strong>.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-horario">
+        <label for="c-horario">Estou ciente da jornada de <strong>segunda a sexta, das 8h às 18h, e sábados alternados, das 8h às 12h</strong>.</label>
+      </div>
+
+      <label class="field-label" style="margin-top:1.4rem;">Pretensão salarial (opcional)</label>
+      <input type="text" id="f-pretensao" placeholder="Ex: R$ 10.000,00">
+      <div class="field-hint">Deixe em branco se o valor informado atende sua expectativa.</div>
+
+      <label class="field-label">Observações ou comentários (opcional)</label>
+      <textarea id="f-observacoes" rows="3" placeholder="Algo que queira nos contar antes de enviar o formulário..."></textarea>
+    </div>
+
+    <div class="card">
+      <h3>Sua experiência</h3>
+      <p class="body-text" style="margin-bottom:1rem;">Responda com exemplos reais. Não precisa ser longo, mas precisa ser concreto: o que você fez, como fez e qual foi o resultado.</p>
+      <div id="openBox"></div>
+    </div>
+
+    <div class="card">
+      <h3>Situação-problema</h3>
+      <p class="body-text" style="margin-bottom:0.8rem;">${esc(SITUACAO_PROBLEMA)}</p>
+      <textarea id="f-situacao" rows="6" placeholder="Descreva como você conduziria essa situação..."></textarea>
+    </div>
+
+    <div class="card">
+      <h3>Perguntas técnicas</h3>
+      <p class="body-text" style="margin-bottom:1.2rem;">Escolha a alternativa que você considera mais adequada.</p>
+      <div id="quizBox"></div>
+    </div>
+
+    <div class="card">
+      <h3>Seus dados</h3>
+      <label class="field-label">Nome completo *</label>
+      <input type="text" id="f-nome" placeholder="Seu nome completo" value="${esc(prefill.nome)}">
+      <div class="field-row">
+        <div>
+          <label class="field-label">E-mail *</label>
+          <input type="email" id="f-email" placeholder="seu@email.com" value="${esc(prefill.email)}">
+          <div class="field-hint">Use o mesmo e-mail do teste DISC.</div>
+        </div>
+        <div>
+          <label class="field-label">WhatsApp *</label>
+          <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
+        </div>
+      </div>
+      <div id="formError" style="display:none"></div>
+      <div style="margin-top:1.6rem;">
+        <button class="btn-primary" id="submitBtn" disabled>Enviar formulário</button>
+        <p class="pending-hint" id="pendingHint"></p>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('openBox').innerHTML = PERGUNTAS_ABERTAS.map((item, i) => `
+    <div class="open-q">
+      <div class="quiz-q-title"><span class="quiz-num">${i + 1}.</span>${esc(item.q)} *</div>
+      ${item.hint ? `<div class="field-hint">${esc(item.hint)}</div>` : ''}
+      <textarea id="open-${i}" rows="5"></textarea>
+    </div>
+  `).join('');
+
+  document.getElementById('quizBox').innerHTML = QUIZ.map((item, qi) => `
+    <div class="quiz-q">
+      <div class="quiz-q-title"><span class="quiz-num">${qi + 1}.</span>${esc(item.q)}</div>
+      ${item.options.map((opt, oi) => `
+        <div class="quiz-opt">
+          <input type="radio" name="quiz-${qi}" id="quiz-${qi}-${oi}" value="${oi}">
+          <label for="quiz-${qi}-${oi}">${esc(opt)}</label>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+
+  const nome = document.getElementById('f-nome');
+  const email = document.getElementById('f-email');
+  const whatsapp = document.getElementById('f-whatsapp');
+  const cPj = document.getElementById('c-pj');
+  const cRem = document.getElementById('c-remuneracao');
+  const cPres = document.getElementById('c-presencial');
+  const cHor = document.getElementById('c-horario');
+  const situacao = document.getElementById('f-situacao');
+  const openEls = PERGUNTAS_ABERTAS.map((_, i) => document.getElementById('open-' + i));
+  const submitBtn = document.getElementById('submitBtn');
+  const pendingHint = document.getElementById('pendingHint');
+
+  function check() {
+    const faltas = [];
+    if (!(cPj.checked && cRem.checked && cPres.checked && cHor.checked)) faltas.push('confirmar as condições da vaga');
+    if (openEls.some(el => el.value.trim().length < 20)) faltas.push('responder as perguntas sobre sua experiência');
+    if (situacao.value.trim().length < 20) faltas.push('responder a situação-problema');
+    if (!nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim()) faltas.push('preencher seus dados');
+    submitBtn.disabled = faltas.length > 0;
+    pendingHint.textContent = faltas.length ? 'Falta: ' + faltas.join(', ') + '.' : '';
+  }
+  [nome, email, whatsapp, cPj, cRem, cPres, cHor, situacao, ...openEls].forEach(el => el.addEventListener('input', check));
+  check();
+
+  submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
+    document.getElementById('formError').style.display = 'none';
+
+    const technicalAnswers = QUIZ.map((item, qi) => {
+      const sel = document.querySelector(`input[name="quiz-${qi}"]:checked`);
+      const chosen = sel ? parseInt(sel.value, 10) : null;
+      return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null, correta: chosen === item.correct };
+    });
+    const technicalScore = technicalAnswers.filter(a => a.correta).length;
+    const respostasPerfil = PERGUNTAS_ABERTAS.map((item, i) => ({ pergunta: item.q, resposta: openEls[i].value.trim() }));
+    const pretensao = document.getElementById('f-pretensao').value.trim() || null;
+    const observacoes = document.getElementById('f-observacoes').value.trim() || null;
+
+    const result = await saveForm({
+      nome: nome.value.trim(),
+      email: email.value.trim(),
+      whatsapp: whatsapp.value.trim(),
+      vaga_titulo: VAGA_TITULO_PADRAO,
+      pretensao_salarial: pretensao,
+      observacoes: observacoes,
+      ciente_pj: cPj.checked,
+      ciente_remuneracao: cRem.checked,
+      ciente_presencial: cPres.checked,
+      ciente_horario: cHor.checked,
+      technical_score: technicalScore,
+      technical_answers: technicalAnswers,
+      respostas_perfil: respostasPerfil,
+      situacao_problema: situacao.value.trim()
+    });
+
+    if (result.ok) {
+      pushCandidatoParaRS({
+        nome: nome.value.trim(),
+        email: email.value.trim(),
+        whatsapp: whatsapp.value.trim(),
+        vaga_titulo: VAGA_TITULO_PADRAO,
+        pretensao_salarial: pretensao,
+        observacoes: observacoes,
+        technical_score: technicalScore
+      });
+      app.innerHTML = `
+        <div class="card success-card">
+          <h2>Formulário recebido ✓</h2>
+          <p>Obrigado, ${esc(nome.value.trim())}. Suas respostas foram recebidas. Se ainda não fez o teste DISC, faça pelo link que enviamos, usando o mesmo e-mail. Entraremos em contato pelos dados informados.</p>
+        </div>
+      `;
+    } else {
+      const errBox = document.getElementById('formError');
+      errBox.innerHTML = `<div class="error-box">Erro ao enviar: ${esc(result.err)}. Tente novamente.</div>`;
+      errBox.style.display = 'block';
+      submitBtn.innerHTML = 'Enviar formulário';
+      check();
+    }
+  });
+}
+
+async function renderAdmin() {
+  document.getElementById('navTag').textContent = 'Painel do recrutador';
+  app.innerHTML = `<p style="color:var(--muted);">Carregando candidatos...</p>`;
+  const subs = await loadSubmissions();
+  if (state.view !== 'admin') return;
+
+  if (subs === null || subs.length === 0) {
+    app.innerHTML = `
+      <button class="back-link" id="backBtn">← Voltar ao formulário</button>
+      <span class="eyebrow">Painel do recrutador</span>
+      <h1 class="section-title">Respostas do <em>formulário</em></h1>
+      <p style="color:var(--muted);font-size:0.9rem;">${subs === null ? 'Não foi possível carregar as respostas. Sua sessão pode ter expirado. Saia e entre de novo.' : 'Nenhuma resposta recebida ainda.'}</p>
+      <p><button class="back-link" id="logoutBtn">Sair da conta</button></p>
+    `;
+    document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+    document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
+    return;
+  }
+
+  app.innerHTML = `
+    <button class="back-link" id="backBtn">← Voltar ao formulário</button>
+    <div class="admin-top">
+      <div>
+        <span class="eyebrow">Painel do recrutador</span>
+        <h1 class="section-title" style="margin-bottom:0;">Respostas do <em>formulário</em></h1>
+      </div>
+      <button class="back-link" id="logoutBtn">Sair da conta</button>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.4rem;">${subs.length} candidato(s) · ${esc(VAGA_TITULO_EXIBICAO)}</p>
+    <div id="subsList"></div>
+  `;
+  document.getElementById('backBtn').addEventListener('click', () => { state.view = 'form'; render(); });
+  document.getElementById('logoutBtn').addEventListener('click', fazerLogoutPainel);
+
+  document.getElementById('subsList').innerHTML = subs.map(s => {
+    const score = s.technical_score ?? null;
+    const scoreClass = score === null ? '' : (score >= 4 ? 'high' : (score <= 2 ? 'low' : ''));
+    return `
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <h4>${esc(s.nome)} ${score !== null ? `<span class="score-pill ${scoreClass}">${score}/5 no técnico</span>` : ''}</h4>
+          <p>${esc(s.email)} · ${esc(s.whatsapp) || '-'} · ${new Date(s.created_at).toLocaleDateString('pt-BR')}${s.pretensao_salarial ? ' · Pretensão: ' + esc(s.pretensao_salarial) : ''}</p>
+        </div>
+        <div class="admin-row-actions">
+          <button class="pdf-btn" data-id="${s.id}">Baixar PDF</button>
+          <button class="danger del-btn" data-id="${s.id}">Remover</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('.pdf-btn').forEach(btn => btn.addEventListener('click', () => buildSubmissionPDF(subs.find(x => x.id === btn.dataset.id))));
+  document.querySelectorAll('.del-btn').forEach(btn => btn.addEventListener('click', async () => {
+    if (!confirm('Remover esta resposta permanentemente?')) return;
+    await deleteSubmission(btn.dataset.id);
+    renderAdmin();
+  }));
+}
+
+function pdfSafe(t) { return (t || '').replace(/→/g, '-').replace(/✓/g, '').replace(/✗/g, '').replace(/[“”]/g, '"').replace(/[‘’]/g, "'"); }
+
+function buildSubmissionPDF(s) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 52;
+  let y = 60;
+  const INK = [58, 58, 58], SOFT = [122, 119, 110], BORDER = [216, 207, 196], OK = [74, 122, 66], ERR = [192, 57, 43];
+  function pb(next) { if (y + next > 790) { doc.addPage(); y = 60; } }
+  function titulo(t) { pb(40); doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...INK); doc.text(t, M, y); y += 18; }
+  function paragrafo(t, color, size, indent) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(size || 9.5); doc.setTextColor(...(color || INK));
+    const lines = doc.splitTextToSize(pdfSafe(t), W - M * 2 - (indent || 0));
+    lines.forEach(l => { pb(14); doc.text(l, M + (indent || 0), y); y += 12; });
+    y += 4;
+  }
+
+  doc.setFont('times','italic'); doc.setFontSize(18); doc.setTextColor(...INK);
+  doc.text('La Vie Consultoria', M, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...SOFT);
+  doc.text('FORMULÁRIO DA VAGA · RESUMO PARA O RECRUTADOR', M, y + 13);
+  doc.setDrawColor(...BORDER); doc.line(M, y + 24, W - M, y + 24);
+  y += 46;
+
+  doc.setFont('times','italic'); doc.setTextColor(...INK);
+  let fs = 22; doc.setFontSize(fs);
+  while (fs > 13 && doc.getTextWidth(pdfSafe(s.nome)) > W - M * 2) { fs -= 1; doc.setFontSize(fs); }
+  doc.text(pdfSafe(s.nome), M, y); y += fs * 0.75;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...SOFT);
+  doc.text(pdfSafe(`${s.email || ''} · ${s.whatsapp || ''} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`), M, y); y += 12;
+  doc.text(pdfSafe(`Vaga: ${VAGA_TITULO_EXIBICAO}`), M, y); y += 26;
+
+  titulo('Condições da vaga');
+  [['Contratação PJ', s.ciente_pj], ['Remuneração R$ 10.000,00 (PJ)', s.ciente_remuneracao], ['Presencial em Goiânia/GO', s.ciente_presencial], ['Seg a sex 8h-18h e sábados alternados 8h-12h', s.ciente_horario]].forEach(([label, val]) => {
+    doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...(val ? OK : ERR));
+    doc.text(val ? 'SIM' : 'NAO', M, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...INK); doc.text(label, M + 32, y); y += 15;
+  });
+  if (s.pretensao_salarial) paragrafo(`Pretensão salarial informada: ${s.pretensao_salarial}`, SOFT);
+  if (s.observacoes) paragrafo(`Observações: ${s.observacoes}`, SOFT);
+  y += 10;
+
+  titulo('Experiência (respostas abertas)');
+  (Array.isArray(s.respostas_perfil) ? s.respostas_perfil : []).forEach((r, i) => {
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...INK);
+    doc.splitTextToSize(pdfSafe(`${i + 1}. ${r.pergunta}`), W - M * 2).forEach(l => { pb(14); doc.text(l, M, y); y += 11; });
+    y += 3;
+    paragrafo(r.resposta || '(sem resposta)', INK, 9, 10);
+    y += 4;
+  });
+
+  titulo('Situação-problema');
+  paragrafo(s.situacao_problema || '(sem resposta)', INK, 9, 10);
+  y += 8;
+
+  titulo(`Questionário técnico: nota ${s.technical_score ?? '-'} / 5`);
+  (Array.isArray(s.technical_answers) ? s.technical_answers : []).forEach((a, i) => {
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...INK);
+    doc.splitTextToSize(pdfSafe(`${i + 1}. ${a.pergunta}`), W - M * 2).forEach(l => { pb(14); doc.text(l, M, y); y += 11; });
+    y += 3;
+    paragrafo(`Resposta: ${a.escolhida || '(não respondida)'} ${a.correta ? '(correta)' : '(incorreta)'}`, a.correta ? OK : ERR, 9, 10);
+    y += 4;
+  });
+
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p); doc.setFontSize(8); doc.setTextColor(180, 175, 168);
+    doc.text('La Vie Consultoria · Processo seletivo confidencial · Documento de uso interno.', M, 822);
+  }
+  doc.save('formulario-' + (s.nome || 'candidato').toLowerCase().replace(/\s+/g, '-') + '.pdf');
+}
+
+function render() {
+  if (state.view === 'form') { document.getElementById('navTag').textContent = 'Formulário da vaga'; renderForm(); }
+  else if (state.view === 'admin') renderAdmin();
+}
+
+function openLoginModal() {
+  const wrap = document.createElement('div');
+  wrap.id = 'loginOverlay';
+  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+  wrap.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;">
+      <button id="loginClose" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:#999;">&times;</button>
+      <h3 style="margin:0 0 6px;font-size:18px;">Entrar no painel</h3>
+      <p style="margin:0 0 16px;font-size:13px;color:#777;">Use o mesmo e-mail e senha da sua conta.</p>
+      <input type="email" id="loginEmail" placeholder="seu-email@exemplo.com" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid #d8cfc4;border-radius:8px;font-size:14px;box-sizing:border-box;">
+      <input type="password" id="loginSenha" placeholder="Senha" autocomplete="current-password" style="width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid #d8cfc4;border-radius:8px;font-size:14px;box-sizing:border-box;">
+      <p id="loginErro" style="color:#a33;font-size:12px;display:none;margin:0 0 8px;"></p>
+      <button id="loginSubmit" style="width:100%;padding:11px;border:none;border-radius:8px;background:#2b2b2b;color:#fff;font-size:14px;cursor:pointer;">Entrar</button>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+  const fechar = () => wrap.remove();
+  wrap.addEventListener('click', e => { if (e.target === wrap) fechar(); });
+  document.getElementById('loginClose').addEventListener('click', fechar);
+  document.getElementById('loginSubmit').addEventListener('click', fazerLoginPainel);
+  document.getElementById('loginSenha').addEventListener('keydown', e => { if (e.key === 'Enter') fazerLoginPainel(); });
+  document.getElementById('loginEmail').focus();
+}
+
+async function fazerLoginPainel() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const erroEl = document.getElementById('loginErro');
+  const btn = document.getElementById('loginSubmit');
+  erroEl.style.display = 'none';
+  if (!email || !senha) { erroEl.textContent = 'Preencha e-mail e senha.'; erroEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    if (!db) throw new Error('Conexão com o banco indisponível.');
+    const { error } = await db.auth.signInWithPassword({ email, password: senha });
+    if (error) throw new Error('E-mail ou senha incorretos.');
+    try { if (rsDb) await rsDb.auth.signInWithPassword({ email, password: senha }); } catch(e) {}
+    document.getElementById('loginOverlay')?.remove();
+    state.view = 'admin'; render();
+  } catch (e) {
+    erroEl.textContent = e.message; erroEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+async function fazerLogoutPainel() {
+  try { await db?.auth.signOut(); } catch(e) {}
+  try { await rsDb?.auth.signOut(); } catch(e) {}
+  state.view = 'form'; render();
+}
+async function sessaoValida() {
+  if (!db) return false;
+  try { const { data } = await db.auth.getSession(); return !!data?.session; } catch(e) { return false; }
+}
+document.getElementById('adminBtn').addEventListener('click', async () => {
+  if (state.view === 'admin') { state.view = 'form'; render(); return; }
+  if (await sessaoValida()) { state.view = 'admin'; render(); return; }
+  openLoginModal();
+});
+
+render();
+})();
+</script>
+</body>
+</html>
