@@ -2548,10 +2548,11 @@ async function aprovarEtapaCom(modo){ // 'online' | 'presencial' — vale pra Tr
 }
 function reprovarCard(id){
   const c=getCands().find(x=>x.id===id);if(!c)return;
-  if(!confirm('Reprovar '+c.nome+'? O candidato sai do funil e vai para a lista de feedback negativo.'))return;
+  if(!confirm('Reprovar '+c.nome+'? O candidato sai do funil e recebe o e-mail de retorno automaticamente em 10 minutos.'))return;
   const origem=c.etapa;
-  const tpl=(origem==='triagem')?'feedbackNegTriagem':'feedbackNegEntrevista';
-  _setEtapaCand(id,'reprovado','Reprovado (origem: '+(ETAPA_LABEL[origem]||origem)+')').then(r=>{if(r){showToast('✗ '+c.nome.split(' ')[0]+' reprovado(a)');abrirMensagem(id,tpl);}});
+  // O e-mail de retorno é agendado pelo banco ao mudar a etapa para "reprovado"
+  // (sai em 10 min; voltar a etapa antes disso cancela). WhatsApp continua no menu 💬.
+  _setEtapaCand(id,'reprovado','Reprovado (origem: '+(ETAPA_LABEL[origem]||origem)+')').then(r=>{if(r){showToast('✗ '+c.nome.split(' ')[0]+' reprovado(a) · e-mail de retorno sai em 10 min');}});
 }
 function menuMensagens(id){
   const c=getCands().find(x=>x.id===id);if(!c)return;
