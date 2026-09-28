@@ -233,7 +233,7 @@ td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align:
 .pdf-btn:hover { border-color: #8C7F6C; color: #302F2C; }
 .del-btn:hover { border-color: #c0392b; color: #c0392b; }
 </style>
-<script src="/resultados-rs.js?v=2"></script>
+<script src="/resultados-rs.js?v=3"></script>
 </head>
 <body>
 
@@ -1645,6 +1645,23 @@ document.getElementById('adminBtn').addEventListener('click', async () => {
 
 render();
 
+
+// Aberto pelo R&S (/disc/?relatorio=1): gera o PDF do relatório DISC de um
+// candidato a partir do resultado guardado no cadastro dele.
+(function abrirRelatorioDoRS(){
+  if (new URLSearchParams(location.search).get('relatorio') !== '1') return;
+  let r = null;
+  try { r = JSON.parse(localStorage.getItem('lv_disc_relatorio') || 'null'); localStorage.removeItem('lv_disc_relatorio'); } catch(e) {}
+  if (!r || !r.scores) return;
+  r.name = r.name || 'Candidato';
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  document.body.innerHTML = '<div style="font-family:system-ui,sans-serif;max-width:520px;margin:90px auto;padding:0 24px;text-align:center;color:#302F2C">'
+    + '<h2 style="font-weight:500">Relatório DISC</h2>'
+    + '<p>O PDF de <strong>' + esc(r.name) + '</strong> foi gerado. Se o download não começou, clique abaixo.</p>'
+    + '<button id="lvBaixarDisc" style="padding:12px 22px;border:none;border-radius:6px;background:#302F2C;color:#fff;cursor:pointer">Baixar PDF</button></div>';
+  document.getElementById('lvBaixarDisc').addEventListener('click', () => buildPDF(r));
+  try { buildPDF(r); } catch(e) { console.error('Falha ao gerar o PDF do DISC:', e); }
+})();
 })();
 </script>
 </body>
