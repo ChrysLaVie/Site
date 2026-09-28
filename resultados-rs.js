@@ -24,6 +24,15 @@ function lvResultadoHtml(doc) {
   return '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>'+esc(doc.nome)+'</title><style>body{font:15px/1.5 system-ui;max-width:800px;margin:40px auto;padding:0 24px;color:#333}h1{font-family:Georgia}dt{font-weight:600;margin-top:16px}dd{margin:4px 0 12px;white-space:pre-wrap}li{break-inside:avoid;border-bottom:1px solid #ddd;padding:10px 0}button{padding:10px 16px}footer{margin-top:32px;color:#666}@media print{button{display:none}body{margin:0}dt{break-after:avoid}}</style><button onclick="window.print()">Imprimir / Salvar em PDF</button><h1>La Vie Consultoria</h1><h2>'+esc(doc.nome)+'</h2>'+render(doc.dados)+'<footer>Documento de uso interno do processo seletivo. Enviado automaticamente pelo site.</footer></html>';
 }
 function lvAbrirResultado(doc){
+  // DISC: abre a página do DISC, que gera o mesmo PDF bonito que o candidato
+  // baixa ao terminar o teste (em vez da listagem simples de pontuações).
+  if(doc&&doc.resultadoSite==='disc'&&doc.dados&&doc.dados.scores){
+    try{
+      localStorage.setItem('lv_disc_relatorio',JSON.stringify(doc.dados));
+      const w=window.open('/disc/?relatorio=1','_blank');
+      if(w)return;
+    }catch(e){}
+  }
   const tela=window.open('','_blank');
   if(!tela){alert('Permita abrir uma nova janela para visualizar o resultado.');return;}
   tela.opener=null;
