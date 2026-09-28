@@ -426,7 +426,7 @@ function renderForm() {
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-remuneracao">
-        <label for="c-remuneracao">Estou ciente de que a remuneração é composta por <strong>salário-base de R$ 2.500,00 a R$ 3.500,00 (CLT, conforme experiência)</strong>, além de <strong>Vale-Transporte</strong>, <strong>Vale-Refeição</strong> e <strong>Plano de Saúde</strong>.</label>
+        <label for="c-remuneracao">Estou ciente de que a remuneração (CLT) é composta por <strong>1 salário mínimo mais comissão e premiação</strong>, com <strong>média inicial de R$ 2.500,00 a R$ 3.500,00</strong> e <strong>média de R$ 5.000,00 a R$ 6.000,00 após a adaptação</strong>, além de <strong>Vale-Transporte</strong>, <strong>Vale-Refeição</strong> e <strong>Plano de Saúde</strong>.</label>
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-presencial">
@@ -438,7 +438,7 @@ function renderForm() {
 
       <label class="field-label">Pretensão salarial (opcional, preencha só se for diferente do valor informado acima)</label>
       <input type="text" id="f-pretensao" placeholder="Ex: R$ 3.000,00">
-      <div class="field-hint">Deixe em branco se o pacote de R$ 2.500,00 a R$ 3.500,00 de salário-base + Vale-Transporte + Vale-Refeição + Plano de Saúde atende sua expectativa.</div>
+      <div class="field-hint">Deixe em branco se o pacote (salário mínimo mais comissão e premiação, média inicial de R$ 2.500,00 a R$ 3.500,00, com Vale-Transporte, Vale-Refeição e Plano de Saúde) atende sua expectativa.</div>
     </div>
 
     <div class="card">
@@ -724,7 +724,7 @@ function buildSubmissionPDF(s) {
   y += 16;
   const conds = [
     ['Contratação CLT', s.ciente_clt],
-    ['Salario R$2.500 a R$3.500 + VT + VR + Plano de Saude', s.ciente_remuneracao],
+    ['Salario minimo + comissao + premiacao (media R$2.500 a R$3.500; R$5.000 a R$6.000 apos adaptacao) + VT + VR + Plano de Saude', s.ciente_remuneracao],
     ['Presencial filial Parque Amazonia, Seg-Sex 08h-18h', s.ciente_presencial]
   ];
   conds.forEach(([label, val]) => {
