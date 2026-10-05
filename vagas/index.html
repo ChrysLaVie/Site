@@ -375,6 +375,16 @@ async function setVagaAtiva(id, ativa) {
     return { ok:true };
   } catch(e) { return { ok:false, err:e.message }; }
 }
+async function setVagaArquivada(id, arquivada) {
+  if (!db) return { ok:false, err:'Banco não configurado' };
+  try {
+    // Arquivar só vale para vaga pausada; ao arquivar garante ativa=false.
+    const payload = arquivada ? { arquivada:true, ativa:false } : { arquivada:false };
+    const { error } = await db.from('vagas').update(payload).eq('id', id);
+    if (error) return { ok:false, err:error.message };
+    return { ok:true };
+  } catch(e) { return { ok:false, err:e.message }; }
+}
 async function deleteVaga(id) { if (!db) return; try { await db.from('vagas').delete().eq('id', id); } catch(e) {} }
 
 // ── SUPABASE: CANDIDATURAS ──
@@ -1454,6 +1464,8 @@ async function renderAdmin() {
   let buscaUnif = '';
   // Vaga selecionada na aba Candidatos. 'todas' mostra todo mundo.
   let vagaUnif = 'todas';
+  // Aba Vagas: por padrão esconde as arquivadas; o botão no fim da lista alterna.
+  let mostrarVagasArquivadas = false;
 
   // ── cruzamento por e-mail para a aba "Candidatos" ──
   function normEmail(e) { return (e || '').trim().toLowerCase(); }
@@ -1485,23 +1497,39 @@ async function renderAdmin() {
     else c.arquivado = !!(c.disc?.arquivada || c.forms?.arquivada);
   });
 
-  function vagasTabHTML() {
+  function vagaRowHTML(v) {
+    const arq = !!v.arquivada;
+    const rotulo = arq ? 'Arquivada' : (v.ativa ? 'Ativa' : 'Pausada');
+    const cor = arq ? 'var(--muted)' : (v.ativa ? 'var(--ok)' : 'var(--muted)');
     return `
-      <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Vagas cadastradas</h2><button class="btn-primary" id="newVagaBtn">+ Nova vaga</button></div>
-      ${ADMIN_VAGAS.length === 0 ? `<div class="empty-admin">Nenhuma vaga cadastrada ainda.<div><button class="btn-primary" id="newVagaBtnEmpty">+ Cadastrar primeira vaga</button></div></div>` :
-        ADMIN_VAGAS.map(v => `
           <div class="entry-row">
             <div class="entry-info">
-              <h4>${esc(v.title)} <span class="status-dot2 ${v.ativa ? 'on' : 'off'}"></span> <span style="font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:${v.ativa ? 'var(--ok)' : 'var(--muted)'};">${v.ativa ? 'Ativa' : 'Pausada'}</span></h4>
+              <h4>${esc(v.title)} <span class="status-dot2 ${v.ativa ? 'on' : 'off'}"></span> <span style="font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:${cor};">${rotulo}</span></h4>
               <p>${esc(v.area)} · ${esc(v.local)} · ${esc(v.tipo)}</p>
             </div>
             <div class="entry-actions">
               <button class="edit-vaga" data-id="${v.id}">Editar</button>
-              <button class="toggle-vaga" data-id="${v.id}" data-ativa="${v.ativa}">${v.ativa ? 'Pausar' : 'Ativar'}</button>
+              ${arq
+                ? `<button class="arquivar-vaga" data-id="${v.id}" data-arquivar="false">Desarquivar</button>`
+                : `<button class="toggle-vaga" data-id="${v.id}" data-ativa="${v.ativa}">${v.ativa ? 'Pausar' : 'Ativar'}</button>
+              ${v.ativa ? '' : `<button class="arquivar-vaga" data-id="${v.id}" data-arquivar="true">Arquivar</button>`}`}
               <button class="danger del-vaga" data-id="${v.id}">Remover</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+  }
+
+  function vagasTabHTML() {
+    const ativasEPausadas = ADMIN_VAGAS.filter(v => !v.arquivada);
+    const arquivadas = ADMIN_VAGAS.filter(v => v.arquivada);
+    return `
+      <div class="admin-top"><h2 class="section-title" style="font-size:1.8rem;margin-bottom:0;">Vagas cadastradas</h2><button class="btn-primary" id="newVagaBtn">+ Nova vaga</button></div>
+      ${ADMIN_VAGAS.length === 0 ? `<div class="empty-admin">Nenhuma vaga cadastrada ainda.<div><button class="btn-primary" id="newVagaBtnEmpty">+ Cadastrar primeira vaga</button></div></div>` :
+        (ativasEPausadas.length === 0 ? `<div class="empty-admin">Nenhuma vaga ativa ou pausada no momento.</div>` : ativasEPausadas.map(vagaRowHTML).join(''))}
+      ${arquivadas.length ? `
+        <div style="margin-top:1.4rem;">
+          <button class="back-link" id="toggleVagasArquivadas" style="padding:0;">${mostrarVagasArquivadas ? '▾ Ocultar' : '▸ Ver'} vagas arquivadas (${arquivadas.length})</button>
+        </div>
+        ${mostrarVagasArquivadas ? arquivadas.map(vagaRowHTML).join('') : ''}` : ''}
     `;
   }
 
@@ -1688,6 +1716,13 @@ async function renderAdmin() {
       if (!r.ok) { alert('Não foi possível alterar o status da vaga: ' + (r.err || 'erro desconhecido') + '\n\nIsso geralmente indica uma política de RLS na tabela "vagas" bloqueando UPDATE para o usuário logado.'); btn.disabled = false; return; }
       await draw();
     }));
+    document.querySelectorAll('.arquivar-vaga').forEach(btn => btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const r = await setVagaArquivada(btn.dataset.id, btn.dataset.arquivar === 'true');
+      if (!r.ok) { alert('Não foi possível arquivar/desarquivar a vaga: ' + (r.err || 'erro desconhecido')); btn.disabled = false; return; }
+      await draw();
+    }));
+    document.getElementById('toggleVagasArquivadas')?.addEventListener('click', () => { mostrarVagasArquivadas = !mostrarVagasArquivadas; draw(); });
     document.querySelectorAll('.del-vaga').forEach(btn => btn.addEventListener('click', async () => { if (!confirm('Remover esta vaga permanentemente? As candidaturas já recebidas continuam no histórico.')) return; await deleteVaga(btn.dataset.id); await draw(); }));
   }
   function bindCandTabEvents() {
@@ -1766,7 +1801,7 @@ async function renderAdmin() {
         <span class="eyebrow">Painel do recrutador</span>
         <button class="back-link" id="logoutBtn" style="float:right">Sair</button>
         <div class="admin-tabs">
-          <button class="tab-btn2 ${state.adminTab==='vagas'?'active':''}" data-tab="vagas">Vagas (${ADMIN_VAGAS.length})</button>
+          <button class="tab-btn2 ${state.adminTab==='vagas'?'active':''}" data-tab="vagas">Vagas (${ADMIN_VAGAS.filter(v => !v.arquivada).length})</button>
           <button class="tab-btn2 ${state.adminTab==='candidaturas'?'active':''}" data-tab="candidaturas">Candidaturas ${naoLidas>0?`(${naoLidas} novas)`:''}</button>
           <button class="tab-btn2 ${state.adminTab==='candidatos'?'active':''}" data-tab="candidatos">Candidatos (${candidatosUnificados.length})</button>
         </div>
