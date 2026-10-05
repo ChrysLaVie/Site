@@ -696,6 +696,11 @@ async function pushCandidatoSemFormsParaRS(r, vagaTitulo) {
     // A função descobre a empresa a partir da vaga, cuida de não duplicar e
     // não rebaixa a etapa de quem já avançou no processo.
     documentos.push(lvResultadoDocumento('disc', {...r, vaga_titulo:vagaTitulo}));
+    const pdfDisc = await _subirPdfDisc(r);
+    if (pdfDisc) documentos.push({
+      nome:'Resultado DISC (PDF)', path:pdfDisc, origem:'vagas', bucket:'curriculos', tipo:'application/pdf',
+      enviadoEm:new Date().toISOString(), enviadoPor:'Site (automático)'
+    });
     const payloadRS = {
       p_nome: r.name,
       p_email: emailNorm,
@@ -1251,7 +1256,7 @@ function _registroParaPDF(linha) {
   };
 }
 
-function buildPDF(r) {
+function buildPDF(r, salvar = true) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
@@ -1415,7 +1420,25 @@ function buildPDF(r) {
   doc.setTextColor(180, 175, 168);
   doc.text('La Vie Consultoria · lavieconsultoria.com · Este resultado é um instrumento de autoconhecimento profissional, não um diagnóstico definitivo.', M, 822);
 
-  doc.save('disc-lavie-' + r.name.toLowerCase().replace(/\s+/g, '-') + '.pdf');
+  if (salvar) doc.save('disc-lavie-' + r.name.toLowerCase().replace(/\s+/g, '-') + '.pdf');
+  return doc;
+}
+
+// Gera o mesmo PDF que o candidato baixa e guarda no bucket do site, para o
+// R&S abrir o arquivo direto no cadastro em vez de remontar o relatório.
+async function _subirPdfDisc(r) {
+  try {
+    if (!db || !window.jspdf) return null;
+    const blob = buildPDF({ ...r, name: r.name || 'Candidato' }, false).output('blob');
+    const slug = String(r.email || r.name || 'candidato').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60);
+    const path = 'disc/' + Date.now() + '_' + slug + '.pdf';
+    const { error } = await db.storage.from('curriculos').upload(path, blob, { contentType: 'application/pdf', upsert: false });
+    if (error) throw error;
+    return path;
+  } catch (e) {
+    console.warn('Não foi possível guardar o PDF do DISC:', e);
+    return null;
+  }
 }
 
 // ═══════════════════════════════════════════════════════

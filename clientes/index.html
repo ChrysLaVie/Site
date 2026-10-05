@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 
@@ -3773,7 +3774,7 @@ async function salvarEntrevista(){
     _entrevistas.unshift(rec);
     // ── Auto-criar candidato no funil se não existir ──
     const candidatoIdFinal = await syncCandidatoFromEntrevista(rec);
-    anexarDossiePDFAutomatico(rec, candidatoIdFinal);
+    await anexarDossiePDFAutomatico(rec, candidatoIdFinal);
     const btn=document.getElementById('save-btn');
     btn.textContent='✓ Salvo!';btn.classList.add('saved');
     setTimeout(()=>{btn.textContent='💾 Salvar no histórico';btn.classList.remove('saved');},3000);
@@ -3853,52 +3854,108 @@ function gerarDossiePDF(id){
   }, 50);
 }
 
-// Normaliza nome pra comparação (ignora acento, espaço duplo, maiúscula/minúscula)// Gera o dossiê da entrevista como PDF de verdade (não a caixa de impressão)
-// e anexa direto no cadastro do candidato, no mesmo bucket/lista usada pelo
-// upload manual (anexarDocs). Roda sozinha ao salvar a entrevista; qualquer
-// falha aqui é só um aviso no console e nunca trava o salvamento em si.
-async function anexarDossiePDFAutomatico(entrev, candidatoId){
+// Normaliza nome pra comparação (ignora acento, espaço duplo, maiúscula/minúscula)// Gera o dossiê da entrevista como PDF de texto (jsPDF) e anexa direto no
+// cadastro do candidato. A versão anterior "fotografava" um HTML fora da tela
+// com html2pdf e o arquivo saía em branco. Roda ao salvar a entrevista; se der
+// errado, avisa na tela em vez de falhar em silêncio.
+function gerarPdfDossie(e){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 48, larg = W - 2*M;
+  let y = 60;
+  const novaPagina = h => { if(y + h > H - 50){ doc.addPage(); y = 60; } };
+  const texto = (t, {tam=10, negrito=false, cor=[34,34,34], recuo=0, depois=4}={}) => {
+    doc.setFont('helvetica', negrito?'bold':'normal'); doc.setFontSize(tam); doc.setTextColor(...cor);
+    const linhas = doc.splitTextToSize(String(t==null?'':t), larg - recuo);
+    linhas.forEach(l => { novaPagina(tam+4); doc.text(l, M+recuo, y); y += tam + 4; });
+    y += depois;
+  };
+  const titulo = t => { y += 6; novaPagina(30); texto(t.toUpperCase(), {tam:10, negrito:true, depois:2});
+    doc.setDrawColor(200); doc.line(M, y-2, W-M, y-2); y += 8; };
+
+  texto('Dossiê de Entrevista', {tam:20, negrito:true, depois:2});
+  texto((e.nome||'') + (e.vaga ? ' · ' + e.vaga : ''), {tam:11, cor:[102,102,102], depois:10});
+
+  const dados = [
+    ['Nome', e.nome], ['CPF', e.cpf], ['Idade', e.idade], ['Estado civil', e.estadoCivil],
+    ['Naturalidade', e.naturalidade], ['Quantidade de filhos', e.qtdFilhos], ['Onde mora atualmente', e.ondeMora],
+    ['Como soube da vaga', e.comoSoube], ['Vaga', e.vaga], ['Setor', e.setor], ['Entrevistador', e.entrevistador],
+    ['Data', new Date(e.data || Number(e.id) || Date.now()).toLocaleDateString('pt-BR')],
+    ['Resultado', e.resultado==='approved'?'Aprovado':e.resultado==='reprovado'?'Reprovado':'Em avaliação'],
+  ].filter(([,v]) => v!==undefined && v!==null && v!=='');
+  titulo('Dados');
+  dados.forEach(([k,v]) => texto(k + ': ' + v, {depois:0}));
+
+  const avals = Object.entries(e.avaliacoes||{});
+  if(avals.length){
+    titulo('Ficha de avaliação');
+    avals.forEach(([c,v]) => texto(c + ': ' + v + '/5', {depois:0}));
+    if(e.avgStar) texto('Média geral: ' + e.avgStar + '/5', {negrito:true, depois:0});
+  }
+
+  (e.respostas||[]).forEach(sec => {
+    titulo(sec.nome || 'Seção');
+    (sec.perguntas||[]).forEach(q => {
+      texto((q.marcada ? '[x] ' : '[  ] ') + q.texto, {depois: q.nota ? 0 : 4});
+      if(q.nota) texto('Anotação: ' + q.nota, {cor:[85,85,85], recuo:14});
+    });
+  });
+
+  if(e.observacoes){ titulo('Observações gerais'); texto(e.observacoes); }
+
+  y += 10; texto('Gerado por La Vie · R&S em ' + new Date().toLocaleString('pt-BR'), {tam:8, cor:[150,150,150]});
+  return doc.output('blob');
+}
+
+async function anexarDossiePDFAutomatico(entrev, candidatoId, {substituir=false, silencioso=false}={}){
   try{
-    if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) return;
-    if(!candidatoId) return;
-    if(typeof html2pdf==='undefined'){ console.warn('html2pdf.js não carregou; dossiê não foi anexado automaticamente.'); return; }
-
-    const html = montarHtmlDossie(entrev);
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:24px';
-    wrap.innerHTML = html;
-    document.body.appendChild(wrap);
-    let blob;
-    try{
-      const larguraPdf = wrap.scrollWidth, alturaPdf = wrap.scrollHeight;
-      blob = await html2pdf().from(wrap).set({
-        margin:10, filename:'dossie.pdf', jsPDF:{unit:'pt', format:'a4'},
-        // Sem isso, o wrapper fora da tela (position:fixed;left:-9999px) faz o
-        // html2canvas medir altura 0 e o PDF sai em branco.
-        html2canvas:{width:larguraPdf, height:alturaPdf, windowWidth:larguraPdf, windowHeight:alturaPdf, scrollX:0, scrollY:0}
-      }).outputPdf('blob');
-      if(!blob || blob.size < 2000){ throw new Error('PDF gerado ficou vazio/pequeno demais ('+(blob?blob.size:0)+' bytes)'); }
-    } finally {
-      wrap.remove();
-    }
-
-    const idx = _cands.findIndex(c=>c.id===candidatoId);
-    if(idx<0){ console.warn('Candidato '+candidatoId+' não encontrado; dossiê não anexado.'); return; }
+    if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) return false;
+    if(!candidatoId) throw new Error('entrevista sem candidato vinculado');
+    if(!window.jspdf) throw new Error('biblioteca de PDF não carregou');
+    const blob = gerarPdfDossie(entrev);
 
     const safe = ('dossie-entrevista_'+(entrev.nome||'')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
     const path = candidatoId+'/'+Date.now()+'_'+safe+'.pdf';
     const {error} = await sb.storage.from(DOCS_BUCKET).upload(path, blob, {upsert:false, contentType:'application/pdf'});
     if(error) throw error;
 
-    const doc = {nome:'Dossiê de entrevista - '+(entrev.nome||''), path, tipo:'application/pdf', tamanho:_fmtTam(blob.size), enviadoEm:new Date().toISOString(), enviadoPor:getUserName()};
-    const docsAtuais = Array.isArray(_cands[idx].documentos) ? _cands[idx].documentos : [];
-    _cands[idx].documentos = [...docsAtuais, doc];
-    await upsertCand(_cands[idx]);
-    showToast('📎 Dossiê da entrevista anexado ao candidato!');
+    const nomeDoc = 'Dossiê de entrevista - '+(entrev.nome||'');
+    const doc = {nome:nomeDoc, path, tipo:'application/pdf', tamanho:_fmtTam(blob.size), enviadoEm:new Date().toISOString(), enviadoPor:getUserName(), entrevistaId:entrev.id};
+    // Lê e grava só a lista de documentos direto no banco: não depende do
+    // candidato estar carregado na tela e não sobrescreve outros campos.
+    const {data:atual, error:erroLer} = await sb.from('candidatos').select('documentos').eq('id', candidatoId).single();
+    if(erroLer) throw erroLer;
+    let docs = Array.isArray(atual && atual.documentos) ? atual.documentos : [];
+    if(substituir) docs = docs.filter(d => !(d && d.nome===nomeDoc && (!d.entrevistaId || d.entrevistaId===entrev.id)));
+    docs = [...docs, doc];
+    const {error:erroGravar} = await sb.from('candidatos').update({documentos:docs}).eq('id', candidatoId);
+    if(erroGravar) throw erroGravar;
+    const idx = _cands.findIndex(c=>c.id===candidatoId);
+    if(idx>=0) _cands[idx].documentos = docs;
+    if(!silencioso) showToast('📎 PDF da entrevista anexado ao candidato!');
+    return true;
   }catch(err){
-    console.warn('Não foi possível anexar o dossiê automaticamente:', err);
+    console.warn('Não foi possível anexar o PDF da entrevista:', err);
+    if(!silencioso) alert('A entrevista foi salva, mas o PDF não foi anexado ao candidato.\n\nMotivo: '+(err.message||err)+'\n\nVocê pode gerar de novo pelo histórico de entrevistas.');
+    return false;
   }
 }
+
+// Refaz os PDFs de entrevistas já salvas (os antigos saíam em branco).
+// Uso pontual pelo console: await regerarDossiesEntrevista()
+async function regerarDossiesEntrevista(){
+  // Vale para o cliente aberto no momento. A entrevista não guarda o id do
+  // candidato no banco, então o vínculo é pelo nome (como na hora de salvar).
+  const lista = (_entrevistas||[]).filter(e => Array.isArray(e.respostas) && e.respostas.length);
+  let ok=0, falha=0, semCandidato=[];
+  for(const e of lista){
+    const c = e.candidatoId ? _cands.find(x=>x.id===e.candidatoId) : _cands.find(x=>normNome(x.nome)===normNome(e.nome));
+    if(!c){ semCandidato.push(e.nome); continue; }
+    (await anexarDossiePDFAutomatico(e, c.id, {substituir:true, silencioso:true})) ? ok++ : falha++;
+  }
+  return {total:lista.length, ok, falha, semCandidato};
+}
+window.regerarDossiesEntrevista = regerarDossiesEntrevista;
 
 function normNome(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toLowerCase(); }
 
