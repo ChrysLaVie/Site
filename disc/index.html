@@ -1699,6 +1699,10 @@ async function aproveitarDiscExistente() {
 
 aproveitarDiscExistente().then(ok => { if (!ok) render(); }).catch(() => render());
 
+// Para reprocessar candidatos antigos pelo console (painel logado): gera o
+// PDF do DISC a partir do resultado guardado no cadastro e sobe no bucket.
+window.lvSubirPdfDisc = _subirPdfDisc;
+
 
 // Aberto pelo R&S (/disc/?relatorio=1): gera o PDF do relatório DISC de um
 // candidato a partir do resultado guardado no cadastro dele.
