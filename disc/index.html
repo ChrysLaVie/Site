@@ -583,17 +583,6 @@ const incoming = {
 // compartilhado com o R&S para montar o link nos avisos de etapa pendente.
 const formsUrlParaVaga = lvFormsUrlParaVaga;
 
-// Link do e-mail de etapa pendente para quem já fez o DISC (?ir=formulario):
-// segue direto para o formulário da vaga, sem refazer o teste. O e-mail é
-// montado no banco, que não conhece o mapa vaga -> formulário.
-if (urlParams.get('ir') === 'formulario') {
-  const destino = formsUrlParaVaga(incoming.vaga);
-  if (destino) {
-    const p = new URLSearchParams({ nome: incoming.nome, email: incoming.email, telefone: incoming.telefone, vaga: incoming.vaga });
-    window.location.replace(`${destino}?${p.toString()}`);
-  }
-}
-
 // ── REDE DE SEGURANÇA ──────────────────────────────────────────────────────────
 // Se a vaga não tiver formulário técnico próprio nem for reconhecida por
 // aproximação, o candidato ainda assim NÃO deve sumir: registramos no painel do
@@ -1643,7 +1632,49 @@ document.getElementById('adminBtn').addEventListener('click', async () => {
   openLoginModal();
 });
 
-render();
+// ── DISC JÁ FEITO ──────────────────────────────────────────────────────────────
+// O DISC vale para qualquer vaga. Quem já fez o teste (em outra candidatura)
+// não refaz: o resultado mais recente entra no cadastro desta vaga no R&S e a
+// pessoa segue direto para o formulário. Também atende o link dos e-mails de
+// etapa pendente (?ir=formulario).
+function _irParaFormulario() {
+  const destino = formsUrlParaVaga(incoming.vaga);
+  if (!destino) return false;
+  const p = new URLSearchParams({ nome: incoming.nome, email: incoming.email, telefone: incoming.telefone, vaga: incoming.vaga });
+  window.location.replace(`${destino}?${p.toString()}`);
+  return true;
+}
+async function aproveitarDiscExistente() {
+  if (urlParams.get('relatorio') === '1') return false;
+  const vaga = (incoming.vaga || '').trim();
+  const email = (incoming.email || '').trim().toLowerCase();
+  if (!vaga || !email.includes('@') || !db) return false;
+  app.innerHTML = '<div class="card"><p>Carregando...</p></div>';
+  let ex = null;
+  try {
+    const { data } = await db.rpc('lv_disc_existente', { p_email: email });
+    ex = Array.isArray(data) ? data[0] : data;
+  } catch (e) { /* sem a informação, segue para o teste normalmente */ }
+  if (!ex || !ex.primary_profile || !ex.most) {
+    return urlParams.get('ir') === 'formulario' ? _irParaFormulario() : false;
+  }
+  app.innerHTML = '<div class="card"><h2>Você já fez o teste DISC</h2>'
+    + '<p>Vamos aproveitar o seu resultado de ' + new Date(ex.created_at).toLocaleDateString('pt-BR')
+    + ' nesta candidatura. Só um instante...</p></div>';
+  const r = {
+    name: incoming.nome || ex.name, email, phone: incoming.telefone || ex.phone || null,
+    scores: ex.most, primary: ex.primary_profile, secondary: ex.secondary_profile,
+    timestamp: new Date(ex.created_at).getTime()
+  };
+  await pushCandidatoSemFormsParaRS(r, vaga);
+  if (_irParaFormulario()) return true;
+  app.innerHTML = '<div class="card"><h2>Candidatura concluída ✓</h2>'
+    + '<p>Seu resultado do DISC foi aproveitado para a vaga de <strong>' + vaga.replace(/[&<>"']/g, '')
+    + '</strong>. A equipe da La Vie Consultoria vai analisar seu perfil e entrará em contato.</p></div>';
+  return true;
+}
+
+aproveitarDiscExistente().then(ok => { if (!ok) render(); }).catch(() => render());
 
 
 // Aberto pelo R&S (/disc/?relatorio=1): gera o PDF do relatório DISC de um
