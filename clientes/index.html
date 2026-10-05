@@ -4624,7 +4624,7 @@ async function loadEmpresasExtras(){
   }
   try{
     const {data,error} = await sb.from('empresas').select('*');
-    if(!error && data) data.forEach(row=>_mergeEmpresaConfig({
+    if(!error && data) data.filter(row=>!row.oculta).forEach(row=>_mergeEmpresaConfig({
       empresaId: row.id, nome: row.nome, subtitulo: row.subtitulo, logo: row.logo,
       bancos: row.bancos, parcelas: row.parcelas
     }));
