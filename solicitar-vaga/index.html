@@ -390,31 +390,41 @@ Observações: ${campo('observacoes')}
     const larguraUtil = 495;
     let y = 55;
 
-    // Paleta Linho (Manual da Marca La Vie)
-    const GRAFITE = [58, 58, 58];
-    const TAUPE = [166, 152, 136];
-    const BEGE = [216, 207, 196];
-    const OFFWHITE = [242, 241, 237];
+    // Tons do site lavieconsultoria.com (mesmas variáveis do CSS)
+    const ESCURO = [26, 25, 23];        // --dark, barra superior e título
+    const GRAFITE = [58, 58, 58];       // --charcoal, texto
+    const AREIA_ESCURA = [113, 102, 90];// --sand-dark, rótulos e destaques
+    const AREIA = [216, 207, 196];      // --sand, filetes
+    const NEUTRO = [98, 98, 98];        // --muted, rodapé
+    const OFFWHITE = [242, 241, 237];   // --bg
 
     function pintarFundo(){
       doc.setFillColor(OFFWHITE[0], OFFWHITE[1], OFFWHITE[2]);
       doc.rect(0, 0, 595.28, 841.89, 'F');
+      // Barra escura no topo, como a navegação do site
+      doc.setFillColor(ESCURO[0], ESCURO[1], ESCURO[2]);
+      doc.rect(0, 0, 595.28, 34, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(OFFWHITE[0], OFFWHITE[1], OFFWHITE[2]);
+      doc.text('LA VIE · CONSULTORIA EMPRESARIAL', 50, 21, { charSpace: 2 });
     }
 
     function novaPagina(){
       doc.addPage();
       pintarFundo();
-      y = 55;
+      y = 70;
     }
 
     pintarFundo();
+    y = 62;
 
     // Logo (reaproveita a imagem já carregada na página)
     const logoEl = document.querySelector('.logo');
     let logoAltura = 0;
     if (logoEl && logoEl.src && logoEl.src.startsWith('data:image')) {
       try {
-        const logoWidth = 90;
+        const logoWidth = 84;
         const proporcao = (logoEl.naturalHeight && logoEl.naturalWidth) ? (logoEl.naturalHeight / logoEl.naturalWidth) : 0.78;
         logoAltura = logoWidth * proporcao;
         doc.addImage(logoEl.src, 'PNG', marginX, y, logoWidth, logoAltura);
@@ -422,20 +432,20 @@ Observações: ${campo('observacoes')}
     }
 
     // O título entra abaixo do logo, nunca por cima dele
-    y += logoAltura + 32;
+    y += logoAltura + 24;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(AREIA_ESCURA[0], AREIA_ESCURA[1], AREIA_ESCURA[2]);
+    doc.text('RECRUTAMENTO E SELEÇÃO', marginX, y, { charSpace: 2 });
+
+    y += 24;
     doc.setFont('times', 'normal');
-    doc.setFontSize(23);
-    doc.setTextColor(GRAFITE[0], GRAFITE[1], GRAFITE[2]);
+    doc.setFontSize(26);
+    doc.setTextColor(ESCURO[0], ESCURO[1], ESCURO[2]);
     doc.text('Solicitação de Vaga', marginX, y);
 
-    y += 17;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(TAUPE[0], TAUPE[1], TAUPE[2]);
-    doc.text('LA VIE · CONSULTORIA EMPRESARIAL INTEGRADA', marginX, y, { charSpace: 1.2 });
-
-    y += 14;
-    doc.setDrawColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+    y += 16;
+    doc.setDrawColor(AREIA[0], AREIA[1], AREIA[2]);
     doc.setLineWidth(1);
     doc.line(marginX, y, marginX + larguraUtil, y);
     y += 28;
@@ -447,10 +457,10 @@ Observações: ${campo('observacoes')}
       if (y > 750) { novaPagina(); }
       doc.setFont('times', 'bolditalic');
       doc.setFontSize(14);
-      doc.setTextColor(GRAFITE[0], GRAFITE[1], GRAFITE[2]);
+      doc.setTextColor(ESCURO[0], ESCURO[1], ESCURO[2]);
       doc.text(titulo, marginX, y);
       y += 7;
-      doc.setDrawColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.setDrawColor(AREIA[0], AREIA[1], AREIA[2]);
       doc.setLineWidth(0.75);
       doc.line(marginX, y, marginX + larguraUtil, y);
       y += 19;
@@ -460,7 +470,7 @@ Observações: ${campo('observacoes')}
       if (y > 770) { novaPagina(); }
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.setTextColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.setTextColor(AREIA_ESCURA[0], AREIA_ESCURA[1], AREIA_ESCURA[2]);
       doc.text(label.toUpperCase(), marginX, y, { charSpace: 0.9 });
       y += 13;
       doc.setFont('helvetica', 'normal');
@@ -496,7 +506,25 @@ Observações: ${campo('observacoes')}
     }
 
     secao('Nível de necessidade');
-    campoLinha('Urgência', campo('urgencia'));
+    // Chip de urgência com as mesmas cores do semáforo do formulário
+    (function(){
+      const urgencia = String(campo('urgencia'));
+      const tons = {
+        'Alta':  { fundo: [251, 234, 231], texto: [192, 57, 43] },
+        'Média': { fundo: [251, 243, 217], texto: [138, 106, 0] },
+        'Baixa': { fundo: [231, 244, 234], texto: [63, 125, 85] }
+      };
+      const tom = tons[urgencia] || { fundo: [232, 228, 222], texto: [58, 58, 58] };
+      const rotuloChip = ('URGÊNCIA ' + urgencia).toUpperCase();
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      const larguraTexto = doc.getTextWidth(rotuloChip) + rotuloChip.length * 1.1;
+      doc.setFillColor(tom.fundo[0], tom.fundo[1], tom.fundo[2]);
+      doc.roundedRect(marginX, y - 12, larguraTexto + 24, 22, 11, 11, 'F');
+      doc.setTextColor(tom.texto[0], tom.texto[1], tom.texto[2]);
+      doc.text(rotuloChip, marginX + 12, y + 3, { charSpace: 1.1 });
+      y += 32;
+    })();
 
     secao('Empresa');
     campoLinha('Razão social', campo('empresa'));
@@ -526,12 +554,12 @@ Observações: ${campo('observacoes')}
     const paginas = doc.internal.getNumberOfPages();
     for (let p = 1; p <= paginas; p++){
       doc.setPage(p);
-      doc.setDrawColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.setDrawColor(AREIA[0], AREIA[1], AREIA[2]);
       doc.setLineWidth(0.75);
       doc.line(marginX, 800, marginX + larguraUtil, 800);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
-      doc.setTextColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.setTextColor(NEUTRO[0], NEUTRO[1], NEUTRO[2]);
       doc.text('La Vie Consultoria · Solicitação de Vaga', marginX, 815);
       doc.text(`${String(p).padStart(2, '0')} / ${String(paginas).padStart(2, '0')}`, marginX + larguraUtil, 815, { align: 'right' });
     }
