@@ -81,7 +81,10 @@ const lvFormsUrlParaVaga = (() => {
     'Coordenador(a) de Marketing e Comercial - Enseada dos Bacuris': FORMS_ENSEADA_BACURIS,
     'Aux. de Departamento Pessoal':                          FORMS_AUX_DP,
     'Consultor(a) de Vendas Interno':                        FORMS_ROMA_CONSULTOR_VENDAS,
-    'Coordenador Financeiro / Gestão':                       FORMS_COORD_FINANCEIRO
+    'Coordenador Financeiro / Gestão':                       FORMS_COORD_FINANCEIRO,
+    // Formulário único dirigido por configuração no banco (lv_form_configs):
+    // a vaga não precisa mais de um arquivo forms-<vaga>.html próprio.
+    'Analista de RH/DP': 'https://lavieconsultoria.com/vagas/form.html?vaga=analista-rh-dp'
   };
 
   // Retorna a URL do formulário da vaga, ou null se a vaga não tiver um.
