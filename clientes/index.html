@@ -2878,11 +2878,26 @@ async function _urlDoSite(path){
   if(SITE_BUCKET_PUBLICO){
     return SITE_SUPABASE_URL+'/storage/v1/object/public/'+SITE_DOCS_BUCKET+'/'+encodeURIComponent(path);
   }
-  const s=sbSite();
-  if(!s) throw new Error('anon key do projeto do site não configurada (SITE_SUPABASE_KEY)');
-  const { data, error } = await s.storage.from(SITE_DOCS_BUCKET).createSignedUrl(path, 60);
-  if(error||!data) throw (error||new Error('objeto não encontrado no bucket do site'));
-  return data.signedUrl;
+  // O bucket de currículos do site não aceita mais leitura anônima: quem
+  // assina o link temporário é a Edge Function "abrir-curriculo-site" do
+  // projeto do site, que antes confere (via x-rs-token) se quem pede está
+  // logado neste painel. Sem sessão válida, ninguém obtém o arquivo.
+  const { data: sess } = await sb.auth.getSession();
+  const rsToken = sess && sess.session && sess.session.access_token;
+  if(!rsToken) throw new Error('sessão expirada — entre novamente para abrir documentos do site');
+  const resp = await fetch(SITE_SUPABASE_URL+'/functions/v1/abrir-curriculo-site', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer '+SITE_SUPABASE_KEY,
+      'apikey': SITE_SUPABASE_KEY,
+      'x-rs-token': rsToken
+    },
+    body: JSON.stringify({ path: path, expiresIn: 60 })
+  });
+  const dados = await resp.json().catch(()=>({}));
+  if(!resp.ok || !dados.signedUrl) throw new Error(dados.error || 'não foi possível gerar o link do documento');
+  return dados.signedUrl;
 }
 
 async function abrirDocumento(i){

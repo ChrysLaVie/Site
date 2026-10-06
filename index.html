@@ -1332,20 +1332,29 @@ footer p a { opacity:1; }
         <div class="form-group"><label for="whatsapp" class="sr-only">WhatsApp</label><input type="tel" id="whatsapp" name="whatsapp" placeholder="WhatsApp"></div>
       </div>
       <div class="form-group">
-        <select id="desafioSelect"><option value="" disabled selected>Principal desafio</option>
+        <label for="desafioSelect" class="sr-only">Principal desafio</label>
+        <select id="desafioSelect" name="desafio"><option value="" disabled selected>Principal desafio</option>
           <option>Gestão de Pessoas</option><option>Processos e Estrutura</option>
           <option>Financeiro e Indicadores</option><option>Certificações ISO / EcoVadis / SASSMAQ</option>
           <option>Contabilidade e Fiscal</option><option>Gestão Integrada</option>
         </select>
       </div>
       <div class="form-group">
-        <textarea rows="4" placeholder="Conte brevemente sobre sua empresa e o desafio que enfrenta..."></textarea>
+        <label for="mensagemContato" class="sr-only">Mensagem</label>
+        <textarea id="mensagemContato" name="mensagem" rows="4" placeholder="Conte brevemente sobre sua empresa e o desafio que enfrenta..."></textarea>
       </div>
+      <!-- Campo isca (honeypot): pessoa não vê nem preenche; robô de spam preenche
+           tudo que encontra e o FormSubmit descarta o envio quando ele vem cheio. -->
+      <input type="text" name="_honey" id="honeyContato" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;">
       <p style="font-size:0.78rem;color:var(--muted);margin-top:-0.3rem;">Ao enviar, você concorda com nossa <a href="/politica-de-privacidade" style="color:var(--charcoal);">Política de Privacidade</a>.</p>
       <button class="form-submit" id="btnContato">Enviar Mensagem</button>
       <div class="form-success" style="display:none;padding:1.5rem;background:var(--bg-alt);border-radius:var(--radius);text-align:center;margin-top:1rem;">
         <p style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--charcoal);">Mensagem enviada!</p>
         <p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">Nossa equipe entrará em contato em até 24 horas.</p>
+      </div>
+      <div class="form-fail" style="display:none;padding:1.5rem;background:var(--bg-alt);border-radius:var(--radius);text-align:center;margin-top:1rem;">
+        <p style="font-size:0.9rem;color:var(--charcoal);">Não foi possível enviar a mensagem agora.</p>
+        <p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">Fale com a gente pelo <a href="https://wa.me/5562992741488" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);font-weight:500;">WhatsApp (62) 99274-1488</a> ou pelo e-mail <a href="mailto:chrys@lavieconsultoria.com" style="color:var(--charcoal);font-weight:500;">chrys@lavieconsultoria.com</a>.</p>
       </div>
     </div>
   </div>
@@ -1485,7 +1494,10 @@ hamburgerBtn.addEventListener('click', () => toggleMenu(!navLinks.classList.cont
 navOverlay.addEventListener('click', () => toggleMenu(false));
 navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggleMenu(false)));
 
-document.getElementById('btnContato').addEventListener('click', function() {
+// Envio real via FormSubmit (mesmo serviço já ativado no /solicitar-vaga).
+// Destino: chrys@lavieconsultoria.com. Em caso de falha, mostra os contatos
+// diretos em vez de fingir que enviou.
+document.getElementById('btnContato').addEventListener('click', async function() {
   const nome = document.getElementById('nome');
   const email = document.getElementById('email');
   let valid = true;
@@ -1496,8 +1508,36 @@ document.getElementById('btnContato').addEventListener('click', function() {
     } else { group && group.classList.remove('has-error'); }
   });
   if (!valid) return;
-  document.querySelector('.form-success').style.display = 'block';
-  this.style.display = 'none';
+  const btn = this;
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Enviando...';
+  document.querySelector('.form-fail').style.display = 'none';
+  try {
+    const resp = await fetch('https://formsubmit.co/ajax/chrys@lavieconsultoria.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: 'Novo contato pelo site · La Vie Consultoria',
+        _template: 'table',
+        _honey: document.getElementById('honeyContato').value,
+        Nome: nome.value.trim(),
+        Empresa: document.getElementById('empresa').value.trim(),
+        'E-mail': email.value.trim(),
+        WhatsApp: document.getElementById('whatsapp').value.trim(),
+        'Principal desafio': document.getElementById('desafioSelect').value,
+        Mensagem: document.getElementById('mensagemContato').value.trim()
+      })
+    });
+    const dados = await resp.json().catch(() => ({}));
+    if (!resp.ok || String(dados.success) === 'false') throw new Error('falha no envio');
+    document.querySelector('.form-success').style.display = 'block';
+    btn.style.display = 'none';
+  } catch (e) {
+    document.querySelector('.form-fail').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 document.querySelectorAll('.tab-btn').forEach(btn => {

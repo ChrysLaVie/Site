@@ -1,4 +1,10 @@
--- Preserva anexos do recrutador ao receber uma nova etapa do site.
+-- Preserva anexos E dados do candidato ao receber uma nova etapa do site.
+-- Mudanças de segurança (a função é chamada sem login pelo site):
+--   • nome e telefone de candidato EXISTENTE não são mais sobrescritos por
+--     quem chega de fora — só preenchem se estiverem vazios;
+--   • remove < e > do nome/telefone recebidos (defesa extra contra HTML
+--     injetado que seria renderizado no painel);
+--   • telefone limitado a 50 caracteres (o campo é público).
 CREATE OR REPLACE FUNCTION public.lv_receber_candidato_do_site(p_nome text, p_email text, p_telefone text, p_vaga_titulo text, p_obs text DEFAULT NULL::text, p_documentos jsonb DEFAULT '[]'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -9,6 +15,7 @@ DECLARE
   v_vaga        record;
   v_email       text := lower(trim(coalesce(p_email, '')));
   v_nome        text := trim(coalesce(p_nome, ''));
+  v_tel         text;
   v_id          text;
   v_agora       timestamptz := now();
   v_existe      record;
@@ -24,8 +31,9 @@ BEGIN
   END IF;
 
   -- Corta textos exagerados: o campo é público e alguém pode mandar 1 MB de texto.
-  v_nome  := left(v_nome, 200);
+  v_nome  := left(regexp_replace(v_nome, '[<>]', '', 'g'), 200);
   v_email := left(v_email, 200);
+  v_tel   := nullif(left(regexp_replace(trim(coalesce(p_telefone, '')), '[<>]', '', 'g'), 50), '');
   p_obs   := left(coalesce(p_obs, ''), 4000);
 
   -- ── Descobre de qual etapa do site veio esta chamada ──────────────────────
@@ -80,9 +88,11 @@ BEGIN
                         THEN v_existe.historico ELSE '[]'::jsonb END;
 
     -- Atualiza sem mexer na etapa: quem já avançou no processo não volta atrás.
+    -- Nome e telefone existentes são preservados: a chamada vem sem login,
+    -- então dado já confirmado no painel nunca é trocado por dado de fora.
     UPDATE public.candidatos SET
-      nome          = v_nome,
-      telefone      = coalesce(nullif(trim(p_telefone), ''), telefone),
+      nome          = CASE WHEN coalesce(trim(nome), '') = '' THEN v_nome ELSE nome END,
+      telefone      = coalesce(nullif(trim(telefone), ''), v_tel),
       fonte         = CASE WHEN v_rank_novo > v_rank_atual THEN v_fonte ELSE fonte END,
       -- Etapa mais completa substitui a observação, para o painel mostrar o
       -- dossiê atual no topo. Reenvio do mesmo nível ou anterior só acrescenta.
@@ -126,7 +136,7 @@ BEGIN
     id, nome, telefone, email, vaga_id, etapa, data_entrada,
     fonte, obs, documentos, historico, criado_por, criado_em, atualizado_em, empresa_id
   ) VALUES (
-    v_id, v_nome, nullif(trim(p_telefone), ''), v_email, v_vaga.id,
+    v_id, v_nome, v_tel, v_email, v_vaga.id,
     'triagem', v_agora::date,
     v_fonte,
     p_obs,
@@ -140,5 +150,12 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'acao', 'criado', 'candidato_id', v_id, 'fonte', v_fonte);
 END;
-$function$
+$function$;
 
+-- ── Permissões aplicadas junto com esta função (06/10/2026) ─────────────────
+-- Funções usadas apenas pelo painel logado não aceitam mais visitante anônimo:
+--   revoke execute on function public.buscar_candidato_por_email(text) from public, anon;
+--   grant  execute on function public.buscar_candidato_por_email(text) to authenticated;
+--   revoke execute on function public.anexar_documentos_por_email(text, jsonb) from public, anon;
+--   grant  execute on function public.anexar_documentos_por_email(text, jsonb) to authenticated;
+-- lv_receber_candidato_do_site continua aberta (o site envia candidaturas sem login).
