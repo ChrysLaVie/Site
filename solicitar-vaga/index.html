@@ -390,30 +390,52 @@ Observações: ${campo('observacoes')}
     const larguraUtil = 495;
     let y = 55;
 
+    // Paleta Linho (Manual da Marca La Vie)
+    const GRAFITE = [58, 58, 58];
+    const TAUPE = [166, 152, 136];
+    const BEGE = [216, 207, 196];
+    const OFFWHITE = [242, 241, 237];
+
+    function pintarFundo(){
+      doc.setFillColor(OFFWHITE[0], OFFWHITE[1], OFFWHITE[2]);
+      doc.rect(0, 0, 595.28, 841.89, 'F');
+    }
+
+    function novaPagina(){
+      doc.addPage();
+      pintarFundo();
+      y = 55;
+    }
+
+    pintarFundo();
+
     // Logo (reaproveita a imagem já carregada na página)
     const logoEl = document.querySelector('.logo');
+    let logoAltura = 0;
     if (logoEl && logoEl.src && logoEl.src.startsWith('data:image')) {
       try {
         const logoWidth = 90;
         const proporcao = (logoEl.naturalHeight && logoEl.naturalWidth) ? (logoEl.naturalHeight / logoEl.naturalWidth) : 0.78;
-        doc.addImage(logoEl.src, 'PNG', marginX, y, logoWidth, logoWidth * proporcao);
+        logoAltura = logoWidth * proporcao;
+        doc.addImage(logoEl.src, 'PNG', marginX, y, logoWidth, logoAltura);
       } catch (e) { /* segue sem logo se der algum problema */ }
     }
 
-    y += 62;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(19);
-    doc.setTextColor(61, 59, 58);
+    // O título entra abaixo do logo, nunca por cima dele
+    y += logoAltura + 32;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(23);
+    doc.setTextColor(GRAFITE[0], GRAFITE[1], GRAFITE[2]);
     doc.text('Solicitação de Vaga', marginX, y);
 
-    y += 16;
+    y += 17;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10.5);
-    doc.setTextColor(143, 136, 127);
-    doc.text('La Vie Consultoria · Gestão Empresarial Integrada', marginX, y);
+    doc.setFontSize(9);
+    doc.setTextColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+    doc.text('LA VIE · CONSULTORIA EMPRESARIAL INTEGRADA', marginX, y, { charSpace: 1.2 });
 
     y += 14;
-    doc.setDrawColor(138, 129, 120);
+    doc.setDrawColor(TAUPE[0], TAUPE[1], TAUPE[2]);
     doc.setLineWidth(1);
     doc.line(marginX, y, marginX + larguraUtil, y);
     y += 28;
@@ -422,33 +444,53 @@ Observações: ${campo('observacoes')}
     const campo = (k) => d.get(k) || '-';
 
     function secao(titulo){
-      if (y > 750) { doc.addPage(); y = 55; }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12.5);
-      doc.setTextColor(61, 59, 58);
-      doc.text(titulo.toUpperCase(), marginX, y);
-      y += 6;
-      doc.setDrawColor(228, 221, 211);
+      if (y > 750) { novaPagina(); }
+      doc.setFont('times', 'bolditalic');
+      doc.setFontSize(14);
+      doc.setTextColor(GRAFITE[0], GRAFITE[1], GRAFITE[2]);
+      doc.text(titulo, marginX, y);
+      y += 7;
+      doc.setDrawColor(TAUPE[0], TAUPE[1], TAUPE[2]);
       doc.setLineWidth(0.75);
       doc.line(marginX, y, marginX + larguraUtil, y);
-      y += 18;
+      y += 19;
     }
 
     function campoLinha(label, valor){
-      if (y > 770) { doc.addPage(); y = 55; }
+      if (y > 770) { novaPagina(); }
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.5);
-      doc.setTextColor(138, 129, 120);
-      doc.text(label.toUpperCase(), marginX, y);
+      doc.setFontSize(8);
+      doc.setTextColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.text(label.toUpperCase(), marginX, y, { charSpace: 0.9 });
       y += 13;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.setTextColor(61, 59, 58);
-      const linhas = doc.splitTextToSize(String(valor), larguraUtil);
-      linhas.forEach((linha) => {
-        if (y > 785) { doc.addPage(); y = 55; }
-        doc.text(linha, marginX, y);
-        y += 14;
+      doc.setTextColor(GRAFITE[0], GRAFITE[1], GRAFITE[2]);
+      const recuoBullet = 14;
+      const paragrafos = String(valor).replace(/\t/g, ' ').split('\n');
+      paragrafos.forEach((paragrafo) => {
+        if (!paragrafo.trim()) { return; }
+        const marcador = paragrafo.match(/^\s*[•◦▪\-–]\s*/);
+        const conteudo = marcador ? paragrafo.slice(marcador[0].length) : '';
+        if (marcador && conteudo.trim()) {
+          // Linha de lista: marcador fixo na margem e texto com recuo
+          // pendurado, para a quebra de linha alinhar com o texto e não
+          // voltar para a margem esquerda.
+          const linhas = doc.splitTextToSize(conteudo, larguraUtil - recuoBullet);
+          linhas.forEach((linha, i) => {
+            if (y > 785) { novaPagina(); }
+            if (i === 0) { doc.text('•', marginX, y); }
+            doc.text(linha, marginX + recuoBullet, y);
+            y += 14;
+          });
+        } else {
+          const linhas = doc.splitTextToSize(paragrafo, larguraUtil);
+          linhas.forEach((linha) => {
+            if (y > 785) { novaPagina(); }
+            doc.text(linha, marginX, y);
+            y += 14;
+          });
+        }
       });
       y += 11;
     }
@@ -484,10 +526,14 @@ Observações: ${campo('observacoes')}
     const paginas = doc.internal.getNumberOfPages();
     for (let p = 1; p <= paginas; p++){
       doc.setPage(p);
+      doc.setDrawColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.setLineWidth(0.75);
+      doc.line(marginX, 800, marginX + larguraUtil, 800);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
-      doc.setTextColor(143, 136, 127);
-      doc.text(`La Vie Consultoria · página ${p} de ${paginas}`, marginX, 815);
+      doc.setTextColor(TAUPE[0], TAUPE[1], TAUPE[2]);
+      doc.text('La Vie Consultoria · Solicitação de Vaga', marginX, 815);
+      doc.text(`${String(p).padStart(2, '0')} / ${String(paginas).padStart(2, '0')}`, marginX + larguraUtil, 815, { align: 'right' });
     }
 
     return doc;
