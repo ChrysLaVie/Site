@@ -1027,6 +1027,10 @@ const { createClient } = supabase;
 // ║  3. Rode o SQL que está no comentário no FINAL deste arquivo               ║
 // ║  Enquanto não colar, o sistema roda em MODO DEMONSTRAÇÃO (dados locais).    ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
+// ── UTIL: escape de HTML — TODA interpolação de dado vindo de candidato/
+// usuário/banco dentro de innerHTML/template de render passa por aqui.
+// Escapa também aspas, então serve dentro de atributos (title="...", value="...").
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 // ── UTIL: contagem de dias por CALENDÁRIO ──────────────────────────────────
 // Antes, os cálculos de "dias em aberto" comparavam o horário exato (Date.now())
 // com meio-dia da data de abertura. Isso fazia o número variar (e até ficar
@@ -1290,7 +1294,7 @@ async function carregarPerfilEEntrar(user){
 
   document.getElementById('login-screen').style.display='none';
   const av=document.getElementById('user-avatar');
-  av.innerHTML = currentUser.foto ? `<img src="${currentUser.foto}" style="width:100%;height:100%;object-fit:cover">` : currentUser.iniciais;
+  av.innerHTML = currentUser.foto ? `<img src="${esc(currentUser.foto)}" style="width:100%;height:100%;object-fit:cover">` : esc(currentUser.iniciais);
   if(!currentUser.foto) av.style.background = currentUser.cor;
   document.getElementById('user-name').textContent = currentUser.nome;
   document.title = `La Vie · ${currentEmpresa && EMPRESAS[currentEmpresa] ? EMPRESAS[currentEmpresa].nome : ''}`;
@@ -1317,10 +1321,10 @@ function renderEmpresaSwitcher(){
   const atual = EMPRESAS[currentEmpresa];
   wrap.innerHTML = `
     <div onclick="toggleEmpresaMenu(event)" style="display:flex;align-items:center;gap:6px;background:rgba(242,241,237,.08);border:1px solid rgba(242,241,237,.15);border-radius:20px;padding:4px 12px;cursor:pointer;font-size:11px;color:rgba(242,241,237,.85)">
-      🏢 ${atual.nome} ▾
+      🏢 ${esc(atual.nome)} ▾
     </div>
     <div id="empresa-menu" style="display:none;position:absolute;top:38px;left:0;background:var(--offwhite);border:1.5px solid var(--bege);border-radius:10px;box-shadow:var(--shadow-md);z-index:300;min-width:190px;overflow:hidden">
-      ${clientes.map(id=>`<button onclick="switchEmpresa('${id}')" style="width:100%;text-align:left;padding:10px 14px;background:${id===currentEmpresa?'var(--bege-lt)':'none'};border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--charcoal)">${EMPRESAS[id].nome}</button>`).join('')}
+      ${clientes.map(id=>`<button onclick="switchEmpresa('${id}')" style="width:100%;text-align:left;padding:10px 14px;background:${id===currentEmpresa?'var(--bege-lt)':'none'};border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--charcoal)">${esc(EMPRESAS[id].nome)}</button>`).join('')}
     </div>`;
 }
 function toggleEmpresaMenu(e){
@@ -1430,7 +1434,7 @@ function renderAgenda(){
     let evHtml=evs.slice(0,3).map(e=>{
       const hora=e.horaIni?e.horaIni+' ':'';
       const cls=e.status==='cancelada'?'cancelada':(e.status==='realizada'?'realizada':'');
-      return `<div class="ag-ev ${e.tipo||'online'} ${cls}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${(e.titulo||'').replace(/"/g,'')}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
+      return `<div class="ag-ev ${e.tipo||'online'} ${cls}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${esc(e.titulo||'')}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
     }).join('');
     if(evs.length>3) evHtml+=`<div style="font-size:10px;color:var(--mid)">+${evs.length-3} mais</div>`;
     cells+=`<div class="ag-cell ${isToday?'today':''}" onclick="abrirAgendaModal(null,'${dStr}')"><div class="ag-day">${dia}</div>${evHtml}</div>`;
@@ -1447,13 +1451,13 @@ function renderAgendaLista(){
   document.getElementById('agenda-lista-wrap').innerHTML=lista.map(e=>{
     const [y,m,d]=e.data.split('-');
     const horario=e.horaIni?`${e.horaIni}${e.horaFim?'–'+e.horaFim:''}`:'';
-    const linkBtn=e.link?`<a href="${e.link}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">🔗 Entrar</a>`:'';
-    const gcalBtn=`<a href="${gcalLink(e,'interna')}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">📅</a>`;
-    const statusTag=e.status&&e.status!=='agendada'?` · ${e.status}`:'';
+    const linkBtn=e.link?`<a href="${esc(e.link)}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">🔗 Entrar</a>`:'';
+    const gcalBtn=`<a href="${esc(gcalLink(e,'interna'))}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">📅</a>`;
+    const statusTag=e.status&&e.status!=='agendada'?` · ${esc(e.status)}`:'';
     const cand=getCands().find(x=>x.id===e.candidatoId)||{};
     const contato=[
-      cand.tel?`<span onclick="event.stopPropagation();copiarContato('${cand.tel.replace(/'/g,"")}','Telefone')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">📞 ${escapeHtmlAg(cand.tel)}</span>`:'',
-      cand.email?`<span onclick="event.stopPropagation();copiarContato('${cand.email.replace(/'/g,"")}','E-mail')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">✉ ${escapeHtmlAg(cand.email)}</span>`:''
+      cand.tel?`<span onclick="event.stopPropagation();copiarContato('${esc(String(cand.tel).replace(/['"\\]/g,''))}','Telefone')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">📞 ${escapeHtmlAg(cand.tel)}</span>`:'',
+      cand.email?`<span onclick="event.stopPropagation();copiarContato('${esc(String(cand.email).replace(/['"\\]/g,''))}','E-mail')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">✉ ${escapeHtmlAg(cand.email)}</span>`:''
     ].filter(Boolean).join(' &nbsp;·&nbsp; ');
     return `<div class="ag-lista-item" onclick="abrirAgendaModal('${e.id}')">
       <div class="ag-lista-date"><div class="d">${parseInt(d)}</div><div class="m">${AG_MES_ABREV[parseInt(m)-1]}</div></div>
@@ -1482,7 +1486,7 @@ function copiarContato(valor,rotulo){
     .catch(()=>prompt('Copie o '+rotulo.toLowerCase()+':',valor));
 }
 
-function escapeHtmlAg(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtmlAg(s){ return esc(s); } // alias mantido — hoje escapa também aspas via esc()
 
 // Monta link "Adicionar ao Google Agenda" (render). versao: 'interna' (com obs/link) ou 'candidato' (limpa)
 function gcalLink(a, versao){
@@ -2441,20 +2445,20 @@ function abrirMensagem(candId,tplKey){
   const c=getCands().find(x=>x.id===candId);if(!c){alert('Candidato não encontrado.');return;}
   const tpl=MSG_TEMPLATES[tplKey];if(!tpl)return;
   _msgCtx={candId,tplKey};
-  let corpo=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${tpl.nome}</div><div style="font-size:12px;color:var(--mid);margin-bottom:14px">Para: <strong>${c.nome}</strong>${c.tel?` · ${c.tel}`:' · (sem telefone)'}</div>`;
+  let corpo=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${tpl.nome}</div><div style="font-size:12px;color:var(--mid);margin-bottom:14px">Para: <strong>${esc(c.nome)}</strong>${c.tel?` · ${esc(c.tel)}`:' · (sem telefone)'}</div>`;
   if(tpl.campos.length){
     // Se já existe entrevista agendada para este candidato, puxa os dados de lá
     // em vez de obrigar a digitar tudo de novo.
     const pre=_dadosDaAgendaDoCand(candId);
     if(pre){
-      corpo+=`<div style="background:var(--bege-lt);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--mid);margin-bottom:10px">📅 Preenchido a partir da entrevista já agendada para <strong>${pre.rotulo}</strong>. Ajuste se precisar.</div>`;
+      corpo+=`<div style="background:var(--bege-lt);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--mid);margin-bottom:10px">📅 Preenchido a partir da entrevista já agendada para <strong>${esc(pre.rotulo)}</strong>. Ajuste se precisar.</div>`;
     } else {
       corpo+=`<div style="background:var(--bege-lt);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--mid);margin-bottom:10px">Não há entrevista agendada para este candidato. Se você agendar pela aba Agenda, a mensagem já sai preenchida e o evento entra no Google Agenda.</div>`;
     }
     corpo+=`<div style="font-size:12px;color:var(--mid);margin-bottom:8px">Confira os campos abaixo (eles entram no texto):</div>`;
     corpo+=tpl.campos.map((cp,i)=>{
       const v=pre&&pre.valores[cp]?pre.valores[cp]:'';
-      return `<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}" value="${(v+'').replace(/"/g,'&quot;')}"></div>`;
+      return `<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}" value="${esc(v)}"></div>`;
     }).join('');
   } else {
     corpo+=`<div style="font-size:12px;color:var(--mid)">Mensagem pronta — nome e vaga já preenchidos.</div>`;
@@ -2584,7 +2588,7 @@ function renderVagas() {
   const fSe=document.getElementById('vaga-filter-setor').value;
   const setores=[...new Set(vagas.map(v=>v.setor).filter(Boolean))].sort();
   const sel=document.getElementById('vaga-filter-setor'); const cur=sel.value;
-  sel.innerHTML='<option value="">Todos os setores</option>'+setores.map(s=>`<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');
+  sel.innerHTML='<option value="">Todos os setores</option>'+setores.map(s=>`<option value="${esc(s)}" ${s===cur?'selected':''}>${esc(s)}</option>`).join('');
   const fi=vagas.filter(v=>(!search||v.titulo.toLowerCase().includes(search))&&(!fSt||v.status===fSt)&&(!fSe||v.setor===fSe));
   const grid=document.getElementById('vagas-grid');
   if(!fi.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📋</div><p>${vagas.length?'Nenhuma vaga encontrada.':'Nenhuma vaga cadastrada.'}</p></div>`;return;}
@@ -2602,20 +2606,20 @@ function renderVagas() {
       : (SL[v.status]||v.status);
     return `<div class="vaga-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div class="vaga-name">${v.titulo}</div><span class="tag ${ST[v.status]||'tag-closed'}">${statusLabel}</span>
+        <div class="vaga-name">${esc(v.titulo)}</div><span class="tag ${ST[v.status]||'tag-closed'}">${statusLabel}</span>
       </div>
       <div class="vaga-meta">
-        ${v.setor?`<span>📂 ${v.setor}</span>`:''}${v.gestor?`<span>👤 ${v.gestor}</span>`:''}
+        ${v.setor?`<span>📂 ${esc(v.setor)}</span>`:''}${v.gestor?`<span>👤 ${esc(v.gestor)}</span>`:''}
         ${v.dataAbertura?`<span>📅 Abertura: ${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:''}
         ${v.dataEncerramento?`<span>🏁 Encerramento: ${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:(v.status==='aberta'&&dias!==null?`<span>⏱ ${dias}d em aberto</span>`:'')}
       </div>
       <div class="vaga-meta">
-        ${v.salario?`<span>💰 ${v.salario}</span>`:''}${v.qtd?`<span>👥 ${v.qtd} vaga${v.qtd>1?'s':''}</span>`:''}
+        ${v.salario?`<span>💰 ${esc(v.salario)}</span>`:''}${v.qtd?`<span>👥 ${v.qtd} vaga${v.qtd>1?'s':''}</span>`:''}
         <span>🎯 ${n} candidato${n!==1?'s':''}</span>
-        ${v.criadoPor?`<span style="color:var(--light)">por ${v.criadoPor.split(' ')[0]}</span>`:''}
+        ${v.criadoPor?`<span style="color:var(--light)">por ${esc(v.criadoPor.split(' ')[0])}</span>`:''}
       </div>
-      ${v.honorario&&!isClienteExterno()?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${v.honorario}</span></div>`:''}
-      ${v.dataReabertura?`<div class="vaga-meta" style="margin-top:2px"><span style="background:#FFF3CD;border-radius:6px;padding:2px 8px;font-weight:600;color:#7A5C00">Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}</span></div>`:''}
+      ${v.honorario&&!isClienteExterno()?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${esc(v.honorario)}</span></div>`:''}
+      ${v.dataReabertura?`<div class="vaga-meta" style="margin-top:2px"><span style="background:#FFF3CD;border-radius:6px;padding:2px 8px;font-weight:600;color:#7A5C00">Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+esc(v.motivoReabertura):''}</span></div>`:''}
       ${(v.historicoReaberturas&&v.historicoReaberturas.length)?`<div class="vaga-meta" style="margin-top:2px;flex-direction:column;align-items:flex-start;gap:2px">${v.historicoReaberturas.map((h,i)=>{
         if(!h.cicloAnteriorAbertura||!h.cicloAnteriorEncerramento) return `<span style="font-size:11px;color:var(--mid)">Ciclo ${i+1}: dados do período não registrados</span>`;
         const abr=new Date(h.cicloAnteriorAbertura+'T12:00:00').toLocaleDateString('pt-BR');

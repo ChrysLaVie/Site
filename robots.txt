@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+# Painel interno (login) e página de clientes: fora dos buscadores.
+Disallow: /clientes/
+Disallow: /solicitar-vaga/
+
+Sitemap: https://lavieconsultoria.com/sitemap.xml
