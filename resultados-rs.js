@@ -64,6 +64,7 @@ const lvFormsUrlParaVaga = (() => {
   const FORMS_AUX_DP = 'https://lavieconsultoria.com/vagas/forms-aux-dp.html';
   const FORMS_ROMA_CONSULTOR_VENDAS = 'https://lavieconsultoria.com/vagas/forms-roma-consultor-vendas.html';
   const FORMS_COORD_FINANCEIRO = 'https://lavieconsultoria.com/vagas/forms-coord-financeiro.html';
+  const FORMS_ROMA_ANALISTA_RH_DP = 'https://lavieconsultoria.com/vagas/forms-roma-analista-rh-dp.html';
 
   const VAGAS_COM_FORMS_PROPRIO = {
     'Gerente de Captação de Alunos e Televendas':            FORMS_GERENTE_CAPTACAO,
@@ -81,7 +82,8 @@ const lvFormsUrlParaVaga = (() => {
     'Coordenador(a) de Marketing e Comercial - Enseada dos Bacuris': FORMS_ENSEADA_BACURIS,
     'Aux. de Departamento Pessoal':                          FORMS_AUX_DP,
     'Consultor(a) de Vendas Interno':                        FORMS_ROMA_CONSULTOR_VENDAS,
-    'Coordenador Financeiro / Gestão':                       FORMS_COORD_FINANCEIRO
+    'Coordenador Financeiro / Gestão':                       FORMS_COORD_FINANCEIRO,
+    'Analista de RH/DP':                                     FORMS_ROMA_ANALISTA_RH_DP
   };
 
   // Retorna a URL do formulário da vaga, ou null se a vaga não tiver um.
