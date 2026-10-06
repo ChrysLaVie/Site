@@ -215,8 +215,7 @@ const QUIZ = [
       'O lead quente demonstrou interesse recente e tem intenção próxima de matrícula; o frio ainda está distante da decisão',
       'O lead quente vem por telefone e o frio vem por WhatsApp',
       'Não há diferença prática: os dois devem receber exatamente a mesma abordagem'
-    ],
-    correct: 1
+    ]
   },
   {
     q: 'Um interessado pede informações pelo WhatsApp, recebe os valores e para de responder. Qual a conduta mais adequada?',
@@ -225,8 +224,7 @@ const QUIZ = [
       'Enviar mensagens diariamente até obter uma resposta',
       'Registrar o contato no CRM e retomar em follow-up planejado, entendendo a objeção antes de repetir a proposta',
       'Repassar o contato para outro consultor e não acompanhar mais'
-    ],
-    correct: 2
+    ]
   },
   {
     q: 'Para que serve alimentar o CRM a cada contato realizado?',
@@ -235,8 +233,7 @@ const QUIZ = [
       'Para manter o histórico do interessado, permitir follow-up no tempo certo e não perder oportunidades da base',
       'Somente para gerar o relatório do fim do mês',
       'Não tem função prática quando o consultor já anota tudo em caderno próprio'
-    ],
-    correct: 1
+    ]
   },
   {
     q: 'Um aluno chega para efetivar a matrícula e a documentação está incompleta. O que fazer?',
@@ -245,8 +242,7 @@ const QUIZ = [
       'Recusar o atendimento e orientar que procure a instituição em outro dia',
       'Conferir o que falta, orientar com clareza sobre o documento pendente e acompanhar até a regularização',
       'Preencher os dados faltantes por conta própria para não perder a venda'
-    ],
-    correct: 2
+    ]
   },
   {
     q: 'Na comercialização de parcerias educacionais com empresas, qual a sequência correta depois do aceite do cliente?',
@@ -255,8 +251,7 @@ const QUIZ = [
       'Solicitar a documentação, encaminhar ao Jurídico para emissão do contrato, colher as assinaturas e protocolar as vias nas áreas responsáveis',
       'Enviar o projeto ao e-MEC antes de qualquer assinatura',
       'Emitir os boletos primeiro e tratar do contrato depois do primeiro pagamento'
-    ],
-    correct: 1
+    ]
   }
 ];
 
@@ -564,13 +559,31 @@ function renderForm() {
     submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
     document.getElementById('formError').style.display = 'none';
 
-    // Apura o questionário técnico
+    // Apura o questionário técnico NO SERVIDOR: o gabarito não fica mais no
+    // código-fonte da página (qualquer candidato conseguia ler as respostas
+    // certas aqui). As escolhas vão como {"q0":"1",...}, com os índices na
+    // MESMA ordem do array QUIZ acima (a mesma gravada em lv_form_configs),
+    // e a função lv_corrigir_quiz compara com o gabarito guardado no banco.
+    const respostas = {};
     const technicalAnswers = QUIZ.map((item, qi) => {
       const sel = document.querySelector(`input[name="quiz-${qi}"]:checked`);
       const chosen = sel ? parseInt(sel.value, 10) : null;
-      return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null, correta: chosen === item.correct };
+      if (chosen !== null) respostas['q' + qi] = String(chosen);
+      return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null };
     });
-    const technicalScore = technicalAnswers.filter(a => a.correta).length;
+    let technicalScore = null;
+    try {
+      const { data: corr, error: corrErr } = await db.rpc('lv_corrigir_quiz', { p_slug: 'vendas-educacional', p_respostas: respostas });
+      if (corrErr) throw corrErr;
+      const c = Array.isArray(corr) ? corr[0] : corr;
+      if (c && typeof c.acertos === 'number') technicalScore = c.acertos;
+      else if (c && typeof c.pct === 'number') technicalScore = Math.round((c.pct / 100) * QUIZ.length);
+    } catch (e) {
+      // Se a correção no servidor falhar, a candidatura segue mesmo assim,
+      // com technical_score null: a nota não pode ser calculada aqui porque
+      // o gabarito não existe mais no navegador.
+      console.warn('Correção do quiz no servidor falhou; enviando com technical_score null:', e && e.message ? e.message : e);
+    }
 
     const result = await saveForm({
       nome: nome.value.trim(),
@@ -813,8 +826,12 @@ function buildSubmissionPDF(s) {
     y += qLines.length * 11 + 3;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(...(a.correta ? OK : ERR));
-    const respLines = doc.splitTextToSize(pdfSafe(`Resposta: ${a.escolhida || '(não respondida)'} ${a.correta ? '(correta)' : '(incorreta)'}`), W - M * 2 - 10);
+    // Respostas novas não trazem mais o certo/errado por questão (a correção
+    // passou a ser feita no servidor e só a nota volta); registros antigos,
+    // que ainda têm o campo "correta", continuam sendo exibidos como antes.
+    doc.setTextColor(...(a.correta === true ? OK : (a.correta === false ? ERR : INK)));
+    const corrTag = a.correta === true ? ' (correta)' : (a.correta === false ? ' (incorreta)' : '');
+    const respLines = doc.splitTextToSize(pdfSafe(`Resposta: ${a.escolhida || '(não respondida)'}${corrTag}`), W - M * 2 - 10);
     doc.text(respLines, M + 10, y);
     y += respLines.length * 11 + 10;
   });

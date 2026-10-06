@@ -198,8 +198,7 @@ const QUIZ = [
       'Intensificar a divulgação, criar promoções pontuais e retomar contato com interessados antigos para reverter a baixa procura',
       'Baixar o preço das diárias pela metade sem avaliar o impacto no negócio',
       'Cancelar as reservas futuras para reorganizar a agenda'
-    ],
-    correct: 1
+    ]
   },
   {
     q: 'Um interessado entra em contato pelo WhatsApp perguntando sobre disponibilidade e valores das casas. Qual a conduta mais adequada?',
@@ -208,8 +207,7 @@ const QUIZ = [
       'Entender a necessidade do interessado (datas, número de pessoas, motivo da viagem), indicar a opção mais adequada e conduzir até a reserva',
       'Encaminhar direto para o Mantenedor decidir',
       'Ignorar até que o interessado volte a perguntar'
-    ],
-    correct: 1
+    ]
   },
   {
     q: 'Qual é a função de plataformas como Stays, Airbnb e Booking na gestão das reservas de casas de temporada?',
@@ -218,8 +216,7 @@ const QUIZ = [
       'Centralizar anúncios, calendário de disponibilidade e pagamentos, ajudando a evitar overbooking entre canais diferentes',
       'Substituem totalmente o contato direto com o hóspede',
       'São usadas somente para emitir nota fiscal'
-    ],
-    correct: 1
+    ]
   },
   {
     q: 'Duas reservas caíram na mesma data em canais diferentes (overbooking). Qual a atitude mais adequada?',
@@ -228,8 +225,7 @@ const QUIZ = [
       'Verificar qual reserva foi confirmada primeiro, buscar rapidamente uma alternativa para o segundo hóspede e comunicar a situação com transparência',
       'Cancelar as duas reservas para não precisar lidar com o problema',
       'Aceitar as duas reservas e deixar para resolver no dia do check-in'
-    ],
-    correct: 1
+    ]
   },
   {
     q: 'Um hóspede já hospedado reclama de um problema na casa, como um eletrodoméstico com defeito. Qual a conduta mais adequada do Coordenador?',
@@ -238,8 +234,7 @@ const QUIZ = [
       'Buscar resolver o quanto antes, informando prazo e solução ao hóspede, para garantir uma boa experiência durante a estadia',
       'Repassar direto ao Mantenedor sem dar retorno ao hóspede',
       'Oferecer desconto sem antes verificar o problema relatado'
-    ],
-    correct: 1
+    ]
   }
 ];
 
@@ -510,12 +505,31 @@ function renderForm() {
     submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
     document.getElementById('formError').style.display = 'none';
 
+    // Apura o questionário técnico NO SERVIDOR: o gabarito não fica mais no
+    // código-fonte da página (qualquer candidato conseguia ler as respostas
+    // certas aqui). As escolhas vão como {"q0":"1",...}, com os índices na
+    // MESMA ordem do array QUIZ acima (a mesma gravada em lv_form_configs),
+    // e a função lv_corrigir_quiz compara com o gabarito guardado no banco.
+    const respostas = {};
     const technicalAnswers = QUIZ.map((item, qi) => {
       const sel = document.querySelector(`input[name="quiz-${qi}"]:checked`);
       const chosen = sel ? parseInt(sel.value, 10) : null;
-      return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null, correta: chosen === item.correct };
+      if (chosen !== null) respostas['q' + qi] = String(chosen);
+      return { pergunta: item.q, escolhida: chosen !== null ? item.options[chosen] : null };
     });
-    const technicalScore = technicalAnswers.filter(a => a.correta).length;
+    let technicalScore = null;
+    try {
+      const { data: corr, error: corrErr } = await db.rpc('lv_corrigir_quiz', { p_slug: 'enseada-bacuris', p_respostas: respostas });
+      if (corrErr) throw corrErr;
+      const c = Array.isArray(corr) ? corr[0] : corr;
+      if (c && typeof c.acertos === 'number') technicalScore = c.acertos;
+      else if (c && typeof c.pct === 'number') technicalScore = Math.round((c.pct / 100) * QUIZ.length);
+    } catch (e) {
+      // Se a correção no servidor falhar, a candidatura segue mesmo assim,
+      // com technical_score null: a nota não pode ser calculada aqui porque
+      // o gabarito não existe mais no navegador.
+      console.warn('Correção do quiz no servidor falhou; enviando com technical_score null:', e && e.message ? e.message : e);
+    }
 
     const result = await saveForm({
       nome: nome.value.trim(),
@@ -748,8 +762,12 @@ function buildSubmissionPDF(s) {
     y += qLines.length * 11 + 3;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(...(a.correta ? OK : ERR));
-    const respLines = doc.splitTextToSize(pdfSafe(`Resposta: ${a.escolhida || '(não respondida)'} ${a.correta ? '(correta)' : '(incorreta)'}`), W - M * 2 - 10);
+    // Respostas novas não trazem mais o certo/errado por questão (a correção
+    // passou a ser feita no servidor e só a nota volta); registros antigos,
+    // que ainda têm o campo "correta", continuam sendo exibidos como antes.
+    doc.setTextColor(...(a.correta === true ? OK : (a.correta === false ? ERR : INK)));
+    const corrTag = a.correta === true ? ' (correta)' : (a.correta === false ? ' (incorreta)' : '');
+    const respLines = doc.splitTextToSize(pdfSafe(`Resposta: ${a.escolhida || '(não respondida)'}${corrTag}`), W - M * 2 - 10);
     doc.text(respLines, M + 10, y);
     y += respLines.length * 11 + 10;
   });
