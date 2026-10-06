@@ -390,34 +390,20 @@ Observações: ${campo('observacoes')}
     const larguraUtil = 495;
     let y = 55;
 
-    // Tons do site lavieconsultoria.com (mesmas variáveis do CSS)
-    const ESCURO = [26, 25, 23];        // --dark, barra superior e título
+    // Tons do site lavieconsultoria.com (mesmas variáveis do CSS),
+    // sobre papel branco, como nas propostas e Ordens de Serviço
+    const ESCURO = [26, 25, 23];        // --dark, títulos
     const GRAFITE = [58, 58, 58];       // --charcoal, texto
     const AREIA_ESCURA = [113, 102, 90];// --sand-dark, rótulos e destaques
     const AREIA = [216, 207, 196];      // --sand, filetes
     const NEUTRO = [98, 98, 98];        // --muted, rodapé
-    const OFFWHITE = [242, 241, 237];   // --bg
-
-    function pintarFundo(){
-      doc.setFillColor(OFFWHITE[0], OFFWHITE[1], OFFWHITE[2]);
-      doc.rect(0, 0, 595.28, 841.89, 'F');
-      // Barra escura no topo, como a navegação do site
-      doc.setFillColor(ESCURO[0], ESCURO[1], ESCURO[2]);
-      doc.rect(0, 0, 595.28, 34, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.setTextColor(OFFWHITE[0], OFFWHITE[1], OFFWHITE[2]);
-      doc.text('LA VIE · CONSULTORIA EMPRESARIAL', 50, 21, { charSpace: 2 });
-    }
 
     function novaPagina(){
       doc.addPage();
-      pintarFundo();
-      y = 70;
+      y = 55;
     }
 
-    pintarFundo();
-    y = 62;
+    y = 50;
 
     // Logo (reaproveita a imagem já carregada na página)
     const logoEl = document.querySelector('.logo');
