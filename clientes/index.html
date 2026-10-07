@@ -1118,7 +1118,7 @@ const EMPRESAS = {
   lavie:   { nome:'La Vie Consultoria', empresaId:null, logo:LOGO_LAVIE, subtitulo:'Consultoria Empresarial · Acesso master' },
   cambury: { nome:'UniCambury',  empresaId:'cambury', logo:LOGO_CAMBURY, subtitulo:'Centro Universitário · Direção', termoCliente:'Mantenedor', produtos:['rs'] },
   autoclub: { nome:'Auto Club Proteção Veicular', empresaId:'autoclub', logo:LOGO_AUTOCLUB, subtitulo:'Proteção Veicular · Comercial', termoCliente:'Cliente', produtos:['rs'] },
-  avep: { nome:'AVEP Brasil', empresaId:'avep', logo:LOGO_AVEP, subtitulo:'Proteção Veicular Colaborativa · Mentoria', termoCliente:'Cliente', produtos:['mentoria'], grupo:'autoclub' },
+  avep: { nome:'AVEP Brasil', empresaId:'avep', logo:LOGO_AVEP, subtitulo:'Proteção Veicular Colaborativa · Mentoria', termoCliente:'Cliente', produtos:['mentoria'], grupo:'autoclub', inativo:true },
   ducarmo: { nome:'Du Carmo', empresaId:'ducarmo', logo:LOGO_DUCARMO, subtitulo:'Comércio · Direção', termoCliente:'Cliente', produtos:['rs'], inativo:true },
 };
 
@@ -4958,6 +4958,25 @@ function renderFinanceiroMentoria(){
     </div>`;
 }
 
+// Lançamentos de mentoria que ficam num cliente de R&S (ex.: o contrato da
+// AVEP, unificada na Auto Club) não têm vaga. Para não sumirem do Financeiro,
+// cada contrato vira uma linha com o título do contrato no lugar da vaga.
+let _contratosMentoriaCache={};
+async function _carregarContratosMentoria(){
+  if(_contratosMentoriaCache[currentEmpresa]) return _contratosMentoriaCache[currentEmpresa];
+  const mapa={};
+  try{ const {data}=await sb.from('mentoria_contratos').select('id,titulo').eq('empresa_id',currentEmpresa); (data||[]).forEach(c=>{ mapa[c.id]=c.titulo; }); }catch(e){}
+  _contratosMentoriaCache[currentEmpresa]=mapa;
+  return mapa;
+}
+function _vagaDoPagamento(p, vagas, contratos){
+  const v=vagas.find(x=>x.id===p.vagaId);
+  if(v) return v;
+  if((p.origem||'rs')!=='mentoria') return null;
+  const titulo=(contratos && contratos[p.contratoId]) || 'Programa de Desenvolvimento';
+  return { id:'__mentoria__'+(p.contratoId||''), titulo:'Mentoria · '+titulo, ordemServico:'Contrato de mentoria', status:'aberta', criadoEm:'0000' };
+}
+
 async function renderFinanceiro(){
   if(!_pagamentos.length){ await loadPagamentos(); }
   if(!empresaTemProduto('rs')){
@@ -4972,6 +4991,7 @@ async function renderFinanceiro(){
   const fm=document.getElementById('fin-mentoria'); if(fm) fm.style.display='none';
   await sincronizarParcelas();
   const vagas=getVagas();
+  const contratosMent=await _carregarContratosMentoria();
   const search=(document.getElementById('fin-search')?.value||'').toLowerCase();
   const fStatus=document.getElementById('fin-filter-status')?.value||'';
   const osSelect=document.getElementById('fin-filter-os');
@@ -4999,7 +5019,7 @@ async function renderFinanceiro(){
   // stats
   let totalPrev=0,totalPago=0,totalPend=0,totalAtr=0,totalCancelado=0;
   _pagamentos.forEach(p=>{
-    const v=vagas.find(x=>x.id===p.vagaId);
+    const v=_vagaDoPagamento(p,vagas,contratosMent);
     if(!v) return; // parcela órfã (vaga excluída) não entra em nenhum total
     let s=_statusReal(p);
     // Blindagem: vaga cancelada só cancela a parcela de FECHAMENTO (parcela 2).
@@ -5028,7 +5048,7 @@ async function renderFinanceiro(){
   }
   // tabela
   const rows=_pagamentos.map(p=>{
-    const v=vagas.find(x=>x.id===p.vagaId); if(!v) return null;
+    const v=_vagaDoPagamento(p,vagas,contratosMent); if(!v) return null;
     let s=_statusReal(p);
     if(v.status==='cancelada' && p.parcela===2 && s!=='pago') s='cancelada';
     return {p,v,s};
