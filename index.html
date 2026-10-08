@@ -1035,11 +1035,28 @@ footer p a { opacity:1; }
     </div>
   </div>
   <div class="servicos-tabs reveal">
-    <button class="tab-btn active" onclick="showTab(this,'integrada')">Gestão Integrada</button>
+    <button class="tab-btn active" onclick="showTab(this,'pessoas')">Pessoas e Lideranças</button>
+    <button class="tab-btn" onclick="showTab(this,'integrada')">Gestão Integrada</button>
     <button class="tab-btn" onclick="showTab(this,'processos')">Processos e Qualidade</button>
-    <button class="tab-btn" onclick="showTab(this,'pessoas')">Pessoas e Lideranças</button>
   </div>
-  <div id="tab-integrada" class="tab-panel active reveal">
+  <div id="tab-pessoas" class="tab-panel active reveal">
+    <div class="servico-intro">
+      <p>Para empresas que precisam estruturar equipes e desenvolver gestores, com metodologia aplicada e presença na execução.</p>
+      <div class="servico-cta" style="display:flex;flex-wrap:wrap;gap:1.2rem 2rem;">
+        <a onclick="irParaContato('Gestão de Pessoas')">Quero estruturar meu RH →</a>
+        <a href="/plano-de-carreira/" target="_blank" rel="noopener noreferrer">Plano de Cargos e Salários →</a>
+        <a href="/solicitar-vaga/" target="_blank" rel="noopener noreferrer">Solicitar uma vaga →</a>
+      </div>
+    </div>
+    <div class="servico-items">
+      <div class="servico-item"><div class="servico-item-text"><h4>Contratação Certeira</h4><p>Processo seletivo estruturado com perfil comportamental e técnico definido.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Equidade e Progressão Clara</h4><p>Plano de cargos com faixas salariais e critérios de progressão.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Gestão de Performance</h4><p>Ciclos de avaliação com indicadores e planos de desenvolvimento.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Rotina Trabalhista sem Riscos</h4><p>Folha, férias, 13º, ponto e conformidade total.</p></div></div>
+      <div class="servico-item"><div class="servico-item-text"><h4>Lideranças Preparadas</h4><p>Trilhas de desenvolvimento, treinamentos e endomarketing.</p></div></div>
+    </div>
+  </div>
+  <div id="tab-integrada" class="tab-panel reveal">
     <div class="servico-intro">
       <p>Para empresas que precisam reorganizar o negócio como um todo: finanças, indicadores e direção estratégica em um só lugar.</p>
       <div class="servico-cta">
@@ -1065,21 +1082,6 @@ footer p a { opacity:1; }
       <div class="servico-item"><div class="servico-item-text"><h4>Conformidade para Transportes</h4><p>Preparação e suporte para auditorias SASSMAQ.</p></div></div>
       <div class="servico-item"><div class="servico-item-text"><h4>Reputação ESG Estruturada</h4><p>Diagnóstico e estruturação para avaliação EcoVadis de sustentabilidade.</p></div></div>
       <div class="servico-item"><div class="servico-item-text"><h4>Processos Sob Controle</h4><p>Fluxogramas, POPs, código de conduta e políticas internas.</p></div></div>
-    </div>
-  </div>
-  <div id="tab-pessoas" class="tab-panel reveal">
-    <div class="servico-intro">
-      <p>Para empresas que precisam estruturar equipes e desenvolver gestores, com metodologia aplicada e presença na execução.</p>
-      <div class="servico-cta">
-        <a onclick="irParaContato('Gestão de Pessoas')">Quero estruturar meu RH →</a>
-      </div>
-    </div>
-    <div class="servico-items">
-      <div class="servico-item"><div class="servico-item-text"><h4>Contratação Certeira</h4><p>Processo seletivo estruturado com perfil comportamental e técnico definido.</p></div></div>
-      <div class="servico-item"><div class="servico-item-text"><h4>Equidade e Progressão Clara</h4><p>Plano de cargos com faixas salariais e critérios de progressão.</p></div></div>
-      <div class="servico-item"><div class="servico-item-text"><h4>Gestão de Performance</h4><p>Ciclos de avaliação com indicadores e planos de desenvolvimento.</p></div></div>
-      <div class="servico-item"><div class="servico-item-text"><h4>Rotina Trabalhista sem Riscos</h4><p>Folha, férias, 13º, ponto e conformidade total.</p></div></div>
-      <div class="servico-item"><div class="servico-item-text"><h4>Lideranças Preparadas</h4><p>Trilhas de desenvolvimento, treinamentos e endomarketing.</p></div></div>
     </div>
   </div>
 </section>
@@ -1308,8 +1310,12 @@ footer p a { opacity:1; }
       <h2 class="section-title">Vamos estruturar<br>sua <em>empresa?</em></h2>
       <p style="color:var(--muted);font-size:0.97rem;line-height:1.85;margin-bottom:3rem;font-weight:300;">Agende uma conversa estratégica com nossa equipe. Analisamos sua situação e identificamos as prioridades de estruturação.</p>
       <div class="contato-links">
+        <a href="/plano-de-carreira/" class="contato-link" target="_blank" rel="noopener noreferrer">
+          <span class="contato-link-label">Plano de Cargos e Salários</span>
+          <span class="contato-link-value">Solicitar proposta →</span>
+        </a>
         <a href="/solicitar-vaga/" class="contato-link" target="_blank" rel="noopener noreferrer">
-          <span class="contato-link-label">Já é cliente?</span>
+          <span class="contato-link-label">Recrutamento e Seleção</span>
           <span class="contato-link-value">Solicitar uma vaga →</span>
         </a>
         <a href="https://wa.me/5562992741488" class="contato-link" target="_blank" rel="noopener noreferrer">
