@@ -112,6 +112,31 @@
   .chip input[type=checkbox]:checked + span::before{box-shadow:inset 0 0 0 2px var(--white)}
   .chip input:focus-visible + span{outline:2px solid var(--sand-dark);outline-offset:2px}
 
+  /* Envio de arquivos */
+  .drop{
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.35rem;
+    border:1px dashed var(--sand-dark);border-radius:var(--radius);background:var(--bg);
+    padding:1.6rem 1rem;text-align:center;cursor:pointer;transition:.15s;
+  }
+  .drop:hover,.drop.over{border-color:var(--charcoal);background:var(--bg-alt)}
+  .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .drop strong{font-weight:500;font-size:0.85rem;color:var(--charcoal)}
+  .drop span{font-size:0.74rem;color:var(--muted);font-weight:400}
+  .files{list-style:none;display:flex;flex-direction:column;gap:0.4rem;margin-top:0.6rem}
+  .files li{
+    display:flex;align-items:center;justify-content:space-between;gap:0.8rem;
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+    padding:0.55rem 0.8rem;font-size:0.82rem;font-weight:400;
+  }
+  .files li .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .files li .tam{color:var(--muted);font-size:0.74rem;margin-left:0.4rem}
+  .files li button{
+    padding:0.2rem 0.55rem;font-size:0.68rem;letter-spacing:0.1em;background:transparent;
+    border:1px solid var(--border);color:var(--muted);flex:none;
+  }
+  .files li button:hover{border-color:var(--charcoal);color:var(--charcoal)}
+  .file-erro{font-size:0.76rem;color:#8a2d20;font-weight:400}
+
   .callout{
     margin-top:1.5rem;padding:1rem 1.2rem;background:var(--bg);border-left:2px solid var(--sand-dark);
     font-size:0.82rem;color:var(--charcoal);font-weight:400;border-radius:0 var(--radius) var(--radius) 0;
@@ -244,7 +269,7 @@
     <section class="step" data-title="Presença digital">
       <fieldset>
         <legend><span class="num">02</span><span class="titulo">Presença digital</span></legend>
-        <p class="intro">Usamos o site e as redes da sua empresa para preparar a proposta com a identidade visual de vocês. Informe pelo menos um.</p>
+        <p class="intro">Usamos o site e as redes da sua empresa para preparar a proposta com a identidade visual de vocês. Informe pelo menos um link ou envie um material.</p>
         <div class="grid" id="grupoRedes">
           <div class="field full">
             <label for="site">Site</label>
@@ -259,8 +284,20 @@
             <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/company/...">
           </div>
           <div class="field full">
-            <label for="outras_redes">Outras redes ou materiais</label>
+            <label for="outras_redes">Outras redes ou links</label>
             <input type="text" id="outras_redes" name="outras_redes" placeholder="Facebook, YouTube, link de apresentação institucional">
+          </div>
+          <div class="field full">
+            <span class="qlabel">Materiais da empresa (opcional)</span>
+            <span class="hint">Logo, manual da marca, apresentação institucional, organograma. PDF, imagem, PowerPoint ou Word, até 5 arquivos de 15 MB.</span>
+            <label class="drop" id="drop">
+              <input type="file" id="arquivos" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.svg,.ppt,.pptx,.doc,.docx">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A7A7A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              <strong>Clique para escolher ou arraste os arquivos aqui</strong>
+              <span>Os arquivos chegam para a equipe La Vie junto com as respostas.</span>
+            </label>
+            <ul class="files" id="listaArquivos"></ul>
+            <span class="file-erro" id="arquivoErro"></span>
           </div>
         </div>
       </fieldset>
@@ -541,7 +578,7 @@
       ['email','E-mail'],['telefone','Telefone / WhatsApp']
     ]],
     ['Presença digital', [
-      ['site','Site'],['instagram','Instagram'],['linkedin','LinkedIn'],['outras_redes','Outras redes ou materiais']
+      ['site','Site'],['instagram','Instagram'],['linkedin','LinkedIn'],['outras_redes','Outras redes ou links'],['arquivos_links','Materiais enviados']
     ]],
     ['Estrutura atual', [
       ['colaboradores','Colaboradores'],['num_cargos','Cargos diferentes'],['unidades','Unidades ou filiais'],
@@ -569,6 +606,7 @@
     }));
     const cid = (d.get('cidade')||'').trim(), uf = (d.get('uf')||'').trim().toUpperCase();
     v.cidade_uf = [cid, uf].filter(Boolean).join(' / ');
+    v.arquivos_links = arquivosLinks.length ? arquivosLinks.join('\n') : (arquivos.length ? arquivos.map(f => f.name).join(', ') : '');
     return v;
   }
 
@@ -604,10 +642,10 @@
     // Etapa de presença digital: pelo menos um campo
     const redes = etapa.querySelector('#grupoRedes');
     if (redes){
-      const campos = redes.querySelectorAll('input');
-      if (!Array.from(campos).some(c => c.value.trim())){
+      const campos = redes.querySelectorAll('input:not([type=file])');
+      if (!Array.from(campos).some(c => c.type !== 'file' && c.value.trim()) && !arquivos.length){
         campos.forEach(c => c.classList.add('invalid'));
-        ok = false; msg = 'Informe pelo menos o site ou uma rede social da empresa.';
+        ok = false; msg = 'Informe pelo menos o site, uma rede social ou envie um material da empresa.';
       }
     }
     if (!ok){
@@ -646,6 +684,78 @@
 
   btnAvancar.addEventListener('click', () => { if (validar(atual)) mostrar(atual + 1); });
   btnVoltar.addEventListener('click', () => { if (atual > 0) mostrar(atual - 1); });
+
+  // Arquivos: vão para o Supabase do site (bucket materiais-clientes) e o link segue no e-mail
+  const SB_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8';
+  const BUCKET = 'materiais-clientes';
+  const MAX_ARQ = 5, MAX_MB = 15;
+  const EXT_OK = ['pdf','png','jpg','jpeg','webp','svg','ppt','pptx','doc','docx'];
+  let arquivos = [];
+  let arquivosLinks = [];
+  const inputArq = document.getElementById('arquivos');
+  const lista = document.getElementById('listaArquivos');
+  const arqErro = document.getElementById('arquivoErro');
+  const drop = document.getElementById('drop');
+
+  const tamanho = b => b > 1048576 ? (b/1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b/1024)) + ' KB';
+  function desenharLista(){
+    arquivosLinks = [];
+    lista.innerHTML = '';
+    arquivos.forEach((f, i) => {
+      const li = document.createElement('li');
+      const nome = document.createElement('span'); nome.className = 'nome'; nome.textContent = f.name;
+      const tam = document.createElement('span'); tam.className = 'tam'; tam.textContent = tamanho(f.size);
+      nome.appendChild(tam);
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover';
+      rm.addEventListener('click', () => { arquivos.splice(i, 1); desenharLista(); });
+      li.append(nome, rm); lista.appendChild(li);
+    });
+  }
+  function adicionar(novos){
+    arqErro.textContent = '';
+    const recusados = [];
+    Array.from(novos).forEach(f => {
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (!EXT_OK.includes(ext)) { recusados.push(`${f.name} (formato não aceito)`); return; }
+      if (f.size > MAX_MB * 1048576) { recusados.push(`${f.name} (maior que ${MAX_MB} MB)`); return; }
+      if (arquivos.length >= MAX_ARQ) { recusados.push(`${f.name} (limite de ${MAX_ARQ} arquivos)`); return; }
+      if (!arquivos.some(a => a.name === f.name && a.size === f.size)) arquivos.push(f);
+    });
+    if (recusados.length) arqErro.textContent = 'Não adicionado: ' + recusados.join('; ');
+    desenharLista();
+    if (arquivos.length){
+      document.querySelectorAll('#grupoRedes .invalid').forEach(c => c.classList.remove('invalid'));
+      if (!steps[atual].querySelector('.invalid, .group-invalid')) msgValida.classList.remove('show');
+    }
+  }
+  inputArq.addEventListener('change', () => { adicionar(inputArq.files); inputArq.value = ''; });
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => { e.preventDefault(); adicionar(e.dataTransfer.files); });
+
+  function slug(t){
+    return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w.]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
+  }
+  async function enviarArquivos(empresa){
+    const pasta = `${new Date().toISOString().slice(0,10)}-${slug(empresa).slice(0,40) || 'empresa'}-${Math.random().toString(36).slice(2,10)}`;
+    const links = [];
+    for (const f of arquivos){
+      const caminho = `${pasta}/${slug(f.name) || 'arquivo'}`;
+      try{
+        const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${caminho}`, {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': f.type || 'application/octet-stream' },
+          body: f
+        });
+        if (!r.ok) throw new Error(r.status);
+        links.push(`${f.name}: ${SB_URL}/storage/v1/object/public/${BUCKET}/${caminho}`);
+      }catch(e){
+        links.push(`${f.name}: não foi possível enviar, pedir ao cliente`);
+      }
+    }
+    return links;
+  }
 
   // Texto para WhatsApp
   function textoResumo(){
@@ -709,6 +819,23 @@
         y += 13;
         doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...GRAFITE);
         const valor = v[k] || '-';
+        if (k === 'arquivos_links' && arquivosLinks.length){
+          arquivosLinks.forEach(l => {
+            if (y > 785) novaPagina();
+            const i = l.indexOf(': ');
+            const nome = l.slice(0, i), url = l.slice(i + 2);
+            if (url.startsWith('http')){
+              doc.setTextColor(...AREIA_ESCURA);
+              doc.textWithLink(nome + '  (clique para abrir)', marginX, y, { url });
+              doc.setTextColor(...GRAFITE);
+            } else {
+              doc.text(`${nome}: ${url}`, marginX, y);
+            }
+            y += 14;
+          });
+          y += 11;
+          return;
+        }
         String(valor).split('\n').forEach(par => {
           if (!par.trim()) return;
           doc.splitTextToSize(par, larguraUtil).forEach(linha => {
@@ -747,6 +874,11 @@
     btnEnviar.textContent = 'Enviando…';
 
     try{
+      if (arquivos.length && !arquivosLinks.length){
+        btnEnviar.textContent = 'Enviando arquivos…';
+        arquivosLinks = await enviarArquivos(form.empresa.value);
+        btnEnviar.textContent = 'Enviando…';
+      }
       const v = valores();
       const dados = new FormData();
       dados.append('_subject', `PCCS · ${v.empresa}`);
