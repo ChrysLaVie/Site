@@ -525,7 +525,10 @@ header {
     <div><h1 class="page-title" id="dash-title">Dashboard</h1><p class="page-sub" id="dash-subtitle">Dados em tempo real</p></div>
     <div id="dash-filtro-wrap" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:flex-end">
       <label for="dash-vaga-filtro" style="font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--light)">Mostrar</label>
-      <select class="filter-input wide" id="dash-vaga-filtro" onchange="renderDashboard()" style="max-width:320px"><option value="">Todas as vagas</option></select>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-ghost btn-sm" id="dash-btn-relatorio" style="display:none;white-space:nowrap" onclick="gerarRelatorioFechamento(_dashVagaFiltroId())">📄 Relatório de fechamento</button>
+        <select class="filter-input wide" id="dash-vaga-filtro" onchange="renderDashboard()" style="max-width:320px"><option value="">Todas as vagas</option></select>
+      </div>
     </div>
   </div>
   <!-- Dashboard de mentoria: só aparece para empresas sem R&S (ex.: AVEP). -->
@@ -2664,6 +2667,7 @@ function renderVagas() {
         <button class="btn btn-ghost btn-sm" onclick="editVaga('${v.id}')">✏ Editar</button>
         <button class="btn btn-ghost btn-sm" onclick="verCandVaga('${v.id}')">👥 Candidatos</button>
         <button class="btn btn-ghost btn-sm" onclick="abrirImagensVaga('${v.id}')">🖼 Imagens${(v.imagens&&v.imagens.length)?` (${v.imagens.length})`:''}</button>
+        ${v.status==='encerrada'&&v.dataEncerramento?`<button class="btn btn-ghost btn-sm" onclick="gerarRelatorioFechamento('${v.id}')">📄 Relatório</button>`:''}
         ${v.status==='encerrada'?`<button class="btn btn-ghost btn-sm" onclick="reabrirVaga('${v.id}')">Reabrir</button>`:''}
       </div>
     </div>`;
@@ -4361,6 +4365,167 @@ function renderAcoesPendentes(){
   el.innerHTML = html;
 }
 
+// ══ RELATÓRIO DE FECHAMENTO DA VAGA (PDF para enviar ao cliente) ══════════════
+// Uma página A4 com o prazo da proposta x entrega do dossiê, a linha do tempo
+// do ciclo em dias úteis (La Vie x decisão do cliente), o funil de candidatos
+// e a garantia. Gera e baixa o PDF; os números são os mesmos do dashboard.
+function _relatorioFechamentoHTML(v){
+  const fmt = d => d ? new Date(String(d).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR') : '-';
+  const esc = t => String(t==null?'':t).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  const emp = EMPRESAS[currentEmpresa] || {};
+  const cands = getCandsVisiveis().filter(c => _candidatoNoCicloVaga(c, v));
+  const inicio = _inicioCicloVaga(v), fim = v.dataEncerramento;
+  const manual = v.dataDossieManual;
+  const dossie = manual && manual>=inicio && manual<=fim ? manual : dataDossieVaga(v.id, cands, inicio, fim);
+  const uLaVie = dossie ? diasUteisCalendario(inicio, dossie) : null;
+  const uCliente = dossie ? diasUteisCalendario(dossie, fim) : null;
+  const uTotal = diasUteisCalendario(inicio, fim);
+
+  const contratado = c => c.etapa==='admissao' || (c.etapa==='aprovacao' && v.status==='encerrada');
+  const alcance = c => (c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa])
+    .reduce((m,et)=>Math.max(m, ETAPA_ORDEM.indexOf(et)), -1);
+  const contratados = cands.filter(contratado);
+  const funil = [['Candidatos avaliados', cands.length],
+    ...ETAPA_ORDEM.map((et,i)=>[ETAPA_LABEL[et]||et, cands.filter(c=>contratado(c) || alcance(c)>=i).length]),
+    [contratados.length===1?'Contratado(a)':'Contratados', contratados.length]];
+  const maxF = Math.max(1, funil[0][1]);
+  const taxa = cands.length ? (contratados.length/cands.length*100).toFixed(1).replace('.',',').replace(',0','') : '0';
+
+  const garantiaDias = v.garantiaDias || 60;
+  const garantiaAte = fim ? (()=>{ const d=new Date(fim.slice(0,10)+'T12:00:00'); d.setDate(d.getDate()+garantiaDias); return d.toISOString().slice(0,10); })() : null;
+
+  // Meio-círculo do prazo (mesmo desenho do dashboard)
+  const pMax = v.prazoMax, pMin = v.prazoMin || v.prazoMax;
+  let gauge = '', destaque = '', selo = '';
+  if(uLaVie!==null){
+    const escala = Math.max(pMax||uLaVie, uLaVie, 1);
+    const pt = f => { const t=Math.PI*(1-f); return [(100+90*Math.cos(t)).toFixed(1),(100-90*Math.sin(t)).toFixed(1)]; };
+    const arco = (f1,f2) => { const [x1,y1]=pt(f1),[x2,y2]=pt(f2); return `M ${x1} ${y1} A 90 90 0 0 1 ${x2} ${y2}`; };
+    const rot = (f,txt) => { const t=Math.PI*(1-f); return `<text x="${(100+109*Math.cos(t)).toFixed(1)}" y="${(104-109*Math.sin(t)).toFixed(1)}" text-anchor="middle" font-size="11" fill="#7A7A7A">${txt}</text>`; };
+    const dentro = !pMax || uLaVie<=pMax;
+    const cor = dentro ? CH.green : CH.amber;
+    gauge = `<svg viewBox="-18 -10 236 128" width="236" height="128">
+      <path d="${arco(0,1)}" fill="none" stroke="#EAE7E1" stroke-width="15" stroke-linecap="round"/>
+      ${pMax?`<path d="${arco(pMin/escala,pMax/escala)}" fill="none" stroke="#CFE6D8" stroke-width="15"/>`:''}
+      <path d="${arco(0,Math.max(0.02,uLaVie/escala))}" fill="none" stroke="${cor}" stroke-width="15" stroke-linecap="round"/>
+      ${pMax?rot(pMin/escala,pMin)+(pMax!==pMin?rot(pMax/escala,pMax):''):''}
+      <text x="100" y="84" text-anchor="middle" font-family="'Playfair Display',serif" font-size="34" font-weight="700" fill="#3A3A3A">${uLaVie}d</text>
+      <text x="100" y="104" text-anchor="middle" font-size="11" fill="#7A7A7A">dias úteis</text>
+    </svg>`;
+    destaque = `Shortlist entregue em ${uLaVie} dia${uLaVie===1?'':'s'} út${uLaVie===1?'il':'eis'}`;
+    if(pMax){
+      const txt = uLaVie<pMin ? `${pMin-uLaVie} dia${pMin-uLaVie===1?'':'s'} út${pMin-uLaVie===1?'il':'eis'} antes do prazo mínimo`
+        : dentro ? 'Dentro do prazo da proposta' : `${uLaVie-pMax} dia${uLaVie-pMax===1?'':'s'} acima do prazo`;
+      selo = `<span style="display:inline-block;background:${dentro?'#EEF3F0':'#FBF3E4'};color:${cor};padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600">${dentro?'✓ ':''}${txt}</span>`;
+    }
+  }
+
+  const resumo = uLaVie===null ? '' :
+    `A La Vie apresentou a shortlist em ${uLaVie} dia${uLaVie===1?'':'s'} út${uLaVie===1?'il':'eis'}`
+    + (pMax ? (uLaVie<pMin ? `, ${pMin-uLaVie} antes do prazo mínimo previsto na proposta (${pMin} a ${pMax} dias úteis)` : uLaVie<=pMax ? ', dentro do prazo previsto na proposta' : '') : '')
+    + `. Dos ${cands.length} candidatos avaliados, ${funil[4][1]} seguiram para a entrevista final com a empresa, e a contratação foi concluída em ${uTotal} dias úteis desde o início do ciclo.`;
+  const caixa = (rot, val) => `<div style="flex:1;background:#fff;border:1px solid #EAE7E1;border-radius:10px;padding:12px 14px">
+      <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:1.3px;color:#A8A8A8">${rot}</div>
+      <div style="font-size:13.5px;font-weight:600;margin-top:4px">${val}</div></div>`;
+  const marco = (data, rot) => `<div style="text-align:center;width:120px">
+      <div style="width:12px;height:12px;border-radius:50%;background:#3A3A3A;margin:0 auto 6px"></div>
+      <div style="font-size:13px;font-weight:600">${fmt(data)}</div>
+      <div style="font-size:10.5px;color:#7A7A7A">${rot}</div></div>`;
+  const trecho = (n, rot, cor) => `<div style="flex:1;padding-top:2px">
+      <div style="height:6px;border-radius:3px;background:${cor};margin-top:3px"></div>
+      <div style="text-align:center;font-size:11px;margin-top:6px"><strong style="color:${cor}">${n} dia${n===1?'':'s'} út${n===1?'il':'eis'}</strong> <span style="color:#7A7A7A">${rot}</span></div></div>`;
+  const secao = t => `<div style="font-size:10px;text-transform:uppercase;letter-spacing:1.6px;color:#A8A8A8;margin:26px 0 10px">${t}</div>`;
+
+  return `<div style="width:794px;height:1122px;box-sizing:border-box;padding:46px 56px 40px;background:#FAF8F3;font-family:'DM Sans',sans-serif;color:#3A3A3A;position:relative">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="${LOGO_LAVIE}" style="height:62px;filter:brightness(.5) contrast(1.6)">
+        <div><div style="font-family:'Playfair Display',serif;font-style:italic;font-size:22px;line-height:1">La Vie</div>
+          <div style="font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:#7A7A7A;margin-top:4px">Consultoria Empresarial</div></div>
+      </div>
+      ${emp.logo?`<img src="${emp.logo}" style="height:40px;max-width:150px;object-fit:contain">`:''}
+    </div>
+    <div style="height:1px;background:#D8CFC4;margin:18px 0 22px"></div>
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.8px;color:#B8860B">Relatório de fechamento de vaga</div>
+    <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;margin-top:6px;line-height:1.15">${esc(v.titulo)}</div>
+    <div style="font-size:13px;color:#7A7A7A;margin-top:6px">${esc(emp.nome||'')}${v.ordemServico?' · '+esc(v.ordemServico.split('·')[0].trim()):''}</div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      ${caixa(contratados.length===1?'Contratado(a)':'Contratados', esc(contratados.map(c=>c.nome).join(', ')||'-'))}
+      ${caixa('Início do ciclo', fmt(inicio))}
+      ${caixa('Fechamento', fmt(fim))}
+    </div>
+
+    ${uLaVie!==null?`
+    <div style="display:flex;align-items:center;gap:26px;background:#fff;border:1px solid #EAE7E1;border-radius:12px;padding:20px 24px;margin-top:22px">
+      ${gauge}
+      <div style="flex:1">
+        <div style="font-family:'Playfair Display',serif;font-size:21px;font-weight:700;line-height:1.25">${destaque}</div>
+        ${pMax?`<div style="font-size:12.5px;color:#7A7A7A;margin-top:8px;line-height:1.5">Prazo da proposta: ${pMin===pMax?pMax:pMin+' a '+pMax} dias úteis para a shortlist, contados a partir de ${fmt(inicio)}.</div>`:''}
+        ${selo?`<div style="margin-top:12px">${selo}</div>`:''}
+      </div>
+    </div>
+
+    ${secao('Linha do tempo · dias úteis (segunda a sexta)')}
+    <div style="display:flex;align-items:flex-start">
+      ${marco(inicio,'Início do ciclo')}
+      ${trecho(uLaVie,'La Vie',CH.green)}
+      ${marco(dossie,'Dossiê entregue')}
+      ${trecho(uCliente,'decisão do cliente',CH.gold)}
+      ${marco(fim,'Contratação')}
+    </div>
+    <div style="text-align:center;font-size:12px;color:#7A7A7A;margin-top:10px">Ciclo completo: <strong style="color:#3A3A3A">${uTotal} dias úteis</strong></div>
+    `:''}
+
+    ${secao('Funil do processo')}
+    <div style="background:#fff;border:1px solid #EAE7E1;border-radius:12px;padding:16px 20px">
+      ${funil.map(([rot,n],i)=>`<div style="display:flex;align-items:center;gap:12px;margin:5px 0">
+        <div style="width:150px;font-size:12px;text-align:right">${rot}</div>
+        <div style="flex:1;background:#F3F1EC;border-radius:4px;height:16px">
+          <div style="width:${Math.max(1.5,n/maxF*100)}%;height:16px;border-radius:4px;background:${i===0?'#3A3A3A':i===funil.length-1?CH.green:'#9A9A9A'}"></div></div>
+        <div style="width:28px;font-size:12.5px;font-weight:600">${n}</div></div>`).join('')}
+      <div style="font-size:11.5px;color:#7A7A7A;margin-top:8px;text-align:right">Conversão total: <strong style="color:#3A3A3A">${taxa}%</strong> do avaliado até a contratação</div>
+    </div>
+
+    ${resumo?`${secao('Resumo')}<div style="font-size:13px;line-height:1.65">${resumo}</div>`:''}
+
+    ${garantiaAte?`<div style="margin-top:22px;border-left:3px solid #B8860B;padding:6px 0 6px 14px;font-size:12.5px;line-height:1.5">
+      <strong>Garantia de reposição:</strong> ${garantiaDias} dias, válida até ${fmt(garantiaAte)}.</div>`:''}
+
+    <div style="position:absolute;left:56px;right:56px;bottom:30px;display:flex;justify-content:space-between;font-size:10px;color:#A8A8A8;border-top:1px solid #EAE7E1;padding-top:10px">
+      <span>La Vie Consultoria Empresarial · lavieconsultoria.com</span>
+      <span>Emitido em ${new Date().toLocaleDateString('pt-BR')}</span>
+    </div>
+  </div>`;
+}
+
+async function gerarRelatorioFechamento(vagaId){
+  const v = _vagas.find(x => x.id===vagaId);
+  if(!v) return;
+  if(v.status!=='encerrada' || !v.dataEncerramento){ showToast('O relatório fica disponível quando a vaga é fechada'); return; }
+  if(typeof html2pdf==='undefined'){ showToast('Gerador de PDF ainda carregando, tente de novo em instantes'); return; }
+  showToast('📄 Gerando relatório de fechamento...');
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:-1';
+  box.innerHTML = _relatorioFechamentoHTML(v);
+  document.body.appendChild(box);
+  try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    const nome = `Relatorio de fechamento - ${v.titulo} - ${(EMPRESAS[currentEmpresa]||{}).nome||''}`
+      .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9 ()._-]/g,'').replace(/\s+/g,' ').trim() + '.pdf';
+    await html2pdf().set({ margin:0, filename:nome, image:{type:'jpeg',quality:0.96},
+      html2canvas:{ scale:2, useCORS:true, backgroundColor:'#FAF8F3' },
+      jsPDF:{ unit:'px', format:[794,1122], orientation:'portrait', hotfixes:['px_scaling'] } })
+      .from(box.firstElementChild).save();
+  }catch(e){
+    console.warn('Relatório de fechamento:', e);
+    showToast('Não foi possível gerar o relatório agora');
+  }finally{
+    box.remove();
+  }
+}
+window.gerarRelatorioFechamento = gerarRelatorioFechamento;
+
 // ══ INDICADORES DE R&S — gráficos reais: tempo por etapa, funil, candidatos por vaga, destino ══
 function renderIndicadoresFunil(){
   const vagas=_dashVagas();
@@ -4618,6 +4783,8 @@ function renderDashboard(){
   const _cardCandVaga=document.getElementById('dash-card-cand-vaga');
   if(_cardCandVaga){ _cardCandVaga.style.display=_dashVagaFiltroId()?'none':''; _cardCandVaga.parentElement.style.gridTemplateColumns=_dashVagaFiltroId()?'1fr':'1fr 1fr'; }
   const _vagaSel = _dashVagaFiltroId() ? vagas[0] : null;
+  const _btnRel = document.getElementById('dash-btn-relatorio');
+  if(_btnRel) _btnRel.style.display = (_vagaSel && _vagaSel.status==='encerrada' && _vagaSel.dataEncerramento) ? '' : 'none';
   // Show sector context for gestores
   const subEl = document.getElementById('dash-subtitle');
   if(subEl) {
