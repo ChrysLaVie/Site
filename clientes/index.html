@@ -4599,8 +4599,8 @@ function renderDashboard(){
   const mediaClienteC = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.diasCliente,0)/comDossie.length) : null;
   const mediaLaVieU = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.uteisLaVie,0)/comDossie.length) : null;
   const mediaClienteU = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.uteisCliente,0)/comDossie.length) : null;
-  // Célula "Dias" do Status das Vagas: corridos em cima, úteis embaixo.
-  const _celDias = (c,u) => c===null ? '-' : `${c}d<div style="font-size:10px;color:var(--light);margin-top:1px">${u} úteis</div>`;
+  // Dashboard mostra só dias úteis (segunda a sexta).
+  const _celDias = (u) => u===null ? '-' : `${u}d`;
 
   // "Status das Vagas" — panorama rápido de todas as posições (aberta/fechada/
   // cancelada/em decisão), com o candidato aprovado quando já houver um.
@@ -4631,17 +4631,17 @@ function renderDashboard(){
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
-        diasNum = td ? td.corridos : null;
-        dias = diasNum!==null ? _celDias(diasNum, td.trabalhados) : '-';
+        diasNum = td ? td.trabalhados : null;
+        dias = _celDias(diasNum);
         grupo=0;
-      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?_celDias(diasNum, diasUteisCalendario(_inicioCicloVaga(v))):'-'; grupo=1; }
+      } else if(aprovado){ statusHtml='<span style="color:var(--amber)">● Em Decisão</span>'; diasNum=_inicioCicloVaga(v)?diasUteisCalendario(_inicioCicloVaga(v)):null; dias = _celDias(diasNum); grupo=1; }
       else {
         // Vaga com qtd>1 preenchida parcialmente (ex.: 1 de 5) continua "aberta"
         // até fechar todas — sem isso, ficava idêntica visualmente a uma vaga
         // com zero contratações ainda.
         const progressoTxt = (v.qtd>1 && v.qtdFechadas>0) ? ` (${v.qtdFechadas}/${v.qtd})` : '';
         statusHtml=`<span style="color:var(--mid)">● Em Aberto${progressoTxt}</span>`;
-        diasNum=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null; dias = diasNum!==null?_celDias(diasNum, diasUteisCalendario(_inicioCicloVaga(v))):'-'; grupo=2;
+        diasNum=_inicioCicloVaga(v)?diasUteisCalendario(_inicioCicloVaga(v)):null; dias = _celDias(diasNum); grupo=2;
       }
       // Reabertura/substituição: sinaliza na própria linha da posição, não só na aba Vagas
       const tituloHtml = v.dataReabertura
@@ -4668,18 +4668,17 @@ function renderDashboard(){
       // com dossiê registrado; é o mesmo dado que antes vivia numa tabela
       // separada ("Tempo de Fechamento"), duplicando os "dias" já mostrados aqui.
       const td2 = temposDetalhe.find(t=>t.v.id===v.id);
-      const divisaoHtml = (td2 && td2.diasLaVie!==null)
+      const divisaoHtml = (td2 && td2.uteisLaVie!==null)
         ? `<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bege-lt);min-width:90px">
-             <div style="width:${((td2.diasLaVie+td2.diasCliente)>0?Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100):0)}%;background:${CH.green}"></div>
-             <div style="width:${100-((td2.diasLaVie+td2.diasCliente)>0?Math.round(td2.diasLaVie/(td2.diasLaVie+td2.diasCliente)*100):0)}%;background:${CH.gold}"></div>
+             <div style="width:${((td2.uteisLaVie+td2.uteisCliente)>0?Math.round(td2.uteisLaVie/(td2.uteisLaVie+td2.uteisCliente)*100):0)}%;background:${CH.green}"></div>
+             <div style="width:${100-((td2.uteisLaVie+td2.uteisCliente)>0?Math.round(td2.uteisLaVie/(td2.uteisLaVie+td2.uteisCliente)*100):0)}%;background:${CH.gold}"></div>
            </div>
-           <div style="font-size:10px;color:var(--light);margin-top:2px">${td2.diasLaVie}d La Vie · ${td2.diasCliente}d Cliente</div>
-           <div style="font-size:10px;color:var(--light)">${td2.uteisLaVie} úteis La Vie · ${td2.uteisCliente} úteis Cliente</div>`
+           <div style="font-size:10px;color:var(--light);margin-top:2px">${td2.uteisLaVie}d La Vie · ${td2.uteisCliente}d Cliente</div>`
         : '<span style="font-size:11px;color:var(--light)">—</span>';
       const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td>${divisaoHtml}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
       return {html, grupo, diasNum};
     }).sort((a,b)=> (a.grupo-b.grupo) || ((a.diasNum??999999)-(b.diasNum??999999)) );
-    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:560px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias</th><th>Divisão do Tempo</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.map(l=>l.html).join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
+    statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:560px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias úteis</th><th>Divisão do Tempo</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.map(l=>l.html).join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
 
   document.getElementById('dash-kpis').innerHTML=`
@@ -4698,20 +4697,19 @@ function renderDashboard(){
     bannerEl.innerHTML = `<div style="position:relative;height:160px">
         <canvas id="chart-lv-split"></canvas>
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none">
-          <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal)">${mediaLaVieC+mediaClienteC}d</div>
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">ciclo total</div>
-          <div style="font-size:11px;color:var(--mid);margin-top:2px">${mediaLaVieU+mediaClienteU} dias úteis</div>
+          <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal)">${mediaLaVieU+mediaClienteU}d</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">ciclo total · dias úteis</div>
         </div>
       </div>
       <div style="display:flex;justify-content:space-around;margin-top:10px;font-size:12px">
-        <div><strong style="color:${CH.green}">${mediaLaVieC}d</strong> <span style="color:var(--light)">Tempo La Vie</span><div style="font-size:10.5px;color:var(--light)">${mediaLaVieU} dias úteis</div></div>
-        <div><strong style="color:${CH.gold}">${mediaClienteC}d</strong> <span style="color:var(--light)">Decisão do Cliente</span><div style="font-size:10.5px;color:var(--light)">${mediaClienteU} dias úteis</div></div>
+        <div><strong style="color:${CH.green}">${mediaLaVieU}d</strong> <span style="color:var(--light)">Tempo La Vie</span></div>
+        <div><strong style="color:${CH.gold}">${mediaClienteU}d</strong> <span style="color:var(--light)">Decisão do Cliente</span></div>
       </div>`;
     renderChart('chart-lv-split', {
       type:'doughnut',
-      data:{ labels:['Tempo La Vie','Decisão do Cliente'], datasets:[{ data:[mediaLaVieC,mediaClienteC], backgroundColor:[CH.green,CH.gold], borderWidth:2, borderColor:'#fff' }] },
+      data:{ labels:['Tempo La Vie','Decisão do Cliente'], datasets:[{ data:[mediaLaVieU,mediaClienteU], backgroundColor:[CH.green,CH.gold], borderWidth:2, borderColor:'#fff' }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'70%',
-        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.label}: ${ctx.parsed}d` } } } }
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.label}: ${ctx.parsed} dias úteis` } } } }
     });
   } else {
     lvSubEl.textContent = 'Sem vagas fechadas com dossiê registrado ainda';
@@ -4741,18 +4739,18 @@ function renderDashboard(){
   renderIndicadoresFunil();
 
   if (temposDetalhe.length > 0) {
-    const mediaC = Math.round(temposDetalhe.reduce((s,t)=>s+t.corridos,0)/temposDetalhe.length);
-    const mediaT = Math.round(temposDetalhe.reduce((s,t)=>s+t.trabalhados,0)/temposDetalhe.length);
-    const minC = temposDetalhe.reduce((m,x)=>x.corridos<m.corridos?x:m);
-    const maxC = temposDetalhe.reduce((m,x)=>x.corridos>m.corridos?x:m);
+    // Dashboard em dias úteis (segunda a sexta)
+    const mediaC = Math.round(temposDetalhe.reduce((s,t)=>s+t.trabalhados,0)/temposDetalhe.length);
+    const minC = temposDetalhe.reduce((m,x)=>x.trabalhados<m.trabalhados?x:m);
+    const maxC = temposDetalhe.reduce((m,x)=>x.trabalhados>m.trabalhados?x:m);
 
     const metricasEl = document.getElementById('dash-metricas-tempo');
     if(metricasEl){
       // Ponteiro em formato de relógio (meio-círculo): a posição da média entre
       // a vaga mais rápida e a mais lenta, em vez de 3 linhas de texto empilhadas.
       const arco = 283; // π·90, comprimento do semicírculo usado no path abaixo
-      const faixa = Math.max(1, maxC.corridos - minC.corridos);
-      const frac = Math.min(1, Math.max(0, (mediaC - minC.corridos) / faixa));
+      const faixa = Math.max(1, maxC.trabalhados - minC.trabalhados);
+      const frac = Math.min(1, Math.max(0, (mediaC - minC.trabalhados) / faixa));
       const corPonteiro = frac<0.4 ? CH.green : frac<0.7 ? CH.amber : CH.red;
       metricasEl.innerHTML = `
         <svg viewBox="0 0 200 118" style="width:100%;max-width:220px;display:block;margin:0 auto">
@@ -4760,11 +4758,11 @@ function renderDashboard(){
           <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="${corPonteiro}" stroke-width="14" stroke-linecap="round"
             stroke-dasharray="${(frac*arco).toFixed(1)} ${arco}"/>
           <text x="100" y="82" text-anchor="middle" font-family="'Playfair Display',serif" font-size="30" font-weight="700" fill="var(--charcoal)">${mediaC}d</text>
-          <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · ${mediaT}d úteis</text>
+          <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · dias úteis</text>
         </svg>
         <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
-          <div style="font-size:11.5px"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais rápida</span><br><strong style="color:var(--green)">${minC.corridos}d</strong> <span style="color:var(--light);font-size:10.5px">(${minC.trabalhados} úteis)</span> <span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
-          <div style="font-size:11.5px;text-align:right"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais lenta</span><br><strong style="color:var(--red)">${maxC.corridos}d</strong> <span style="color:var(--light);font-size:10.5px">(${maxC.trabalhados} úteis)</span> <span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
+          <div style="font-size:11.5px"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais rápida</span><br><strong style="color:var(--green)">${minC.trabalhados}d</strong> <span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
+          <div style="font-size:11.5px;text-align:right"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais lenta</span><br><strong style="color:var(--red)">${maxC.trabalhados}d</strong> <span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
         </div>`;
     }
 
