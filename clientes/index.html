@@ -76,6 +76,8 @@ header {
    "parede de caixinhas" que uma borda sólida repetida em todo card cria. */
 .card { background:var(--offwhite); border:1px solid rgba(216,207,196,0.35); border-radius:12px; padding:22px; box-shadow:0 1px 2px rgba(58,58,58,.04), 0 6px 20px rgba(58,58,58,.05); }
 .card + .card { margin-top:14px; }
+/* Cards lado a lado num grid ficam alinhados no topo (sem o espaço de pilha). */
+#page-dashboard [style*="display:grid"] > .card + .card { margin-top:0; }
 .chart-card-title { font-size:13.5px; font-weight:600; color:var(--charcoal); letter-spacing:.2px; margin-bottom:3px; }
 .chart-card-sub { font-size:11.5px; color:var(--mid); margin-bottom:16px; line-height:1.4; }
 .chart-card-headline { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--charcoal); line-height:1; }
@@ -584,7 +586,7 @@ header {
     </div>
     <div class="card chart-card">
       <div class="chart-card-title">Tempo Médio por Etapa</div>
-      <div class="chart-card-sub">Dias reais em cada etapa comparado à meta de SLA</div>
+      <div class="chart-card-sub">Média de dias úteis em cada etapa, comparada à meta</div>
       <div class="chart-wrap" style="height:260px"><canvas id="chart-tempo-etapa"></canvas></div>
     </div>
   </div>
@@ -1055,6 +1057,19 @@ function diasCorridosCalendario(dataInicioISO, dataFimISO){
 }
 // Dias úteis (segunda a sexta) entre as duas datas, na mesma regra dos dias
 // corridos: não conta o dia de início e conta o dia final. Não desconta feriados.
+// Dias úteis (seg a sex) entre dois instantes, com fração do dia: sábado e
+// domingo não contam. Usado no tempo médio por etapa.
+function _diasUteisEntre(aISO, bISO){
+  let t=new Date(aISO); const fim=new Date(bISO); let ms=0;
+  if(isNaN(t)||isNaN(fim)||fim<t) return -1;
+  while(t<fim){
+    const prox=new Date(t); prox.setHours(24,0,0,0);
+    const ate=prox<fim?prox:fim; const w=t.getDay();
+    if(w!==0 && w!==6) ms+=ate-t;
+    t=ate;
+  }
+  return ms/86400000;
+}
 function diasUteisCalendario(dataInicioISO, dataFimISO){
   if(!dataInicioISO) return 0;
   const d=new Date(dataInicioISO.slice(0,10)+'T12:00:00');
@@ -4362,26 +4377,26 @@ function renderIndicadoresFunil(){
     for(let i=0;i<hist.length-1;i++){
       const et=hist[i].etapa;
       if(!soma.hasOwnProperty(et)) continue;
-      const dur=(new Date(hist[i+1].data)-new Date(hist[i].data))/86400000;
+      const dur=_diasUteisEntre(hist[i].data, hist[i+1].data);
       if(dur>=0){ soma[et]+=dur; cont[et]++; }
     }
   });
   const temposReal = ETAPAS.map(e=>cont[e.id]?+(soma[e.id]/cont[e.id]).toFixed(1):0);
   const temposMeta = ETAPAS.map(e=>ETAPA_SLA[e.id]);
-  // Radar em vez de barra horizontal — dá pra ver de relance em qual etapa o
-  // real "estoura" a meta (o polígono vermelho sai pra fora do cinza) sem
-  // repetir o mesmo tipo de gráfico de barra usado em quase tudo mais.
+  // Barras horizontais: realizado (verde dentro da meta, dourado acima) ao lado
+  // da meta em cinza claro, com o valor no nome da etapa para leitura em print.
+  const _fmtD = v => String(v).replace('.',',')+'d';
   renderChart('chart-tempo-etapa', {
-    type:'radar',
-    data:{ labels:ETAPAS.map(e=>e.short), datasets:[
-      { label:'Real (dias)', data:temposReal, backgroundColor:'rgba(192,57,43,.15)', borderColor:CH.red, pointBackgroundColor:CH.red, borderWidth:2 },
-      { label:'Meta SLA (dias)', data:temposMeta, backgroundColor:'rgba(122,122,122,.06)', borderColor:CH.light, pointBackgroundColor:CH.light, borderWidth:1.5, borderDash:[4,3] }
+    type:'bar',
+    data:{ labels:ETAPAS.map((e,i)=>cont[e.id] ? `${e.short}  ${_fmtD(temposReal[i])}` : `${e.short}  sem dados`), datasets:[
+      { label:'Realizado (dias úteis)', data:temposReal, backgroundColor:temposReal.map((v,i)=>v<=temposMeta[i]?CH.green:CH.gold), borderRadius:4, maxBarThickness:14 },
+      { label:'Meta (dias úteis)', data:temposMeta, backgroundColor:CH.bege_lt, borderColor:CH.bege, borderWidth:1, borderRadius:4, maxBarThickness:14 }
     ]},
-    options:{ responsive:true, maintainAspectRatio:false,
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid } },
-        tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.r}d` } } },
-      scales:{ r:{ beginAtZero:true, angleLines:{color:CH.bege_lt}, grid:{color:CH.bege_lt},
-        pointLabels:{color:CH.charcoal,font:{size:11}}, ticks:{ color:CH.mid, backdropColor:'transparent', font:{size:9} } } }
+        tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${_fmtD(ctx.parsed.x)}` } }, datalabels:false },
+      scales:{ x:{ beginAtZero:true, ticks:{ color:CH.light, font:{size:10} }, grid:{ color:CH.bege_lt } },
+               y:{ ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
     }
   });
 
