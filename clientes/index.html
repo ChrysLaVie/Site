@@ -551,7 +551,8 @@ header {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:4px">
         <div>
           <div class="chart-card-title">Funil de Conversão</div>
-          <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a admissão (contratação)</div>
+          <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a contratação</div>
+          <select class="filter-input" id="dash-funil-vaga" onchange="renderIndicadoresFunil()" style="margin-top:8px;max-width:260px;font-size:12px"><option value="">Todas as vagas</option></select>
         </div>
         <div style="text-align:right">
           <div class="chart-card-headline" id="dash-funil-taxa">0%</div>
@@ -4324,8 +4325,23 @@ function renderAcoesPendentes(){
 
 // ══ INDICADORES DE R&S — gráficos reais: tempo por etapa, funil, candidatos por vaga, destino ══
 function renderIndicadoresFunil(){
-  const cands=getCandsVisiveis();
   const vagas=getVagasVisiveis();
+  // Filtro de vaga do Funil de Conversão e do Destino dos Candidatos: permite
+  // mostrar ao cliente o resultado de uma vaga só (ex.: a vaga recém-fechada),
+  // sem misturar com candidatos de vagas ainda em triagem.
+  const selVaga=document.getElementById('dash-funil-vaga');
+  if(selVaga){
+    const atual=selVaga.value;
+    selVaga.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}">${v.titulo}${v.status==='encerrada'?' (fechada)':v.status==='cancelada'?' (cancelada)':''}</option>`).join('');
+    selVaga.value = vagas.some(v=>v.id===atual) ? atual : '';
+  }
+  const vagaFiltro = selVaga ? selVaga.value : '';
+  const cands=getCandsVisiveis().filter(c=>!vagaFiltro || c.vagaId===vagaFiltro);
+  // Contratado: está em Admissão, ou é o aprovado de uma vaga já fechada (a
+  // vaga só fecha com a contratação; sem isso o funil mostrava 0% até alguém
+  // mover o candidato de Aprovação para Admissão).
+  const _vagaPorId = Object.fromEntries(vagas.map(v=>[v.id,v]));
+  const contratado = c => c.etapa==='admissao' || (c.etapa==='aprovacao' && _vagaPorId[c.vagaId] && _vagaPorId[c.vagaId].status==='encerrada');
 
   // 1) Tempo médio por etapa (só considera passagens já concluídas, ou seja, com
   // uma etapa seguinte registrada no histórico — evita distorcer com quem ainda está lá)
@@ -4367,11 +4383,17 @@ function renderIndicadoresFunil(){
   // Admissão usa a etapa ATUAL do candidato — é o único jeito de refletir quem
   // está realmente contratado hoje (um candidato pode ter passado pela Admissão
   // e depois sido corrigido/reprovado; "visitou" contaria ele errado).
-  const visitou = c => new Set((c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa]));
+  // Cada candidato conta em todas as etapas até a mais avançada que alcançou
+  // (quem pulou etapa, ex.: Triagem direto para Entrevista Final, conta também
+  // nas anteriores). Assim o funil só diminui de uma etapa para a outra.
+  const alcance = c => {
+    const ids = (c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa]);
+    return ids.reduce((m,et)=>Math.max(m, ETAPA_ORDEM.indexOf(et)), -1);
+  };
   const totalAvaliados = cands.length;
-  const admitidosAgora = cands.filter(c=>c.etapa==='admissao').length;
-  const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et]), ETAPA_LABEL.admissao];
-  const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map(et=>cands.filter(c=>visitou(c).has(et)).length), admitidosAgora];
+  const admitidosAgora = cands.filter(contratado).length;
+  const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et]), 'Contratados'];
+  const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map((et,i)=>cands.filter(c=>contratado(c) || alcance(c)>=i).length), admitidosAgora];
   const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
   document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '0%';
   const funilCores = funilValores.map((_,i)=> i===0 ? CH.charcoal : i===funilValores.length-1 ? CH.green : CH.mid);
@@ -4407,7 +4429,7 @@ function renderIndicadoresFunil(){
   // "Contratados" usa a etapa Admissão (quem foi de fato efetivado), não
   // Aprovação (que é só a decisão enviada ao cliente, ainda pendente) — senão
   // todo mundo já contratado cai errado dentro de "Em Andamento".
-  const nAdmitidos = cands.filter(c=>c.etapa==='admissao').length;
+  const nAdmitidos = cands.filter(contratado).length;
   const nBanco = cands.filter(c=>(c.etapa||'').startsWith('banco_talentos')).length;
   const nReprovados = cands.filter(c=>c.etapa==='reprovado').length;
   const nAndamento = cands.length - nAdmitidos - nBanco - nReprovados;
@@ -4418,7 +4440,7 @@ function renderIndicadoresFunil(){
     { label:'Reprovados', n:nReprovados, cor:CH.red }
   ].filter(d=>d.n>0);
   const totalDestino = destino.reduce((s,d)=>s+d.n,0);
-  document.getElementById('dash-destino-sub').textContent = totalDestino>0 ? `${totalDestino} candidatos avaliados no total` : 'Sem candidatos avaliados ainda';
+  document.getElementById('dash-destino-sub').textContent = totalDestino>0 ? `${totalDestino} candidatos avaliados${vagaFiltro?' nesta vaga':' no total'}` : 'Sem candidatos avaliados ainda';
   renderChart('chart-destino', {
     type:'doughnut',
     data:{ labels:destino.map(d=>d.label), datasets:[{ data:destino.map(d=>d.n), backgroundColor:destino.map(d=>d.cor), borderWidth:2, borderColor:'#fff' }] },
