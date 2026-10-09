@@ -568,7 +568,7 @@ header {
       <div class="chart-card-title">Destino dos Candidatos</div>
       <div class="chart-card-sub" id="dash-destino-sub">Para onde foram os candidatos avaliados</div>
       <div class="chart-wrap" style="height:160px"><canvas id="chart-destino"></canvas></div>
-      <div class="chart-legend" id="dash-destino-legend"></div>
+      <div id="dash-destino-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:12px"></div>
     </div>
     <div class="card">
       <div class="chart-card-title">Métricas de Tempo</div>
@@ -577,7 +577,7 @@ header {
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;align-items:start">
-    <div class="card chart-card">
+    <div class="card chart-card" id="dash-card-cand-vaga">
       <div class="chart-card-title">Candidatos por Vaga</div>
       <div class="chart-card-sub">Total avaliado em cada posição, do maior para o menor volume</div>
       <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
@@ -4402,7 +4402,7 @@ function renderIndicadoresFunil(){
   };
   const totalAvaliados = cands.length;
   const admitidosAgora = cands.filter(contratado).length;
-  const funilLabels = ['Total Avaliados', ...ETAPA_ORDEM.map(et=>ETAPA_LABEL[et]), 'Contratados'];
+  const funilLabels = ['Avaliados', ...ETAPA_ORDEM.map(et=>(ETAPAS.find(e=>e.id===et)||{}).short||ETAPA_LABEL[et]), 'Contratados'];
   const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map((et,i)=>cands.filter(c=>contratado(c) || alcance(c)>=i).length), admitidosAgora];
   const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
   document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '0%';
@@ -4415,7 +4415,7 @@ function renderIndicadoresFunil(){
         tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.y} candidato${ctx.parsed.y===1?'':'s'}` } },
         datalabels:false },
       scales:{ y:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
-                x:{ ticks:{ color:CH.charcoal, font:{size:11} }, grid:{ display:false } } }
+                x:{ ticks:{ color:CH.charcoal, font:{size:10.5}, maxRotation:0, autoSkip:false }, grid:{ display:false } } }
     }
   });
 
@@ -4463,7 +4463,7 @@ function renderIndicadoresFunil(){
   });
   document.getElementById('dash-destino-legend').innerHTML = destino.map(d=>{
     const pct = totalDestino>0 ? Math.round(d.n/totalDestino*100) : 0;
-    return `<div class="chart-legend-item"><span class="chart-legend-dot" style="background:${d.cor}"></span>${d.label} · ${pct}%</div>`;
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)"><span style="width:8px;height:8px;border-radius:50%;background:${d.cor};flex:none"></span><strong style="color:var(--charcoal);font-weight:600">${d.n}</strong> ${d.label} <span style="color:var(--light)">(${pct}%)</span></div>`;
   }).join('');
 
 }
@@ -4591,6 +4591,8 @@ function renderDashboard(){
   if(_tt) _tt.textContent='Dashboard';
   _popularFiltroDash();
   const vagas=_dashVagas();
+  const _cardCandVaga=document.getElementById('dash-card-cand-vaga');
+  if(_cardCandVaga){ _cardCandVaga.style.display=_dashVagaFiltroId()?'none':''; _cardCandVaga.parentElement.style.gridTemplateColumns=_dashVagaFiltroId()?'1fr':'1fr 1fr'; }
   const _vagaSel = _dashVagaFiltroId() ? vagas[0] : null;
   // Show sector context for gestores
   const subEl = document.getElementById('dash-subtitle');
@@ -4785,12 +4787,13 @@ function renderDashboard(){
       const arco = 283; // π·90, comprimento do semicírculo usado no path abaixo
       const faixa = Math.max(1, maxC.trabalhados - minC.trabalhados);
       const frac = Math.min(1, Math.max(0, (mediaC - minC.trabalhados) / faixa));
-      const corPonteiro = frac<0.4 ? CH.green : frac<0.7 ? CH.amber : CH.red;
+      const umaSo = temposDetalhe.length===1;
+      const corPonteiro = umaSo ? CH.green : frac<0.4 ? CH.green : frac<0.7 ? CH.amber : CH.red;
       metricasEl.innerHTML = `
         <svg viewBox="0 0 200 118" style="width:100%;max-width:220px;display:block;margin:0 auto">
           <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="var(--bege-lt)" stroke-width="14" stroke-linecap="round"/>
           <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="${corPonteiro}" stroke-width="14" stroke-linecap="round"
-            stroke-dasharray="${(frac*arco).toFixed(1)} ${arco}"/>
+            stroke-dasharray="${((umaSo?1:frac)*arco).toFixed(1)} ${arco}"/>
           <text x="100" y="82" text-anchor="middle" font-family="'Playfair Display',serif" font-size="30" font-weight="700" fill="var(--charcoal)">${mediaC}d</text>
           <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · dias úteis</text>
         </svg>
