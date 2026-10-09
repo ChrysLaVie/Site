@@ -573,8 +573,8 @@ header {
       <div id="dash-destino-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:12px"></div>
     </div>
     <div class="card">
-      <div class="chart-card-title">Métricas de Tempo</div>
-      <div class="chart-card-sub">Fechamento mais rápido, mais lento e a média do ciclo</div>
+      <div class="chart-card-title" id="dash-metricas-titulo">Métricas de Tempo</div>
+      <div class="chart-card-sub" id="dash-metricas-sub">Fechamento mais rápido, mais lento e a média do ciclo</div>
       <div id="dash-metricas-tempo"></div>
     </div>
   </div>
@@ -586,7 +586,7 @@ header {
     </div>
     <div class="card chart-card">
       <div class="chart-card-title">Tempo Médio por Etapa</div>
-      <div class="chart-card-sub">Média de dias úteis em cada etapa, comparada à meta</div>
+      <div class="chart-card-sub">Média de dias úteis em cada etapa do processo</div>
       <div class="chart-wrap" style="height:260px"><canvas id="chart-tempo-etapa"></canvas></div>
     </div>
   </div>
@@ -832,6 +832,7 @@ header {
     <div class="form-field"><label>Qtd de vagas</label><input id="nv-qtd" type="number" min="1" value="1"></div>
     <div class="form-field"><label>Salário</label><input id="nv-salario" placeholder="R$ 0.000,00"></div>
     <div class="form-field"><label>Honorário La Vie</label><input id="nv-honorario" placeholder="Ex: 70% · R$ 1.400"></div>
+    <div class="form-field"><label>Prazo da shortlist (dias úteis)</label><div style="display:flex;align-items:center;gap:6px"><input id="nv-prazo-min" type="number" min="1" placeholder="de" style="width:70px"><span style="color:var(--light)">a</span><input id="nv-prazo-max" type="number" min="1" placeholder="até" style="width:70px"></div><div style="font-size:10.5px;color:var(--light);margin-top:3px">Meta da proposta. Deixe vazio se o cliente não tiver prazo</div></div>
     <div class="form-field"><label>Tipo</label><select id="nv-tipo"><option>CLT</option><option>PJ</option><option>Estágio</option><option>Trainee</option><option>Jovem Aprendiz</option></select></div>
     <div class="form-field"><label>Motivo</label><select id="nv-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais de divulgação</label><input id="nv-canais"></div>
@@ -860,6 +861,7 @@ header {
     </div>
     <div class="form-field"><label>Salário</label><input id="ev-salario"></div>
     <div class="form-field"><label>Honorário La Vie</label><input id="ev-honorario" placeholder="Ex: 70% · R$ 1.400"></div>
+    <div class="form-field"><label>Prazo da shortlist (dias úteis)</label><div style="display:flex;align-items:center;gap:6px"><input id="ev-prazo-min" type="number" min="1" placeholder="de" style="width:70px"><span style="color:var(--light)">a</span><input id="ev-prazo-max" type="number" min="1" placeholder="até" style="width:70px"></div><div style="font-size:10.5px;color:var(--light);margin-top:3px">Meta da proposta. Deixe vazio se o cliente não tiver prazo</div></div>
     <div class="form-field"><label>Motivo</label><select id="ev-motivo"><option>Substituição</option><option>Aumento de quadro</option><option>Nova posição</option><option>Reestruturação</option></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Canais</label><input id="ev-canais"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="ev-obs"></textarea></div>
@@ -1869,17 +1871,17 @@ let _vagas = [], _cands = [], _entrevistas = [], _agenda = [];
 // que aconteceu com as datas de abertura da Cambury).
 let _vagasCarregouOk = false, _dadosCarregouOk = false, _dadosCarregando = false, _loadSeq = 0;
 // As artes são carregadas apenas ao abrir Imagens, nunca na listagem.
-const VAGAS_COLUNAS = 'id,titulo,setor,data_abertura,data_encerramento,qtd,qtd_fechadas,status,tipo,salario,honorario,gestor,motivo,canais,obs,criado_por,atualizado_por,criado_em,atualizado_em,data_dossie_manual,empresa_id,legenda,ordem_servico,data_reabertura,motivo_reabertura,historico_reaberturas,garantia_dias';
+const VAGAS_COLUNAS = 'id,titulo,setor,data_abertura,data_encerramento,qtd,qtd_fechadas,status,tipo,salario,honorario,gestor,motivo,canais,obs,criado_por,atualizado_por,criado_em,atualizado_em,data_dossie_manual,empresa_id,legenda,ordem_servico,data_reabertura,motivo_reabertura,historico_reaberturas,garantia_dias,prazo_shortlist_min,prazo_shortlist_max';
 function getVagas()       { return _vagas; }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60 });
+const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60, prazoMin:r.prazo_shortlist_min??null, prazoMax:r.prazo_shortlist_max??null });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, prazo_shortlist_min:v.prazoMin??null, prazo_shortlist_max:v.prazoMax??null, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em, googleEventId:r.google_event_id });
@@ -2675,12 +2677,12 @@ async function salvarVaga() {
   const dataEl = document.getElementById('nv-data');
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
-  const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
+  const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),prazoMin:parseInt(document.getElementById('nv-prazo-min').value)||null,prazoMax:parseInt(document.getElementById('nv-prazo-max').value)||null,tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-nova-vaga');
-    ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
+    ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-prazo-min','nv-prazo-max','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
@@ -2711,7 +2713,7 @@ async function reabrirVaga(id){
 
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-os').value=v.ordemServico||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-os').value=v.ordemServico||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-prazo-min').value=v.prazoMin||'';document.getElementById('ev-prazo-max').value=v.prazoMax||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -2740,6 +2742,8 @@ async function atualizarVaga() {
     dataDossieManual:document.getElementById('ev-data-dossie').value||null,
     salario:document.getElementById('ev-salario').value.trim(),
     honorario:document.getElementById('ev-honorario').value.trim(),
+    prazoMin:parseInt(document.getElementById('ev-prazo-min').value)||null,
+    prazoMax:parseInt(document.getElementById('ev-prazo-max').value)||null,
     status:novoStatus,
     motivo:document.getElementById('ev-motivo').value,
     canais:document.getElementById('ev-canais').value.trim(),
@@ -4382,19 +4386,22 @@ function renderIndicadoresFunil(){
     }
   });
   const temposReal = ETAPAS.map(e=>cont[e.id]?+(soma[e.id]/cont[e.id]).toFixed(1):0);
-  const temposMeta = ETAPAS.map(e=>ETAPA_SLA[e.id]);
-  // Barras horizontais: realizado (verde dentro da meta, dourado acima) ao lado
-  // da meta em cinza claro, com o valor no nome da etapa para leitura em print.
+  // Barras horizontais com a média de dias úteis de cada etapa: verde nas
+  // etapas da La Vie, dourado nas que dependem do cliente (mesmas cores do
+  // donut La Vie x Cliente). Etapa sem passagem concluída não aparece.
   const _fmtD = v => String(v).replace('.',',')+'d';
+  const _etapaCliente = id => id==='vivencia' || id==='aprovacao';
+  const _etapasCom = ETAPAS.map((e,i)=>({e, v:temposReal[i]})).filter(x=>cont[x.e.id]);
   renderChart('chart-tempo-etapa', {
     type:'bar',
-    data:{ labels:ETAPAS.map((e,i)=>cont[e.id] ? `${e.short}  ${_fmtD(temposReal[i])}` : `${e.short}  sem dados`), datasets:[
-      { label:'Realizado (dias úteis)', data:temposReal, backgroundColor:temposReal.map((v,i)=>v<=temposMeta[i]?CH.green:CH.gold), borderRadius:4, maxBarThickness:14 },
-      { label:'Meta (dias úteis)', data:temposMeta, backgroundColor:CH.bege_lt, borderColor:CH.bege, borderWidth:1, borderRadius:4, maxBarThickness:14 }
+    data:{ labels:_etapasCom.map(x=>`${x.e.short}  ${_fmtD(x.v)}`), datasets:[
+      { label:'Média (dias úteis)', data:_etapasCom.map(x=>x.v), backgroundColor:_etapasCom.map(x=>_etapaCliente(x.e.id)?CH.gold:CH.green), borderRadius:4, maxBarThickness:18 }
     ]},
     options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid } },
-        tooltip:{ callbacks:{ label:ctx=>`${ctx.dataset.label}: ${_fmtD(ctx.parsed.x)}` } }, datalabels:false },
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11}, color:CH.mid,
+          generateLabels:()=>[{text:'Etapas La Vie',fillStyle:CH.green,strokeStyle:CH.green,lineWidth:0,hidden:false,datasetIndex:0},{text:'Etapas do cliente',fillStyle:CH.gold,strokeStyle:CH.gold,lineWidth:0,hidden:false,datasetIndex:0}] },
+          onClick:()=>{} },
+        tooltip:{ callbacks:{ label:ctx=>`Média: ${_fmtD(ctx.parsed.x)} úteis` } }, datalabels:false },
       scales:{ x:{ beginAtZero:true, ticks:{ color:CH.light, font:{size:10} }, grid:{ color:CH.bege_lt } },
                y:{ ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
     }
@@ -4798,7 +4805,32 @@ function renderDashboard(){
     const maxC = temposDetalhe.reduce((m,x)=>x.trabalhados>m.trabalhados?x:m);
 
     const metricasEl = document.getElementById('dash-metricas-tempo');
-    if(metricasEl){
+    const _tit=document.getElementById('dash-metricas-titulo'), _sub=document.getElementById('dash-metricas-sub');
+    const tPrazo = temposDetalhe.length===1 && temposDetalhe[0].v.prazoMax && temposDetalhe[0].uteisLaVie!==null ? temposDetalhe[0] : null;
+    if(_tit){ _tit.textContent = tPrazo ? 'Prazo da Shortlist' : 'Métricas de Tempo'; _sub.textContent = tPrazo ? 'Entrega do dossiê comparada ao prazo da proposta' : 'Fechamento mais rápido, mais lento e a média do ciclo'; }
+    if(metricasEl && tPrazo){
+      // Meio-círculo de 0 até o prazo máximo: faixa clara = prazo da proposta,
+      // arco verde = dias úteis até a entrega do dossiê.
+      const pMax=tPrazo.v.prazoMax, pMin=tPrazo.v.prazoMin||pMax, real=tPrazo.uteisLaVie;
+      const escala=Math.max(pMax, real);
+      const pt=f=>{ const t=Math.PI*(1-f); return [(100+90*Math.cos(t)).toFixed(1),(100-90*Math.sin(t)).toFixed(1)]; };
+      const arcoDe=(f1,f2)=>{ const [x1,y1]=pt(f1),[x2,y2]=pt(f2); return `M ${x1} ${y1} A 90 90 0 0 1 ${x2} ${y2}`; };
+      const rot=(f,txt)=>{ const t=Math.PI*(1-f); return `<text x="${(100+108*Math.cos(t)).toFixed(1)}" y="${(104-108*Math.sin(t)).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--mid)">${txt}</text>`; };
+      const dentro = real<=pMax;
+      const cor = dentro ? CH.green : CH.amber;
+      const selo = real<pMin ? `${pMin-real} dia${pMin-real===1?'':'s'} úte${pMin-real===1?'l':'is'} antes do prazo mínimo` : dentro ? 'Dentro do prazo da proposta' : `${real-pMax} dia${real-pMax===1?'':'s'} acima do prazo`;
+      metricasEl.innerHTML = `
+        <svg viewBox="-16 -8 232 126" style="width:100%;max-width:240px;display:block;margin:0 auto">
+          <path d="${arcoDe(0,1)}" fill="none" stroke="var(--bege-lt)" stroke-width="14" stroke-linecap="round"/>
+          <path d="${arcoDe(pMin/escala,pMax/escala)}" fill="none" stroke="#CFE6D8" stroke-width="14"/>
+          <path d="${arcoDe(0,Math.max(0.02,real/escala))}" fill="none" stroke="${cor}" stroke-width="14" stroke-linecap="round"/>
+          ${rot(pMin/escala,pMin)}${pMax!==pMin?rot(pMax/escala,pMax):''}
+          <text x="100" y="80" text-anchor="middle" font-family="'Playfair Display',serif" font-size="30" font-weight="700" fill="var(--charcoal)">${real}d</text>
+          <text x="100" y="100" text-anchor="middle" font-size="10.5" fill="var(--mid)">dossiê entregue · dias úteis</text>
+        </svg>
+        <div style="text-align:center;font-size:11.5px;color:var(--mid);margin-top:6px">Prazo da proposta: ${pMin===pMax?pMax:pMin+' a '+pMax} dias úteis</div>
+        <div style="text-align:center;margin-top:8px"><span style="display:inline-block;background:${dentro?'var(--green-lt)':'#FBF3E4'};color:${cor};padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:600">${dentro?'✓ ':''}${selo}</span></div>`;
+    } else if(metricasEl){
       // Ponteiro em formato de relógio (meio-círculo): a posição da média entre
       // a vaga mais rápida e a mais lenta, em vez de 3 linhas de texto empilhadas.
       const arco = 283; // π·90, comprimento do semicírculo usado no path abaixo
