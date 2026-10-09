@@ -521,6 +521,10 @@ header {
 <div id="page-dashboard" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
     <div><h1 class="page-title" id="dash-title">Dashboard</h1><p class="page-sub" id="dash-subtitle">Dados em tempo real</p></div>
+    <div id="dash-filtro-wrap" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:flex-end">
+      <label for="dash-vaga-filtro" style="font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--light)">Mostrar</label>
+      <select class="filter-input wide" id="dash-vaga-filtro" onchange="renderDashboard()" style="max-width:320px"><option value="">Todas as vagas</option></select>
+    </div>
   </div>
   <!-- Dashboard de mentoria: só aparece para empresas sem R&S (ex.: AVEP). -->
   <div id="dash-mentoria" style="display:none"></div>
@@ -552,7 +556,6 @@ header {
         <div>
           <div class="chart-card-title">Funil de Conversão</div>
           <div class="chart-card-sub" style="margin-bottom:0">Do total avaliado até a contratação</div>
-          <select class="filter-input" id="dash-funil-vaga" onchange="renderIndicadoresFunil()" style="margin-top:8px;max-width:260px;font-size:12px"><option value="">Todas as vagas</option></select>
         </div>
         <div style="text-align:right">
           <div class="chart-card-headline" id="dash-funil-taxa">0%</div>
@@ -4267,10 +4270,26 @@ function diasNaEtapaAtual(c){
   if(!dataRef) return 0;
   return diasCorridosCalendario(dataRef);
 }
+// ── Filtro de vaga do Dashboard ─────────────────────────────────────────────
+// "Todas as vagas" mostra o cliente inteiro; escolhendo uma vaga, todos os
+// indicadores do dashboard passam a considerar só ela (para apresentar ao
+// cliente o resultado de uma vaga específica).
+function _dashVagaFiltroId(){ const s=document.getElementById('dash-vaga-filtro'); return s ? s.value : ''; }
+function _dashVagas(){ const id=_dashVagaFiltroId(); const vs=getVagasVisiveis(); return id ? vs.filter(v=>v.id===id) : vs; }
+function _dashCands(){ const id=_dashVagaFiltroId(); const cs=getCandsVisiveis(); return id ? cs.filter(c=>c.vagaId===id) : cs; }
+function _popularFiltroDash(){
+  const sel=document.getElementById('dash-vaga-filtro'); if(!sel) return;
+  const vagas=getVagasVisiveis();
+  const atual=sel.value;
+  const rotulo=v=>v.titulo+(v.status==='encerrada'?' · fechada':v.status==='cancelada'?' · cancelada':' · em aberto');
+  sel.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}">${rotulo(v)}</option>`).join('');
+  sel.value = vagas.some(v=>v.id===atual) ? atual : '';
+}
+
 function renderAcoesPendentes(){
   const el=document.getElementById('dash-acoes-pendentes'); if(!el) return;
-  const vagas=getVagasVisiveis();
-  const cands=getCandsVisiveis().filter(c=>ETAPA_SUBSTATUS[c.etapa]); // só etapas ativas do funil (fora reprovado/banco de talentos)
+  const vagas=_dashVagas();
+  const cands=_dashCands().filter(c=>ETAPA_SUBSTATUS[c.etapa]); // só etapas ativas do funil (fora reprovado/banco de talentos)
   const itens=cands.map(c=>{
     const vaga=vagas.find(v=>v.id===c.vagaId);
     if(vaga && vaga.status!=='aberta') return null; // vaga já encerrada/cancelada = não é mais pendência
@@ -4325,18 +4344,9 @@ function renderAcoesPendentes(){
 
 // ══ INDICADORES DE R&S — gráficos reais: tempo por etapa, funil, candidatos por vaga, destino ══
 function renderIndicadoresFunil(){
-  const vagas=getVagasVisiveis();
-  // Filtro de vaga do Funil de Conversão e do Destino dos Candidatos: permite
-  // mostrar ao cliente o resultado de uma vaga só (ex.: a vaga recém-fechada),
-  // sem misturar com candidatos de vagas ainda em triagem.
-  const selVaga=document.getElementById('dash-funil-vaga');
-  if(selVaga){
-    const atual=selVaga.value;
-    selVaga.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}">${v.titulo}${v.status==='encerrada'?' (fechada)':v.status==='cancelada'?' (cancelada)':''}</option>`).join('');
-    selVaga.value = vagas.some(v=>v.id===atual) ? atual : '';
-  }
-  const vagaFiltro = selVaga ? selVaga.value : '';
-  const cands=getCandsVisiveis().filter(c=>!vagaFiltro || c.vagaId===vagaFiltro);
+  const vagas=_dashVagas();
+  const vagaFiltro=_dashVagaFiltroId();
+  const cands=_dashCands();
   // Contratado: está em Admissão, ou é o aprovado de uma vaga já fechada (a
   // vaga só fecha com a contratação; sem isso o funil mostrava 0% até alguém
   // mover o candidato de Aprovação para Admissão).
@@ -4579,14 +4589,16 @@ function renderDashboard(){
   if(_rs) _rs.style.display='';
   if(_mt) _mt.style.display='none';
   if(_tt) _tt.textContent='Dashboard';
-  const vagas=getVagasVisiveis();
+  _popularFiltroDash();
+  const vagas=_dashVagas();
+  const _vagaSel = _dashVagaFiltroId() ? vagas[0] : null;
   // Show sector context for gestores
   const subEl = document.getElementById('dash-subtitle');
   if(subEl) {
     if(currentUser && currentUser.role==='gestor') {
       subEl.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · ${currentUser.setores.join(' + ')} · Dados em tempo real`;
     } else {
-      subEl.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · Dados em tempo real`;
+      subEl.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · ${_vagaSel ? _vagaSel.titulo : 'Dados em tempo real'}`;
     }
   }
   const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
@@ -4603,7 +4615,7 @@ function renderDashboard(){
   const vagasEncerradas = vagas
     .filter(v => v.status === 'encerrada' && _inicioCicloVaga(v) && v.dataEncerramento)
     .sort((a,b) => new Date(a.dataEncerramento) - new Date(b.dataEncerramento));
-  const candsParaCalc = getCandsVisiveis();
+  const candsParaCalc = _dashCands();
   const temposDetalhe = vagasEncerradas.map(v=>{
     const corridos = diasCorridosCalendario(_inicioCicloVaga(v), v.dataEncerramento);
     const trabalhados = diasUteisCalendario(_inicioCicloVaga(v), v.dataEncerramento);
@@ -4695,7 +4707,7 @@ function renderDashboard(){
              <div style="width:${((td2.uteisLaVie+td2.uteisCliente)>0?Math.round(td2.uteisLaVie/(td2.uteisLaVie+td2.uteisCliente)*100):0)}%;background:${CH.green}"></div>
              <div style="width:${100-((td2.uteisLaVie+td2.uteisCliente)>0?Math.round(td2.uteisLaVie/(td2.uteisLaVie+td2.uteisCliente)*100):0)}%;background:${CH.gold}"></div>
            </div>
-           <div style="font-size:10px;color:var(--light);margin-top:2px">${td2.uteisLaVie}d La Vie · ${td2.uteisCliente}d Cliente</div>`
+           <div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-top:3px;white-space:nowrap"><span style="color:${CH.green};font-weight:600">${td2.uteisLaVie}d La Vie</span><span style="color:${CH.gold};font-weight:600">${td2.uteisCliente}d Cliente</span></div>`
         : '<span style="font-size:11px;color:var(--light)">—</span>';
       const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td>${divisaoHtml}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
       return {html, grupo, diasNum};
@@ -4715,12 +4727,12 @@ function renderDashboard(){
   const bannerEl = document.getElementById('dash-lv-banner');
   const lvSubEl = document.getElementById('dash-lv-sub');
   if(mediaLaVieC!==null){
-    lvSubEl.textContent = `${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''} com dossiê registrado · ${(EMPRESAS[currentEmpresa]&&EMPRESAS[currentEmpresa].termoCliente)||'Cliente'}`;
+    lvSubEl.textContent = `Ciclo de ${comDossie.length} vaga${comDossie.length>1?'s':''} fechada${comDossie.length>1?'s':''}, contado em dias úteis`;
     bannerEl.innerHTML = `<div style="position:relative;height:160px">
         <canvas id="chart-lv-split"></canvas>
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none">
           <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--charcoal)">${mediaLaVieU+mediaClienteU}d</div>
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">ciclo total · dias úteis</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">dias úteis</div>
         </div>
       </div>
       <div style="display:flex;justify-content:space-around;margin-top:10px;font-size:12px">
@@ -4782,10 +4794,10 @@ function renderDashboard(){
           <text x="100" y="82" text-anchor="middle" font-family="'Playfair Display',serif" font-size="30" font-weight="700" fill="var(--charcoal)">${mediaC}d</text>
           <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · dias úteis</text>
         </svg>
-        <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
+        ${temposDetalhe.length===1 ? `<div style="text-align:center;font-size:11.5px;color:var(--mid);margin-top:6px">${minC.v.titulo.split('–')[0].trim()}</div>` : `<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
           <div style="font-size:11.5px"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais rápida</span><br><strong style="color:var(--green)">${minC.trabalhados}d</strong> <span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
           <div style="font-size:11.5px;text-align:right"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais lenta</span><br><strong style="color:var(--red)">${maxC.trabalhados}d</strong> <span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
-        </div>`;
+        </div>`}`;
     }
 
   } else {
