@@ -2839,7 +2839,7 @@ function renderCandidatos() {
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
     const nE=entrevistas.filter(e=>e.nome===c.nome&&e.vagaId===c.vagaId).length;
     const dt=c.dataEntrada?new Date(c.dataEntrada+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-    const finalizado=(c.etapa==='reprovado'||c.etapa==='admissao'||String(c.etapa||'').startsWith('banco_talentos'));
+    const finalizado=(c.etapa==='reprovado'||c.etapa==='admissao'||c.etapa==='aprovacao'||String(c.etapa||'').startsWith('banco_talentos'));
     const acoes=`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">`
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--green-lt,#e6f4ea);color:var(--green,#1a7f37);border:1px solid var(--green,#1a7f37)" onclick="aprovarCard('${c.id}')" title="Aprovar e avançar">✓ Aprovar</button>`)
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--red-lt);color:var(--red);border:1px solid var(--red)" onclick="reprovarCard('${c.id}')" title="Reprovar e enviar feedback">✗ Reprovar</button>`)
@@ -4381,12 +4381,13 @@ function _relatorioFechamentoHTML(v){
   const uCliente = dossie ? diasUteisCalendario(dossie, fim) : null;
   const uTotal = diasUteisCalendario(inicio, fim);
 
-  const contratado = c => c.etapa==='admissao' || (c.etapa==='aprovacao' && v.status==='encerrada');
+  // Aprovação e Admissão são a mesma coisa: a etapa final do processo.
+  const contratado = c => c.etapa==='admissao' || c.etapa==='aprovacao';
   const alcance = c => (c.historico||[]).map(h=>h.etapa).filter(Boolean).concat([c.etapa])
     .reduce((m,et)=>Math.max(m, ETAPA_ORDEM.indexOf(et)), -1);
   const contratados = cands.filter(contratado);
   const funil = [['Candidatos avaliados', cands.length],
-    ...ETAPA_ORDEM.map((et,i)=>[ETAPA_LABEL[et]||et, cands.filter(c=>contratado(c) || alcance(c)>=i).length]),
+    ...ETAPA_ORDEM.filter(et=>et!=='aprovacao').map((et,i)=>[ETAPA_LABEL[et]||et, cands.filter(c=>contratado(c) || alcance(c)>=i).length]),
     [contratados.length===1?'Contratado(a)':'Contratados', contratados.length]];
   const maxF = Math.max(1, funil[0][1]);
   const taxa = cands.length ? (contratados.length/cands.length*100).toFixed(1).replace('.',',').replace(',0','') : '0';
@@ -4535,7 +4536,8 @@ function renderIndicadoresFunil(){
   // vaga só fecha com a contratação; sem isso o funil mostrava 0% até alguém
   // mover o candidato de Aprovação para Admissão).
   const _vagaPorId = Object.fromEntries(vagas.map(v=>[v.id,v]));
-  const contratado = c => c.etapa==='admissao' || (c.etapa==='aprovacao' && _vagaPorId[c.vagaId] && _vagaPorId[c.vagaId].status==='encerrada');
+  // Aprovação e Admissão são a mesma coisa: a etapa final do processo.
+  const contratado = c => c.etapa==='admissao' || c.etapa==='aprovacao';
 
   // 1) Tempo médio por etapa (só considera passagens já concluídas, ou seja, com
   // uma etapa seguinte registrada no histórico — evita distorcer com quem ainda está lá)
@@ -4556,7 +4558,7 @@ function renderIndicadoresFunil(){
   // donut La Vie x Cliente). Etapa sem passagem concluída não aparece.
   const _fmtD = v => String(v).replace('.',',')+'d';
   const _etapaCliente = id => id==='vivencia' || id==='aprovacao';
-  const _etapasCom = ETAPAS.map((e,i)=>({e, v:temposReal[i]})).filter(x=>cont[x.e.id]);
+  const _etapasCom = ETAPAS.map((e,i)=>({e, v:temposReal[i]})).filter(x=>cont[x.e.id] && x.e.id!=='aprovacao');
   renderChart('chart-tempo-etapa', {
     type:'bar',
     data:{ labels:_etapasCom.map(x=>`${x.e.short}  ${_fmtD(x.v)}`), datasets:[
@@ -4589,8 +4591,9 @@ function renderIndicadoresFunil(){
   };
   const totalAvaliados = cands.length;
   const admitidosAgora = cands.filter(contratado).length;
-  const funilLabels = ['Avaliados', ...ETAPA_ORDEM.map(et=>(ETAPAS.find(e=>e.id===et)||{}).short||ETAPA_LABEL[et]), 'Contratados'];
-  const funilValores = [totalAvaliados, ...ETAPA_ORDEM.map((et,i)=>cands.filter(c=>contratado(c) || alcance(c)>=i).length), admitidosAgora];
+  const _etapasFunil = ETAPA_ORDEM.filter(et=>et!=='aprovacao');
+  const funilLabels = ['Avaliados', ..._etapasFunil.map(et=>(ETAPAS.find(e=>e.id===et)||{}).short||ETAPA_LABEL[et]), 'Contratados'];
+  const funilValores = [totalAvaliados, ..._etapasFunil.map((et,i)=>cands.filter(c=>contratado(c) || alcance(c)>=i).length), admitidosAgora];
   const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
   document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '0%';
   const funilCores = funilValores.map((_,i)=> i===0 ? CH.charcoal : i===funilValores.length-1 ? CH.green : CH.mid);
