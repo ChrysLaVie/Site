@@ -4407,15 +4407,17 @@ function renderIndicadoresFunil(){
   const taxaConversao = totalAvaliados>0 ? (funilValores[funilValores.length-1]/totalAvaliados*100) : 0;
   document.getElementById('dash-funil-taxa').textContent = totalAvaliados>0 ? taxaConversao.toFixed(1).replace('.0','')+'%' : '0%';
   const funilCores = funilValores.map((_,i)=> i===0 ? CH.charcoal : i===funilValores.length-1 ? CH.green : CH.mid);
+  // Barras horizontais, do total até os contratados (formato de funil), com o
+  // número ao lado do nome de cada etapa para leitura direta em print.
   renderChart('chart-funil', {
     type:'bar',
-    data:{ labels:funilLabels, datasets:[{ data:funilValores, backgroundColor:funilCores, borderRadius:6, maxBarThickness:70 }] },
-    options:{ responsive:true, maintainAspectRatio:false,
+    data:{ labels:funilLabels.map((l,i)=>`${l}  ${funilValores[i]}`), datasets:[{ data:funilValores, backgroundColor:funilCores, borderRadius:5, maxBarThickness:22 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:false },
-        tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.y} candidato${ctx.parsed.y===1?'':'s'}` } },
+        tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.x} candidato${ctx.parsed.x===1?'':'s'}` } },
         datalabels:false },
-      scales:{ y:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
-                x:{ ticks:{ color:CH.charcoal, font:{size:10.5}, maxRotation:0, autoSkip:false }, grid:{ display:false } } }
+      scales:{ x:{ beginAtZero:true, ticks:{ color:CH.light, font:{size:10}, precision:0 }, grid:{ color:CH.bege_lt } },
+               y:{ ticks:{ color:CH.charcoal, font:{size:11.5} }, grid:{ display:false } } }
     }
   });
 
