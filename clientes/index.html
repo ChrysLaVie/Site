@@ -249,6 +249,21 @@ header {
 
 /* ── FILTERS ── */
 .filters-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+/* Filtro de etapas com caixinhas (várias etapas ao mesmo tempo) */
+.etapa-ms { position:relative; }
+.etapa-ms-btn { cursor:pointer; min-width:200px; display:flex; justify-content:space-between; align-items:center; gap:10px; text-align:left; }
+.etapa-ms-btn .seta { color:var(--light); font-size:10px; }
+.etapa-ms-btn.filtrando { border-color:var(--charcoal); font-weight:600; }
+.etapa-ms-menu { display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:60; background:var(--offwhite); border:1px solid var(--bege); border-radius:10px; box-shadow:0 10px 28px rgba(58,58,58,.14); padding:8px; min-width:270px; max-height:420px; overflow:auto; }
+.etapa-ms.open .etapa-ms-menu { display:block; }
+.etapa-ms-atalhos { display:flex; gap:6px; flex-wrap:wrap; padding:2px 2px 9px; border-bottom:1px solid var(--bege-lt); margin-bottom:4px; }
+.etapa-ms-atalhos button { font-family:'DM Sans',sans-serif; font-size:11.5px; border:1px solid var(--bege); background:#fff; border-radius:14px; padding:4px 10px; cursor:pointer; color:var(--charcoal); }
+.etapa-ms-atalhos button:hover { border-color:var(--charcoal); }
+.etapa-ms-grupo { font-size:9.5px; text-transform:uppercase; letter-spacing:1.2px; color:var(--light); padding:9px 8px 3px; }
+.etapa-ms-item { display:flex; align-items:center; gap:9px; padding:6px 8px; border-radius:6px; font-size:13px; cursor:pointer; user-select:none; }
+.etapa-ms-item:hover { background:var(--bege-lt); }
+.etapa-ms-item input { accent-color:var(--charcoal); width:15px; height:15px; margin:0; cursor:pointer; }
+.etapa-ms-item .n { margin-left:auto; color:var(--light); font-size:12px; }
 .filter-input { border:1.5px solid var(--bege); border-radius:8px; padding:7px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--charcoal); background:var(--offwhite); outline:none; transition:border-color .2s; }
 .filter-input:focus { border-color:var(--charcoal); }
 .filter-input.wide { min-width:200px; }
@@ -622,7 +637,10 @@ header {
   <div class="filters-bar" style="margin-top:14px">
     <input class="filter-input wide" id="cand-search" placeholder="🔍 Buscar candidato..." oninput="renderFunil();renderCandidatos()">
     <select class="filter-input" id="cand-filter-vaga" onchange="renderFunil();renderCandidatos()"><option value="">Todas as vagas</option></select>
-    <select class="filter-input" id="cand-filter-etapa" onchange="renderCandidatos()"><option value="">Todas as etapas</option></select>
+    <div class="etapa-ms" id="cand-etapa-ms">
+      <button type="button" class="filter-input etapa-ms-btn" id="cand-etapa-btn" onclick="toggleEtapaMenu(event)"><span id="cand-etapa-rotulo">Todas as etapas</span><span class="seta">▼</span></button>
+      <div class="etapa-ms-menu" id="cand-etapa-menu" onclick="event.stopPropagation()"></div>
+    </div>
     <button class="filter-toggle" id="cand-toggle-encerradas" onclick="toggleCandEncerradas()" title="Incluir candidatos de vagas encerradas e canceladas">Vagas encerradas</button>
   </div>
   <div class="cand-table-wrap" style="margin-top:16px">
@@ -2793,7 +2811,50 @@ function verCandVaga(id) {
 }
 
 // ══ CANDIDATOS ════════════════════════════════════════════════════════════════
-let activeEtapa='';
+// Etapas marcadas no filtro de candidatos (vazio = todas). Fica salvo no
+// navegador, então "todos menos reprovados" continua valendo ao voltar.
+let activeEtapas=new Set();
+try{ const _s=JSON.parse(localStorage.getItem('lv_cand_etapas')||'[]'); if(Array.isArray(_s)) activeEtapas=new Set(_s); }catch(e){}
+function _salvarEtapasFiltro(){ try{ localStorage.setItem('lv_cand_etapas', JSON.stringify([...activeEtapas])); }catch(e){} }
+function _etapasDoFiltro(){ return ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'}]); }
+// Aprovação e Admissão são a mesma etapa final: marcar Aprovação traz os dois.
+function _candNaEtapaFiltro(c){ return !activeEtapas.size || activeEtapas.has(c.etapa) || (c.etapa==='admissao' && activeEtapas.has('aprovacao')); }
+function _contaEtapa(cands,id){ return cands.filter(c=>c.etapa===id || (id==='aprovacao' && c.etapa==='admissao')).length; }
+function toggleEtapaMenu(ev){ ev.stopPropagation(); document.getElementById('cand-etapa-ms').classList.toggle('open'); }
+document.addEventListener('click',()=>{ const m=document.getElementById('cand-etapa-ms'); if(m) m.classList.remove('open'); });
+function marcarEtapaFiltro(id,on){ if(on) activeEtapas.add(id); else activeEtapas.delete(id); _aposMudarEtapasFiltro(); }
+function atalhoEtapasFiltro(tipo){
+  const todas=_etapasDoFiltro().map(e=>e.id);
+  if(tipo==='todas') activeEtapas=new Set();
+  else if(tipo==='sem_reprovados') activeEtapas=new Set(todas.filter(id=>id!=='reprovado'));
+  else if(tipo==='andamento') activeEtapas=new Set(ETAPA_ORDEM.filter(id=>id!=='aprovacao'));
+  _aposMudarEtapasFiltro();
+}
+function _aposMudarEtapasFiltro(){
+  const todas=_etapasDoFiltro().map(e=>e.id);
+  activeEtapas=new Set([...activeEtapas].filter(id=>todas.includes(id)));
+  if(activeEtapas.size && todas.every(id=>activeEtapas.has(id))) activeEtapas=new Set(); // tudo marcado = sem filtro
+  _salvarEtapasFiltro(); renderFunil(); renderCandidatos();
+}
+function _rotuloEtapasFiltro(){
+  const todas=_etapasDoFiltro();
+  if(!activeEtapas.size) return 'Todas as etapas';
+  if(activeEtapas.size===todas.length-1 && !activeEtapas.has('reprovado')) return 'Todas menos reprovados';
+  if(activeEtapas.size===1){ const e=todas.find(x=>activeEtapas.has(x.id)); return e?e.label:'1 etapa'; }
+  return activeEtapas.size+' etapas';
+}
+function _renderMenuEtapas(cands){
+  const _ids=_etapasDoFiltro().map(e=>e.id);
+  activeEtapas=new Set([...activeEtapas].filter(id=>_ids.includes(id))); // descarta etapa que não existe neste cliente
+  const item=e=>`<label class="etapa-ms-item"><input type="checkbox" ${activeEtapas.has(e.id)?'checked':''} onchange="marcarEtapaFiltro('${e.id}',this.checked)"><span>${e.label}</span><span class="n">${_contaEtapa(cands,e.id)}</span></label>`;
+  document.getElementById('cand-etapa-menu').innerHTML=
+    `<div class="etapa-ms-atalhos"><button type="button" onclick="atalhoEtapasFiltro('todas')">Todas</button><button type="button" onclick="atalhoEtapasFiltro('sem_reprovados')">Todas menos reprovados</button><button type="button" onclick="atalhoEtapasFiltro('andamento')">Em andamento</button></div>`
+    +`<div class="etapa-ms-grupo">Processo</div>`+ETAPAS.map(item).join('')
+    +(getBancos().length?`<div class="etapa-ms-grupo">Banco de talentos</div>`+getBancos().map(item).join(''):'')
+    +`<div class="etapa-ms-grupo">Encerrados</div>`+item({id:'reprovado',label:'Reprovados'});
+  document.getElementById('cand-etapa-rotulo').textContent=_rotuloEtapasFiltro();
+  document.getElementById('cand-etapa-btn').classList.toggle('filtrando', activeEtapas.size>0);
+}
 // Por padrão a aba Candidatos só mostra vagas abertas; o toggle inclui encerradas/canceladas.
 let candShowEncerradas=false;
 function getVagasCandidatos(){ const vs=getVagasVisiveis(); return candShowEncerradas?vs:vs.filter(v=>v.status==='aberta'); }
@@ -2815,23 +2876,24 @@ function renderFunil() {
   const opt=v=>`<option value="${v.id}" ${v.id===curV?'selected':''}>${v.titulo}</option>`;
   selV.innerHTML='<option value="">Todas as vagas</option>'+abertas.map(opt).join('')
     +(fechadas.length?'<optgroup label="Encerradas / canceladas">'+fechadas.map(opt).join('')+'</optgroup>':'');
-  document.getElementById('cand-filter-etapa').innerHTML='<option value="">Todas as etapas</option>'+[...ETAPAS,...getBancos(),{id:'reprovado',label:'Reprovados'}].map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   const searchEl=document.getElementById('cand-search'),search=searchEl?searchEl.value.toLowerCase():'';
   const fV=curV;
   const vagaIds=new Set(vagas.map(v=>v.id));
   const cands=todos.filter(c=>vagaIds.has(c.vagaId)&&(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
   const total=cands.length||1;
+  _renderMenuEtapas(cands);
   const totalCardVisual=`<div class="funnel-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-n">${cands.length}</div><div class="fs-l">Total</div><div class="fs-pct">100%</div></div>`;
   document.getElementById('funnel-visual').innerHTML=totalCardVisual+ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
   const totalCardSteps=`<div class="funil-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-count">${cands.length}</div><div class="fs-name">Total</div></div>`;
-  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funil-step ${activeEtapa===e.id?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'}]).map(e=>{const n=_contaEtapa(cands,e.id);return `<div class="funil-step ${activeEtapas.has(e.id)?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
-function setEtapa(id){activeEtapa=activeEtapa===id?'':id;document.getElementById('cand-filter-etapa').value=activeEtapa;renderFunil();renderCandidatos();}
+// Clicar nas caixinhas do funil liga e desliga a etapa no filtro (dá para marcar várias); "Total" limpa.
+function setEtapa(id){ if(!id) activeEtapas=new Set(); else if(activeEtapas.has(id)) activeEtapas.delete(id); else activeEtapas.add(id); _aposMudarEtapasFiltro(); }
 function renderCandidatos() {
   const cands=getCandsVisiveis(),vagas=getVagasVisiveis(),entrevistas=getEntrevistasVisiveis();
-  const search=document.getElementById('cand-search').value.toLowerCase(),fV=document.getElementById('cand-filter-vaga').value,fE=document.getElementById('cand-filter-etapa').value;
+  const search=document.getElementById('cand-search').value.toLowerCase(),fV=document.getElementById('cand-filter-vaga').value;
   const vagaIds=new Set(getVagasCandidatos().map(v=>v.id));
-  const fi=cands.filter(c=>vagaIds.has(c.vagaId)&&(!search||c.nome.toLowerCase().includes(search))&&(!fV||c.vagaId===fV)&&(!fE||c.etapa===fE))
+  const fi=cands.filter(c=>vagaIds.has(c.vagaId)&&(!search||c.nome.toLowerCase().includes(search))&&(!fV||c.vagaId===fV)&&_candNaEtapaFiltro(c))
     .sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR',{sensitivity:'base'}));
   const tbody=document.getElementById('cand-tbody');
   if(!fi.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
