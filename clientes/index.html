@@ -883,6 +883,7 @@ header {
     <div class="form-field"><label>Ordem de Serviço</label><input id="nv-os" placeholder="Ex: OS Cambury Nº 02"></div>
     <div class="form-field"><label>Setor *</label><input id="nv-setor" placeholder="Ex: Produção"></div>
     <div class="form-field"><label>Gestor Solicitante</label><input id="nv-gestor"></div>
+    <div class="form-field"><label>E-mail do responsável</label><input id="nv-resp-email" type="email" placeholder="recebe os dossiês aprovados"></div>
     <div class="form-field"><label>Data de Abertura *</label><input id="nv-data" type="date"></div>
     <div class="form-field"><label>Qtd de vagas</label><input id="nv-qtd" type="number" min="1" value="1"></div>
     <div class="form-field"><label>Salário</label><input id="nv-salario" placeholder="R$ 0.000,00"></div>
@@ -904,6 +905,7 @@ header {
     <div class="form-field"><label>Ordem de Serviço</label><input id="ev-os" placeholder="Ex: OS Cambury Nº 02"></div>
     <div class="form-field"><label>Setor</label><input id="ev-setor"></div>
     <div class="form-field"><label>Gestor</label><input id="ev-gestor"></div>
+    <div class="form-field"><label>E-mail do responsável</label><input id="ev-resp-email" type="email" placeholder="recebe os dossiês aprovados"></div>
     <div class="form-field"><label>Data Abertura</label><input id="ev-data" type="date"></div>
     <div class="form-field"><label>Qtd Total</label><input id="ev-qtd" type="number" min="1"></div>
     <div class="form-field"><label>Qtd Fechadas</label><input id="ev-qtd-fech" type="number" min="0"></div>
@@ -1926,17 +1928,17 @@ let _vagas = [], _cands = [], _entrevistas = [], _agenda = [];
 // que aconteceu com as datas de abertura da Cambury).
 let _vagasCarregouOk = false, _dadosCarregouOk = false, _dadosCarregando = false, _loadSeq = 0;
 // As artes são carregadas apenas ao abrir Imagens, nunca na listagem.
-const VAGAS_COLUNAS = 'id,titulo,setor,data_abertura,data_encerramento,qtd,qtd_fechadas,status,tipo,salario,honorario,gestor,motivo,canais,obs,criado_por,atualizado_por,criado_em,atualizado_em,data_dossie_manual,empresa_id,legenda,ordem_servico,data_reabertura,motivo_reabertura,historico_reaberturas,garantia_dias,prazo_shortlist_min,prazo_shortlist_max';
+const VAGAS_COLUNAS = 'id,titulo,setor,data_abertura,data_encerramento,qtd,qtd_fechadas,status,tipo,salario,honorario,gestor,motivo,canais,obs,criado_por,atualizado_por,criado_em,atualizado_em,data_dossie_manual,empresa_id,legenda,ordem_servico,data_reabertura,motivo_reabertura,historico_reaberturas,garantia_dias,prazo_shortlist_min,prazo_shortlist_max,responsavel_email';
 function getVagas()       { return _vagas; }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
-const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60, prazoMin:r.prazo_shortlist_min??null, prazoMax:r.prazo_shortlist_max??null });
+const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60, prazoMin:r.prazo_shortlist_min??null, prazoMax:r.prazo_shortlist_max??null, responsavelEmail:r.responsavel_email||'' });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
-const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, prazo_shortlist_min:v.prazoMin??null, prazo_shortlist_max:v.prazoMax??null, atualizado_em:new Date().toISOString() });
+const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, prazo_shortlist_min:v.prazoMin??null, prazo_shortlist_max:v.prazoMax??null, responsavel_email:v.responsavelEmail||null, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em, googleEventId:r.google_event_id });
@@ -2743,12 +2745,12 @@ async function salvarVaga() {
   const dataEl = document.getElementById('nv-data');
   if(!dataEl.value) dataEl.value = new Date().toISOString().slice(0,10);
   const setorVal = document.getElementById('nv-setor').value.trim() || (currentUser.role==='gestor' && currentUser.setores.length===1 ? currentUser.setores[0] : '');
-  const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),prazoMin:parseInt(document.getElementById('nv-prazo-min').value)||null,prazoMax:parseInt(document.getElementById('nv-prazo-max').value)||null,tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
+  const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),prazoMin:parseInt(document.getElementById('nv-prazo-min').value)||null,responsavelEmail:document.getElementById('nv-resp-email').value.trim(),prazoMax:parseInt(document.getElementById('nv-prazo-max').value)||null,tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
     if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
     closeModal('modal-nova-vaga');
-    ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-prazo-min','nv-prazo-max','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
+    ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-prazo-min','nv-prazo-max','nv-resp-email','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
     renderVagasStats();renderVagas();renderDashboard();
     showToast('✅ Vaga salva!');
@@ -2779,7 +2781,7 @@ async function reabrirVaga(id){
 
 function editVaga(id) {
   const v=getVagas().find(x=>x.id===id); if(!v)return;
-  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-os').value=v.ordemServico||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-prazo-min').value=v.prazoMin||'';document.getElementById('ev-prazo-max').value=v.prazoMax||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
+  document.getElementById('ev-id').value=v.id;document.getElementById('ev-titulo').value=v.titulo||'';document.getElementById('ev-os').value=v.ordemServico||'';document.getElementById('ev-setor').value=v.setor||'';document.getElementById('ev-gestor').value=v.gestor||'';document.getElementById('ev-data').value=v.dataAbertura||'';document.getElementById('ev-qtd').value=v.qtd||1;document.getElementById('ev-qtd-fech').value=v.qtdFechadas||0;document.getElementById('ev-data-enc').value=v.dataEncerramento||'';document.getElementById('ev-data-dossie').value=v.dataDossieManual||'';document.getElementById('ev-salario').value=v.salario||'';document.getElementById('ev-honorario').value=v.honorario||'';document.getElementById('ev-prazo-min').value=v.prazoMin||'';document.getElementById('ev-resp-email').value=v.responsavelEmail||'';document.getElementById('ev-prazo-max').value=v.prazoMax||'';document.getElementById('ev-status').value=v.status||'aberta';document.getElementById('ev-motivo').value=v.motivo||'Substituição';document.getElementById('ev-canais').value=v.canais||'';document.getElementById('ev-obs').value=v.obs||'';
   openModal('modal-edit-vaga');
 }
 
@@ -2809,6 +2811,7 @@ async function atualizarVaga() {
     salario:document.getElementById('ev-salario').value.trim(),
     honorario:document.getElementById('ev-honorario').value.trim(),
     prazoMin:parseInt(document.getElementById('ev-prazo-min').value)||null,
+    responsavelEmail:document.getElementById('ev-resp-email').value.trim(),
     prazoMax:parseInt(document.getElementById('ev-prazo-max').value)||null,
     status:novoStatus,
     motivo:document.getElementById('ev-motivo').value,
@@ -4441,7 +4444,8 @@ function renderAcoesPendentes(){
     return {c,vaga,dias,nivel,sub:ETAPA_SUBSTATUS[c.etapa],finTxt,urgencia:dias-sla};
   }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
 
-  if(!itens.length){ el.innerHTML='<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento.</div>'; return; }
+  const _blocoDossie = _blocoDossiesPendentes();
+  if(!itens.length){ el.innerHTML = _blocoDossie || '<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento.</div>'; return; }
 
   const cor={r:'var(--red)',   a:'#B7791F',   g:'var(--green)'};
   const bg ={r:'var(--red-lt)',a:'#FBF3E4',   g:'var(--green-lt)'};
@@ -4468,7 +4472,7 @@ function renderAcoesPendentes(){
     html += `<div id="dash-acoes-resto" style="display:none;margin-top:8px">${grid(resto)}</div>
     <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="const r=document.getElementById('dash-acoes-resto');const btn=event.currentTarget;const abrindo=r.style.display==='none';r.style.display=abrindo?'block':'none';btn.textContent=abrindo?'Mostrar menos':'Mostrar mais ${resto.length} pendência${resto.length>1?'s':''}';">Mostrar mais ${resto.length} pendência${resto.length>1?'s':''}</button>`;
   }
-  el.innerHTML = html;
+  el.innerHTML = _blocoDossie + html;
 }
 
 // ══ RELATÓRIO DE FECHAMENTO DA VAGA (PDF para enviar ao cliente) ══════════════
@@ -4632,6 +4636,177 @@ async function gerarRelatorioFechamento(vagaId){
   }
 }
 window.gerarRelatorioFechamento = gerarRelatorioFechamento;
+
+// ══ ENVIO DO DOSSIÊ AO RESPONSÁVEL DA VAGA ═══════════════════════════════════
+// Quando um dossiê aprovado pela Chrys é salvo no cadastro do candidato, abre a
+// pendência "Enviar dossiê ao responsável" (só para a La Vie, nunca para o
+// cliente). O botão monta o e-mail no modelo aprovado, com os dossiês anexados
+// e a assinatura, e cria um RASCUNHO no Gmail: nada é enviado sem ela revisar.
+// Depois do envio, "Marcar como enviado" registra no histórico do candidato.
+const _DOSSIE_DESDE = '2026-10-10';
+const _GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
+const _ASSINATURA_HTML = '<div><br></div><span class="gmail_signature_prefix">-- </span><br><div dir="ltr" class="gmail_signature"><img width="420" height="138" src="https://ci3.googleusercontent.com/mail-sig/AIorK4yv-9zKcvjr6PwxtfPeutLHicrmy2Nin8viMQU0BTWQNRdd82uRYWwWU-7Fp46feR0H6w1zPC-PftJ8"></div>';
+let _gmailTok = null, _gmailTokAte = 0, _envioDossie = null;
+
+function _ehDocDossie(d){
+  return d && d.path && /^(Dossiê do candidato ·|Dossie_)/i.test(d.nome||'') && (d.enviadoEm||'') >= _DOSSIE_DESDE;
+}
+// Candidatos com dossiê salvo e ainda não enviado ao responsável da vaga.
+function _dossiesPendentes(cands, vagas){
+  const out = [];
+  (cands||[]).forEach(c => {
+    if(c.etapa==='reprovado' || String(c.etapa||'').startsWith('banco_talentos')) return;
+    const vaga = (vagas||[]).find(v => v.id===c.vagaId);
+    if(!vaga || vaga.status!=='aberta') return;
+    const docs = (c.documentos||[]).filter(_ehDocDossie);
+    if(!docs.length) return;
+    const doc = docs.reduce((a,b) => (a.enviadoEm||'') > (b.enviadoEm||'') ? a : b);
+    const jaEnviado = (c.historico||[]).some(h => h && h.tipo==='dossie_enviado' && (h.data||'') >= (doc.enviadoEm||''));
+    if(!jaEnviado) out.push({c, vaga, doc});
+  });
+  return out;
+}
+function _blocoDossiesPendentes(){
+  if(typeof isClienteExterno==='function' && isClienteExterno()) return '';
+  const pend = _dossiesPendentes(_dashCands(), _dashVagas());
+  if(!pend.length) return '';
+  const porVaga = {};
+  pend.forEach(p => { (porVaga[p.vaga.id] = porVaga[p.vaga.id] || {vaga:p.vaga, itens:[]}).itens.push(p); });
+  return Object.values(porVaga).map(g => {
+    const nomes = g.itens.map(p => (p.c.nome||'').split(' ')[0]).join(', ');
+    const para = g.vaga.responsavelEmail ? `para ${g.vaga.responsavelEmail}` : 'cadastre o e-mail do responsável';
+    return `<div class="card" style="padding:14px 18px;margin:0 0 10px;border-left:4px solid #0B7A66;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="min-width:0"><strong>Enviar dossiê ao responsável</strong>
+        <div style="font-size:12.5px;color:var(--mid);margin-top:2px">${g.vaga.titulo} · ${g.itens.length} ${g.itens.length===1?'perfil':'perfis'}: ${nomes} · ${para}</div></div>
+      <button class="btn btn-primary btn-sm" onclick="abrirEnvioDossie('${g.vaga.id}')">Preparar e-mail</button>
+    </div>`;
+  }).join('');
+}
+
+function _textoEnvioDossie(vaga, itens, maisPerfis){
+  const gestor = (vaga.gestor||'').trim().split(' ')[0];
+  const n = itens.length;
+  const abertura = maisPerfis
+    ? `Para dar agilidade ao processo da vaga de ${vaga.titulo}, já envio ${n===1?'o primeiro perfil aprovado':'os primeiros perfis aprovados'} na etapa de RH. Seguimos com as entrevistas e, nos próximos dias, apresento os demais perfis, completando de 3 a 4 candidatos para a sua decisão.`
+    : `Concluímos a etapa de RH da vaga de ${vaga.titulo}. ${n===1?'Segue o perfil aprovado':'Seguem os perfis aprovados'} para a entrevista final com você.`;
+  const lista = itens.map((p,i) => `${i+1}. ${p.c.nome}\n${p.doc.resumo || '[escreva aqui um resumo de uma ou duas linhas]'}`).join('\n\n');
+  return `Olá${gestor?', '+gestor:''}! Tudo bem?\n\n${abertura}\n\n${lista}\n\nEm anexo está o dossiê de cada ${n===1?'perfil':'candidato'}, com a avaliação da entrevista, o perfil comportamental, a análise da consultoria e o currículo. Os dossiês também ficam disponíveis no seu painel da La Vie.\n\nObrigada!`;
+}
+
+function abrirEnvioDossie(vagaId){
+  const vaga = _vagas.find(v => v.id===vagaId); if(!vaga) return;
+  const itens = _dossiesPendentes(getCandsVisiveis(), [vaga]);
+  if(!itens.length){ showToast('Nenhum dossiê pendente de envio nesta vaga'); return; }
+  _envioDossie = { vaga, itens, rascunho:null };
+  let m = document.getElementById('modal-envio-dossie');
+  if(!m){
+    m = document.createElement('div'); m.className = 'modal-bg'; m.id = 'modal-envio-dossie';
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+    document.body.appendChild(m);
+  }
+  const n = itens.length;
+  m.innerHTML = `<div class="modal" style="max-width:720px">
+    <div class="modal-header"><div class="modal-title">Enviar dossiê ao responsável</div><button class="modal-close" onclick="closeModal('modal-envio-dossie')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-field" style="grid-column:1/-1"><label>Para (responsável da vaga)</label><input id="ed-para" type="email" value="${vaga.responsavelEmail||''}" placeholder="email@empresa.com.br"></div>
+      <div class="form-field" style="grid-column:1/-1"><label>Assunto</label><input id="ed-assunto" value="${vaga.titulo} · ${n===1?'perfil aprovado':'perfis aprovados'} para a entrevista final"></div>
+      <div class="form-field" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0"><input type="checkbox" id="ed-mais" checked style="width:auto" onchange="document.getElementById('ed-corpo').value=_textoEnvioDossie(_envioDossie.vaga,_envioDossie.itens,this.checked)"> Ainda vou apresentar mais perfis nesta vaga</label></div>
+      <div class="form-field" style="grid-column:1/-1"><label>Texto do e-mail (a assinatura entra automaticamente)</label><textarea id="ed-corpo" style="min-height:260px;line-height:1.5">${_textoEnvioDossie(vaga, itens, true).replace(/</g,'&lt;')}</textarea></div>
+      <div class="form-field" style="grid-column:1/-1"><label>Anexos</label>
+        ${itens.map((p,i) => `<label style="display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0;margin-top:4px"><input type="checkbox" class="ed-anexo" data-i="${i}" checked style="width:auto"> ${p.doc.nome} · ${p.c.nome}</label>`).join('')}
+      </div>
+    </div>
+    <div id="ed-status" style="font-size:12.5px;color:var(--mid);margin:4px 0 12px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="marcarDossieEnviado()">Marcar como enviado</button>
+      <button class="btn btn-primary" id="ed-btn-rascunho" onclick="criarRascunhoDossie()">Criar rascunho no Gmail</button>
+    </div></div>`;
+  openModal('modal-envio-dossie');
+}
+
+function _gmailToken(){
+  if(_gmailTok && Date.now() < _gmailTokAte) return Promise.resolve(_gmailTok);
+  return new Promise((resolve, reject) => {
+    if(!window.google?.accounts?.oauth2){ reject(new Error('Google ainda carregando')); return; }
+    const tc = google.accounts.oauth2.initTokenClient({ client_id: GCAL_CLIENT_ID, scope: _GMAIL_SCOPE,
+      callback: r => { if(r.error){ reject(r); return; } _gmailTok = r.access_token; _gmailTokAte = Date.now() + ((r.expires_in||3600)-120)*1000; resolve(_gmailTok); },
+      error_callback: e => reject(e) });
+    tc.requestAccessToken({ prompt: '' });
+  });
+}
+const _b64utf8 = s => btoa(unescape(encodeURIComponent(s)));
+const _blobB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+const _quebra76 = s => s.replace(/.{1,76}/g, '$&\r\n');
+
+async function criarRascunhoDossie(){
+  const st = document.getElementById('ed-status'), btn = document.getElementById('ed-btn-rascunho');
+  const para = document.getElementById('ed-para').value.trim();
+  const assunto = document.getElementById('ed-assunto').value.trim();
+  const corpo = document.getElementById('ed-corpo').value;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)){ st.textContent = 'Informe o e-mail do responsável.'; return; }
+  if(corpo.includes('[escreva aqui')){ st.textContent = 'Complete o resumo de cada candidato antes de criar o rascunho.'; return; }
+  const sel = [...document.querySelectorAll('.ed-anexo:checked')].map(x => _envioDossie.itens[+x.dataset.i]);
+  btn.disabled = true; st.textContent = 'Conectando ao Gmail...';
+  try{
+    const token = await _gmailToken();
+    st.textContent = 'Anexando os dossiês...';
+    const limite = 'lv' + Date.now();
+    const esc = t => t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const html = '<div dir="ltr">' + esc(corpo).replace(/\n/g,'<br>') + '<br>' + _ASSINATURA_HTML + '</div>';
+    const partes = [
+      'To: ' + para, 'Subject: =?UTF-8?B?' + _b64utf8(assunto) + '?=', 'MIME-Version: 1.0',
+      'Content-Type: multipart/mixed; boundary="' + limite + '"', '',
+      '--' + limite, 'Content-Type: text/html; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', _quebra76(_b64utf8(html))
+    ];
+    for(const p of sel){
+      const {data, error} = await sb.storage.from(DOCS_BUCKET).download(p.doc.path);
+      if(error) throw error;
+      const nomeArq = (p.doc.path.split('/').pop()||'dossie.pdf').replace(/^\d+_/, '');
+      partes.push('--' + limite, 'Content-Type: application/pdf; name="' + nomeArq + '"',
+        'Content-Disposition: attachment; filename="' + nomeArq + '"', 'Content-Transfer-Encoding: base64', '', _quebra76(await _blobB64(data)));
+    }
+    partes.push('--' + limite + '--', '');
+    st.textContent = 'Criando o rascunho...';
+    const r = await fetch('https://gmail.googleapis.com/upload/gmail/v1/users/me/drafts?uploadType=media', {
+      method:'POST', headers:{ Authorization:'Bearer ' + token, 'Content-Type':'message/rfc822' }, body: partes.join('\r\n') });
+    if(!r.ok) throw new Error('Gmail ' + r.status + ': ' + (await r.text()).slice(0,200));
+    const j = await r.json();
+    _envioDossie.rascunho = { para, quando: new Date().toISOString() };
+    if(!_envioDossie.vaga.responsavelEmail || _envioDossie.vaga.responsavelEmail !== para){
+      _envioDossie.vaga.responsavelEmail = para;
+      try{ await sb.from('vagas').update({ responsavel_email: para }).eq('id', _envioDossie.vaga.id); }catch(e){}
+    }
+    const link = 'https://mail.google.com/mail/u/0/#drafts?compose=' + (j.message && j.message.id || '');
+    st.innerHTML = `Rascunho criado no seu Gmail. <a href="${link}" target="_blank" rel="noopener">Abrir o rascunho</a>, revisar e enviar. Depois clique em "Marcar como enviado".`;
+    window.open(link, '_blank', 'noopener');
+  }catch(e){
+    console.warn('Rascunho do dossiê:', e);
+    const gmail = 'https://mail.google.com/mail/u/0/?view=cm&fs=1&to=' + encodeURIComponent(para) + '&su=' + encodeURIComponent(assunto) + '&body=' + encodeURIComponent(corpo);
+    st.innerHTML = `Não consegui criar o rascunho pelo Gmail (${String(e && (e.message||e.type||e.error) || e).slice(0,80)}). <a href="${gmail}" target="_blank" rel="noopener">Abrir o e-mail no Gmail</a> e anexar os dossiês manualmente.`;
+  }finally{ btn.disabled = false; }
+}
+
+async function marcarDossieEnviado(){
+  if(!_envioDossie) return;
+  const para = document.getElementById('ed-para').value.trim() || _envioDossie.vaga.responsavelEmail || 'responsável da vaga';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  try{
+    for(const p of _envioDossie.itens){
+      const {data:atual, error} = await sb.from('candidatos').select('historico').eq('id', p.c.id).single();
+      if(error) throw error;
+      const hist = (Array.isArray(atual && atual.historico) ? atual.historico : []).concat([{
+        data: new Date().toISOString(), etapa: p.c.etapa, tipo: 'dossie_enviado',
+        obs: `Dossiê enviado por e-mail a ${para} em ${hoje}.`, usuario: getUserName() }]);
+      const {error:e2} = await sb.from('candidatos').update({ historico: hist }).eq('id', p.c.id);
+      if(e2) throw e2;
+      p.c.historico = hist;
+    }
+    closeModal('modal-envio-dossie');
+    showToast('Envio do dossiê registrado no histórico');
+    renderDashboard();
+  }catch(e){ console.warn(e); showToast('Não foi possível registrar o envio agora'); }
+}
+window.abrirEnvioDossie = abrirEnvioDossie; window.criarRascunhoDossie = criarRascunhoDossie; window.marcarDossieEnviado = marcarDossieEnviado;
 
 // ══ INDICADORES DE R&S — gráficos reais: tempo por etapa, funil, candidatos por vaga, destino ══
 function renderIndicadoresFunil(){
