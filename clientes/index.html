@@ -205,6 +205,39 @@ header {
 .vaga-name { font-weight:600; font-size:14px; margin-bottom:6px; }
 .vaga-meta { font-size:12px; color:var(--mid); display:flex; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
 .vaga-actions { display:flex; gap:8px; margin-top:10px; }
+/* Card de vaga (aba Vagas): sem emoji, dados com rótulo, status discreto */
+#vagas-grid { grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr)); gap:16px; }
+#vagas-grid .vaga-card { padding:0; cursor:default; display:flex; flex-direction:column; border:1px solid rgba(216,207,196,.7); box-shadow:0 1px 2px rgba(58,58,58,.04),0 6px 20px rgba(58,58,58,.05); }
+#vagas-grid .vaga-card:hover { transform:none; border-color:var(--bege); box-shadow:0 1px 2px rgba(58,58,58,.05),0 10px 26px rgba(58,58,58,.08); }
+#vagas-grid .vaga-card::before { display:none; }
+.vg-topo { padding:18px 20px 14px; }
+.vg-linha1 { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.vg-eyebrow { font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:var(--light); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vg-status { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--mid); white-space:nowrap; }
+.vg-status::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; }
+.vg-status.aberta { color:var(--green); }
+.vg-status.encerrada { color:var(--mid); }
+.vg-status.cancelada { color:var(--red); }
+.vg-titulo { font-family:'Playfair Display',serif; font-size:19px; font-weight:700; line-height:1.25; margin-top:8px; color:var(--charcoal); }
+.vg-sub { font-size:12px; color:var(--mid); margin-top:4px; }
+.vg-dados { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--bege-lt); border-bottom:1px solid var(--bege-lt); }
+.vg-dado { padding:11px 14px 12px 20px; border-right:1px solid var(--bege-lt); }
+.vg-dado:nth-child(3n) { border-right:none; }
+.vg-dado:nth-child(n+4) { border-top:1px solid var(--bege-lt); }
+.vg-rot { font-size:9.5px; text-transform:uppercase; letter-spacing:1.1px; color:var(--light); }
+.vg-val { font-size:13px; font-weight:600; color:var(--charcoal); margin-top:3px; }
+.vg-val.verde { color:var(--green); }
+.vg-info { padding:12px 20px 0; display:flex; flex-direction:column; gap:8px; }
+.vg-info-l { font-size:12.5px; line-height:1.45; color:var(--charcoal); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.vg-info-l .vg-rot { display:inline; margin-right:6px; }
+.vg-honor { background:var(--bege-lt); border-radius:8px; padding:8px 12px; font-size:12px; line-height:1.45; }
+.vg-nota { font-size:11.5px; color:#7A5C00; background:#FBF3E4; border-radius:8px; padding:7px 12px; line-height:1.45; }
+.vg-ciclos { font-size:11px; color:var(--mid); line-height:1.6; }
+.vg-autor { font-size:11px; color:var(--light); }
+.vg-acoes { margin-top:auto; padding:12px 14px 14px; display:flex; flex-wrap:wrap; gap:6px; }
+.vg-acoes .vg-btn { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; color:var(--charcoal); background:transparent; border:1px solid var(--bege); border-radius:7px; padding:6px 12px; cursor:pointer; transition:border-color .15s, background .15s; }
+.vg-acoes .vg-btn:hover { border-color:var(--charcoal); background:#fff; }
+.vg-acoes .vg-btn .q { color:var(--light); font-weight:500; margin-left:4px; }
 
 /* ── FUNIL ── */
 .funil-steps {
@@ -621,7 +654,7 @@ header {
   </div>
   <div class="stats-row" id="vagas-stats"></div>
   <div class="filters-bar" style="margin-top:16px">
-    <input class="filter-input wide" id="vaga-search" placeholder="🔍 Buscar vaga..." oninput="renderVagas()">
+    <input class="filter-input wide" id="vaga-search" placeholder="Buscar vaga" oninput="renderVagas()">
     <select class="filter-input" id="vaga-filter-status" onchange="renderVagas()"><option value="">Todos os status</option><option value="aberta">Abertas</option><option value="encerrada">Encerradas</option><option value="cancelada">Canceladas</option></select>
     <select class="filter-input" id="vaga-filter-setor" onchange="renderVagas()"><option value="">Todos os setores</option></select>
   </div>
@@ -2645,48 +2678,58 @@ function renderVagas() {
   sel.innerHTML='<option value="">Todos os setores</option>'+setores.map(s=>`<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');
   const fi=vagas.filter(v=>(!search||v.titulo.toLowerCase().includes(search))&&(!fSt||v.status===fSt)&&(!fSe||v.setor===fSe));
   const grid=document.getElementById('vagas-grid');
-  if(!fi.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📋</div><p>${vagas.length?'Nenhuma vaga encontrada.':'Nenhuma vaga cadastrada.'}</p></div>`;return;}
+  if(!fi.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><p>${vagas.length?'Nenhuma vaga encontrada.':'Nenhuma vaga cadastrada.'}</p></div>`;return;}
   const ST={aberta:'tag-open',encerrada:'tag-closed',cancelada:'tag-closed'};
   const SL={aberta:'Aberta',encerrada:'Encerrada',cancelada:'Cancelada'};
   const cands=getCands();
   grid.innerHTML=fi.map(v=>{
     const n=cands.filter(c=>c.vagaId===v.id).length;
-    const dias=_inicioCicloVaga(v)?diasCorridosCalendario(_inicioCicloVaga(v)):null;
-    // Vaga com mais de 1 posição (qtd>1) pode ir sendo preenchida aos poucos
-    // sem fechar de vez — sem isso, "1 de 5 preenchida" ficava indistinguível
-    // de "0 de 5", porque as duas mostram só a tag genérica "Aberta".
+    const fmt=d=>new Date(String(d).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR');
+    const inicio=_inicioCicloVaga(v);
+    const uteis=(a,b)=>{ const x=diasUteisCalendario(a,b); return `${x} dia${x===1?'':'s'} út${x===1?'il':'eis'}`; };
+    // Vaga com mais de 1 posição pode ir sendo preenchida aos poucos sem fechar de vez.
     const statusLabel = (v.status==='aberta' && v.qtd>1 && v.qtdFechadas>0)
-      ? `Aberta (${v.qtdFechadas}/${v.qtd} preenchidas)`
-      : (SL[v.status]||v.status);
+      ? `Aberta · ${v.qtdFechadas}/${v.qtd}` : (SL[v.status]||v.status);
+    const os = v.ordemServico ? v.ordemServico.split('·')[0].trim() : '';
+    const eyebrow = [v.setor, os].filter(Boolean).join(' · ');
+    const dados = [];
+    if(v.dataAbertura) dados.push(['Abertura', fmt(v.dataAbertura)]);
+    if(v.status==='aberta'){
+      if(inicio) dados.push(['Em aberto', uteis(inicio)]);
+    } else if(v.dataEncerramento){
+      dados.push([v.status==='cancelada'?'Cancelamento':'Encerramento', fmt(v.dataEncerramento)]);
+      if(v.status==='encerrada' && inicio) dados.push(['Ciclo', uteis(inicio, v.dataEncerramento)]);
+    }
+    dados.push(['Posições', v.qtd>1 ? `${v.qtdFechadas||0} de ${v.qtd} preenchida${(v.qtdFechadas||0)===1?'':'s'}` : String(v.qtd||1)]);
+    dados.push(['Candidatos', String(n)]);
+    if(v.prazoMax) dados.push(['Prazo shortlist', `${v.prazoMin&&v.prazoMin!==v.prazoMax?v.prazoMin+' a ':''}${v.prazoMax} dias úteis`]);
+    if(v.tipo && (!v.prazoMax || dados.length%3)) dados.push(['Contratação', v.tipo]);
+    while(dados.length%3) dados.push(['','']);
+    const ciclos=(v.historicoReaberturas||[]).map((h,i)=>{
+      if(!h.cicloAnteriorAbertura||!h.cicloAnteriorEncerramento) return `Ciclo ${i+1}: período não registrado`;
+      return `Ciclo ${i+1}: ${fmt(h.cicloAnteriorAbertura)} a ${fmt(h.cicloAnteriorEncerramento)} (${diasUteisCalendario(h.cicloAnteriorAbertura,h.cicloAnteriorEncerramento)} dias úteis)`;
+    });
+    const nImg=(v.imagens&&v.imagens.length)||0;
     return `<div class="vaga-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div class="vaga-name">${v.titulo}</div><span class="tag ${ST[v.status]||'tag-closed'}">${statusLabel}</span>
+      <div class="vg-topo">
+        <div class="vg-linha1"><span class="vg-eyebrow">${eyebrow||'&nbsp;'}</span><span class="vg-status ${v.status}">${statusLabel}</span></div>
+        <div class="vg-titulo">${v.titulo}</div>
+        ${v.gestor?`<div class="vg-sub">Solicitante: ${v.gestor}</div>`:''}
       </div>
-      <div class="vaga-meta">
-        ${v.setor?`<span>📂 ${v.setor}</span>`:''}${v.gestor?`<span>👤 ${v.gestor}</span>`:''}
-        ${v.dataAbertura?`<span>📅 Abertura: ${new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:''}
-        ${v.dataEncerramento?`<span>🏁 Encerramento: ${new Date(v.dataEncerramento+'T12:00:00').toLocaleDateString('pt-BR')}</span>`:(v.status==='aberta'&&dias!==null?`<span>⏱ ${dias}d em aberto (${diasUteisCalendario(_inicioCicloVaga(v))} úteis)</span>`:'')}
+      <div class="vg-dados">${dados.map(([r,val])=>`<div class="vg-dado">${r?`<div class="vg-rot">${r}</div><div class="vg-val">${val}</div>`:''}</div>`).join('')}</div>
+      <div class="vg-info">
+        ${v.salario?`<div class="vg-info-l" title="${String(v.salario).replace(/"/g,'&quot;')}"><span class="vg-rot">Remuneração</span>${v.salario}</div>`:''}
+        ${v.honorario&&!isClienteExterno()?`<div class="vg-honor"><span class="vg-rot" style="display:block;margin-bottom:2px">Honorário La Vie</span>${v.honorario}</div>`:''}
+        ${v.dataReabertura?`<div class="vg-nota">Reaberta em ${fmt(v.dataReabertura)}${v.motivoReabertura?': '+v.motivoReabertura:''}</div>`:''}
+        ${ciclos.length?`<div class="vg-ciclos">${ciclos.join('<br>')}</div>`:''}
+        ${v.criadoPor?`<div class="vg-autor">Cadastrada por ${v.criadoPor.split(' ')[0]}</div>`:''}
       </div>
-      <div class="vaga-meta">
-        ${v.salario?`<span>💰 ${v.salario}</span>`:''}${v.qtd?`<span>👥 ${v.qtd} vaga${v.qtd>1?'s':''}</span>`:''}
-        <span>🎯 ${n} candidato${n!==1?'s':''}</span>
-        ${v.criadoPor?`<span style="color:var(--light)">por ${v.criadoPor.split(' ')[0]}</span>`:''}
-      </div>
-      ${v.honorario&&!isClienteExterno()?`<div class="vaga-meta" style="margin-top:2px"><span style="background:var(--bege);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--charcoal)">💼 Honorário La Vie: ${v.honorario}</span></div>`:''}
-      ${v.dataReabertura?`<div class="vaga-meta" style="margin-top:2px"><span style="background:#FFF3CD;border-radius:6px;padding:2px 8px;font-weight:600;color:#7A5C00">Reaberta em ${new Date(v.dataReabertura+'T12:00:00').toLocaleDateString('pt-BR')}${v.motivoReabertura?': '+v.motivoReabertura:''}</span></div>`:''}
-      ${(v.historicoReaberturas&&v.historicoReaberturas.length)?`<div class="vaga-meta" style="margin-top:2px;flex-direction:column;align-items:flex-start;gap:2px">${v.historicoReaberturas.map((h,i)=>{
-        if(!h.cicloAnteriorAbertura||!h.cicloAnteriorEncerramento) return `<span style="font-size:11px;color:var(--mid)">Ciclo ${i+1}: dados do período não registrados</span>`;
-        const abr=new Date(h.cicloAnteriorAbertura+'T12:00:00').toLocaleDateString('pt-BR');
-        const enc=new Date(h.cicloAnteriorEncerramento+'T12:00:00').toLocaleDateString('pt-BR');
-        const dur=diasCorridosCalendario(h.cicloAnteriorAbertura,h.cicloAnteriorEncerramento)+'d';
-        return `<span style="font-size:11px;color:var(--mid)">Ciclo ${i+1}: ${abr} → ${enc} (${dur})</span>`;
-      }).join('')}</div>`:''}
-      <div class="vaga-actions">
-        <button class="btn btn-ghost btn-sm" onclick="editVaga('${v.id}')">✏ Editar</button>
-        <button class="btn btn-ghost btn-sm" onclick="verCandVaga('${v.id}')">👥 Candidatos</button>
-        <button class="btn btn-ghost btn-sm" onclick="abrirImagensVaga('${v.id}')">🖼 Imagens${(v.imagens&&v.imagens.length)?` (${v.imagens.length})`:''}</button>
-        ${v.status==='encerrada'&&v.dataEncerramento?`<button class="btn btn-ghost btn-sm" onclick="gerarRelatorioFechamento('${v.id}')">📄 Relatório</button>`:''}
-        ${v.status==='encerrada'?`<button class="btn btn-ghost btn-sm" onclick="reabrirVaga('${v.id}')">Reabrir</button>`:''}
+      <div class="vg-acoes">
+        <button class="vg-btn" onclick="editVaga('${v.id}')">Editar</button>
+        <button class="vg-btn" onclick="verCandVaga('${v.id}')">Candidatos<span class="q">${n}</span></button>
+        <button class="vg-btn" onclick="abrirImagensVaga('${v.id}')">Imagens${nImg?`<span class="q">${nImg}</span>`:''}</button>
+        ${v.status==='encerrada'&&v.dataEncerramento?`<button class="vg-btn" onclick="gerarRelatorioFechamento('${v.id}')">Relatório</button>`:''}
+        ${v.status==='encerrada'?`<button class="vg-btn" onclick="reabrirVaga('${v.id}')">Reabrir</button>`:''}
       </div>
     </div>`;
   }).join('');
