@@ -135,6 +135,7 @@ header {
 .tag-triagem  { background:#EDE9FE; color:#5B21B6; }
 .tag-rh       { background:#DBEAFE; color:#1D4ED8; }
 .tag-gestor   { background:#FEF3C7; color:#92400E; }
+.tag-final    { background:#FCE7F3; color:#9D174D; } /* Entrevista Final: tom próprio, diferente de Formulários e Testes */
 .tag-aprovado { background:var(--green-lt); color:var(--green); }
 .tag-admissao { background:#ECFDF5; color:#065F46; }
 .tag-reprovado{ background:var(--red-lt); color:var(--red); }
@@ -2165,7 +2166,7 @@ document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', 
 // agenda, funil, dashboard) lê desses mesmos objetos sem precisar saber qual
 // cliente está logado.
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
-const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'rh',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
+const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'final',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
 const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista',banco_talentos_vagas_canceladas:'Banco de Talentos (vaga cancelada)'};
 // ordem do funil para avanço
 const ETAPA_ORDEM=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao'];
