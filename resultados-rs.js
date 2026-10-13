@@ -69,6 +69,7 @@ const lvFormsUrlParaVaga = (() => {
   const VAGAS_COM_FORMS_PROPRIO = {
     'Gerente de Captação de Alunos e Televendas':            FORMS_GERENTE_CAPTACAO,
     'Coordenador de Instituto Tecnológico':                  FORMS_COORD_INSTITUTO,
+    'Gerente Comercial de Novos Negócios Educacionais':      FORMS_COORD_INSTITUTO,
     'Gerente de Marketing':                                  FORMS_GERENTE_MARKETING,
     'Coordenador de Relacionamento e Experiência do Aluno':  FORMS_COORD_RELACIONAMENTO,
     'Motorista Carreteiro':                                 FORMS_MOTORISTA,
