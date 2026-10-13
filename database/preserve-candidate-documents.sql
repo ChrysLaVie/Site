@@ -56,7 +56,7 @@ BEGIN
   SELECT id, titulo, empresa_id INTO v_vaga
   FROM public.vagas
   WHERE lower(trim(titulo)) = lower(trim(coalesce(p_vaga_titulo, '')))
-  ORDER BY (status = 'aberta') DESC, criado_em DESC NULLS LAST
+  ORDER BY (status = 'aberta') DESC, criado_em DESC NULLS LAST, id DESC
   LIMIT 1;
 
   IF v_vaga.id IS NULL THEN
