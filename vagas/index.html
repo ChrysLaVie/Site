@@ -659,7 +659,7 @@ async function loadCandidatosDisc() {
 // Lista de tabelas de formulário técnico — uma por vaga com forms próprio,
 // mais a genérica (vagas sem forms específico). Sempre que uma vaga nova ganhar
 // seu próprio formulário/tabela, adicionar o nome da tabela aqui.
-const FORMS_TABLES = ['forms_gerente_captacao', 'forms_coord_instituto', 'forms_gerente_marketing', 'forms_coord_relacionamento', 'forms_motorista', 'forms_consultor_protecao_veicular', 'forms_coord_academico', 'forms_ducarmo_vendedora', 'forms_coord_comercializacao', 'forms_consultor_vendas_educacional', 'forms_analista_marketing', 'forms_secretaria', 'forms_enseada_bacuris', 'forms_aux_dp', 'forms_coord_financeiro', 'forms_roma_consultor_vendas', 'forms_roma_analista_rh_dp', 'forms_generico'];
+const FORMS_TABLES = ['forms_gerente_captacao', 'forms_coord_instituto', 'forms_gerente_marketing', 'forms_coord_relacionamento', 'forms_motorista', 'forms_consultor_protecao_veicular', 'forms_coord_academico', 'forms_ducarmo_vendedora', 'forms_coord_comercializacao', 'forms_consultor_vendas_educacional', 'forms_analista_marketing', 'forms_secretaria', 'forms_enseada_bacuris', 'forms_aux_dp', 'forms_coord_financeiro', 'forms_roma_consultor_vendas', 'forms_roma_analista_rh_dp', 'forms_social_media', 'forms_generico'];
 async function loadFormsRespostas() {
   if (!db) return [];
   const all = [];
@@ -1295,6 +1295,7 @@ const CONDICOES_POR_VAGA = {
   'Aux. de Departamento Pessoal': [['Contratação PJ','ciente_pj'],['Remuneração R$ 3.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
   'Secretária': [['Contratação PJ','ciente_pj'],['Remuneração R$ 3.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
   'Analista de Marketing': [['Contratação PJ','ciente_pj'],['Remuneração R$ 5.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
+  'Social Media': [['Contratação PJ','ciente_pj'],['Remuneração R$ 2.500,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
   'Consultor(a) de Vendas · Educacional': [['Contratação PJ','ciente_pj'],['Remuneração R$ 2.500,00 (PJ) + comissão','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
   'Coordenador(a) Acadêmico': [['Contratação PJ','ciente_pj'],['Remuneração R$ 8.000,00 (PJ)','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
   'Coordenador(a) Geral de Comercialização': [['Contratação PJ','ciente_pj'],['Remuneração R$10.000 + comissão','ciente_remuneracao'],['Presencial em Goiânia/GO','ciente_presencial'],['Horário de funcionamento do departamento','ciente_horario']],
