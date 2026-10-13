@@ -339,6 +339,9 @@ async function pushCandidatoParaRS(formPayload) {
     const envio = await _lvReceberComRetentativa(payloadRS);
     if (!envio.ok) { await _registrarPendenciaRS(payloadRS, envio.err); throw new Error(envio.err); }
     console.info('Candidato enviado ao R&S:', emailNorm);
+    if (formPayload.linkedin) {
+      try { await rsDb.rpc('lv_salvar_linkedin', { p_email: emailNorm, p_vaga_titulo: formPayload.vaga_titulo, p_linkedin: formPayload.linkedin }); } catch (e) { console.warn('LinkedIn não gravado no R&S:', e); }
+    }
   } catch (e) {
     // A resposta do candidato já está salva na tabela do formulário, então nada
     // se perde: o que falhou foi só a cópia automática para o funil do R&S.
@@ -354,6 +357,15 @@ async function pushCandidatoParaRS(formPayload) {
       if(erroLog)throw erroLog;
     } catch (e2) { console.error('Falha ao registrar erro da integração:', e2); }
   }
+}
+
+// LinkedIn é opcional: aceita com ou sem https e guarda até 300 caracteres.
+function _lvLinkedin() {
+  const el = document.getElementById('f-linkedin');
+  let v = el ? el.value.trim() : '';
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  return v.slice(0, 300);
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -467,6 +479,8 @@ function renderForm() {
       <input type="tel" id="f-whatsapp" placeholder="(62) 9 0000-0000" value="${esc(prefill.telefone)}">
       <label class="field-label">E-mail *</label>
       <input type="email" id="f-email" placeholder="seu@email.com" value="${esc(prefill.email)}">
+      <label class="field-label">LinkedIn (opcional)</label>
+      <input type="url" id="f-linkedin" placeholder="linkedin.com/in/seu-perfil" autocomplete="url">
       <div id="formError" style="display:none"></div>
       <div style="margin-top:1.6rem;">
         <button class="btn-primary" id="submitBtn" disabled>Enviar formulário</button>
@@ -541,6 +555,7 @@ function renderForm() {
       idade: null,
       email: email.value.trim(),
       whatsapp: whatsapp.value.trim(),
+      linkedin: _lvLinkedin(),
       vaga_titulo: prefill.vaga,
       pretensao_salarial: document.getElementById('f-pretensao').value.trim() || null,
       observacoes: document.getElementById('f-observacoes').value.trim() || null,
@@ -557,6 +572,7 @@ function renderForm() {
         nome: nome.value.trim(),
         email: email.value.trim(),
         whatsapp: whatsapp.value.trim(),
+        linkedin: _lvLinkedin(),
         vaga_titulo: prefill.vaga,
         observacoes: document.getElementById('f-observacoes').value.trim() || null
       });
@@ -713,6 +729,7 @@ function buildSubmissionPDF(s) {
   doc.setTextColor(...SOFT);
   doc.text(pdfSafe(`${s.email || ''} · ${s.whatsapp || ''}${s.idade ? ' · Idade: ' + s.idade : ''} · Enviado em ${new Date(s.created_at).toLocaleDateString('pt-BR')}`), M, y);
   y += 12;
+  if (s.linkedin) { doc.text(pdfSafe(`LinkedIn: ${s.linkedin}`), M, y); y += 12; }
   doc.text(pdfSafe(`Vaga: ${s.vaga_titulo || ''}`), M, y);
   y += 26;
 
