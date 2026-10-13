@@ -59,6 +59,7 @@ const lvFormsUrlParaVaga = (() => {
   const FORMS_CONSULTOR_ESPECIALISTA = 'https://lavieconsultoria.com/vagas/forms-consultor-protecao-veicular.html';
   const FORMS_VENDAS_EDUCACIONAL = 'https://lavieconsultoria.com/vagas/forms-consultor-vendas-educacional.html';
   const FORMS_ANALISTA_MARKETING = 'https://lavieconsultoria.com/vagas/forms-analista-marketing.html';
+  const FORMS_SOCIAL_MEDIA = 'https://lavieconsultoria.com/vagas/forms-social-media.html';
   const FORMS_SECRETARIA = 'https://lavieconsultoria.com/vagas/forms-secretaria.html';
   const FORMS_ENSEADA_BACURIS = 'https://lavieconsultoria.com/vagas/forms-coord-marketing-enseada.html';
   const FORMS_AUX_DP = 'https://lavieconsultoria.com/vagas/forms-aux-dp.html';
@@ -79,6 +80,7 @@ const lvFormsUrlParaVaga = (() => {
     'Consultor(a) de Vendas · Educacional':                  FORMS_VENDAS_EDUCACIONAL,
     'Consultor Especialista':                                FORMS_CONSULTOR_ESPECIALISTA,
     'Analista de Marketing':                                 FORMS_ANALISTA_MARKETING,
+    'Social Media':                                          FORMS_SOCIAL_MEDIA,
     'Secretária':                                            FORMS_SECRETARIA,
     'Coordenador(a) de Marketing e Comercial - Enseada dos Bacuris': FORMS_ENSEADA_BACURIS,
     'Aux. de Departamento Pessoal':                          FORMS_AUX_DP,
