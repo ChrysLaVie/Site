@@ -272,9 +272,9 @@ footer{text-align:center; padding-block:40px 64px; font-family:var(--mono); font
     <h1>Mapa astral</h1>
     <p>Digite o nome de quem é o mapa e a senha que você recebeu.</p>
     <label for="nome">Nome</label>
-    <input id="nome" name="nome" type="text" autocapitalize="words" autocomplete="off" placeholder="Ex.: Maria" required>
+    <input id="nome" name="mapa-titular" type="text" autocapitalize="words" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="Ex.: Maria" required>
     <label for="pw">Senha</label>
-    <input id="pw" name="pw" type="password" autocomplete="off" required>
+    <input id="pw" name="mapa-chave" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore required>
     <button type="submit" id="go">Abrir mapa</button>
     <div class="gate-err" id="err" role="alert"></div>
     <div class="gate-foot">La Vie</div>
@@ -299,6 +299,8 @@ footer{text-align:center; padding-block:40px 64px; font-family:var(--mono); font
     const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
     return JSON.parse(new TextDecoder().decode(plain));
   }
+  document.getElementById('nome').value=''; document.getElementById('pw').value='';
+  setTimeout(()=>{ const n=document.getElementById('nome'), p=document.getElementById('pw'); if(document.activeElement!==n && document.activeElement!==p){ n.value=''; p.value=''; } }, 600);
   const form = document.getElementById('gateForm'), err = document.getElementById('err'), go = document.getElementById('go');
   form.addEventListener('submit', async ev=>{
     ev.preventDefault();
