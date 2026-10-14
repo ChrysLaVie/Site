@@ -5090,7 +5090,7 @@ function renderDashboard(){
   const emAberto=totalQtd-fechadas-canceladas;
   // Em substituição: vagas reabertas (reposição) que ainda estão em aberto.
   // Já fazem parte do saldo em aberto; o card só destaca quantas são reposição.
-  const emSubstituicao=vagas.filter(v=>v.dataReabertura && v.status!=='encerrada' && v.status!=='cancelada').reduce((s,v)=>s+Math.max(0,(v.qtd||0)-(v.qtdFechadas||0)),0);
+  const emSubstituicao=vagas.filter(v=>v.dataReabertura && v.status!=='encerrada' && v.status!=='cancelada').reduce((s,v)=>s+Math.max(1,(v.qtd||0)-(v.qtdFechadas||0)),0);
   // Canceladas contam como resolvidas (foi o cliente quem cancelou, não é falha do RH)
   const resolvidas=fechadas+canceladas;
   const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
