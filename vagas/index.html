@@ -133,6 +133,12 @@ nav {
 .btn-primary:hover { background:var(--dark); transform:translateY(-2px); }
 .btn-primary:disabled { background:var(--sand-dark); cursor:not-allowed; transform:none; }
 .empty-note { color:var(--muted); font-size:0.9rem; font-weight:300; }
+/* Banco de talentos: sempre visível, com ou sem vagas abertas */
+.banco-card { max-width:820px; margin-top:2.6rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-alt); padding:2rem; display:flex; gap:1.6rem; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.banco-card h3 { font-family:'Cormorant Garamond',serif; font-size:1.45rem; font-weight:500; color:var(--charcoal); margin-bottom:0.5rem; }
+.banco-card p { font-size:0.88rem; color:var(--muted); line-height:1.7; font-weight:300; max-width:500px; }
+.banco-card .btn-primary { flex-shrink:0; }
+@media (max-width:600px){ .banco-card { padding:1.5rem; } .banco-card .btn-primary { width:100%; text-align:center; } }
 
 /* Modal */
 .modal-overlay { position:fixed; inset:0; background:rgba(26,25,23,0.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto; }
@@ -819,14 +825,24 @@ async function renderVagas() {
         </select>
       </div>
       <div class="vagas-list" id="vagasList"><p class="empty-note">Carregando vagas...</p></div>
+      <div class="banco-card" id="bancoTalentos">
+        <div>
+          <span class="vaga-setor">Banco de Talentos</span>
+          <h3>Não encontrou a vaga ideal?</h3>
+          <p>Cadastre seu currículo no banco de talentos da La Vie. Quando surgir uma oportunidade na sua área, em qualquer um dos nossos clientes, entramos em contato.</p>
+        </div>
+        <button class="btn-primary" id="bancoBtn">Cadastrar currículo</button>
+      </div>
     </section>
   `;
+  document.getElementById('bancoBtn').addEventListener('click', () => openApplyModal(VAGA_BANCO));
+  if (new URLSearchParams(location.search).has('banco')) openApplyModal(VAGA_BANCO);
 
   VAGAS = await loadVagasPublicas();
   if (state.view !== 'vagas') return;
 
   if (VAGAS.length === 0) {
-    document.getElementById('vagasList').innerHTML = '<p class="empty-note">Nenhuma vaga aberta no momento. Cadastre seu currículo no banco de talentos para ser avisado quando surgirem oportunidades.</p>';
+    document.getElementById('vagasList').innerHTML = '<p class="empty-note">Nenhuma vaga aberta no momento. Cadastre seu currículo no banco de talentos logo abaixo para ser avisado quando surgirem oportunidades.</p>';
     return;
   }
 
@@ -841,9 +857,18 @@ async function renderVagas() {
   _abrirVagaDaUrlSeExistir();
 }
 
+// ── BANCO DE TALENTOS ──
+// Currículo espontâneo, sem vaga aberta. No R&S cada área tem uma "vaga" de
+// banco de talentos com o título exato abaixo ("Banco de Talentos · Área"), na
+// empresa "Banco de Talentos La Vie"; é por esse título que a candidatura cai
+// no lugar certo.
+const BANCO_AREAS = ['Administrativo','Comercial e Vendas','Recursos Humanos e DP','Financeiro e Contábil','Marketing e Comunicação','Educação e Acadêmico','Atendimento e Recepção','Logística e Motoristas','Outras áreas'];
+const VAGA_BANCO = { id:'banco-talentos', banco:true, title:'Banco de Talentos', area:'Todas as áreas', local:'Goiânia e região', tipo:'Currículo espontâneo' };
+
 // ── MODAL: CANDIDATURA ──
 function openApplyModal(vaga) {
   let selectedFiles = [];
+  const ehBanco = !!vaga.banco;
   // Vaga de motorista exige documentos além do currículo. O MOPP não é
   // obrigatório como arquivo separado quando já está averbado na CNH, então o
   // texto pede os documentos sem travar o envio de quem tem tudo numa folha só.
@@ -857,13 +882,14 @@ function openApplyModal(vaga) {
         <button class="modal-close" id="closeModal">×</button>
         <div id="modalContent">
           <h3>${esc(vaga.title)}</h3>
-          <p class="modal-sub">${esc(vaga.area)} · ${esc(vaga.local)} · ${esc(vaga.tipo)}</p>
+          ${ehBanco ? '<p class="modal-sub">Deixe seu currículo e escolha a área de interesse. Avisamos quando surgir uma vaga para o seu perfil.</p>' : `<p class="modal-sub">${esc(vaga.area)} · ${esc(vaga.local)} · ${esc(vaga.tipo)}</p>`}
 
           <div class="form-group"><label class="fl">Nome completo *</label><input type="text" id="m-nome" placeholder="Seu nome completo" autocomplete="name"></div>
           <div class="form-row">
             <div class="form-group"><label class="fl">E-mail *</label><input type="email" id="m-email" placeholder="seu@email.com"></div>
             <div class="form-group"><label class="fl">WhatsApp *</label><input type="tel" id="m-whatsapp" placeholder="(62) 9 0000-0000"></div>
           </div>
+          ${ehBanco ? `<div class="form-group"><label class="fl">Área de interesse *</label><select id="m-area" style="width:100%;padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:0.9rem;background:var(--white);"><option value="">Selecione</option>${BANCO_AREAS.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')}</select></div>` : ''}
           <div class="form-group">
             <label class="fl">${ehMotorista ? 'Currículo e documentos *' : 'Currículo e anexos (PDF ou Word) *'}</label>
             <div class="file-drop" id="fileArea">
@@ -874,10 +900,10 @@ function openApplyModal(vaga) {
           </div>
           <div class="form-group" style="display:flex;align-items:flex-start;gap:0.6rem;margin-top:0.4rem;">
             <input type="checkbox" id="m-lgpd" style="width:16px;height:16px;margin-top:0.25rem;flex-shrink:0;accent-color:var(--charcoal);">
-            <label for="m-lgpd" style="flex:1;min-width:0;font-size:0.78rem;line-height:1.5;color:var(--muted);">Li e concordo com a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a> e autorizo o uso dos meus dados pessoais e do meu currículo para fins deste processo seletivo. *</label>
+            <label for="m-lgpd" style="flex:1;min-width:0;font-size:0.78rem;line-height:1.5;color:var(--muted);">Li e concordo com a <a href="/politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a> e autorizo o uso dos meus dados pessoais e do meu currículo para fins ${ehBanco ? 'de banco de talentos e de processos seletivos futuros da La Vie Consultoria' : 'deste processo seletivo'}. *</label>
           </div>
           <div id="formError" style="display:none"></div>
-          <button class="btn-primary" id="submitBtn" style="width:100%;" disabled>Enviar candidatura</button>
+          <button class="btn-primary" id="submitBtn" style="width:100%;" disabled>${ehBanco ? 'Enviar currículo' : 'Enviar candidatura'}</button>
         </div>
       </div>
     </div>
@@ -887,9 +913,11 @@ function openApplyModal(vaga) {
   const fileInput = document.getElementById('m-file'), fileArea = document.getElementById('fileArea'), fileName = document.getElementById('fileName');
   const lgpd = document.getElementById('m-lgpd');
   const submitBtn = document.getElementById('submitBtn');
+  const areaSel = document.getElementById('m-area');
 
-  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length || !lgpd.checked; }
+  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length || !lgpd.checked || (ehBanco && !areaSel.value); }
   nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check); lgpd.addEventListener('change', check);
+  if (areaSel) areaSel.addEventListener('change', check);
 
   function handleFiles(fileList) {
     const incoming = Array.from(fileList || []);
@@ -916,8 +944,14 @@ function openApplyModal(vaga) {
   submitBtn.addEventListener('click', async () => {
     submitBtn.disabled = true; submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
     document.getElementById('formError').style.display = 'none';
-    const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:vaga.title, files:selectedFiles });
-    if (result.ok) {
+    const tituloEnvio = ehBanco ? `Banco de Talentos · ${areaSel.value}` : vaga.title;
+    const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:tituloEnvio, files:selectedFiles });
+    if (result.ok && ehBanco) {
+      const discParams = new URLSearchParams({ nome: nome.value.trim(), email: email.value.trim(), telefone: whatsapp.value.trim(), vaga: tituloEnvio });
+      document.getElementById('modalContent').innerHTML = `
+        <div class="success-box"><h3>Currículo recebido</h3><p>Seu currículo entrou no banco de talentos da La Vie, na área de <strong>${esc(areaSel.value)}</strong>.<br>Para aumentar suas chances, faça também o Teste DISC: ele ajuda a encontrar a vaga certa para o seu perfil.</p></div>
+        <a href="https://lavieconsultoria.com/disc/?${discParams.toString()}" class="btn-primary" style="width:100%;margin-top:1rem;text-align:center;text-decoration:none;">Fazer o Teste DISC →</a>`;
+    } else if (result.ok) {
       const discParams = new URLSearchParams({ nome: nome.value.trim(), email: email.value.trim(), telefone: whatsapp.value.trim(), vaga: vaga.title });
       const discUrl = `https://lavieconsultoria.com/disc/?${discParams.toString()}`;
       document.getElementById('modalContent').innerHTML = `
@@ -926,7 +960,7 @@ function openApplyModal(vaga) {
     } else {
       document.getElementById('formError').innerHTML = `<div class="error-box">Erro ao enviar: ${esc(result.err)}. Tente novamente.</div>`;
       document.getElementById('formError').style.display = 'block';
-      submitBtn.disabled = false; submitBtn.innerHTML = 'Enviar candidatura';
+      submitBtn.disabled = false; submitBtn.innerHTML = ehBanco ? 'Enviar currículo' : 'Enviar candidatura';
     }
   });
 }
