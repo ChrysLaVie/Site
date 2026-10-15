@@ -5117,7 +5117,21 @@ function renderDashboard(){
     const uteisCliente = dDossie ? diasUteisCalendario(dDossie, v.dataEncerramento) : null;
     return {v, corridos, trabalhados, dDossie, diasLaVie, diasCliente, uteisLaVie, uteisCliente};
   });
-  const comDossie = temposDetalhe.filter(t=>t.diasLaVie!==null);
+  // Ciclos anteriores de vagas reabertas (reposição): o fechamento do primeiro
+  // ciclo também entra nos indicadores de tempo, mesmo com a vaga aberta de novo.
+  const ciclosAnteriores = [];
+  vagas.forEach(v=>(v.historicoReaberturas||[]).forEach((h,i)=>{
+    const ini=h.cicloAnteriorAbertura, fimC=h.cicloAnteriorEncerramento;
+    if(!ini || !fimC || fimC<ini) return;
+    const man=h.cicloAnteriorDossie;
+    const dD = man && man>=ini && man<=fimC ? man : dataDossieVaga(v.id,candsParaCalc,ini,fimC);
+    ciclosAnteriores.push({ v:{...v, titulo:`${v.titulo} (${i+1}º ciclo)`}, anterior:true,
+      corridos:diasCorridosCalendario(ini,fimC), trabalhados:diasUteisCalendario(ini,fimC), dDossie:dD,
+      diasLaVie: dD?diasCorridosCalendario(ini,dD):null, diasCliente: dD?diasCorridosCalendario(dD,fimC):null,
+      uteisLaVie: dD?diasUteisCalendario(ini,dD):null, uteisCliente: dD?diasUteisCalendario(dD,fimC):null });
+  }));
+  const ciclosFechados = temposDetalhe.concat(ciclosAnteriores);
+  const comDossie = ciclosFechados.filter(t=>t.diasLaVie!==null);
   const mediaLaVieC = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.diasLaVie,0)/comDossie.length) : null;
   const mediaClienteC = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.diasCliente,0)/comDossie.length) : null;
   const mediaLaVieU = comDossie.length ? Math.round(comDossie.reduce((s,t)=>s+t.uteisLaVie,0)/comDossie.length) : null;
@@ -5262,15 +5276,15 @@ function renderDashboard(){
   renderAcoesPendentes();
   renderIndicadoresFunil();
 
-  if (temposDetalhe.length > 0) {
+  if (ciclosFechados.length > 0) {
     // Dashboard em dias úteis (segunda a sexta)
-    const mediaC = Math.round(temposDetalhe.reduce((s,t)=>s+t.trabalhados,0)/temposDetalhe.length);
-    const minC = temposDetalhe.reduce((m,x)=>x.trabalhados<m.trabalhados?x:m);
-    const maxC = temposDetalhe.reduce((m,x)=>x.trabalhados>m.trabalhados?x:m);
+    const mediaC = Math.round(ciclosFechados.reduce((s,t)=>s+t.trabalhados,0)/ciclosFechados.length);
+    const minC = ciclosFechados.reduce((m,x)=>x.trabalhados<m.trabalhados?x:m);
+    const maxC = ciclosFechados.reduce((m,x)=>x.trabalhados>m.trabalhados?x:m);
 
     const metricasEl = document.getElementById('dash-metricas-tempo');
     const _tit=document.getElementById('dash-metricas-titulo'), _sub=document.getElementById('dash-metricas-sub');
-    const tPrazo = temposDetalhe.length===1 && temposDetalhe[0].v.prazoMax && temposDetalhe[0].uteisLaVie!==null ? temposDetalhe[0] : null;
+    const tPrazo = ciclosFechados.length===1 && ciclosFechados[0].v.prazoMax && ciclosFechados[0].uteisLaVie!==null ? ciclosFechados[0] : null;
     if(_tit){ _tit.textContent = tPrazo ? 'Prazo da Shortlist' : 'Métricas de Tempo'; _sub.textContent = tPrazo ? 'Entrega do dossiê comparada ao prazo da proposta' : 'Fechamento mais rápido, mais lento e a média do ciclo'; }
     if(metricasEl && tPrazo){
       // Meio-círculo de 0 até o prazo máximo: faixa clara = prazo da proposta,
@@ -5300,7 +5314,7 @@ function renderDashboard(){
       const arco = 283; // π·90, comprimento do semicírculo usado no path abaixo
       const faixa = Math.max(1, maxC.trabalhados - minC.trabalhados);
       const frac = Math.min(1, Math.max(0, (mediaC - minC.trabalhados) / faixa));
-      const umaSo = temposDetalhe.length===1;
+      const umaSo = ciclosFechados.length===1;
       const corPonteiro = umaSo ? CH.green : frac<0.4 ? CH.green : frac<0.7 ? CH.amber : CH.red;
       metricasEl.innerHTML = `
         <svg viewBox="0 0 200 118" style="width:100%;max-width:220px;display:block;margin:0 auto">
@@ -5310,7 +5324,7 @@ function renderDashboard(){
           <text x="100" y="82" text-anchor="middle" font-family="'Playfair Display',serif" font-size="30" font-weight="700" fill="var(--charcoal)">${mediaC}d</text>
           <text x="100" y="102" text-anchor="middle" font-size="10.5" fill="var(--mid)">média do ciclo · dias úteis</text>
         </svg>
-        ${temposDetalhe.length===1 ? `<div style="text-align:center;font-size:11.5px;color:var(--mid);margin-top:6px">${minC.v.titulo.split('–')[0].trim()}</div>` : `<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
+        ${ciclosFechados.length===1 ? `<div style="text-align:center;font-size:11.5px;color:var(--mid);margin-top:6px">${minC.v.titulo.split('–')[0].trim()}</div>` : `<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">
           <div style="font-size:11.5px"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais rápida</span><br><strong style="color:var(--green)">${minC.trabalhados}d</strong> <span style="color:var(--light)">${minC.v.titulo.split('–')[0].trim()}</span></div>
           <div style="font-size:11.5px;text-align:right"><span style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--light)">mais lenta</span><br><strong style="color:var(--red)">${maxC.trabalhados}d</strong> <span style="color:var(--light)">${maxC.v.titulo.split('–')[0].trim()}</span></div>
         </div>`}`;
