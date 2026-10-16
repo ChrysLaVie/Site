@@ -1938,6 +1938,10 @@ let _vagasCarregouOk = false, _dadosCarregouOk = false, _dadosCarregando = false
 // As artes são carregadas apenas ao abrir Imagens, nunca na listagem.
 const VAGAS_COLUNAS = 'id,titulo,setor,data_abertura,data_encerramento,qtd,qtd_fechadas,status,tipo,salario,honorario,gestor,motivo,canais,obs,criado_por,atualizado_por,criado_em,atualizado_em,data_dossie_manual,empresa_id,legenda,ordem_servico,data_reabertura,motivo_reabertura,historico_reaberturas,garantia_dias,prazo_shortlist_min,prazo_shortlist_max,responsavel_email';
 function getVagas()       { return _vagas; }
+// Vagas sem cobrança (ex.: OS 4 da Cambury, banco de talentos) não entram no financeiro:
+// não geram parcela e nem aparecem na lista, nem zeradas.
+function _vagaSemCobranca(v){ return /^\s*sem cobran/i.test(v&&v.honorario||''); }
+function getVagasCobradas(){ return _vagas.filter(v=>!_vagaSemCobranca(v)); }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
@@ -5569,7 +5573,7 @@ async function sincronizarParcelas(){
   // Em empresa de mentoria não há vaga nenhuma, e rodar aqui apagaria os
   // lançamentos do contrato como se fossem parcelas órfãs.
   if(!empresaTemProduto('rs')) return;
-  const vagas=getVagas();
+  const vagas=getVagasCobradas();
   // Se o carregamento das vagas falhou (rede instável) e o app ainda não tem
   // nenhuma vaga em memória, NUNCA trata as parcelas existentes como órfãs —
   // senão essa rotina apaga (e depois recria do zero, perdendo baixa e data
@@ -5754,7 +5758,7 @@ async function renderFinanceiro(){
   const fr=document.getElementById('fin-rs'); if(fr) fr.style.display='';
   const fm=document.getElementById('fin-mentoria'); if(fm) fm.style.display='none';
   await sincronizarParcelas();
-  const vagas=getVagas();
+  const vagas=getVagasCobradas();
   const contratosMent=await _carregarContratosMentoria();
   const search=(document.getElementById('fin-search')?.value||'').toLowerCase();
   const fStatus=document.getElementById('fin-filter-status')?.value||'';
@@ -6069,7 +6073,7 @@ async function novoLancamentoManual(){
   renderFinanceiro(); showToast('✅ Lançamento manual criado!');
 }
 function exportFinanceiroCSV(){
-  const vagas=getVagas();
+  const vagas=getVagasCobradas();
   const header=['Vaga','Parcela','Percentual','Valor','Vencimento','Status','Pago em'];
   const linhas=_pagamentos.map(p=>{
     const v=vagas.find(x=>x.id===p.vagaId); if(!v)return null;
