@@ -1943,6 +1943,8 @@ function getVagas()       { return _vagas; }
 // não geram parcela e nem aparecem na lista, nem zeradas.
 function _vagaSemCobranca(v){ return /^\s*sem cobran/i.test(v&&v.honorario||''); }
 function getVagasCobradas(){ return _vagas.filter(v=>!_vagaSemCobranca(v)); }
+// Vagas canceladas sempre por último em qualquer lista do sistema (ordem estável: o resto fica como estava).
+function _canceladasNoFim(arr){ return (arr||[]).slice().sort((a,b)=>((a&&a.status==='cancelada')?1:0)-((b&&b.status==='cancelada')?1:0)); }
 function getCands()       { return _cands; }
 function getEntrevistas() { return _entrevistas; }
 
@@ -2033,7 +2035,7 @@ async function loadAll() {
     if(seq!==_loadSeq || empresa!==currentEmpresa)return false;
     for(const r of results)if(r.error || !Array.isArray(r.data))throw r.error || new Error('Resposta inválida');
     const [v,c,e,a]=results;
-    _vagas=v.data.map(dbToVaga); _cands=c.data.map(dbToCand);
+    _vagas=_canceladasNoFim(v.data.map(dbToVaga)); _cands=c.data.map(dbToCand);
     _entrevistas=e.data.map(dbToEntrev); _agenda=a.data.map(dbToAgenda);
     _vagasCarregouOk=true; _dadosCarregouOk=true;
     setTimeout(()=>lvPdfsAutomaticos(empresa), 1500);
@@ -2101,7 +2103,7 @@ async function deleteAgenda(id){ if(DEMO_MODE){_agenda=_agenda.filter(x=>x.id!==
 function setupRealtime() {
   if(DEMO_MODE) return;
   sb.channel('rs')
-    .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=r.data.map(dbToVaga); refreshPage(); showToast('🔄 Vagas atualizadas');} })
+    .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=_canceladasNoFim(r.data.map(dbToVaga)); refreshPage(); showToast('🔄 Vagas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); if(!window._lvPdfEmLote){ showToast('🔄 Candidatos atualizados'); lvPdfsAutomaticos(currentEmpresa); }} })
     .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
@@ -2785,7 +2787,7 @@ async function salvarVaga() {
   const v={id:Date.now().toString(),titulo,ordemServico:document.getElementById('nv-os').value.trim(),setor:setorVal,gestor:document.getElementById('nv-gestor').value.trim(),dataAbertura:document.getElementById('nv-data').value||null,qtd:parseInt(document.getElementById('nv-qtd').value)||1,qtdFechadas:0,status:'aberta',salario:document.getElementById('nv-salario').value.trim(),honorario:document.getElementById('nv-honorario').value.trim(),prazoMin:parseInt(document.getElementById('nv-prazo-min').value)||null,responsavelEmail:document.getElementById('nv-resp-email').value.trim(),prazoMax:parseInt(document.getElementById('nv-prazo-max').value)||null,tipo:document.getElementById('nv-tipo').value,motivo:document.getElementById('nv-motivo').value,canais:document.getElementById('nv-canais').value.trim(),obs:document.getElementById('nv-obs').value.trim(),criadoPor:getUserName()};
   try{
     await upsertVaga(v);
-    if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
+    if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = _canceladasNoFim(r.data.map(dbToVaga)); }
     closeModal('modal-nova-vaga');
     ['nv-titulo','nv-os','nv-setor','nv-gestor','nv-data','nv-salario','nv-honorario','nv-prazo-min','nv-prazo-max','nv-resp-email','nv-canais','nv-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('nv-qtd').value='1';
@@ -2860,7 +2862,7 @@ async function atualizarVaga() {
     await upsertVaga(_vagas[idx]);
     // Recarrega do Supabase para garantir dados atualizados (em modo demo, os
     // dados locais já foram atualizados por upsertVaga acima)
-    if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = r.data.map(dbToVaga); }
+    if(!DEMO_MODE){ const r = await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data) _vagas = _canceladasNoFim(r.data.map(dbToVaga)); }
     closeModal('modal-edit-vaga');
     renderVagasStats();
     renderVagas();
@@ -5195,7 +5197,7 @@ function renderDashboard(){
       });
       const admitido = poolOrdenado[0];
       let statusHtml, dias, diasNum=null, grupo;
-      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Cancelada</span>'; dias='-'; grupo=1; }
+      if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Cancelada</span>'; dias='-'; grupo=3; }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
@@ -5828,6 +5830,9 @@ async function renderFinanceiro(){
     .filter(({s})=>!fStatus||s===fStatus)
     .filter(({v})=>!fOS||(v.ordemServico||'')===fOS)
     .sort((a,b)=>{
+      // 0) vaga cancelada ou parcela cancelada: sempre no fim da lista
+      const xa=(a.v.status==='cancelada'||a.s==='cancelada')?1:0, xb=(b.v.status==='cancelada'||b.s==='cancelada')?1:0;
+      if(xa!==xb) return xa-xb;
       // 1) vagas quitadas (tudo pago/cancelado) vão pro final da lista
       const qa=_vagaQuitada(a.v)?1:0, qb=_vagaQuitada(b.v)?1:0;
       if(qa!==qb) return qa-qb;
