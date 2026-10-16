@@ -5586,7 +5586,7 @@ async function sincronizarParcelas(){
   const remover=_pagamentos.filter(p=>!idsValidos.has(p.id) && !/-saldo\d/.test(p.id) && (p.origem||'rs')==='rs');
   if(remover.length){
     for(const p of remover){ if(!(typeof DEMO_MODE!=='undefined'&&DEMO_MODE)){try{await sb.from('pagamentos').delete().eq('id',p.id);}catch(e){}} }
-    _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id) || (p.origem||'rs')!=='rs');
+    _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id) || /-saldo\d/.test(p.id) || (p.origem||'rs')!=='rs');
   }
   // Corrige pct/valor/vencimento de parcelas existentes se o honorário, o % ou a data de
   // encerramento da vaga mudou (mantém status/baixa; nunca mexe em parcela já paga)
