@@ -5151,7 +5151,7 @@ function renderDashboard(){
     if(!ini || !fimC || fimC<ini) return;
     const man=h.cicloAnteriorDossie;
     const dD = man && man>=ini && man<=fimC ? man : dataDossieVaga(v.id,candsParaCalc,ini,fimC);
-    ciclosAnteriores.push({ v:{...v, titulo:`${v.titulo} (${i+1}º ciclo)`}, anterior:true,
+    ciclosAnteriores.push({ v:{...v, titulo:`${v.titulo} (${i+1}º ciclo)`}, anterior:true, baseTitulo:v.titulo, ciclo:i+1, ini, fimC, motivo:h.motivo||'',
       corridos:diasCorridosCalendario(ini,fimC), trabalhados:diasUteisCalendario(ini,fimC), dDossie:dD,
       diasLaVie: dD?diasCorridosCalendario(ini,dD):null, diasCliente: dD?diasCorridosCalendario(dD,fimC):null,
       uteisLaVie: dD?diasUteisCalendario(ini,dD):null, uteisCliente: dD?diasUteisCalendario(dD,fimC):null });
@@ -5240,7 +5240,36 @@ function renderDashboard(){
         : '<span style="font-size:11px;color:var(--light)">—</span>';
       const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px">${statusHtml}</td><td style="font-size:12px;color:var(--mid)">${candidatoNome}</td><td style="font-size:12px;text-align:center">${dias}</td><td>${divisaoHtml}</td><td style="font-size:12px;text-align:center">${garantiaHtml}</td></tr>`;
       return {html, grupo, diasNum};
-    }).sort((a,b)=> (a.grupo-b.grupo) || ((a.diasNum??999999)-(b.diasNum??999999)) );
+    });
+    // Fechamentos de ciclos anteriores (vagas reabertas por reposição): cada
+    // fechamento vira uma linha própria, com o candidato e os dias daquele ciclo.
+    const _candDoCiclo = (vid, ini, fim) => {
+      let melhor = null;
+      candsParaCalc.filter(c=>c.vagaId===vid).forEach(c=>{
+        (Array.isArray(c.historico)?c.historico:[]).forEach(h=>{
+          if(!h || !h.data || (h.etapa!=='aprovacao' && h.etapa!=='admissao')) return;
+          const d=String(h.data).slice(0,10); if(d<ini || d>fim) return;
+          const peso=(h.etapa==='admissao'?1:0);
+          if(!melhor || peso>melhor.peso || (peso===melhor.peso && d>melhor.d)) melhor={c, d, peso};
+        });
+      });
+      return melhor ? melhor.c.nome : '-';
+    };
+    ciclosAnteriores.forEach(t=>{
+      const fmtD=d=>new Date(d+'T12:00:00').toLocaleDateString('pt-BR');
+      const tituloHtml = `${t.baseTitulo} <span title="Ciclo de ${fmtD(t.ini)} a ${fmtD(t.fimC)}" style="cursor:help;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);border:1px solid var(--light);border-radius:4px;padding:1px 5px;vertical-align:middle">${t.ciclo}º ciclo</span>`;
+      const divisaoHtml = (t.uteisLaVie!==null)
+        ? `<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--bege-lt);min-width:90px">
+             <div style="width:${((t.uteisLaVie+t.uteisCliente)>0?Math.round(t.uteisLaVie/(t.uteisLaVie+t.uteisCliente)*100):0)}%;background:${CH.green}"></div>
+             <div style="width:${100-((t.uteisLaVie+t.uteisCliente)>0?Math.round(t.uteisLaVie/(t.uteisLaVie+t.uteisCliente)*100):0)}%;background:${CH.gold}"></div>
+           </div>
+           <div style="display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-top:3px;white-space:nowrap"><span style="color:${CH.green};font-weight:600">${t.uteisLaVie}d La Vie</span><span style="color:${CH.gold};font-weight:600">${t.uteisCliente}d Cliente</span></div>`
+        : '<span style="font-size:11px;color:var(--light)">-</span>';
+      const motivoAttr = String(t.motivo||'').replace(/"/g,'&quot;');
+      const html = `<tr><td style="font-size:12px;font-weight:500">${tituloHtml}</td><td style="font-size:12px"><span style="color:var(--green)">● Fechada</span></td><td style="font-size:12px;color:var(--mid)">${_candDoCiclo(t.v.id, t.ini, t.fimC)}</td><td style="font-size:12px;text-align:center">${_celDias(t.trabalhados)}</td><td>${divisaoHtml}</td><td style="font-size:12px;text-align:center"><span style="color:var(--light);cursor:help" title="${motivoAttr}">Reposta depois</span></td></tr>`;
+      linhas.push({html, grupo:0, diasNum:t.trabalhados});
+    });
+    linhas.sort((a,b)=> (a.grupo-b.grupo) || ((a.diasNum??999999)-(b.diasNum??999999)) );
     statusVagasEl.innerHTML = vagas.length ? `<table class="cand-table" style="min-width:560px"><thead><tr><th>Posição</th><th>Status</th><th>Candidato</th><th style="text-align:center">Dias úteis</th><th>Divisão do Tempo</th><th style="text-align:center">Garantia repos.</th></tr></thead><tbody>${linhas.map(l=>l.html).join('')}</tbody></table>` : '<div style="color:var(--mid);font-size:13px;padding:8px 0">Sem vagas ainda.</div>';
   }
 
