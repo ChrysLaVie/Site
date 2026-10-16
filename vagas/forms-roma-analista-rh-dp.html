@@ -442,7 +442,11 @@ function renderForm() {
       </div>
       <div class="check-block">
         <input type="checkbox" id="c-presencial">
-        <label for="c-presencial">Estou ciente de que a vaga é <strong>presencial, em Goiânia/GO</strong>, em jornada <strong>Segunda a Sexta, das 08h às 18h</strong>.</label>
+        <label for="c-presencial">Estou ciente de que a vaga é <strong>presencial</strong>, na Roma Distribuição, no <strong>Setor Coimbra, em Goiânia/GO</strong>.</label>
+      </div>
+      <div class="check-block">
+        <input type="checkbox" id="c-horario">
+        <label for="c-horario">Estou ciente da jornada de trabalho: <strong>segunda a sexta-feira, das 08h às 18h</strong>.</label>
       </div>
 
       <label class="field-label">Observações ou comentários (opcional)</label>
@@ -514,6 +518,7 @@ function renderForm() {
   const cClt = document.getElementById('c-clt');
   const cRem = document.getElementById('c-remuneracao');
   const cPres = document.getElementById('c-presencial');
+  const cHor = document.getElementById('c-horario');
   const submitBtn = document.getElementById('submitBtn');
 
   function allQuestionsAnswered() {
@@ -528,11 +533,11 @@ function renderForm() {
       nome.value.trim() &&
       email.value.includes('@') &&
       whatsapp.value.trim() &&
-      cClt.checked && cRem.checked && cPres.checked &&
+      cClt.checked && cRem.checked && cPres.checked && cHor.checked &&
       allQuestionsAnswered()
     );
   }
-  [nome, email, whatsapp, cClt, cRem, cPres].forEach(el => el.addEventListener('input', check));
+  [nome, email, whatsapp, cClt, cRem, cPres, cHor].forEach(el => el.addEventListener('input', check));
   document.getElementById('triagemList').addEventListener('change', check);
   document.getElementById('perfilList').addEventListener('input', check);
   document.getElementById('comercialList').addEventListener('input', check);
@@ -562,6 +567,7 @@ function renderForm() {
       ciente_clt: cClt.checked,
       ciente_remuneracao: cRem.checked,
       ciente_presencial: cPres.checked,
+      ciente_horario: cHor.checked,
       respostas_perfil: respostasPerfil,
       respostas_comerciais: respostasComerciais
     });
@@ -742,7 +748,8 @@ function buildSubmissionPDF(s) {
   const conds = [
     ['Contratação CLT', s.ciente_clt],
     ['R$ 3.000,00 (CLT) + VT + VR R$ 20,00/dia + Plano de Saude Unimed', s.ciente_remuneracao],
-    ['Presencial em Goiania/GO, Seg-Sex 08h-18h', s.ciente_presencial]
+    ['Presencial no Setor Coimbra, Goiania/GO', s.ciente_presencial],
+    ['Jornada de segunda a sexta, das 08h as 18h', s.ciente_horario]
   ];
   conds.forEach(([label, val]) => {
     doc.setFont('helvetica', 'bold');
