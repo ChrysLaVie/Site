@@ -827,6 +827,7 @@ header {
     <div><h1 class="page-title">Financeiro</h1><p class="page-sub" id="fin-subtitle" style="margin-bottom:20px">Honorários por vaga</p></div>
     <div style="display:flex;gap:8px" id="fin-acoes">
       <button class="btn btn-ghost btn-sm" id="fin-csv-btn" onclick="exportFinanceiroCSV()">⬇ CSV</button>
+      <button class="btn btn-ghost btn-sm" id="fin-pdf-btn" onclick="gerarRelatorioFinanceiroPDF()" title="Gera o PDF do cliente aberto com os filtros de status e OS da tela">⬇ Relatório PDF</button>
       <button class="btn btn-ghost btn-sm" id="fin-manual-btn" onclick="novoLancamentoManual()">➕ Lançamento manual</button>
     </div>
   </div>
@@ -5774,6 +5775,7 @@ async function renderFinanceiro(){
   }
   const souCliente = isClienteExterno();
   const csvBtn=document.getElementById('fin-csv-btn'); if(csvBtn) csvBtn.style.display=souCliente?'none':'';
+  const pdfBtn=document.getElementById('fin-pdf-btn'); if(pdfBtn) pdfBtn.style.display=souCliente?'none':'';
   const manualBtn=document.getElementById('fin-manual-btn'); if(manualBtn) manualBtn.style.display=souCliente?'none':'';
   const subEl=document.getElementById('fin-subtitle');
   if(subEl){
@@ -6072,6 +6074,104 @@ async function novoLancamentoManual(){
   }
   renderFinanceiro(); showToast('✅ Lançamento manual criado!');
 }
+// ── Relatório financeiro em PDF ──────────────────────────────────────────────
+// Usa o cliente aberto e os filtros da tela (status e Ordem de Serviço).
+// Fechamentos vêm primeiro, depois as entradas; total só das parcelas listadas.
+async function gerarRelatorioFinanceiroPDF(){
+  if(typeof html2pdf==='undefined'){ showToast('Gerador de PDF ainda carregando, tente de novo em instantes'); return; }
+  const emp = EMPRESAS[currentEmpresa]||{};
+  const vagas = getVagasCobradas();
+  const fStatus = document.getElementById('fin-filter-status')?.value||'';
+  const fOS = document.getElementById('fin-filter-os')?.value||'';
+  const search = (document.getElementById('fin-search')?.value||'').toLowerCase();
+  const esc = t => String(t==null?'':t).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  const fmtD = s => s ? s.slice(0,10).split('-').reverse().join('/') : '';
+  const hoje = new Date(); const hojeISO = hoje.toISOString().slice(0,10);
+  let itens = _pagamentos.map(p=>{
+    const v = vagas.find(x=>x.id===p.vagaId); if(!v) return null;
+    let s = _statusReal(p);
+    if(v.status==='cancelada' && p.parcela===2 && s!=='pago') s='cancelada';
+    return {p,v,s};
+  }).filter(Boolean)
+    .filter(({s})=> fStatus ? s===fStatus : s!=='cancelada')
+    .filter(({v})=>!fOS || (v.ordemServico||'')===fOS)
+    .filter(({v})=>!search || v.titulo.toLowerCase().includes(search));
+  if(!itens.length){ showToast('Nenhuma parcela com esses filtros'); return; }
+  const ehFech = it => it.p.parcela===2;
+  itens.sort((a,b)=> (ehFech(b)-ehFech(a)) || String(a.p.vencimento||'9999').localeCompare(String(b.p.vencimento||'9999')) || a.v.titulo.localeCompare(b.v.titulo));
+  // Vagas com o mesmo título (ex.: várias posições de Consultor) ganham "posição n"
+  const porTitulo = {};
+  vagas.forEach(v=>{ (porTitulo[v.titulo]=porTitulo[v.titulo]||[]).push(v.id); });
+  const nomeVaga = v => { const ids=porTitulo[v.titulo]||[]; return ids.length>1 ? `${v.titulo} (posição ${ids.indexOf(v.id)+1})` : v.titulo; };
+  const rotulo = p => {
+    const saldo = /-saldo\d/.test(p.id);
+    const tipo = p.parcela===2 ? 'Fechamento' : 'Entrada';
+    if(saldo) return `Saldo da ${tipo.toLowerCase()} (pagamento parcial)`;
+    return `${tipo} (${p.pct||50}% ${p.parcela===2?'na aprovação':'na abertura'})`;
+  };
+  const dias = p => { if(!p.vencimento) return ''; const d=Math.round((new Date(hojeISO)-new Date(p.vencimento.slice(0,10)))/86400000); return d>0?d:''; };
+  const titulos = {atrasado:'Pagamentos em atraso', pendente:'Pagamentos a vencer', pago:'Pagamentos recebidos', cancelada:'Parcelas canceladas'};
+  const titulo = titulos[fStatus] || 'Relatório financeiro';
+  const lblTotal = {atrasado:'Total em atraso', pendente:'Total a vencer', pago:'Total recebido', cancelada:'Total cancelado'}[fStatus] || 'Total';
+  const mostraDias = fStatus==='atrasado';
+  const mostraStatus = !fStatus;
+  const total = itens.reduce((s,it)=>s+(+it.p.valor||0),0);
+  const oss = [...new Set(itens.map(it=>(it.v.ordemServico||'').split('·')[0].trim()).filter(Boolean))];
+  const linhas = itens.map((it,i)=>`<tr style="${i%2?'background:#F7F6F2;':''}page-break-inside:avoid">
+      <td style="padding:7px 6px;border-bottom:1px solid #E2E0DA;font-weight:bold;color:#14213D">${esc(nomeVaga(it.v))}</td>
+      <td style="padding:7px 6px;border-bottom:1px solid #E2E0DA">${esc(rotulo(it.p))}</td>
+      <td style="padding:7px 6px;border-bottom:1px solid #E2E0DA;text-align:center;white-space:nowrap">${fStatus==='pago'?fmtD(it.p.pagoEm):fmtD(it.p.vencimento)}</td>
+      ${mostraDias?`<td style="padding:7px 6px;border-bottom:1px solid #E2E0DA;text-align:center">${dias(it.p)}</td>`:''}
+      ${mostraStatus?`<td style="padding:7px 6px;border-bottom:1px solid #E2E0DA;text-align:center">${esc(FIN_LBL[it.s]||it.s)}</td>`:''}
+      <td style="padding:7px 6px;border-bottom:1px solid #E2E0DA;text-align:right;white-space:nowrap;font-weight:bold">${_fmtBRL(+it.p.valor||0)}</td></tr>`).join('');
+  const th = (t,al,w)=>`<th style="background:#14213D;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:7px 6px;text-align:${al};width:${w}">${t}</th>`;
+  const html = `<div style="width:186mm;font-family:Arial,Helvetica,sans-serif;color:#1C1C1C;font-size:12px;background:#fff">
+    <table style="width:100%;border-collapse:collapse"><tr>
+      <td><img src="${LOGO_LAVIE}" style="height:62px"></td>
+      <td style="text-align:right">${emp.logo?`<img src="${emp.logo}" style="height:46px">`:''}</td></tr></table>
+    <div style="border-top:2px solid #14213D;margin:16px 0 18px"></div>
+    <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#8A6634;font-weight:bold">Relatório financeiro · Recrutamento e Seleção</div>
+    <div style="font-family:Georgia,serif;color:#14213D;font-size:27px;font-weight:bold;margin:4px 0 2px">${titulo}</div>
+    <div style="font-family:Georgia,serif;font-style:italic;color:#5A5A52;font-size:14px">${esc(emp.nome||'')} · posição em ${hoje.toLocaleDateString('pt-BR')}</div>
+    <table style="width:100%;margin-top:18px;border-collapse:collapse"><tr>
+      <td style="width:33%;vertical-align:top"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:#5A5A52;font-weight:bold">Cliente</div><div style="font-size:14px;font-weight:bold;color:#14213D;margin-top:3px">${esc(emp.nome||'')}</div></td>
+      <td style="width:33%;vertical-align:top"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:#5A5A52;font-weight:bold">Parcelas</div><div style="font-size:14px;font-weight:bold;color:#14213D;margin-top:3px">${itens.length}</div></td>
+      <td style="width:33%;vertical-align:top"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:#5A5A52;font-weight:bold">Ordem de Serviço</div><div style="font-size:14px;font-weight:bold;color:#14213D;margin-top:3px">${esc(oss.join(', ')||'Todas')}</div></td>
+    </tr></table>
+    <table style="width:100%;margin-top:20px;border-collapse:collapse;border-top:1.5px solid ${fStatus==='atrasado'?'#9C2B2B':'#14213D'};border-bottom:1.5px solid ${fStatus==='atrasado'?'#9C2B2B':'#14213D'}"><tr>
+      <td style="padding:10px 0;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:${fStatus==='atrasado'?'#9C2B2B':'#14213D'};font-weight:bold">${lblTotal}</td>
+      <td style="padding:10px 0;font-family:Georgia,serif;font-size:28px;color:#14213D;text-align:right">${_fmtBRL(total)}</td></tr></table>
+    <table style="width:100%;margin-top:20px;border-collapse:collapse;font-size:11.5px">
+      <thead><tr>${th('Vaga','left','34%')}${th('Parcela','left','28%')}${th(fStatus==='pago'?'Pago em':'Vencimento','center','13%')}${mostraDias?th('Dias','center','8%'):''}${mostraStatus?th('Status','center','10%'):''}${th('Valor','right','14%')}</tr></thead>
+      <tbody>${linhas}</tbody>
+      <tfoot><tr><td colspan="${3+(mostraDias?1:0)+(mostraStatus?1:0)}" style="border-top:2px solid #14213D;padding-top:9px;font-weight:bold;font-size:13px;color:#14213D">${lblTotal}</td>
+        <td style="border-top:2px solid #14213D;padding-top:9px;font-weight:bold;font-size:13px;color:#14213D;text-align:right;white-space:nowrap">${_fmtBRL(total)}</td></tr></tfoot>
+    </table>
+    <div style="margin-top:20px;font-size:11px;color:#4A4A44;line-height:1.55">Honorários conforme a Ordem de Serviço: 50% na abertura da vaga e 50% no fechamento.${mostraDias?' "Dias" indica os dias corridos desde o vencimento até a data deste relatório.':''}</div>
+    <div style="margin-top:26px;border-top:1px solid #E2E0DA;padding-top:10px;font-size:10.5px;color:#5A5A52">La Vie Consultoria · Chrysthyan Kelly Ferreira Alves · chrys@lavieconsultoria.com · (62) 99274-1488 · lavieconsultoria.com</div>
+  </div>`;
+  showToast('📄 Gerando relatório financeiro...');
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:-1';
+  box.innerHTML = html;
+  document.body.appendChild(box);
+  try{
+    const nome = `${titulo} - ${emp.nome||''} - ${hoje.toLocaleDateString('pt-BR').replace(/\//g,'-')}`
+      .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9 ()._-]/g,'').replace(/\s+/g,' ').trim()+'.pdf';
+    await html2pdf().set({ margin:12, filename:nome, image:{type:'jpeg',quality:0.96},
+      html2canvas:{ scale:2, useCORS:true, backgroundColor:'#FFFFFF' },
+      jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' },
+      pagebreak:{ mode:['css','legacy'], avoid:'tr' } })
+      .from(box.firstElementChild).save();
+  }catch(e){
+    console.warn('Relatório financeiro:', e);
+    showToast('Não foi possível gerar o relatório agora');
+  }finally{
+    box.remove();
+  }
+}
+window.gerarRelatorioFinanceiroPDF = gerarRelatorioFinanceiroPDF;
+
 function exportFinanceiroCSV(){
   const vagas=getVagasCobradas();
   const header=['Vaga','Parcela','Percentual','Valor','Vencimento','Status','Pago em'];
