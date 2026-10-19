@@ -4487,16 +4487,74 @@ function _pendenciaDocs(c, vaga){
     cobDias
   };
 }
-// Registra no histórico que o candidato foi cobrado (chamado ao abrir o
-// WhatsApp ou o e-mail com a mensagem de etapa pendente).
+// ── Convite de entrevista sem resposta ──────────────────────────────────────
+// Candidato que recebeu convite de entrevista pelo painel (registro
+// tipo:'convite' no histórico) e não tem nenhuma entrevista na Agenda depois
+// do convite. Regra da La Vie: convidado que não responde sai do processo.
+const _CONVITE_TPLS = { conviteOnline:'entrevista online', convitePresencial:'entrevista presencial', feedbackPositivoRH:'Entrevista La Vie', conviteGestor:'entrevista final' };
+function _pendenciaConvite(c, vaga){
+  if(!vaga || vaga.status!=='aberta') return null;
+  if(!['entrevista_rh','entrevista_gestor','vivencia'].includes(c.etapa)) return null;
+  const conv=(c.historico||[]).filter(h=>h && h.tipo==='convite' && h.etapaCobrada===c.etapa).slice(-1)[0];
+  if(!conv) return null;
+  const temAgenda=(_agenda||[]).some(a=>a && a.candidatoId===c.id && a.status!=='cancelada' && String(a.criadoEm||a.data||'')>=String(conv.data).slice(0,10));
+  if(temAgenda) return null;
+  return { texto:`Convidado para ${conv.oque||'entrevista'}, sem resposta`, cobradoEm:conv.data, cobDias:diasUteisCalendario(conv.data) };
+}
+// Registra no histórico que o candidato foi cobrado ou convidado (chamado ao
+// abrir o WhatsApp ou o e-mail com a mensagem). Sem o campo `etapa`, para não
+// contar como movimentação nos indicadores.
 async function _registrarCobranca(candId, tplKey, canal){
-  if(!['pendenteDisc','pendenteForm'].includes(tplKey)) return;
   const c=getCands().find(x=>x.id===candId); if(!c) return;
-  const oque = tplKey==='pendenteDisc' ? 'teste DISC' : 'formulário da vaga';
-  c.historico=[...(c.historico||[]), { tipo:'cobranca', etapaCobrada:c.etapa, data:new Date().toISOString(),
-    obs:`Cobrança do ${oque} enviada por ${canal}.`, usuario:getUserName() }];
+  let reg=null;
+  if(tplKey==='pendenteDisc' || tplKey==='pendenteForm'){
+    const oque = tplKey==='pendenteDisc' ? 'teste DISC' : 'formulário da vaga';
+    reg={ tipo:'cobranca', etapaCobrada:c.etapa, data:new Date().toISOString(), obs:`Cobrança do ${oque} enviada por ${canal}.`, usuario:getUserName() };
+  } else if(_CONVITE_TPLS[tplKey]){
+    reg={ tipo:'convite', etapaCobrada:c.etapa, oque:_CONVITE_TPLS[tplKey], data:new Date().toISOString(), obs:`Convite para ${_CONVITE_TPLS[tplKey]} enviado por ${canal}.`, usuario:getUserName() };
+  }
+  if(!reg) return;
+  c.historico=[...(c.historico||[]), reg];
   try{ await upsertCand(c); }catch(e){ console.warn('Não foi possível registrar a cobrança', e); showToast('⚠ A mensagem abriu, mas a cobrança não ficou registrada no histórico'); }
   try{ renderAcoesPendentes(); }catch(e){}
+}
+// ── Reprovação em lote de quem não respondeu ────────────────────────────────
+// Lista os cobrados/convidados sem resposta há _COBRANCA_SLA dias úteis ou mais,
+// todos marcados; a Chrys confere e reprova os selecionados de uma vez. Cada
+// um passa pelo fluxo normal (histórico + e-mail de retorno em 10 min).
+let _inativosPendentes=[];
+function _blocoInativosPendentes(itens){
+  _inativosPendentes = itens.filter(it=>it.semResposta);
+  if(!_inativosPendentes.length || isClienteExterno()) return '';
+  const linhas=_inativosPendentes.map((it,i)=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bege);font-size:13px;cursor:pointer">
+      <input type="checkbox" class="inativo-chk" data-i="${i}" checked>
+      <span style="flex:1;min-width:0"><strong>${it.c.nome}</strong> <span style="color:var(--mid)">· ${it.vaga?it.vaga.titulo:''}</span><br>
+      <span style="font-size:11.5px;color:var(--mid)">${it.sub} · ${it.cobTxt}</span></span>
+    </label>`).join('');
+  return `<div class="card" style="padding:14px 18px;margin-bottom:10px;border-left:4px solid var(--red)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><strong>Sem resposta há ${_COBRANCA_SLA} dias úteis ou mais</strong><div style="font-size:12px;color:var(--mid)">Cobrados ou convidados pelo painel que não voltaram. Desmarque quem quiser manter.</div></div>
+      <button class="btn" style="background:var(--red);color:#fff" onclick="reprovarInativosSelecionados()">✗ Reprovar selecionados</button>
+    </div>
+    <div style="margin-top:8px">${linhas}</div>
+  </div>`;
+}
+async function reprovarInativosSelecionados(){
+  const sel=[...document.querySelectorAll('.inativo-chk:checked')].map(ch=>_inativosPendentes[+ch.dataset.i]).filter(Boolean);
+  if(!sel.length){ alert('Nenhum candidato selecionado.'); return; }
+  const nomes=sel.map(it=>'• '+it.c.nome).join('\n');
+  if(!confirm(`Reprovar ${sel.length} candidato${sel.length>1?'s':''} por falta de resposta?\n\n${nomes}\n\nCada um sai do funil e recebe o e-mail de retorno automaticamente em 10 minutos.`)) return;
+  let ok=0, falhas=[];
+  for(const it of sel){
+    const origem=it.c.etapa;
+    const quando=it.cobradoEm?_dataBR(String(it.cobradoEm).slice(0,10)):'';
+    const r=await _setEtapaCand(it.c.id,'reprovado',`Reprovado por falta de resposta (${it.tpl?'cobrado':'convidado'} em ${quando}; origem: ${ETAPA_LABEL[origem]||origem})`);
+    if(r) ok++; else falhas.push(it.c.nome);
+  }
+  showToast(`✗ ${ok} reprovado${ok===1?'':'s'} por falta de resposta · e-mails de retorno saem em 10 min`);
+  if(falhas.length) alert('Não foi possível reprovar: '+falhas.join(', '));
+  try{ renderAcoesPendentes(); renderDashboard&&renderDashboard(); }catch(e){}
 }
 // ── Filtro de vaga do Dashboard ─────────────────────────────────────────────
 // "Todas as vagas" mostra o cliente inteiro; escolhendo uma vaga, todos os
@@ -4527,13 +4585,13 @@ function renderAcoesPendentes(){
     // Falta DISC/formulário: a pendência vira "cobrar", com a mensagem pronta.
     // Já cobrado e sem resposta há _COBRANCA_SLA dias úteis = vermelho (regra
     // da La Vie: quem não responde à cobrança sai do processo).
-    const pend=_pendenciaDocs(c, vaga);
-    let sub=ETAPA_SUBSTATUS[c.etapa], cobTxt='', urgencia=dias-sla, tpl=null;
+    const pend=_pendenciaDocs(c, vaga) || _pendenciaConvite(c, vaga);
+    let sub=ETAPA_SUBSTATUS[c.etapa], cobTxt='', urgencia=dias-sla, tpl=null, semResposta=false, cobradoEm=null;
     if(pend){
-      sub=pend.texto; tpl=pend.tpl;
+      sub=pend.texto; tpl=pend.tpl||null; cobradoEm=pend.cobradoEm||null;
       if(pend.cobradoEm){
-        cobTxt=`Cobrado em ${_dataBR(pend.cobradoEm.slice(0,10))} (${pend.cobDias} dia${pend.cobDias===1?'':'s'} út${pend.cobDias===1?'il':'eis'} sem resposta)`;
-        if(pend.cobDias>=_COBRANCA_SLA){ nivel='r'; cobTxt+=' · sem resposta: reprovar'; urgencia=100+pend.cobDias; }
+        cobTxt=`${tpl?'Cobrado':'Convidado'} em ${_dataBR(pend.cobradoEm.slice(0,10))} (${pend.cobDias} dia${pend.cobDias===1?'':'s'} út${pend.cobDias===1?'il':'eis'} sem resposta)`;
+        if(pend.cobDias>=_COBRANCA_SLA){ nivel='r'; semResposta=true; cobTxt+=' · sem resposta: reprovar'; urgencia=100+pend.cobDias; }
         else { nivel='a'; urgencia=50+pend.cobDias; }
       } else {
         nivel = dias>=sla ? 'r' : 'a';
@@ -4553,10 +4611,10 @@ function renderAcoesPendentes(){
         }
       }
     }
-    return {c,vaga,dias,nivel,sub,finTxt,urgencia,tpl,cobTxt};
+    return {c,vaga,dias,nivel,sub,finTxt,urgencia,tpl,cobTxt,semResposta,cobradoEm};
   }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
 
-  const _blocoDossie = _blocoDossiesPendentes();
+  const _blocoDossie = _blocoInativosPendentes(itens) + _blocoDossiesPendentes();
   if(!itens.length){ el.innerHTML = _blocoDossie || '<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento.</div>'; return; }
 
   const cor={r:'var(--red)',   a:'#B7791F',   g:'var(--green)'};
@@ -4576,8 +4634,8 @@ function renderAcoesPendentes(){
       <div style="font-size:13px">${it.sub}</div>
       ${it.cobTxt?`<div style="font-size:11px;color:var(--mid)">${it.cobTxt}</div>`:''}
       ${it.finTxt?`<div style="font-size:11px;color:var(--mid)">${it.finTxt}</div>`:''}
-      ${it.tpl && !isClienteExterno() ? `<div style="display:flex;gap:6px;margin-top:2px">
-        <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();abrirMensagem('${it.c.id}','${it.tpl}')">💬 Cobrar ${it.tpl==='pendenteDisc'?'DISC':'formulário'}</button>
+      ${(it.tpl || it.cobTxt) && !isClienteExterno() ? `<div style="display:flex;gap:6px;margin-top:2px">
+        ${it.tpl ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();abrirMensagem('${it.c.id}','${it.tpl}')">💬 Cobrar ${it.tpl==='pendenteDisc'?'DISC':'formulário'}</button>` : ''}
         ${it.cobTxt ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;color:var(--red)" onclick="event.stopPropagation();reprovarCard('${it.c.id}')">✗ Reprovar</button>` : ''}
       </div>` : ''}
     </div>`;
