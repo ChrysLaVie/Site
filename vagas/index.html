@@ -776,7 +776,7 @@ function _renderVagasLista() {
   document.querySelectorAll('.vaga-card .btn-copy-link').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
-      const url = `${location.origin}${location.pathname}?vaga=${btn.dataset.id}`;
+      const url = `${location.origin}${location.pathname}?vaga=${_slugVaga(VAGAS.find(v => v.id === btn.dataset.id) || { id: btn.dataset.id })}`;
       try { await navigator.clipboard.writeText(url); } catch (err) { window.prompt('Copie o link da vaga:', url); return; }
       const original = btn.textContent;
       btn.textContent = '✓ Link copiado!';
@@ -788,20 +788,40 @@ function _renderVagasLista() {
 // Mantém a URL compartilhável em sincronia com a vaga aberta — assim dá pra
 // mandar o link de uma vaga específica (Instagram, LinkedIn, WhatsApp) e quem
 // abrir já cai direto nela, em vez de sempre cair na lista inteira.
+// O link usa o nome da vaga (ex.: ?vaga=consultor-especialista) em vez do id.
+// Links antigos com o id continuam abrindo a vaga.
+function _slugTexto(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/\((a|o|as|os|es)\)/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function _slugVaga(v) {
+  if (!v) return '';
+  const base = _slugTexto(v.title) || String(v.id || '');
+  // Duas vagas abertas com o mesmo nome: a mais antiga fica com o nome puro, as outras ganham -2, -3...
+  const iguais = (VAGAS || []).filter(x => _slugTexto(x.title) === base)
+    .sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+  const i = iguais.findIndex(x => x.id === v.id);
+  return i > 0 ? `${base}-${i + 1}` : base;
+}
+function _acharVagaPorParam(p) {
+  if (!p) return null;
+  return VAGAS.find(v => v.id === p) || VAGAS.find(v => _slugVaga(v) === p) || null;
+}
 function _atualizarUrlDaVaga(vagaId) {
   const url = new URL(location.href);
-  if (vagaId) url.searchParams.set('vaga', vagaId);
+  const vaga = vagaId && VAGAS.find(v => v.id === vagaId);
+  if (vagaId) url.searchParams.set('vaga', vaga ? _slugVaga(vaga) : vagaId);
   else url.searchParams.delete('vaga');
   history.replaceState(null, '', url.pathname + url.search);
-  const vaga = vagaId && VAGAS.find(v => v.id === vagaId);
   document.title = vaga ? `${vaga.title} · Vagas · La Vie Consultoria` : 'Vagas · La Vie Consultoria';
 }
 
-// Ao carregar a página já com ?vaga=ID na URL (link compartilhado), abre
+// Ao carregar a página já com ?vaga=nome-da-vaga na URL (link compartilhado), abre
 // direto o card correspondente em vez de deixar a pessoa procurar na lista.
 function _abrirVagaDaUrlSeExistir() {
-  const vagaId = new URLSearchParams(location.search).get('vaga');
-  if (!vagaId) return;
+  const achada = _acharVagaPorParam(new URLSearchParams(location.search).get('vaga'));
+  if (!achada) return;
+  const vagaId = achada.id;
   const card = document.querySelector(`.vaga-card[data-id="${CSS.escape(vagaId)}"]`);
   if (!card) return;
   card.classList.add('open');
