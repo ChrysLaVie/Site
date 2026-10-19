@@ -1954,11 +1954,11 @@ function getEntrevistas() { return _entrevistas; }
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60, prazoMin:r.prazo_shortlist_min??null, prazoMax:r.prazo_shortlist_max??null, responsavelEmail:r.responsavel_email||'' });
 const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, canal:r.canal||null, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em, ..._baseCand(r.documentos, r.fonte, r.obs) });
-const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
+const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, roteiroId:r.roteiro_id||null, candidatoId:r.candidato_id||null, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, prazo_shortlist_min:v.prazoMin??null, prazo_shortlist_max:v.prazoMax??null, responsavel_email:v.responsavelEmail||null, atualizado_em:new Date().toISOString() });
 const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, canal:c.canal||null, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
-const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
+const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId||null, roteiro_id:e.roteiroId||null, candidato_id:e.candidatoId||null, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em, googleEventId:r.google_event_id });
 const agendaToDb= a => ({ id:a.id, empresa_id:a.empresaId||currentEmpresa, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, google_event_id:a.googleEventId||null, atualizado_em:new Date().toISOString() });
 
@@ -2068,7 +2068,7 @@ async function upsertVaga(v, salvarImagens=false) {
   if(!data || !data.length)throw new Error('Vaga não foi salva. Verifique seu acesso.');
   v._persistida=true;
 }
-async function deleteVaga(id)  { if(DEMO_MODE){_vagas=_vagas.filter(x=>x.id!==id);demoSave();return;} await sb.from('vagas').delete().eq('id',id); }
+async function deleteVaga(id)  { if(DEMO_MODE){_vagas=_vagas.filter(x=>x.id!==id);demoSave();return;} const {error}=await sb.from('vagas').delete().eq('id',id); if(error) throw error; }
 // O site (candidatura, DISC, formulário, PDFs automáticos) grava no mesmo
 // cadastro enquanto o painel está aberto. Antes de salvar, o painel busca a
 // versão do banco e acrescenta o que chegou depois que a tela foi carregada
@@ -2094,11 +2094,11 @@ async function _mesclarCandComBanco(c){
   }catch(e){ console.warn('Não foi possível conferir a versão do banco antes de salvar:', e); }
 }
 async function upsertCand(c)   { if(!c.empresaId) c.empresaId=currentEmpresa; if(DEMO_MODE){_localUpsert(_cands,c);demoSave();return;} await _mesclarCandComBanco(c); const {error} = await sb.from('candidatos').upsert(candToDb(c)); if(error) throw error; Object.assign(c, _baseCand(c.documentos, c.fonte, c.obs)); }
-async function deleteCand(id)  { if(DEMO_MODE){_cands=_cands.filter(x=>x.id!==id);demoSave();return;} await sb.from('candidatos').delete().eq('id',id); }
+async function deleteCand(id)  { if(DEMO_MODE){_cands=_cands.filter(x=>x.id!==id);demoSave();return;} const {error}=await sb.from('candidatos').delete().eq('id',id); if(error) throw error; }
 async function upsertEntrev(e) { if(!e.empresaId) e.empresaId=currentEmpresa; if(DEMO_MODE){_localUpsert(_entrevistas,e);demoSave();return;} const {error} = await sb.from('entrevistas').upsert(entrevToDb(e)); if(error) throw error; }
-async function deleteEntrev(id){ if(DEMO_MODE){_entrevistas=_entrevistas.filter(x=>x.id!==id);demoSave();return;} await sb.from('entrevistas').delete().eq('id',id); }
+async function deleteEntrev(id){ if(DEMO_MODE){_entrevistas=_entrevistas.filter(x=>x.id!==id);demoSave();return;} const {error}=await sb.from('entrevistas').delete().eq('id',id); if(error) throw error; }
 async function upsertAgenda(a){ if(!a.empresaId) a.empresaId=currentEmpresa; if(DEMO_MODE){_localUpsert(_agenda,a);demoSave();return;} const {error}=await sb.from('agenda').upsert(agendaToDb(a)); if(error) throw error; }
-async function deleteAgenda(id){ if(DEMO_MODE){_agenda=_agenda.filter(x=>x.id!==id);demoSave();return;} await sb.from('agenda').delete().eq('id',id); }
+async function deleteAgenda(id){ if(DEMO_MODE){_agenda=_agenda.filter(x=>x.id!==id);demoSave();return;} const {error}=await sb.from('agenda').delete().eq('id',id); if(error) throw error; }
 
 // ══ REALTIME ══════════════════════════════════════════════════════════════════
 // Cada assinatura recarrega já filtrando pela empresa ativa, para que uma
@@ -2882,7 +2882,8 @@ async function atualizarVaga() {
 async function excluirVaga() {
   const id=document.getElementById('ev-id').value;
   if(!confirm('Excluir esta vaga?'))return;
-  await deleteVaga(id);_vagas=_vagas.filter(v=>v.id!==id);closeModal('modal-edit-vaga');renderVagasStats();renderVagas();
+  try{ await deleteVaga(id); }catch(e){ alert('A vaga não foi excluída: '+(e.message||e)); return; }
+  _vagas=_vagas.filter(v=>v.id!==id);closeModal('modal-edit-vaga');renderVagasStats();renderVagas();
 }
 
 
@@ -2993,7 +2994,7 @@ function renderCandidatos() {
   if(!fi.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
   tbody.innerHTML=fi.map(c=>{
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
-    const nE=entrevistas.filter(e=>e.nome===c.nome&&e.vagaId===c.vagaId).length;
+    const nE=entrevistas.filter(e=>e.candidatoId ? e.candidatoId===c.id : (normNome(e.nome)===normNome(c.nome)&&(e.vagaId===c.vagaId||!getVagas().some(v=>v.id===e.vagaId)))).length;
     const dt=c.dataEntrada?new Date(c.dataEntrada+'T12:00:00').toLocaleDateString('pt-BR'):'—';
     const finalizado=(c.etapa==='reprovado'||c.etapa==='admissao'||c.etapa==='aprovacao'||String(c.etapa||'').startsWith('banco_talentos'));
     const acoes=`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">`
@@ -3049,7 +3050,7 @@ async function atualizarCandidato(){
   _cands[idx]={..._cands[idx],nome,cpf,tel,email,vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
   try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
-async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;await deleteCand(id);_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
+async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;try{ await deleteCand(id); }catch(e){ alert('O candidato não foi excluído: '+(e.message||e)); return; }_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
 
 // ══ DOCUMENTOS DO CANDIDATO (Supabase Storage — bucket PRIVADO) ═══════════════
 // Importante: o bucket "documentos" precisa estar configurado como privado no
@@ -3212,7 +3213,7 @@ async function anexarDocs(ev){
       _cands[idx].documentos=[...docsAtuais,doc];
     }catch(e){ alert('Erro ao enviar "'+f.name+'": '+e.message); }
   }
-  try{ await upsertCand(_cands[idx]); }catch(e){}
+  try{ await upsertCand(_cands[idx]); }catch(e){ renderDocsList(); alert('O arquivo subiu, mas não foi possível gravar no cadastro do candidato: '+(e.message||e)+'\n\nFeche e abra o candidato e tente anexar de novo.'); return; }
   renderDocsList(); showToast('✅ Documento(s) anexado(s)!');
 }
 async function removerDoc(i){
@@ -3225,7 +3226,7 @@ async function removerDoc(i){
     try{ await sb.storage.from(DOCS_BUCKET).remove([doc.path]); }catch(e){}
   }
   _cands[idx].documentos=docsAtuais.filter((_,j)=>j!==i);
-  try{ await upsertCand(_cands[idx]); }catch(e){}
+  try{ await upsertCand(_cands[idx]); }catch(e){ _cands[idx].documentos=docsAtuais; renderDocsList(); alert('Não foi possível remover o documento do cadastro: '+(e.message||e)); return; }
   renderDocsList();
 }
 
@@ -4029,12 +4030,19 @@ async function salvarEntrevista(){
     naturalidade:(document.getElementById('f-naturalidade')||{}).value||'',
     qtdFilhos:(document.getElementById('f-qtd-filhos')||{}).value||'',
     ondeMora:(document.getElementById('f-onde-mora')||{}).value||'',
-    entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,vagaId:curRoteiro.id,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,respostas,registradoPor:getUserName()};
+    entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,roteiroId:curRoteiro.id,vagaId:(candidatoIdSelecionado&&(getCands().find(x=>x.id===candidatoIdSelecionado)||{}).vagaId)||null,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,respostas,registradoPor:getUserName()};
   try{
     await upsertEntrev(rec);
     _entrevistas.unshift(rec);
     // ── Auto-criar candidato no funil se não existir ──
     const candidatoIdFinal = await syncCandidatoFromEntrevista(rec);
+    // Grava na entrevista o candidato e a vaga reais (antes ficava só o id do
+    // roteiro, e a coluna Entrevistas do candidato nunca encontrava nada).
+    if(candidatoIdFinal && (rec.candidatoId!==candidatoIdFinal || !rec.vagaId)){
+      const cFinal=_cands.find(x=>x.id===candidatoIdFinal);
+      rec.candidatoId=candidatoIdFinal; if(cFinal && cFinal.vagaId) rec.vagaId=cFinal.vagaId;
+      try{ await upsertEntrev(rec); }catch(e){ console.warn('Entrevista salva, mas sem o vínculo com o candidato:', e); }
+    }
     await anexarDossiePDFAutomatico(rec, candidatoIdFinal);
     const btn=document.getElementById('save-btn');
     btn.textContent='✓ Salvo!';btn.classList.add('saved');
@@ -4617,7 +4625,8 @@ function renderAcoesPendentes(){
     return {c,vaga,dias,nivel,sub,finTxt,urgencia,tpl,cobTxt,semResposta,cobradoEm};
   }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
 
-  const _blocoDossie = _blocoInativosPendentes(itens) + _blocoDossiesPendentes();
+  _conferirSyncSite();
+  const _blocoDossie = _blocoSyncSite() + _blocoInativosPendentes(itens) + _blocoDossiesPendentes();
   if(!itens.length){ el.innerHTML = _blocoDossie || '<div class="card" style="padding:18px 22px;color:var(--mid);font-size:13px">Nenhuma pendência no momento.</div>'; return; }
 
   const cor={r:'var(--red)',   a:'#B7791F',   g:'var(--green)'};
@@ -4843,6 +4852,30 @@ function _dossiesPendentes(cands, vagas){
     if(!jaEnviado) out.push({c, vaga, doc});
   });
   return out;
+}
+// ── Candidaturas do site que não chegaram ao painel ─────────────────────────
+// O site reenvia sozinho a cada 2 min (lv_reenviar_pendencias_rs); aqui só
+// aparece o total que ainda está preso, para a La Vie saber que existe.
+let _syncSite={total:0, em:0};
+async function _conferirSyncSite(){
+  if(typeof isClienteExterno==='function' && isClienteExterno()) return;
+  if(Date.now()-_syncSite.em < 60000) return;
+  _syncSite.em=Date.now();
+  try{
+    const s=sbSite(); if(!s) return;
+    const {data,error}=await s.rpc('lv_sync_pendencias_total'); if(error) throw error;
+    const n=Number(data)||0;
+    if(n!==_syncSite.total){ _syncSite.total=n; renderAcoesPendentes(); }
+  }catch(e){ console.warn('Não foi possível conferir a fila de reenvio do site:', e); }
+}
+function _blocoSyncSite(){
+  if(!_syncSite.total || (typeof isClienteExterno==='function' && isClienteExterno())) return '';
+  const n=_syncSite.total;
+  return `<div class="card" style="padding:14px 18px;margin:0 0 10px;border-left:4px solid var(--red);display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="min-width:0"><strong>${n} candidatura${n===1?'':'s'} do site ainda não ${n===1?'chegou':'chegaram'} ao painel</strong>
+      <div style="font-size:12.5px;color:var(--mid);margin-top:2px">O site tenta reenviar sozinho a cada 2 minutos. Se continuar aqui, abra o painel do site para ver o motivo e reenviar.</div></div>
+    <a class="btn btn-ghost btn-sm" href="https://lavieconsultoria.com/vagas/" target="_blank" rel="noopener">Abrir painel do site</a>
+  </div>`;
 }
 function _blocoDossiesPendentes(){
   if(typeof isClienteExterno==='function' && isClienteExterno()) return '';
@@ -6372,7 +6405,7 @@ function renderHist(){
   }).join('');
 }
 function toggleHistDetail(id){const r=document.getElementById('hd-'+id);r.style.display=r.style.display==='none'?'table-row':'none';}
-async function excluirEntrevista(id){if(!confirm('Excluir?'))return;await deleteEntrev(id);_entrevistas=_entrevistas.filter(e=>e.id!==id);renderPainel();}
+async function excluirEntrevista(id){if(!confirm('Excluir?'))return;try{ await deleteEntrev(id); }catch(e){ alert('A entrevista não foi excluída: '+(e.message||e)); return; }_entrevistas=_entrevistas.filter(e=>e.id!==id);renderPainel();}
 function exportCSV(){
   const all=getEntrevistas();if(!all.length){alert('Sem registros.');return;}
   const rows=all.map(e=>[new Date(e.data).toLocaleString('pt-BR'),e.nome,e.cpf||'',e.idade||'',e.estadoCivil||'',e.naturalidade||'',e.qtdFilhos||'',e.ondeMora||'',e.comoSoube||'',e.vaga,e.setor||'',e.entrevistador||'',e.registradoPor||'',e.avgStar||'',e.resultado==='approved'?'Aprovado':e.resultado==='reprovado'?'Reprovado':'',(e.observacoes||'').replace(/"/g,'""')].map(v=>`"${v}"`).join(','));
