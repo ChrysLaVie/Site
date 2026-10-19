@@ -2297,60 +2297,16 @@ Instagram: https://instagram.com/lavie_consultoria
 Facebook: https://www.facebook.com/profile.php?id=61594399173425
 LinkedIn: https://www.linkedin.com/company/lavieconsultoria/`;
 const MSG_TEMPLATES={
-  testeDisc:{nome:'Convite teste DISC (perfil comportamental)',campos:[],texto:
-`Olá, {nome}! Tudo bem?
-
-Que bom seguir com você no processo seletivo para a vaga de {vaga}. Como próxima etapa, gostaríamos que você realizasse um teste de perfil comportamental (DISC). Ele nos ajuda a conhecer melhor o seu jeito de trabalhar.
-
-Acesse pelo link:
-https://mrcoach.com.br/teste-perfil-comportamental-disc.php
-
-Algumas orientações para o melhor aproveitamento:
-• Reserve cerca de 15 minutos para realizá-lo;
-• Escolha um lugar tranquilo, onde não seja interrompido(a);
-• Não feche o link antes de concluir todo o processo;
-• Não existe certo ou errado — o importante é responder com sinceridade.
-
-Ao finalizar, por favor nos avise para darmos sequência. Qualquer dúvida, estamos à disposição.
-
-Atenciosamente,
-${ASSINATURA}`},
-  testeTriagem:{nome:'Convite formulário de triagem (antes da entrevista)',campos:[],texto:
-`Olá, {nome}! Tudo bem?
-
-Dando sequência ao seu processo seletivo para a vaga de {vaga}, a próxima etapa é o preenchimento do nosso formulário de triagem. Ele reúne algumas questões sobre seu perfil, experiência e conhecimentos técnicos, e nos ajuda a conhecê-lo(a) melhor antes da entrevista on-line.
-
-Acesse pelo link:
-https://forms.gle/PjbYbPkTpioTs2H1A
-
-Algumas orientações:
-• Reserve cerca de 15 minutos para responder com calma;
-• Faça em um lugar tranquilo, onde não seja interrompido(a);
-• Responda a todas as questões e finalize o envio até o fim;
-• Seja sincero(a) nas respostas — é isso que nos permite avaliar o melhor encaixe.
-
-Assim que recebermos suas respostas, daremos sequência ao agendamento da entrevista on-line. Qualquer dúvida, estamos à disposição.
-
-Atenciosamente,
-${ASSINATURA}`},
-  bancoTalentos:{nome:'Banco de Talentos (não se encaixa / reprovado)',campos:[],texto:
-`Olá, {nome}! Tudo bem?
-
-Agradecemos muito a sua participação no nosso processo seletivo e o tempo que dedicou a cada etapa.
-
-Neste momento, seu perfil não seguirá para as vagas em aberto, mas gostaríamos de mantê-lo(a) em nosso Banco de Talentos. Isso significa que seu currículo ficará guardado conosco e, sempre que surgir uma oportunidade alinhada à sua experiência, entraremos em contato.
-
-Desejamos muito sucesso na sua trajetória e esperamos poder trabalhar juntos em breve.
-
-Atenciosamente,
-${ASSINATURA}`},
+  // Revisado em 19/10/2026: sem emoji, sem travessão, voz da Chrys em primeira
+  // pessoa, "retorno" no lugar de "feedback", cada dado em uma linha.
   inicial:{nome:'Mensagem inicial (recebemos currículo)',campos:[],texto:
-`Olá! Tudo bem?
+`Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria, responsável pelo processo seletivo.
+Aqui é a Chrys, da La Vie Consultoria, responsável pelo processo seletivo.
 
-Passando para confirmar que recebemos a sua candidatura para a vaga de {vaga}, muito obrigada pelo interesse! Ela já está na nossa fase de análise.
-Assim que concluirmos essa etapa, retornamos com um feedback sobre os próximos passos. Pedimos só um pouco de paciência enquanto avaliamos todos os candidatos com o cuidado que cada um merece.
+Passando para confirmar que recebemos a sua candidatura para a vaga de {vaga}. Obrigada pelo interesse!
+
+Ela já está na nossa fase de análise. Assim que concluirmos essa etapa, retorno com os próximos passos. Enquanto isso, peço só um pouco de paciência: avaliamos cada candidato com cuidado.
 
 ${REDES_SOCIAIS}
 
@@ -2359,12 +2315,14 @@ ${ASSINATURA}`},
   pendenteDisc:{nome:'Etapa pendente: teste DISC',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria.
+Aqui é a Chrys, da La Vie Consultoria.
 
-Recebemos o seu currículo para a vaga de {vaga}, obrigada pelo interesse! Para concluir a sua candidatura, ainda falta fazer o teste de perfil comportamental (DISC). Ele leva de 8 a 12 minutos e, ao final, você já segue para o formulário da vaga.
+Recebemos o seu currículo para a vaga de {vaga}, obrigada pelo interesse! Para concluir a sua candidatura, falta fazer o teste de perfil comportamental (DISC). Ele leva de 8 a 12 minutos e, ao final, você já segue para o formulário da vaga.
 
 Acesse pelo link:
 {linkDisc}
+
+Dica: faça em um lugar tranquilo e não feche a página antes de concluir. Não existe resposta certa ou errada, o que importa é responder com sinceridade.
 
 A candidatura só entra na nossa análise depois que todas as etapas forem concluídas.
 
@@ -2375,9 +2333,9 @@ ${ASSINATURA}`},
   pendenteForm:{nome:'Etapa pendente: formulário da vaga',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria.
+Aqui é a Chrys, da La Vie Consultoria.
 
-Recebemos o seu currículo e o seu teste DISC para a vaga de {vaga}, obrigada! Para concluir a sua candidatura, falta só preencher o formulário da vaga.
+Recebemos o seu currículo e o seu teste DISC para a vaga de {vaga}, obrigada! Para concluir a sua candidatura, falta só preencher o formulário da vaga. Leva uns 10 minutos.
 
 Acesse pelo link:
 {linkFormulario}
@@ -2391,37 +2349,46 @@ ${ASSINATURA}`},
   conviteOnline:{nome:'Aprovação triagem + entrevista online',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria.
+Aqui é a Chrys, da La Vie Consultoria.
 
-Analisamos seu perfil e temos uma boa notícia: você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
+Analisei o seu perfil e tenho uma boa notícia: você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
 
-Gostaríamos de agendar uma entrevista online para te conhecer melhor e conversar sobre sua trajetória profissional.
-Temos disponibilidade nos seguintes horários:
-[DATA E HORÁRIO 1] [DATA E HORÁRIO 2]
+Gostaria de agendar uma entrevista online para te conhecer melhor e conversar sobre a sua trajetória. Tenho disponibilidade nestes horários:
+[DATA E HORÁRIO 1]
+[DATA E HORÁRIO 2]
+
 Qual deles fica melhor para você?
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
 ${ASSINATURA}`},
   confirmaOnline:{nome:'Confirmação de entrevista online',campos:['DATA','HORÁRIO','LINK'],texto:
 `Perfeito, {nome}!
+
 Sua entrevista para a vaga de {vaga} está confirmada.
-Data: [DATA] Horário: [HORÁRIO] Formato: Online Link da entrevista: [LINK]
-Pedimos que entre com alguns minutinhos de antecedência e esteja em um local tranquilo, se possível.
+
+Data: [DATA]
+Horário: [HORÁRIO]
+Formato: online
+Link da entrevista: [LINK]
+
+Entre com alguns minutos de antecedência, de preferência em um lugar tranquilo e com boa conexão.
 
 Qualquer imprevisto, me avise por aqui. Até lá!
 ${ASSINATURA}`},
   convitePresencial:{nome:'Aprovação triagem + entrevista presencial',campos:['ENDEREÇO','DATA','HORÁRIO'],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria.
+Aqui é a Chrys, da La Vie Consultoria.
 
-Seu perfil avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
-Gostaríamos de agendar uma entrevista presencial para te conhecer melhor e conversar sobre a oportunidade.
+Analisei o seu perfil e tenho uma boa notícia: você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
 
-Local: [ENDEREÇO] Data sugerida: [DATA] Horário sugerido: [HORÁRIO]
+Gostaria de agendar uma entrevista presencial para te conhecer melhor e conversar sobre a oportunidade.
 
-Você consegue comparecer nesse dia e horário?
-Fico no aguardo da sua confirmação.
+Local: [ENDEREÇO]
+Data: [DATA]
+Horário: [HORÁRIO]
+
+Você consegue comparecer nesse dia e horário? Fico no aguardo da sua confirmação.
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
 ${ASSINATURA}`},
@@ -2429,124 +2396,127 @@ ${ASSINATURA}`},
 `Perfeito, {nome}!
 
 Sua entrevista para a vaga de {vaga} está confirmada.
-Data: [DATA] Horário: [HORÁRIO] Local: [ENDEREÇO] Pessoa de referência: [NOME DE REFERÊNCIA]
 
-Pedimos que chegue com alguns minutinhos de antecedência.
+Data: [DATA]
+Horário: [HORÁRIO]
+Local: [ENDEREÇO]
+Pessoa de referência: [NOME DE REFERÊNCIA]
 
-Caso tenha qualquer imprevisto, me avise por aqui. Até lá!
+Chegue com alguns minutos de antecedência.
+
+Qualquer imprevisto, me avise por aqui. Até lá!
 ${ASSINATURA}`},
   reagendar:{nome:'Reagendamento de entrevista',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
 
-Precisaremos reagendar sua entrevista para a vaga de {vaga}.
-Temos disponibilidade nos seguintes horários:
-[DATA E HORÁRIO 1] [DATA E HORÁRIO 2]
+Preciso reagendar a sua entrevista para a vaga de {vaga}. Peço desculpas pelo transtorno.
 
-Qual deles fica melhor para você?
-Obrigada pela compreensão.
+Tenho disponibilidade nestes horários:
+[DATA E HORÁRIO 1]
+[DATA E HORÁRIO 2]
 
+Qual deles fica melhor para você? Obrigada pela compreensão.
 ${ASSINATURA}`},
   noShow:{nome:'Candidato não compareceu',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Tínhamos uma entrevista agendada para hoje referente à vaga de {vaga}, mas não identificamos seu comparecimento.
+Tínhamos uma entrevista marcada hoje para a vaga de {vaga}, mas não consegui falar com você no horário combinado.
 
-Gostaríamos de saber se você ainda tem interesse em participar do processo seletivo.
-Caso tenha interesse, por gentileza, me retorne para avaliarmos a possibilidade de um novo horário.
+Você ainda tem interesse em participar do processo? Se sim, me responda por aqui que vejo a possibilidade de um novo horário.
 
 Fico no aguardo.
 ${ASSINATURA}`},
-  feedbackPositivoRH:{nome:'Feedback positivo após entrevista R&S',campos:[],texto:
+  feedbackPositivoRH:{nome:'Retorno positivo após entrevista La Vie',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Obrigada pela entrevista.
+Obrigada pela nossa conversa. Gostei muito de conhecer melhor a sua trajetória.
 
-Gostamos muito de conhecer melhor sua trajetória e entender mais sobre suas experiências profissionais.
+Você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}. Agora vou alinhar os próximos passos com a empresa contratante e volto com as orientações assim que tiver novidades.
 
-Seu perfil avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
-Agora, vamos alinhar os próximos passos com a empresa contratante e retornaremos com as orientações.
-
-Qualquer dúvida, pode me chamar por aqui.
-Parabéns por essa etapa!
+Parabéns por essa etapa! Qualquer dúvida, é só me chamar por aqui.
 ${ASSINATURA}`},
-  conviteGestor:{nome:'Convite entrevista com gestor/empresa',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
+  conviteGestor:{nome:'Convite para a fase final (entrevista com a empresa)',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
 
-Temos uma boa notícia.
-Você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
-Agora, a próxima conversa será com o gestor responsável pela área e/ou representante da empresa contratante.
+Tenho uma boa notícia: você avançou para a fase final do processo seletivo para a vaga de {vaga}.
 
-Temos disponibilidade nos seguintes horários:
-[DATA E HORÁRIO 1] [DATA E HORÁRIO 2]
+A próxima conversa será com o gestor da área ou com um representante da empresa contratante. Tenho disponibilidade nestes horários:
+[DATA E HORÁRIO 1]
+[DATA E HORÁRIO 2]
 
 Qual deles fica melhor para você?
 
+Qualquer dúvida, é só me chamar por aqui. Um abraço!
 ${ASSINATURA}`},
   aprovacaoFinal:{nome:'Aprovação final do candidato',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Temos uma excelente notícia.
+Tenho uma excelente notícia: você foi aprovado(a) no processo seletivo para a vaga de {vaga}. Parabéns pela dedicação em cada etapa!
 
-Você foi aprovado(a) no processo seletivo para a vaga de {vaga}.
-Parabéns pela sua dedicação em cada etapa! Ficamos muito felizes em acompanhar sua trajetória durante o processo.
+Agora o processo segue para a contratação. Em breve você recebe as orientações sobre documentos, exame admissional e data de início.
 
-Agora, seguiremos para a etapa de admissão/contratação. Em breve, você receberá as orientações sobre documentos, exame admissional e demais informações necessárias.
-Parabéns mais uma vez e sucesso nessa nova fase!
-
+Parabéns mais uma vez e muito sucesso nessa nova fase!
 ${ASSINATURA}`},
   encaminhaAdmissao:{nome:'Encaminhamento para admissão',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Conforme alinhado, você foi aprovado(a) para a vaga de {vaga} e agora seguirá para a etapa de admissão.
+Conforme combinamos, você foi aprovado(a) para a vaga de {vaga} e agora segue para a etapa de admissão.
 
-O Departamento Pessoal/Responsável pela contratação entrará em contato para orientar sobre:
+O setor responsável pela contratação na empresa vai entrar em contato para orientar sobre:
+- documentos necessários;
+- exame admissional;
+- data prevista de início;
+- demais informações da contratação.
 
-• Documentos necessários;
-• Exame admissional;
-• Data prevista de início;
-• Demais informações da contratação.
-
-Pedimos que fique atento(a) ao WhatsApp e/ou e-mail para não perder nenhuma orientação importante.
+Fique de olho no WhatsApp e no e-mail para não perder nenhuma orientação.
 
 Parabéns novamente!
 ${ASSINATURA}`},
-  feedbackNegTriagem:{nome:'Feedback negativo após triagem',campos:[],texto:
-`Olá, {nome}. Tudo bem?
+  bancoTalentos:{nome:'Banco de Talentos (perfil guardado para outras vagas)',campos:[],texto:
+`Olá, {nome}! Tudo bem?
 
-Agradecemos muito pelo seu interesse na vaga de {vaga} e por ter enviado seu currículo para análise.
+Obrigada pela sua participação no nosso processo seletivo e pelo tempo que dedicou a cada etapa.
 
-Neste momento, após avaliação dos requisitos da oportunidade, seguimos com candidatos que apresentam maior alinhamento com o perfil solicitado pela empresa contratante.
-Mesmo assim, manteremos seu currículo em nosso banco de talentos para futuras oportunidades compatíveis com seu perfil.
+Neste momento o seu perfil não segue para a vaga de {vaga}, mas gostaria de manter o seu currículo no nosso Banco de Talentos. Sempre que surgir uma oportunidade alinhada à sua experiência, entro em contato.
 
-Desejamos sucesso na sua trajetória profissional.
+Desejo muito sucesso na sua trajetória. Espero que a gente possa trabalhar junto em breve.
+
 Atenciosamente,
 ${ASSINATURA}`},
-  feedbackNegEntrevista:{nome:'Feedback negativo após entrevista',campos:[],texto:
+  feedbackNegTriagem:{nome:'Retorno negativo após triagem',campos:[],texto:
 `Olá, {nome}. Tudo bem?
 
-Quero te agradecer pela sua participação no processo seletivo para a vaga de {vaga}.
+Obrigada pelo seu interesse na vaga de {vaga} e por ter enviado o seu currículo.
 
-Foi muito bom conhecer um pouco mais sobre sua trajetória profissional.
-Após análise da etapa, seguimos com outro perfil que, neste momento, apresentou maior alinhamento com os requisitos da oportunidade.
-Manteremos seu currículo em nosso banco de talentos para futuras vagas compatíveis com sua experiência.
+Depois de avaliar os requisitos da oportunidade, seguimos com os candidatos que apresentaram maior alinhamento com o perfil pedido pela empresa contratante. O seu currículo fica no nosso banco de talentos para futuras oportunidades compatíveis com a sua experiência.
+
+Desejo sucesso na sua trajetória profissional.
+
+Atenciosamente,
+${ASSINATURA}`},
+  feedbackNegEntrevista:{nome:'Retorno negativo após entrevista',campos:[],texto:
+`Olá, {nome}. Tudo bem?
+
+Quero agradecer pela sua participação no processo seletivo para a vaga de {vaga}. Foi muito bom conhecer um pouco mais da sua trajetória.
+
+Nesta etapa seguimos com outro perfil, que neste momento apresentou maior alinhamento com os requisitos da oportunidade. O seu currículo fica no nosso banco de talentos para futuras vagas compatíveis com a sua experiência.
 
 Desejo muito sucesso na sua caminhada profissional.
+
 Atenciosamente,
 ${ASSINATURA}`},
   vagaEncerrada:{nome:'Processo cancelado ou vaga encerrada',campos:[],texto:
 `Olá, {nome}. Tudo bem?
 
-Passando para te atualizar sobre o processo seletivo para a vaga de {vaga}.
-A empresa contratante informou que a vaga foi encerrada/cancelada neste momento. Por isso, o processo seletivo não seguirá com novas etapas.
+Passando para te atualizar sobre o processo seletivo para a vaga de {vaga}: a empresa contratante informou que a vaga foi encerrada, então o processo não segue com novas etapas.
 
-Agradecemos muito pelo seu interesse e pela disponibilidade em participar.
-Seu currículo permanecerá em nosso banco de talentos para futuras oportunidades compatíveis com seu perfil.
+Obrigada pelo seu interesse e pela disponibilidade em participar. O seu currículo fica no nosso banco de talentos para futuras oportunidades compatíveis com o seu perfil.
 
-Grata,
+Atenciosamente,
 ${ASSINATURA}`}
 };
 // Menu manual (💬) — todas que você dispara sem mudar etapa:
-const MSG_MENU=['inicial','pendenteDisc','pendenteForm','confirmaOnline','confirmaPresencial','reagendar','noShow','vagaEncerrada'];
+const MSG_MENU=['inicial','pendenteDisc','pendenteForm','confirmaOnline','confirmaPresencial','reagendar','noShow','encaminhaAdmissao','bancoTalentos','vagaEncerrada'];
 
 // ── Preenche {nome}/{vaga} e abre pop-up para [CAMPOS], depois WhatsApp/e-mail ──
 let _msgCtx=null;
