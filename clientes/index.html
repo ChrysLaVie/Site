@@ -964,6 +964,11 @@ header {
     <div class="form-field" style="grid-column:1/-1"><label>Observação (anotações sobre o candidato)</label><textarea id="mc-obs" placeholder="Ex.: perfil aderente; confirmar disponibilidade presencial; nota técnica do teste..."></textarea></div>
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
+    <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid)">🕒 Atualizações</label>
+    <div style="display:flex;gap:6px;margin:8px 0 10px"><input id="mc-nota" placeholder="Ex.: cobrei formulário e teste pelo WhatsApp" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();registrarNota();}"><button type="button" class="btn btn-primary btn-sm" onclick="registrarNota()">Registrar</button></div>
+    <div id="mc-notas-list" style="display:flex;flex-direction:column;gap:4px;font-size:12px"></div>
+  </div>
+  <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid)">📎 Documentos do candidato</label>
       <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0">+ Anexar<input type="file" id="mc-file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" style="display:none" onchange="anexarDocs(event)"></label>
@@ -2306,11 +2311,12 @@ Aqui é a Chrys, da La Vie Consultoria, responsável pelo processo seletivo.
 
 Passando para confirmar que recebemos a sua candidatura para a vaga de {vaga}. Obrigada pelo interesse!
 
-Ela já está na nossa fase de análise. Assim que concluirmos essa etapa, retorno com os próximos passos. Enquanto isso, peço só um pouco de paciência: avaliamos cada candidato com cuidado.
+Ela já está na nossa fase de análise. Assim que concluirmos essa etapa, retorno com os próximos passos. Peço só um pouco de paciência: avaliamos cada candidato com cuidado.
 
 ${REDES_SOCIAIS}
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
+
 ${ASSINATURA}`},
   pendenteDisc:{nome:'Etapa pendente: teste DISC',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2329,6 +2335,7 @@ A candidatura só entra na nossa análise depois que todas as etapas forem concl
 ${REDES_SOCIAIS}
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
+
 ${ASSINATURA}`},
   pendenteForm:{nome:'Etapa pendente: formulário da vaga',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2345,6 +2352,7 @@ A candidatura só entra na nossa análise depois que todas as etapas forem concl
 ${REDES_SOCIAIS}
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
+
 ${ASSINATURA}`},
   conviteOnline:{nome:'Aprovação triagem + entrevista online',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
@@ -2360,6 +2368,7 @@ Gostaria de agendar uma entrevista online para te conhecer melhor e conversar so
 Qual deles fica melhor para você?
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
+
 ${ASSINATURA}`},
   confirmaOnline:{nome:'Confirmação de entrevista online',campos:['DATA','HORÁRIO','LINK'],texto:
 `Perfeito, {nome}!
@@ -2374,6 +2383,7 @@ Link da entrevista: [LINK]
 Entre com alguns minutos de antecedência, de preferência em um lugar tranquilo e com boa conexão.
 
 Qualquer imprevisto, me avise por aqui. Até lá!
+
 ${ASSINATURA}`},
   convitePresencial:{nome:'Aprovação triagem + entrevista presencial',campos:['ENDEREÇO','DATA','HORÁRIO'],texto:
 `Olá, {nome}! Tudo bem?
@@ -2391,6 +2401,7 @@ Horário: [HORÁRIO]
 Você consegue comparecer nesse dia e horário? Fico no aguardo da sua confirmação.
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
+
 ${ASSINATURA}`},
   confirmaPresencial:{nome:'Confirmação de entrevista presencial',campos:['DATA','HORÁRIO','ENDEREÇO','NOME DE REFERÊNCIA'],texto:
 `Perfeito, {nome}!
@@ -2405,6 +2416,7 @@ Pessoa de referência: [NOME DE REFERÊNCIA]
 Chegue com alguns minutos de antecedência.
 
 Qualquer imprevisto, me avise por aqui. Até lá!
+
 ${ASSINATURA}`},
   reagendar:{nome:'Reagendamento de entrevista',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
@@ -2416,6 +2428,7 @@ Tenho disponibilidade nestes horários:
 [DATA E HORÁRIO 2]
 
 Qual deles fica melhor para você? Obrigada pela compreensão.
+
 ${ASSINATURA}`},
   noShow:{nome:'Candidato não compareceu',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2425,6 +2438,7 @@ Tínhamos uma entrevista marcada hoje para a vaga de {vaga}, mas não consegui f
 Você ainda tem interesse em participar do processo? Se sim, me responda por aqui que vejo a possibilidade de um novo horário.
 
 Fico no aguardo.
+
 ${ASSINATURA}`},
   feedbackPositivoRH:{nome:'Retorno positivo após entrevista La Vie',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2434,6 +2448,7 @@ Obrigada pela nossa conversa. Gostei muito de conhecer melhor a sua trajetória.
 Você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}. Agora vou alinhar os próximos passos com a empresa contratante e volto com as orientações assim que tiver novidades.
 
 Parabéns por essa etapa! Qualquer dúvida, é só me chamar por aqui.
+
 ${ASSINATURA}`},
   conviteGestor:{nome:'Convite para a fase final (entrevista com a empresa)',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
@@ -2447,6 +2462,7 @@ A próxima conversa será com o gestor da área ou com um representante da empre
 Qual deles fica melhor para você?
 
 Qualquer dúvida, é só me chamar por aqui. Um abraço!
+
 ${ASSINATURA}`},
   aprovacaoFinal:{nome:'Aprovação final do candidato',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2456,6 +2472,7 @@ Tenho uma excelente notícia: você foi aprovado(a) no processo seletivo para a 
 Agora o processo segue para a contratação. Em breve você recebe as orientações sobre documentos, exame admissional e data de início.
 
 Parabéns mais uma vez e muito sucesso nessa nova fase!
+
 ${ASSINATURA}`},
   encaminhaAdmissao:{nome:'Encaminhamento para admissão',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2471,6 +2488,7 @@ O setor responsável pela contratação na empresa vai entrar em contato para or
 Fique de olho no WhatsApp e no e-mail para não perder nenhuma orientação.
 
 Parabéns novamente!
+
 ${ASSINATURA}`},
   bancoTalentos:{nome:'Banco de Talentos (perfil guardado para outras vagas)',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2482,6 +2500,7 @@ Neste momento o seu perfil não segue para a vaga de {vaga}, mas gostaria de man
 Desejo muito sucesso na sua trajetória. Espero que a gente possa trabalhar junto em breve.
 
 Atenciosamente,
+
 ${ASSINATURA}`},
   feedbackNegTriagem:{nome:'Retorno negativo após triagem',campos:[],texto:
 `Olá, {nome}. Tudo bem?
@@ -2493,6 +2512,7 @@ Depois de avaliar os requisitos da oportunidade, seguimos com os candidatos que 
 Desejo sucesso na sua trajetória profissional.
 
 Atenciosamente,
+
 ${ASSINATURA}`},
   feedbackNegEntrevista:{nome:'Retorno negativo após entrevista',campos:[],texto:
 `Olá, {nome}. Tudo bem?
@@ -2504,6 +2524,7 @@ Nesta etapa seguimos com outro perfil, que neste momento apresentou maior alinha
 Desejo muito sucesso na sua caminhada profissional.
 
 Atenciosamente,
+
 ${ASSINATURA}`},
   vagaEncerrada:{nome:'Processo cancelado ou vaga encerrada',campos:[],texto:
 `Olá, {nome}. Tudo bem?
@@ -2513,6 +2534,7 @@ Passando para te atualizar sobre o processo seletivo para a vaga de {vaga}: a em
 Obrigada pelo seu interesse e pela disponibilidade em participar. O seu currículo fica no nosso banco de talentos para futuras oportunidades compatíveis com o seu perfil.
 
 Atenciosamente,
+
 ${ASSINATURA}`}
 };
 // Menu manual (💬) — todas que você dispara sem mudar etapa:
@@ -2975,7 +2997,8 @@ function renderCandidatos() {
       +`<button class="btn btn-ghost btn-sm" onclick="menuMensagens('${c.id}')" title="Enviar mensagem">💬</button>`
       +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
       +`</div>`;
-    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
+    const ult=_ultimaAtualizacao(c);
+    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}${ult?`<br><span style="font-size:11px;color:var(--mid)" title="${_dataHoraBR(ult.data)}">🕒 ${_dataBR(String(ult.data).slice(0,10))} · ${String(ult.texto).replace(/</g,'&lt;').slice(0,90)}${String(ult.texto).length>90?'…':''}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
   }).join('');
 }
 function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.innerHTML='<option value="">Selecione...</option>'+getVagasVisiveis().filter(v=>v.status==='aberta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('');}
@@ -2989,6 +3012,35 @@ function abrirNovoCandidatoModal(){
   document.getElementById('nc-etapa').innerHTML=ETAPAS.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
   openModal('modal-novo-cand');
 }
+// ── Atualizações do candidato (anotações com data) ──────────────────────────
+// Entradas do histórico que contam como "o que aconteceu por último": anotação
+// registrada à mão, cobrança, convite e movimentação de etapa. Sem o campo
+// `etapa` nas anotações novas, para não mexer na contagem de dias da etapa.
+const _TIPOS_ATUALIZACAO = { observacao:'Anotação', cobranca:'Cobrança', convite:'Convite', dossie_enviado:'Dossiê enviado' };
+function _atualizacoesCand(c){
+  return (c.historico||[]).filter(h=>h && h.data && (h.tipo in _TIPOS_ATUALIZACAO || (!h.tipo && h.etapa)))
+    .slice().sort((a,b)=>String(b.data).localeCompare(String(a.data)));
+}
+function _dataHoraBR(iso){ try{ const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function _ultimaAtualizacao(c){
+  const h=_atualizacoesCand(c)[0]; if(!h) return null;
+  const texto = h.tipo ? (h.obs||_TIPOS_ATUALIZACAO[h.tipo]) : (h.obs || ('Movido para '+(ETAPA_LABEL[h.etapa]||h.etapa)));
+  return { data:h.data, texto, tipo:h.tipo||'movimentacao' };
+}
+function renderNotasCand(){
+  const id=document.getElementById('mc-id').value; const c=getCands().find(x=>x.id===id); const el=document.getElementById('mc-notas-list'); if(!el) return;
+  const lista=_atualizacoesCand(c||{}).slice(0,8);
+  el.innerHTML = lista.length ? lista.map(h=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--bege)"><span style="white-space:nowrap;color:var(--mid)">${_dataHoraBR(h.data)}</span><span style="flex:1">${(h.obs||(h.tipo?_TIPOS_ATUALIZACAO[h.tipo]:'Movido para '+(ETAPA_LABEL[h.etapa]||h.etapa))).replace(/</g,'&lt;')}${h.usuario?` <span style="color:var(--light)">· ${String(h.usuario).split(' ')[0]}</span>`:''}</span></div>`).join('')
+    : '<div style="color:var(--light);font-style:italic">Nenhuma atualização registrada.</div>';
+}
+async function registrarNota(){
+  const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
+  const inp=document.getElementById('mc-nota'); const texto=(inp.value||'').trim(); if(!texto){ inp.focus(); return; }
+  const c=_cands[idx];
+  c.historico=[...(c.historico||[]), { tipo:'observacao', data:new Date().toISOString(), obs:texto, usuario:getUserName() }];
+  try{ await upsertCand(c); }catch(e){ c.historico=c.historico.slice(0,-1); alert('Não foi possível salvar a atualização: '+(e.message||e)); return; }
+  inp.value=''; renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){} showToast('🕒 Atualização registrada');
+}
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
@@ -3001,7 +3053,7 @@ function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;d
   // atual do candidato não estiver na lista, adiciona ela igual pra não perder.
   if(c.etapa && !opcoesEtapa.some(e=>e.id===c.etapa)) opcoesEtapa.push({id:c.etapa, label:ETAPA_LABEL[c.etapa]||c.etapa});
   selE.innerHTML=opcoesEtapa.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
-  document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();if((c.documentos||[]).some(d=>d&&d.resultadoSite))_converterResultadosDoCandidato(c.id);}
+  document.getElementById('mc-etapa').value=c.etapa;document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';openModal('modal-mover-cand');renderDocsList();renderNotasCand();document.getElementById('mc-nota').value='';if((c.documentos||[]).some(d=>d&&d.resultadoSite))_converterResultadosDoCandidato(c.id);}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
   const nome=document.getElementById('mc-nome').value.trim();
@@ -4428,7 +4480,7 @@ const ETAPA_SUBSTATUS = {
 // Quantos dias ÚTEIS (seg a sex) o candidato está na etapa ATUAL (não desde a
 // entrada no funil). Mesma régua dos indicadores do dashboard.
 function diasNaEtapaAtual(c){
-  const hist=(c.historico||[]).filter(h=>h.etapa===c.etapa);
+  const hist=(c.historico||[]).filter(h=>h.etapa===c.etapa && h.tipo!=='observacao' && h.tipo!=='cobranca' && h.tipo!=='convite');
   const dataRef = hist.length ? hist[hist.length-1].data : (c.dataEntrada?c.dataEntrada+'T12:00:00':null);
   if(!dataRef) return 0;
   return diasUteisCalendario(dataRef);
@@ -4617,6 +4669,7 @@ function renderAcoesPendentes(){
       </div>
       <div style="font-size:13px">${it.sub}</div>
       ${it.cobTxt?`<div style="font-size:11px;color:var(--mid)">${it.cobTxt}</div>`:''}
+      ${(()=>{const u=_ultimaAtualizacao(it.c); return u&&u.tipo==='observacao'?`<div style="font-size:11px;color:var(--mid)">🕒 ${_dataBR(String(u.data).slice(0,10))} · ${String(u.texto).replace(/</g,'&lt;').slice(0,80)}</div>`:'';})()}
       ${it.finTxt?`<div style="font-size:11px;color:var(--mid)">${it.finTxt}</div>`:''}
       ${(it.tpl || it.cobTxt) && !isClienteExterno() ? `<div style="display:flex;gap:6px;margin-top:2px">
         ${it.tpl ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();abrirMensagem('${it.c.id}','${it.tpl}')">💬 Cobrar ${it.tpl==='pendenteDisc'?'DISC':'formulário'}</button>` : ''}
