@@ -2608,6 +2608,7 @@ function enviarWhats(){
   if(!c.tel){alert('Este candidato não tem telefone cadastrado.');return;}
   window.open('https://wa.me/'+_fmtTel(c.tel)+'?text='+encodeURIComponent(txt),'_blank');
   closeModal('modal-msg');showToast('💬 WhatsApp aberto com a mensagem pronta');
+  _registrarCobranca(c.id, _msgCtx.tplKey, 'WhatsApp');
 }
 function enviarEmailMsg(){
   const {c,txt}=_montaTexto();const tpl=MSG_TEMPLATES[_msgCtx.tplKey];
@@ -2615,6 +2616,7 @@ function enviarEmailMsg(){
   const v=getVagas().find(x=>x.id===c.vagaId);const assunto='Processo seletivo'+(v?' — '+v.titulo:'')+' | La Vie Consultoria';
   window.open('mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(txt),'_blank');
   closeModal('modal-msg');showToast('✉ E-mail aberto com a mensagem pronta');
+  _registrarCobranca(c.id, _msgCtx.tplKey, 'e-mail');
 }
 function copiarMsg(){const {txt}=_montaTexto();navigator.clipboard.writeText(txt).then(()=>showToast('📋 Mensagem copiada')).catch(()=>alert('Não foi possível copiar.'));}
 
@@ -4440,12 +4442,61 @@ const ETAPA_SUBSTATUS = {
   vivencia:           'Em Entrevista Final com o cliente',
   aprovacao:          'Dossiê enviado, aguardando contratante finalizar'
 };
-// Quantos dias o candidato está na etapa ATUAL (não desde a entrada no funil)
+// Quantos dias ÚTEIS (seg a sex) o candidato está na etapa ATUAL (não desde a
+// entrada no funil). Mesma régua dos indicadores do dashboard.
 function diasNaEtapaAtual(c){
   const hist=(c.historico||[]).filter(h=>h.etapa===c.etapa);
   const dataRef = hist.length ? hist[hist.length-1].data : (c.dataEntrada?c.dataEntrada+'T12:00:00':null);
   if(!dataRef) return 0;
-  return diasCorridosCalendario(dataRef);
+  return diasUteisCalendario(dataRef);
+}
+// ── Pendência de DISC / formulário ──────────────────────────────────────────
+// Candidato em Triagem ou em Formulários e Testes, em vaga aberta, que ainda
+// não entregou o DISC ou o formulário da vaga. O DISC é reconhecido pelos
+// documentos (ou pela fonte vinda do site); o formulário só é exigido quando a
+// vaga tem formulário próprio (lvFormsUrlParaVaga). Banco de talentos fica fora.
+const _COBRANCA_SLA = 2; // dias úteis sem resposta depois da cobrança = vermelho
+function _candTemDisc(c){
+  const docs=Array.isArray(c.documentos)?c.documentos:[];
+  if(docs.some(d=>d && (d.resultadoSite==='disc' || /disc/i.test(d.nome||'')))) return true;
+  return /DISC/.test(c.fonte||'');
+}
+function _candTemForm(c){
+  const docs=Array.isArray(c.documentos)?c.documentos:[];
+  if(docs.some(d=>d && (d.resultadoSite==='formulario' || /formul/i.test(d.nome||'')))) return true;
+  return /formul/i.test(c.fonte||'');
+}
+function _vagaExigeForm(vaga){
+  if(!vaga) return false;
+  return !!(typeof lvFormsUrlParaVaga==='function' && lvFormsUrlParaVaga(vaga.titulo));
+}
+function _pendenciaDocs(c, vaga){
+  if(!vaga || vaga.status!=='aberta') return null;
+  if(!['triagem','entrevista_rh'].includes(c.etapa)) return null;
+  if(vaga.empresaId==='bancolavie' || /^Banco de Talentos/i.test(vaga.titulo||'')) return null;
+  const faltaDisc=!_candTemDisc(c);
+  const faltaForm=_vagaExigeForm(vaga) && !_candTemForm(c);
+  if(!faltaDisc && !faltaForm) return null;
+  // Última cobrança feita pelo painel (WhatsApp ou e-mail) nesta etapa.
+  const cob=(c.historico||[]).filter(h=>h && h.tipo==='cobranca' && h.etapaCobrada===c.etapa).slice(-1)[0];
+  const cobDias = cob ? diasUteisCalendario(cob.data) : null;
+  return {
+    texto: faltaDisc && faltaForm ? 'Faltam o teste DISC e o formulário da vaga' : faltaDisc ? 'Falta o teste DISC' : 'Falta o formulário da vaga',
+    tpl: faltaDisc ? 'pendenteDisc' : 'pendenteForm',
+    cobradoEm: cob ? cob.data : null,
+    cobDias
+  };
+}
+// Registra no histórico que o candidato foi cobrado (chamado ao abrir o
+// WhatsApp ou o e-mail com a mensagem de etapa pendente).
+async function _registrarCobranca(candId, tplKey, canal){
+  if(!['pendenteDisc','pendenteForm'].includes(tplKey)) return;
+  const c=getCands().find(x=>x.id===candId); if(!c) return;
+  const oque = tplKey==='pendenteDisc' ? 'teste DISC' : 'formulário da vaga';
+  c.historico=[...(c.historico||[]), { tipo:'cobranca', etapaCobrada:c.etapa, data:new Date().toISOString(),
+    obs:`Cobrança do ${oque} enviada por ${canal}.`, usuario:getUserName() }];
+  try{ await upsertCand(c); }catch(e){ console.warn('Não foi possível registrar a cobrança', e); showToast('⚠ A mensagem abriu, mas a cobrança não ficou registrada no histórico'); }
+  try{ renderAcoesPendentes(); }catch(e){}
 }
 // ── Filtro de vaga do Dashboard ─────────────────────────────────────────────
 // "Todas as vagas" mostra o cliente inteiro; escolhendo uma vaga, todos os
@@ -4472,7 +4523,23 @@ function renderAcoesPendentes(){
     if(vaga && vaga.status!=='aberta') return null; // vaga já encerrada/cancelada = não é mais pendência
     const dias=diasNaEtapaAtual(c);
     const sla=ETAPA_SLA[c.etapa]||5;
-    const nivel = dias>=sla*2?'r' : dias>=sla?'a' : 'g';
+    let nivel = dias>=sla*2?'r' : dias>=sla?'a' : 'g';
+    // Falta DISC/formulário: a pendência vira "cobrar", com a mensagem pronta.
+    // Já cobrado e sem resposta há _COBRANCA_SLA dias úteis = vermelho (regra
+    // da La Vie: quem não responde à cobrança sai do processo).
+    const pend=_pendenciaDocs(c, vaga);
+    let sub=ETAPA_SUBSTATUS[c.etapa], cobTxt='', urgencia=dias-sla, tpl=null;
+    if(pend){
+      sub=pend.texto; tpl=pend.tpl;
+      if(pend.cobradoEm){
+        cobTxt=`Cobrado em ${_dataBR(pend.cobradoEm.slice(0,10))} (${pend.cobDias} dia${pend.cobDias===1?'':'s'} út${pend.cobDias===1?'il':'eis'} sem resposta)`;
+        if(pend.cobDias>=_COBRANCA_SLA){ nivel='r'; cobTxt+=' · sem resposta: reprovar'; urgencia=100+pend.cobDias; }
+        else { nivel='a'; urgencia=50+pend.cobDias; }
+      } else {
+        nivel = dias>=sla ? 'r' : 'a';
+        urgencia = 75+dias;
+      }
+    }
     let finTxt='';
     if(vaga){
       const nFechamento = (_parcelasDef().find(d=>d.gatilho==='fechamento')||{}).n;
@@ -4486,7 +4553,7 @@ function renderAcoesPendentes(){
         }
       }
     }
-    return {c,vaga,dias,nivel,sub:ETAPA_SUBSTATUS[c.etapa],finTxt,urgencia:dias-sla};
+    return {c,vaga,dias,nivel,sub,finTxt,urgencia,tpl,cobTxt};
   }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
 
   const _blocoDossie = _blocoDossiesPendentes();
@@ -4504,10 +4571,15 @@ function renderAcoesPendentes(){
           <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.c.nome}</strong>
           <span style="font-size:12px;color:var(--mid)">${it.vaga?it.vaga.titulo:'Sem vaga vinculada'}${it.vaga&&it.vaga.gestor?' · '+it.vaga.gestor:''}</span>
         </div>
-        <span style="background:${bg[it.nivel]};color:${cor[it.nivel]};padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;flex-shrink:0">${it.dias}d</span>
+        <span title="dias úteis nesta etapa" style="background:${bg[it.nivel]};color:${cor[it.nivel]};padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;flex-shrink:0">${it.dias}d úteis</span>
       </div>
       <div style="font-size:13px">${it.sub}</div>
+      ${it.cobTxt?`<div style="font-size:11px;color:var(--mid)">${it.cobTxt}</div>`:''}
       ${it.finTxt?`<div style="font-size:11px;color:var(--mid)">${it.finTxt}</div>`:''}
+      ${it.tpl && !isClienteExterno() ? `<div style="display:flex;gap:6px;margin-top:2px">
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();abrirMensagem('${it.c.id}','${it.tpl}')">💬 Cobrar ${it.tpl==='pendenteDisc'?'DISC':'formulário'}</button>
+        ${it.cobTxt ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;color:var(--red)" onclick="event.stopPropagation();reprovarCard('${it.c.id}')">✗ Reprovar</button>` : ''}
+      </div>` : ''}
     </div>`;
 
   const visiveis=itens.slice(0,LIMITE), resto=itens.slice(LIMITE);
