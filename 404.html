@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Vie Consultoria</title>
+<script>
+  // lavieconsultoria.com/vagas/nome-da-vaga: abre a vaga na página de vagas.
+  if (/^\/vagas\/[^\/.]+\/?$/.test(location.pathname)) {
+    var s = document.createElement('script'); s.src = '/vagas/rota.js'; document.head.appendChild(s);
+  } else {
+    document.documentElement.className = 'nf';
+  }
+</script>
+<style>
+  body { margin: 0; background: #F5F1EA; color: #2B2A27; font-family: 'DM Sans', Arial, sans-serif; }
+  .box { display: none; max-width: 520px; margin: 18vh auto 0; padding: 0 16px; text-align: center; }
+  .nf .box { display: block; }
+  h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 2.4rem; margin: 0 0 12px; }
+  p { line-height: 1.6; color: #5A5650; }
+  a { display: inline-block; margin: 10px 6px 0; padding: 12px 20px; border: 1px solid #2B2A27; color: #2B2A27; text-decoration: none; letter-spacing: 1px; font-size: .85rem; text-transform: uppercase; }
+  a.cheio { background: #2B2A27; color: #F5F1EA; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Página não encontrada</h1>
+  <p>O endereço pode ter mudado ou a página saiu do ar.</p>
+  <a class="cheio" href="/vagas/">Ver vagas abertas</a>
+  <a href="/">Site da La Vie</a>
+</div>
+</body>
+</html>
