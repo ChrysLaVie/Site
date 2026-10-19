@@ -624,6 +624,7 @@ header {
       <div class="chart-card-sub" id="dash-destino-sub">Para onde foram os candidatos avaliados</div>
       <div class="chart-wrap" style="height:160px"><canvas id="chart-destino"></canvas></div>
       <div id="dash-destino-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:12px"></div>
+      <div id="dash-origem" style="margin-top:14px"></div>
     </div>
     <div class="card">
       <div class="chart-card-title" id="dash-metricas-titulo">Métricas de Tempo</div>
@@ -942,7 +943,8 @@ header {
     <div class="form-field" style="grid-column:1/-1"><label>Vaga *</label><select id="nc-vaga"><option value="">Selecione...</option></select></div>
     <div class="form-field"><label>Etapa</label><select id="nc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option></select></div>
     <div class="form-field"><label>Data entrada</label><input id="nc-data" type="date"></div>
-    <div class="form-field" style="grid-column:1/-1"><label>Fonte</label><input id="nc-fonte" placeholder="Ex: LinkedIn, Indicação"></div>
+    <div class="form-field"><label>Canal de origem</label><select id="nc-canal"><option value="curriculo">Currículo recebido</option><option value="indicacao">Indicação</option><option value="linkedin">LinkedIn</option><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option><option value="banco_talentos">Banco de Talentos</option><option value="portal">Portal de vagas</option><option value="site">Site (cadastro manual)</option><option value="outro">Outro</option></select></div>
+    <div class="form-field"><label>Detalhe da origem</label><input id="nc-fonte" placeholder="Ex: indicação do Rogério"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Observações</label><textarea id="nc-obs"></textarea></div>
   </div>
   <div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-ghost" onclick="closeModal('modal-novo-cand')">Cancelar</button><button class="btn btn-primary" onclick="salvarCandidato()">Adicionar</button></div>
@@ -1951,11 +1953,11 @@ function getEntrevistas() { return _entrevistas; }
 
 // ══ DB MAPPERS ════════════════════════════════════════════════════════════════
 const dbToVaga  = r => ({ _persistida:true, _imagensCarregadas:Array.isArray(r.imagens), id:r.id, empresaId:r.empresa_id, titulo:r.titulo, ordemServico:r.ordem_servico, setor:r.setor, dataAbertura:r.data_abertura, dataEncerramento:r.data_encerramento, dataDossieManual:r.data_dossie_manual, qtd:r.qtd, qtdFechadas:r.qtd_fechadas, status:r.status, tipo:r.tipo, salario:r.salario, gestor:r.gestor, motivo:r.motivo, canais:r.canais, obs:r.obs, honorario:r.honorario, imagens:Array.isArray(r.imagens)?r.imagens:[], legenda:r.legenda, criadoPor:r.criado_por, atualizadoPor:r.atualizado_por, criadoEm:r.criado_em, dataReabertura:r.data_reabertura, motivoReabertura:r.motivo_reabertura, historicoReaberturas:Array.isArray(r.historico_reaberturas)?r.historico_reaberturas:[], garantiaDias:r.garantia_dias||60, prazoMin:r.prazo_shortlist_min??null, prazoMax:r.prazo_shortlist_max??null, responsavelEmail:r.responsavel_email||'' });
-const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em, ..._baseCand(r.documentos, r.fonte, r.obs) });
+const dbToCand  = r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, tel:r.telefone, email:r.email, linkedin:r.linkedin, vagaId:r.vaga_id, etapa:r.etapa, dataEntrada:r.data_entrada, fonte:r.fonte, canal:r.canal||null, obs:r.obs, documentos:Array.isArray(r.documentos)?r.documentos:[], historico:r.historico||[], criadoPor:r.criado_por, criadoEm:r.criado_em, ..._baseCand(r.documentos, r.fonte, r.obs) });
 const dbToEntrev= r => ({ id:r.id, empresaId:r.empresa_id, nome:r.nome, cpf:r.cpf, mae:r.mae, comoSoube:r.como_soube, idade:r.idade, estadoCivil:r.estado_civil, naturalidade:r.naturalidade, qtdFilhos:r.qtd_filhos, ondeMora:r.onde_mora, entrevistador:r.entrevistador, vaga:r.vaga, vagaId:r.vaga_id, setor:r.setor, resultado:r.resultado, avaliacoes:r.avaliacoes||{}, avgStar:r.avg_star, observacoes:r.observacoes, secoesConcluidas:r.secoes_concluidas, totalSecoes:r.total_secoes, respostas:r.respostas||null, registradoPor:r.registrado_por, data:r.criado_em });
 
 const vagaToDb  = v => ({ id:v.id, empresa_id:v.empresaId||currentEmpresa, titulo:v.titulo, ordem_servico:v.ordemServico||null, setor:v.setor, data_abertura:v.dataAbertura||null, data_encerramento:v.dataEncerramento||null, data_dossie_manual:v.dataDossieManual||null, qtd:v.qtd||1, qtd_fechadas:v.qtdFechadas||0, status:v.status||'aberta', tipo:v.tipo, salario:v.salario, gestor:v.gestor, motivo:v.motivo, canais:v.canais, obs:v.obs, honorario:v.honorario, imagens:v.imagens||[], legenda:v.legenda||null, criado_por:v.criadoPor, atualizado_por:v.atualizadoPor, data_reabertura:v.dataReabertura||null, motivo_reabertura:v.motivoReabertura||null, historico_reaberturas:v.historicoReaberturas||[], garantia_dias:v.garantiaDias||60, prazo_shortlist_min:v.prazoMin??null, prazo_shortlist_max:v.prazoMax??null, responsavel_email:v.responsavelEmail||null, atualizado_em:new Date().toISOString() });
-const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
+const candToDb  = c => ({ id:c.id, empresa_id:c.empresaId||currentEmpresa, nome:c.nome, cpf:c.cpf, telefone:c.tel, email:c.email, linkedin:c.linkedin||null, vaga_id:c.vagaId, etapa:c.etapa, data_entrada:c.dataEntrada||null, fonte:c.fonte, canal:c.canal||null, obs:c.obs, documentos:c.documentos||[], historico:c.historico||[], criado_por:c.criadoPor, atualizado_em:new Date().toISOString() });
 const entrevToDb= e => ({ id:e.id, empresa_id:e.empresaId||currentEmpresa, nome:e.nome, cpf:e.cpf, mae:e.mae||null, como_soube:e.comoSoube||null, idade:e.idade||null, estado_civil:e.estadoCivil||null, naturalidade:e.naturalidade||null, qtd_filhos:e.qtdFilhos||null, onde_mora:e.ondeMora||null, entrevistador:e.entrevistador, vaga:e.vaga, vaga_id:e.vagaId, setor:e.setor, resultado:e.resultado, avaliacoes:e.avaliacoes, avg_star:e.avgStar, observacoes:e.observacoes, secoes_concluidas:e.secoesConcluidas, total_secoes:e.totalSecoes, respostas:e.respostas||null, registrado_por:e.registradoPor });
 const dbToAgenda= r => ({ id:r.id, empresaId:r.empresa_id, titulo:r.titulo, candidatoId:r.candidato_id, candidato:r.candidato, vagaId:r.vaga_id, vaga:r.vaga, setor:r.setor, data:r.data, horaIni:r.hora_inicio, horaFim:r.hora_fim, tipo:r.tipo, link:r.link, local:r.local, entrevistador:r.entrevistador, status:r.status, obs:r.observacoes, criadoPor:r.criado_por, criadoEm:r.criado_em, googleEventId:r.google_event_id });
 const agendaToDb= a => ({ id:a.id, empresa_id:a.empresaId||currentEmpresa, titulo:a.titulo, candidato_id:a.candidatoId||null, candidato:a.candidato||null, vaga_id:a.vagaId||null, vaga:a.vaga||null, setor:a.setor||null, data:a.data, hora_inicio:a.horaIni||null, hora_fim:a.horaFim||null, tipo:a.tipo||'online', link:a.link||null, local:a.local||null, entrevistador:a.entrevistador||null, status:a.status||'agendada', observacoes:a.obs||null, criado_por:a.criadoPor||null, google_event_id:a.googleEventId||null, atualizado_em:new Date().toISOString() });
@@ -2207,6 +2209,7 @@ document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', 
 // texto certo sempre que a empresa ativa muda, e todo o resto do sistema (toasts,
 // agenda, funil, dashboard) lê desses mesmos objetos sem precisar saber qual
 // cliente está logado.
+const CANAL_LABEL={site:'Site La Vie',curriculo:'Currículo recebido',indicacao:'Indicação',linkedin:'LinkedIn',whatsapp:'WhatsApp',email:'E-mail',banco_talentos:'Banco de Talentos',portal:'Portal de vagas',outro:'Outro'};
 const ETAPAS=[{id:'triagem',label:'Triagem',short:'Triagem'},{id:'entrevista_rh',label:'Formulários e Testes',short:'Testes'},{id:'entrevista_gestor',label:'Entrevista La Vie',short:'La Vie'},{id:'vivencia',label:'Entrevista Final',short:'Final'},{id:'aprovacao',label:'Aprovação',short:'Aprovação'}];
 const ETAPA_TAG  ={triagem:'triagem',entrevista_rh:'rh',entrevista_gestor:'gestor',vivencia:'final',aprovacao:'aprovado',admissao:'admissao',reprovado:'reprovado',banco_talentos_administrativo:'administrativo',banco_talentos_academico:'academico',banco_talentos_geral:'geral',banco_talentos_motorista:'motorista'};
 const ETAPA_LABEL={triagem:'Triagem',entrevista_rh:'Formulários e Testes',entrevista_gestor:'Entrevista La Vie',vivencia:'Entrevista Final',aprovacao:'Aprovação',admissao:'Admissão',reprovado:'Reprovado',banco_talentos_administrativo:'Banco de Talentos Administrativo',banco_talentos_academico:'Banco de Talentos Acadêmico',banco_talentos_geral:'Banco de Talentos Geral',banco_talentos_motorista:'Banco de Talentos Motorista',banco_talentos_vagas_canceladas:'Banco de Talentos (vaga cancelada)'};
@@ -3006,7 +3009,7 @@ function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.i
 async function salvarCandidato(){
   const nome=document.getElementById('nc-nome').value.trim(),vagaId=document.getElementById('nc-vaga').value;
   if(!nome){alert('Preencha o nome.');return;}if(!vagaId){alert('Selecione a vaga.');return;}
-  const c={id:Date.now().toString(),nome,vagaId,cpf:document.getElementById('nc-cpf').value.trim(),tel:document.getElementById('nc-tel').value.trim(),email:document.getElementById('nc-email').value.trim(),linkedin:document.getElementById('nc-linkedin').value.trim(),etapa:document.getElementById('nc-etapa').value,dataEntrada:document.getElementById('nc-data').value||new Date().toISOString().slice(0,10),fonte:document.getElementById('nc-fonte').value.trim(),obs:document.getElementById('nc-obs').value.trim(),historico:[{etapa:document.getElementById('nc-etapa').value,data:new Date().toISOString(),obs:'Cadastro inicial',usuario:getUserName()}],criadoPor:getUserName()};
+  const c={id:Date.now().toString(),nome,vagaId,cpf:document.getElementById('nc-cpf').value.trim(),tel:document.getElementById('nc-tel').value.trim(),email:document.getElementById('nc-email').value.trim(),linkedin:document.getElementById('nc-linkedin').value.trim(),etapa:document.getElementById('nc-etapa').value,dataEntrada:document.getElementById('nc-data').value||new Date().toISOString().slice(0,10),canal:(document.getElementById('nc-canal')||{}).value||'curriculo',fonte:(document.getElementById('nc-fonte').value.trim()||CANAL_LABEL[(document.getElementById('nc-canal')||{}).value]||'Currículo recebido'),obs:document.getElementById('nc-obs').value.trim(),historico:[{etapa:document.getElementById('nc-etapa').value,data:new Date().toISOString(),obs:'Cadastro inicial',usuario:getUserName()}],criadoPor:getUserName()};
   try{await upsertCand(c);_cands.unshift(c);closeModal('modal-novo-cand');['nc-nome','nc-cpf','nc-tel','nc-email','nc-fonte','nc-obs'].forEach(id=>document.getElementById(id).value='');renderFunil();renderCandidatos();showToast('✅ Candidato adicionado!');abrirMensagem(c.id,'inicial');}catch(e){alert('Erro: '+e.message);}
 }
 function abrirNovoCandidatoModal(){
@@ -5113,6 +5116,22 @@ function renderIndicadoresFunil(){
     const pct = totalDestino>0 ? Math.round(d.n/totalDestino*100) : 0;
     return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mid)"><span style="width:8px;height:8px;border-radius:50%;background:${d.cor};flex:none"></span><strong style="color:var(--charcoal);font-weight:600">${d.n}</strong> ${d.label} <span style="color:var(--light)">(${pct}%)</span></div>`;
   }).join('');
+
+  // Origem dos candidatos por canal (coluna `canal`, lista fixa) e quantos de
+  // cada canal chegaram à fase final e foram contratados.
+  try{
+    const alc = c => (c.historico||[]).map(h=>h&&h.etapa).filter(Boolean).concat([c.etapa]);
+    const faseFinal = c => alc(c).some(e=>['vivencia','aprovacao','admissao'].includes(e));
+    const porCanal = {};
+    cands.forEach(c=>{ const k=c.canal||'outro'; const o=porCanal[k]||(porCanal[k]={n:0,fin:0,con:0}); o.n++; if(faseFinal(c)) o.fin++; if(contratado(c)) o.con++; });
+    const linhas = Object.entries(porCanal).sort((a,b)=>b[1].n-a[1].n);
+    const el = document.getElementById('dash-origem');
+    if(el) el.innerHTML = linhas.length ? `<div class="chart-card-sub" style="margin-bottom:6px">Origem dos candidatos</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <tr style="color:var(--mid)"><th style="text-align:left;font-weight:500;padding:3px 0">Canal</th><th style="text-align:right;font-weight:500">Candidatos</th><th style="text-align:right;font-weight:500">Fase final</th><th style="text-align:right;font-weight:500">Contratados</th></tr>
+        ${linhas.map(([k,o])=>`<tr style="border-top:1px solid var(--bege)"><td style="padding:4px 0">${CANAL_LABEL[k]||k}</td><td style="text-align:right">${o.n}</td><td style="text-align:right">${o.fin}</td><td style="text-align:right;font-weight:600">${o.con}</td></tr>`).join('')}
+      </table>` : '';
+  }catch(e){ console.warn('origem dos candidatos', e); }
 
 }
 
