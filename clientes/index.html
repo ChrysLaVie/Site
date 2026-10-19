@@ -2091,7 +2091,8 @@ async function _mesclarCandComBanco(c){
     const novosDocs=(Array.isArray(srv.documentos)?srv.documentos:[]).filter(d=>{ const k=_docKeyCand(d); return !local.has(k) && !base.has(k); });
     if(novosDocs.length) c.documentos=[...(c.documentos||[]), ...novosDocs];
     const hLocal=new Set((c.historico||[]).map(_histKeyCand));
-    const novosHist=(Array.isArray(srv.historico)?srv.historico:[]).filter(h=>!hLocal.has(_histKeyCand(h)));
+    const removidos=c._histRemovidos||new Set();
+    const novosHist=(Array.isArray(srv.historico)?srv.historico:[]).filter(h=>{ const k=_histKeyCand(h); return !hLocal.has(k) && !removidos.has(k); });
     if(novosHist.length) c.historico=[...(c.historico||[]), ...novosHist].sort((a,b)=>String(a&&a.data||'').localeCompare(String(b&&b.data||'')));
     // Fonte e observação: se o painel não mexeu nelas, vale a versão mais nova do banco.
     if((c.fonte??null)===c._fonteBase && srv.fonte) c.fonte=srv.fonte;
@@ -3030,16 +3031,43 @@ function _ultimaAtualizacao(c){
 function renderNotasCand(){
   const id=document.getElementById('mc-id').value; const c=getCands().find(x=>x.id===id); const el=document.getElementById('mc-notas-list'); if(!el) return;
   const lista=_atualizacoesCand(c||{}).slice(0,8);
-  el.innerHTML = lista.length ? lista.map(h=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--bege)"><span style="white-space:nowrap;color:var(--mid)">${_dataHoraBR(h.data)}</span><span style="flex:1">${(h.obs||(h.tipo?_TIPOS_ATUALIZACAO[h.tipo]:'Movido para '+(ETAPA_LABEL[h.etapa]||h.etapa))).replace(/</g,'&lt;')}${h.usuario?` <span style="color:var(--light)">· ${String(h.usuario).split(' ')[0]}</span>`:''}</span></div>`).join('')
+  const podeMexer=h=>h.tipo==='observacao' && (!isClienteExterno() || h.usuario===getUserName());
+  el.innerHTML = lista.length ? lista.map(h=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--bege)"><span style="white-space:nowrap;color:var(--mid)">${_dataHoraBR(h.data)}</span><span style="flex:1">${(h.obs||(h.tipo?_TIPOS_ATUALIZACAO[h.tipo]:'Movido para '+(ETAPA_LABEL[h.etapa]||h.etapa))).replace(/</g,'&lt;')}${h.usuario?` <span style="color:var(--light)">· ${String(h.usuario).split(' ')[0]}</span>`:''}${h.editadoEm?` <span style="color:var(--light)">(editada)</span>`:''}</span>${podeMexer(h)?`<span style="white-space:nowrap"><button type="button" class="btn btn-ghost btn-sm" style="padding:2px 6px" title="Editar" onclick="editarNota('${String(h.data).replace(/'/g,'')}')">✎</button><button type="button" class="btn btn-ghost btn-sm" style="padding:2px 6px;color:var(--red)" title="Apagar" onclick="apagarNota('${String(h.data).replace(/'/g,'')}')">✕</button></span>`:''}</div>`).join('')
     : '<div style="color:var(--light);font-style:italic">Nenhuma atualização registrada.</div>';
 }
 async function registrarNota(){
   const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
   const inp=document.getElementById('mc-nota'); const texto=(inp.value||'').trim(); if(!texto){ inp.focus(); return; }
   const c=_cands[idx];
+  const ultima=_atualizacoesCand(c)[0];
+  if(ultima && ultima.tipo==='observacao' && (ultima.obs||'').trim()===texto && Date.now()-new Date(ultima.data).getTime() < 10*60*1000){ inp.value=''; showToast('Essa anotação já foi registrada há pouco'); return; }
+  if(registrarNota._salvando) return; registrarNota._salvando=true;
   c.historico=[...(c.historico||[]), { tipo:'observacao', data:new Date().toISOString(), obs:texto, usuario:getUserName() }];
-  try{ await upsertCand(c); }catch(e){ c.historico=c.historico.slice(0,-1); alert('Não foi possível salvar a atualização: '+(e.message||e)); return; }
+  try{ await upsertCand(c); }catch(e){ c.historico=c.historico.slice(0,-1); alert('Não foi possível salvar a atualização: '+(e.message||e)); return; }finally{ registrarNota._salvando=false; }
   inp.value=''; renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){} showToast('🕒 Atualização registrada');
+}
+function _notaPorData(c, data){ return (c.historico||[]).findIndex(h=>h && h.tipo==='observacao' && String(h.data)===String(data)); }
+async function editarNota(data){
+  const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
+  const c=_cands[idx]; const i=_notaPorData(c, data); if(i<0) return;
+  const atual=c.historico[i]; const novo=prompt('Editar a anotação:', atual.obs||''); if(novo===null) return;
+  const texto=novo.trim(); if(!texto){ alert('A anotação não pode ficar vazia. Para remover, use o ✕.'); return; }
+  if(texto===atual.obs) return;
+  const antes=[...c.historico];
+  c._histRemovidos=c._histRemovidos||new Set(); c._histRemovidos.add(_histKeyCand(atual));
+  c.historico=c.historico.map((h,j)=>j===i?{...h, obs:texto, editadoEm:new Date().toISOString()}:h);
+  try{ await upsertCand(c); }catch(e){ c.historico=antes; alert('Não foi possível salvar a edição: '+(e.message||e)); return; }
+  renderNotasCand(); renderCandidatos(); showToast('✎ Anotação editada');
+}
+async function apagarNota(data){
+  const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
+  const c=_cands[idx]; const i=_notaPorData(c, data); if(i<0) return;
+  const h=c.historico[i]; if(!confirm('Apagar esta anotação?\n\n'+(h.obs||''))) return;
+  const antes=[...c.historico];
+  c._histRemovidos=c._histRemovidos||new Set(); c._histRemovidos.add(_histKeyCand(h));
+  c.historico=c.historico.filter((_,j)=>j!==i);
+  try{ await upsertCand(c); }catch(e){ c.historico=antes; alert('Não foi possível apagar: '+(e.message||e)); return; }
+  renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){} showToast('✕ Anotação apagada');
 }
 function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';
