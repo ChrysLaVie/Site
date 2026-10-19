@@ -2288,12 +2288,14 @@ function getBancos(){ return BANCOS_POR_EMPRESA[currentEmpresa] || BANCOS_PADRAO
 
 // ══ MENSAGENS PADRÃO — La Vie Consultoria ════════════════════════════════════════
 // {nome} e {vaga} são preenchidos automaticamente. [CAMPOS] viram inputs no pop-up.
-const ASSINATURA='Chrysthyan Kelly Ferreira Alves\nLa Vie Consultoria\n\n🌐 lavieconsultoria.com\n📷 Instagram: instagram.com/lavie_consultoria\n👍 Facebook: facebook.com/profile.php?id=61594399173425\n💼 LinkedIn: linkedin.com/company/lavieconsultoria';
+// Sem emoji: o WhatsApp e o e-mail abertos por link mostram os emojis como "?" em
+// alguns aparelhos. As redes sociais ficam só no bloco REDES_SOCIAIS, para não repetir.
+const ASSINATURA='Chrysthyan Kelly Ferreira Alves\nLa Vie Consultoria\nlavieconsultoria.com';
 // Bloco de redes sociais dos e-mails de confirmação e de etapa pendente.
 const REDES_SOCIAIS=`Enquanto isso, acompanhe a La Vie nas redes sociais. É por lá que divulgamos primeiro as novas vagas e dicas para processos seletivos:
-📷 Instagram: https://instagram.com/lavie_consultoria
-👍 Facebook: https://www.facebook.com/profile.php?id=61594399173425
-💼 LinkedIn: https://www.linkedin.com/company/lavieconsultoria/`;
+Instagram: https://instagram.com/lavie_consultoria
+Facebook: https://www.facebook.com/profile.php?id=61594399173425
+LinkedIn: https://www.linkedin.com/company/lavieconsultoria/`;
 const MSG_TEMPLATES={
   testeDisc:{nome:'Convite teste DISC (perfil comportamental)',campos:[],texto:
 `Olá, {nome}! Tudo bem?
@@ -2345,7 +2347,7 @@ ${ASSINATURA}`},
   inicial:{nome:'Mensagem inicial (recebemos currículo)',campos:[],texto:
 `Olá! Tudo bem?
 
-Aqui é da La Vie Consultoria, responsável pelo processo seletivo 😊
+Aqui é da La Vie Consultoria, responsável pelo processo seletivo.
 
 Passando para confirmar que recebemos a sua candidatura para a vaga de {vaga}, muito obrigada pelo interesse! Ela já está na nossa fase de análise.
 Assim que concluirmos essa etapa, retornamos com um feedback sobre os próximos passos. Pedimos só um pouco de paciência enquanto avaliamos todos os candidatos com o cuidado que cada um merece.
@@ -2357,7 +2359,7 @@ ${ASSINATURA}`},
   pendenteDisc:{nome:'Etapa pendente: teste DISC',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria 😊
+Aqui é da La Vie Consultoria.
 
 Recebemos o seu currículo para a vaga de {vaga}, obrigada pelo interesse! Para concluir a sua candidatura, ainda falta fazer o teste de perfil comportamental (DISC). Ele leva de 8 a 12 minutos e, ao final, você já segue para o formulário da vaga.
 
@@ -2373,7 +2375,7 @@ ${ASSINATURA}`},
   pendenteForm:{nome:'Etapa pendente: formulário da vaga',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria 😊
+Aqui é da La Vie Consultoria.
 
 Recebemos o seu currículo e o seu teste DISC para a vaga de {vaga}, obrigada! Para concluir a sua candidatura, falta só preencher o formulário da vaga.
 
@@ -2389,7 +2391,7 @@ ${ASSINATURA}`},
   conviteOnline:{nome:'Aprovação triagem + entrevista online',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria 😊
+Aqui é da La Vie Consultoria.
 
 Analisamos seu perfil e temos uma boa notícia: você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
 
@@ -2402,7 +2404,7 @@ Qualquer dúvida, é só me chamar por aqui. Um abraço!
 ${ASSINATURA}`},
   confirmaOnline:{nome:'Confirmação de entrevista online',campos:['DATA','HORÁRIO','LINK'],texto:
 `Perfeito, {nome}!
-Sua entrevista para a vaga de {vaga} está confirmada 😊
+Sua entrevista para a vaga de {vaga} está confirmada.
 Data: [DATA] Horário: [HORÁRIO] Formato: Online Link da entrevista: [LINK]
 Pedimos que entre com alguns minutinhos de antecedência e esteja em um local tranquilo, se possível.
 
@@ -2411,7 +2413,7 @@ ${ASSINATURA}`},
   convitePresencial:{nome:'Aprovação triagem + entrevista presencial',campos:['ENDEREÇO','DATA','HORÁRIO'],texto:
 `Olá, {nome}! Tudo bem?
 
-Aqui é da La Vie Consultoria 😊
+Aqui é da La Vie Consultoria.
 
 Seu perfil avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
 Gostaríamos de agendar uma entrevista presencial para te conhecer melhor e conversar sobre a oportunidade.
@@ -2426,7 +2428,7 @@ ${ASSINATURA}`},
   confirmaPresencial:{nome:'Confirmação de entrevista presencial',campos:['DATA','HORÁRIO','ENDEREÇO','NOME DE REFERÊNCIA'],texto:
 `Perfeito, {nome}!
 
-Sua entrevista para a vaga de {vaga} está confirmada 😊
+Sua entrevista para a vaga de {vaga} está confirmada.
 Data: [DATA] Horário: [HORÁRIO] Local: [ENDEREÇO] Pessoa de referência: [NOME DE REFERÊNCIA]
 
 Pedimos que chegue com alguns minutinhos de antecedência.
@@ -2465,12 +2467,12 @@ Seu perfil avançou para a próxima etapa do processo seletivo para a vaga de {v
 Agora, vamos alinhar os próximos passos com a empresa contratante e retornaremos com as orientações.
 
 Qualquer dúvida, pode me chamar por aqui.
-Parabéns por essa etapa! 😊
+Parabéns por essa etapa!
 ${ASSINATURA}`},
   conviteGestor:{nome:'Convite entrevista com gestor/empresa',campos:['DATA E HORÁRIO 1','DATA E HORÁRIO 2'],texto:
 `Olá, {nome}! Tudo bem?
 
-Temos uma boa notícia 😊
+Temos uma boa notícia.
 Você avançou para a próxima etapa do processo seletivo para a vaga de {vaga}.
 Agora, a próxima conversa será com o gestor responsável pela área e/ou representante da empresa contratante.
 
@@ -2483,7 +2485,7 @@ ${ASSINATURA}`},
   aprovacaoFinal:{nome:'Aprovação final do candidato',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
-Temos uma excelente notícia 😊
+Temos uma excelente notícia.
 
 Você foi aprovado(a) no processo seletivo para a vaga de {vaga}.
 Parabéns pela sua dedicação em cada etapa! Ficamos muito felizes em acompanhar sua trajetória durante o processo.
