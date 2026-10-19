@@ -219,6 +219,7 @@ header {
 .vg-status.aberta { color:var(--green); }
 .vg-status.encerrada { color:var(--mid); }
 .vg-status.cancelada { color:var(--red); }
+.vg-status.pausada { color:var(--amber); }
 .vg-titulo { font-family:'Playfair Display',serif; font-size:19px; font-weight:700; line-height:1.25; margin-top:8px; color:var(--charcoal); }
 .vg-sub { font-size:12px; color:var(--mid); margin-top:4px; }
 .vg-dados { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--bege-lt); border-bottom:1px solid var(--bege-lt); }
@@ -656,7 +657,7 @@ header {
   <div class="stats-row" id="vagas-stats"></div>
   <div class="filters-bar" style="margin-top:16px">
     <input class="filter-input wide" id="vaga-search" placeholder="Buscar vaga" oninput="renderVagas()">
-    <select class="filter-input" id="vaga-filter-status" onchange="renderVagas()"><option value="">Todos os status</option><option value="aberta">Abertas</option><option value="encerrada">Encerradas</option><option value="cancelada">Canceladas</option></select>
+    <select class="filter-input" id="vaga-filter-status" onchange="renderVagas()"><option value="">Todos os status</option><option value="aberta">Abertas</option><option value="encerrada">Encerradas</option><option value="pausada">Pausadas</option><option value="cancelada">Canceladas</option></select>
     <select class="filter-input" id="vaga-filter-setor" onchange="renderVagas()"><option value="">Todos os setores</option></select>
   </div>
   <div class="vagas-grid" id="vagas-grid" style="margin-top:16px"></div>
@@ -914,7 +915,7 @@ header {
     <div class="form-field"><label>Data do Dossiê (manual)</label><input id="ev-data-dossie" type="date"><div style="font-size:10.5px;color:var(--light);margin-top:3px">Preencha só se o mesmo candidato fechou 2 vagas — assim o sistema não fica sem essa data pra calcular La Vie x Cliente</div></div>
     <div class="form-field"><label>Status</label>
       <select id="ev-status" onchange="autoEncerramento(this.value)">
-        <option value="aberta">Aberta</option><option value="encerrada">Encerrada</option><option value="cancelada">Cancelada</option>
+        <option value="aberta">Aberta</option><option value="encerrada">Encerrada</option><option value="pausada">Pausada</option><option value="cancelada">Cancelada</option>
       </select>
     </div>
     <div class="form-field"><label>Salário</label><input id="ev-salario"></div>
@@ -2721,8 +2722,8 @@ function renderVagas() {
   const fi=vagas.filter(v=>(!search||v.titulo.toLowerCase().includes(search))&&(!fSt||v.status===fSt)&&(!fSe||v.setor===fSe));
   const grid=document.getElementById('vagas-grid');
   if(!fi.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><p>${vagas.length?'Nenhuma vaga encontrada.':'Nenhuma vaga cadastrada.'}</p></div>`;return;}
-  const ST={aberta:'tag-open',encerrada:'tag-closed',cancelada:'tag-closed'};
-  const SL={aberta:'Aberta',encerrada:'Encerrada',cancelada:'Cancelada'};
+  const ST={aberta:'tag-open',encerrada:'tag-closed',pausada:'tag-closed',cancelada:'tag-closed'};
+  const SL={aberta:'Aberta',encerrada:'Encerrada',pausada:'Pausada',cancelada:'Cancelada'};
   const cands=getCands();
   grid.innerHTML=fi.map(v=>{
     const n=cands.filter(c=>c.vagaId===v.id).length;
@@ -2738,6 +2739,8 @@ function renderVagas() {
     if(v.dataAbertura) dados.push(['Abertura', fmt(v.dataAbertura)]);
     if(v.status==='aberta'){
       if(inicio) dados.push(['Em aberto', uteis(inicio)]);
+    } else if(v.status==='pausada'){
+      dados.push(['Situação','Pausada a pedido do cliente']);
     } else if(v.dataEncerramento){
       dados.push([v.status==='cancelada'?'Cancelamento':'Encerramento', fmt(v.dataEncerramento)]);
       if(v.status==='encerrada' && inicio) dados.push(['Ciclo', uteis(inicio, v.dataEncerramento)]);
@@ -4452,7 +4455,7 @@ function _popularFiltroDash(){
   const sel=document.getElementById('dash-vaga-filtro'); if(!sel) return;
   const vagas=getVagasVisiveis();
   const atual=sel.value;
-  const rotulo=v=>v.titulo+(v.status==='encerrada'?' · fechada':v.status==='cancelada'?' · cancelada':' · em aberto');
+  const rotulo=v=>v.titulo+(v.status==='encerrada'?' · fechada':v.status==='cancelada'?' · cancelada':v.status==='pausada'?' · pausada':' · em aberto');
   sel.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}">${rotulo(v)}</option>`).join('');
   sel.value = vagas.some(v=>v.id===atual) ? atual : '';
 }
@@ -5121,6 +5124,7 @@ function renderDashboard(){
   const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
   const fechadas=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtdFechadas||0),0);
   const emAberto=totalQtd-fechadas-canceladas;
+  const pausadas=vagas.filter(v=>v.status==='pausada').reduce((s,v)=>s+Math.max(0,(v.qtd||0)-(v.qtdFechadas||0)),0);
   // Substituições: toda vaga reaberta por reposição, aberta ou já reposta.
   // As que ainda estão em aberto já fazem parte do saldo em aberto.
   const _vagasSubst=vagas.filter(v=>v.dataReabertura || (v.historicoReaberturas&&v.historicoReaberturas.length));
@@ -5198,6 +5202,7 @@ function renderDashboard(){
       const admitido = poolOrdenado[0];
       let statusHtml, dias, diasNum=null, grupo;
       if(v.status==='cancelada'){ statusHtml='<span style="color:var(--red)">● Cancelada</span>'; dias='-'; grupo=3; }
+      else if(v.status==='pausada'){ statusHtml='<span style="color:var(--amber)">● Pausada</span>'; dias='-'; grupo=2.5; }
       else if(v.status==='encerrada'){
         statusHtml='<span style="color:var(--green)">● Fechada</span>';
         const td=temposDetalhe.find(t=>t.v.id===v.id);
@@ -5283,7 +5288,7 @@ function renderDashboard(){
   document.getElementById('dash-kpis').innerHTML=`
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge g">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">ainda em processo</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">${pausadas?`ainda em processo · ${pausadas} pausada${pausadas===1?'':'s'} pelo cliente`:'ainda em processo'}</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">reposição</span></div><div class="kpi-hero-num a">${substTotal}</div><div class="kpi-hero-lbl" style="margin-top:6px">Substituições</div><div class="kpi-hero-sub">${substAbertas} em aberto · ${substRepostas} já ${substRepostas===1?'reposta':'repostas'}</div></div>`;
 
