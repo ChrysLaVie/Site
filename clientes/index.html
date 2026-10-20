@@ -5728,21 +5728,37 @@ function renderDashboard(){
     if(metricasEl2) metricasEl2.innerHTML = '<div style="color:var(--mid);font-size:12.5px;padding:8px 0">Sem vagas fechadas ainda.</div>';
   }
 
+  // Fechamentos de ciclos anteriores (vaga reaberta por reposição) contam como
+  // vaga fechada também aqui, igual ao KPI do topo.
+  const _ciclosAntV = v => { const n=(v.historicoReaberturas||[]).filter(h=>h&&h.cicloAnteriorEncerramento).length; return n||(v.dataReabertura?1:0); };
   const sm={};vagas.forEach(v=>{
     const s=v.setor||'Outros';
-    if(!sm[s])sm[s]={qtd:0,fech:0,aberto:0,canc:0};
+    if(!sm[s])sm[s]={qtd:0,fech:0,aberto:0,canc:0,repos:0};
     sm[s].qtd+=(v.qtd||0);
-    sm[s].fech+=(v.qtdFechadas||0);
+    sm[s].fech+=(v.qtdFechadas||0)+_ciclosAntV(v);
+    sm[s].repos+=_ciclosAntV(v);
     if(v.status==='cancelada') sm[s].canc+=(v.qtd||0);
     else sm[s].aberto+=(v.qtd||0)-(v.qtdFechadas||0);
   });
   // Sort setores by total qty descending
   const smSorted=Object.entries(sm).sort((a,b)=>b[1].qtd-a[1].qtd);
-  document.getElementById('dash-setores').innerHTML=smSorted.map(([setor,d])=>{const p=(d.qtd-d.canc)>0?Math.round(d.fech/(d.qtd-d.canc)*100):0,done=d.aberto===0&&d.canc===0;return `<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;min-height:130px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:700;margin-bottom:2px">${setor}</div><div style="font-size:11px;color:var(--mid)">Inicial: ${d.qtd} vaga${d.qtd!==1?'s':''}</div></div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:${done?'var(--green)':'var(--charcoal)'}">${p}%</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;margin-bottom:10px"><span style="color:var(--green)">Fechadas: ${d.fech}</span>
+  document.getElementById('dash-setores').innerHTML=smSorted.map(([setor,d])=>{const p=(d.qtd+d.repos-d.canc)>0?Math.round(d.fech/(d.qtd+d.repos-d.canc)*100):0,done=d.aberto===0&&d.canc===0;return `<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;min-height:130px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:700;margin-bottom:2px">${setor}</div><div style="font-size:11px;color:var(--mid)">Inicial: ${d.qtd} vaga${d.qtd!==1?'s':''}</div></div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:${done?'var(--green)':'var(--charcoal)'}">${p}%</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;margin-bottom:10px"><span style="color:var(--green)">Fechadas: ${d.fech}${d.repos?` (${d.repos} reposta${d.repos===1?'':'s'})`:''}</span>
         ${d.aberto>0?`<span style="color:var(--amber)">Em Aberto: ${d.aberto}</span>`:''}
         ${d.canc>0?`<span style="color:var(--red)">Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
   const tabEl=document.getElementById('dash-tabelas');tabEl.innerHTML='';
-  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${vs.map(v=>{const saldo=(v.qtd||0)-(v.qtdFechadas||0),isCan=v.status==='cancelada',isFech=!isCan&&saldo===0;return `<tr><td style="font-weight:500">${v.titulo}</td><td style="font-size:12px;color:var(--mid)">${v.dataAbertura?new Date(v.dataAbertura+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'-'}</td><td style="text-align:center;font-weight:600">${v.qtd||0}</td><td style="text-align:center;color:var(--green);font-weight:600">${v.qtdFechadas||0}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'-':saldo}</td><td>${isCan?'<span style="color:var(--red)">● Cancelada</span>':isFech?'<span style="color:var(--green)">● Concluída</span>':'<span style="color:var(--amber)">● Em aberto</span>'}</td></tr>`;}).join('')}</tbody></table></div>`;tabEl.appendChild(div);});
+  smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${(()=>{
+      // Posições iguais (mesmo cargo, mesma OS, mesma data de abertura) viram
+      // uma linha só: no Auto Club são 8 posições de Consultor Especialista e
+      // listar uma por uma só repetia a mesma informação.
+      const grupos={};
+      vs.forEach(v=>{ const k=[v.titulo,v.ordemServico||'',v.dataAbertura||''].join('|'); const g=grupos[k]||(grupos[k]={titulo:v.titulo,os:v.ordemServico||'',data:v.dataAbertura,n:0,qtd:0,fech:0,repos:0,canc:0}); g.n++; g.qtd+=(v.qtd||0); g.fech+=(v.qtdFechadas||0); g.repos+=_ciclosAntV(v); if(v.status==='cancelada') g.canc+=(v.qtd||0); });
+      return Object.values(grupos).sort((x,y)=>String(y.data||'').localeCompare(String(x.data||''))).map(g=>{
+        const saldo=g.qtd-g.fech-g.canc, isCan=g.canc===g.qtd, isFech=!isCan&&saldo===0;
+        const fechTxt=(g.fech+g.repos)+(g.repos?` <span style="font-weight:400;font-size:11px;color:var(--mid)" title="Fechadas antes da reposição">(${g.repos} reposta${g.repos===1?'':'s'})</span>`:'');
+        const cargo=g.titulo+(g.os?` <span style="font-weight:400;font-size:11px;color:var(--mid)">${g.os}</span>`:'')+(g.n>1?` <span style="font-weight:400;font-size:11px;color:var(--mid)">· ${g.n} posições</span>`:'');
+        return `<tr><td style="font-weight:500">${cargo}</td><td style="font-size:12px;color:var(--mid)">${g.data?new Date(g.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'-'}</td><td style="text-align:center;font-weight:600">${g.qtd}</td><td style="text-align:center;color:var(--green);font-weight:600">${fechTxt}</td><td style="text-align:center;font-weight:600;color:${isCan?'var(--red)':isFech?'var(--green)':'var(--amber)'}">${isCan?'-':saldo}</td><td>${isCan?'<span style="color:var(--red)">● Cancelada</span>':isFech?'<span style="color:var(--green)">● Concluída</span>':g.canc?`<span style="color:var(--amber)">● Em aberto</span> <span style="font-size:11px;color:var(--red)">(${g.canc} cancelada${g.canc===1?'':'s'})</span>`:'<span style="color:var(--amber)">● Em aberto</span>'}</td></tr>`;
+      }).join('');
+    })()}</tbody></table></div>`;tabEl.appendChild(div);});
 }
 
 // ══ PAINEL ════════════════════════════════════════════════════════════════════
