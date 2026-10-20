@@ -2157,7 +2157,7 @@ function goPage(name) {
   if(currentUser && currentUser.role==='gestor') {
     const setLabel = currentUser.setores.join(' + ');
     const sub = document.getElementById('ev-subtitle');
-    if(sub) sub.textContent = `Roteiros do setor: ${{setLabel}}`;
+    if(sub) sub.textContent = `Roteiros do setor: ${setLabel}`;
     // Hide novo candidato button for gestores
     const btnC = document.getElementById('btn-novo-cand');
     if(btnC) btnC.style.display = 'none';
@@ -3007,7 +3007,7 @@ async function salvarCandidato(){
   const nome=document.getElementById('nc-nome').value.trim(),vagaId=document.getElementById('nc-vaga').value;
   if(!nome){alert('Preencha o nome.');return;}if(!vagaId){alert('Selecione a vaga.');return;}
   const c={id:Date.now().toString(),nome,vagaId,cpf:document.getElementById('nc-cpf').value.trim(),tel:document.getElementById('nc-tel').value.trim(),email:document.getElementById('nc-email').value.trim(),linkedin:document.getElementById('nc-linkedin').value.trim(),etapa:document.getElementById('nc-etapa').value,dataEntrada:document.getElementById('nc-data').value||new Date().toISOString().slice(0,10),canal:(document.getElementById('nc-canal')||{}).value||'curriculo',fonte:(document.getElementById('nc-fonte').value.trim()||CANAL_LABEL[(document.getElementById('nc-canal')||{}).value]||'Currículo recebido'),obs:document.getElementById('nc-obs').value.trim(),historico:[{etapa:document.getElementById('nc-etapa').value,data:new Date().toISOString(),obs:'Cadastro inicial',usuario:getUserName()}],criadoPor:getUserName()};
-  try{await upsertCand(c);_cands.unshift(c);closeModal('modal-novo-cand');['nc-nome','nc-cpf','nc-tel','nc-email','nc-fonte','nc-obs'].forEach(id=>document.getElementById(id).value='');renderFunil();renderCandidatos();showToast('✅ Candidato adicionado!');abrirMensagem(c.id,'inicial');}catch(e){alert('Erro: '+e.message);}
+  try{await upsertCand(c);_cands.unshift(c);closeModal('modal-novo-cand');['nc-nome','nc-cpf','nc-tel','nc-email','nc-fonte','nc-obs'].forEach(id=>document.getElementById(id).value='');renderFunil();renderCandidatos();showToast('✅ Candidato adicionado! O e-mail de boas-vindas sai sozinho em 20 min' + (c.email?'':' (sem e-mail: use o 💬 para avisar por WhatsApp)'));}catch(e){alert('Erro: '+e.message);}
 }
 function abrirNovoCandidatoModal(){
   document.getElementById('nc-etapa').innerHTML=ETAPAS.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
@@ -4709,6 +4709,7 @@ function renderAcoesPendentes(){
     // da La Vie: quem não responde à cobrança sai do processo).
     const pend=_pendenciaDocs(c, vaga) || _pendenciaConvite(c, vaga);
     let sub=ETAPA_SUBSTATUS[c.etapa], cobTxt='', urgencia=dias-sla, tpl=null, semResposta=false, cobradoEm=null;
+    const semContato = !String(c.tel||'').replace(/\D/g,'') && !/@/.test(c.email||'');
     if(pend){
       sub=pend.texto; tpl=pend.tpl||null; cobradoEm=pend.cobradoEm||null;
       if(pend.cobradoEm){
@@ -4733,6 +4734,7 @@ function renderAcoesPendentes(){
         }
       }
     }
+    if(semContato){ sub='Sem telefone nem e-mail: nenhuma mensagem ou e-mail automático chega a este candidato'; nivel='r'; urgencia=Math.max(urgencia, 90); tpl=null; }
     return {c,vaga,dias,nivel,sub,finTxt,urgencia,tpl,cobTxt,semResposta,cobradoEm};
   }).filter(Boolean).sort((a,b)=>b.urgencia-a.urgencia);
 

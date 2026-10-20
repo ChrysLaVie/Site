@@ -957,7 +957,7 @@ function openApplyModal(vaga) {
     const incoming = Array.from(fileList || []);
     if (!incoming.length) return;
     for (const f of incoming) {
-      if (f.size > 5*1024*1024) { alert(`"${f.name}" é maior que 5MB e não foi adicionado.`); continue; }
+      if (f.size > 10*1024*1024) { alert(`"${f.name}" é maior que 10 MB e não foi adicionado.`); continue; }
       if (selectedFiles.length >= 5) { alert('Máximo de 5 arquivos.'); break; }
       if (!selectedFiles.some(x => x.name === f.name && x.size === f.size)) selectedFiles.push(f);
     }
