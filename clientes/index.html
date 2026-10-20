@@ -5421,8 +5421,19 @@ function renderDashboard(){
   }
   const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
   const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
-  const fechadas=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtdFechadas||0),0);
-  const emAberto=totalQtd-fechadas-canceladas;
+  // Fechadas no ciclo atual (qtd_fechadas zera quando a vaga é reaberta por reposição).
+  const fechadasAtuais=vagas.filter(v=>v.status!=='cancelada').reduce((s,v)=>s+(v.qtdFechadas||0),0);
+  // Fechamentos de ciclos anteriores: a contratação feita antes da reposição
+  // continua sendo uma vaga fechada pela La Vie, mesmo com a vaga aberta de novo.
+  // Sem isso o Auto Club aparecia com 3 fechadas quando foram 5 (2 delas repostas).
+  const fechadasCiclosAnt=vagas.reduce((s,v)=>{
+    const n=(v.historicoReaberturas||[]).filter(h=>h&&h.cicloAnteriorEncerramento).length;
+    return s+(n||(v.dataReabertura?1:0));
+  },0);
+  const fechadas=fechadasAtuais+fechadasCiclosAnt;
+  const emAberto=totalQtd-fechadasAtuais-canceladas;
+  // Cada reposição é um ciclo a mais de trabalho: entra no total usado nas porcentagens.
+  const totalCiclos=totalQtd+fechadasCiclosAnt;
   const pausadas=vagas.filter(v=>v.status==='pausada').reduce((s,v)=>s+Math.max(0,(v.qtd||0)-(v.qtdFechadas||0)),0);
   // Substituições: toda vaga reaberta por reposição, aberta ou já reposta.
   // As que ainda estão em aberto já fazem parte do saldo em aberto.
@@ -5432,7 +5443,8 @@ function renderDashboard(){
   const substRepostas=_vagasSubst.filter(v=>v.status==='encerrada').length;
   // Canceladas contam como resolvidas (foi o cliente quem cancelou, não é falha do RH)
   const resolvidas=fechadas+canceladas;
-  const pct=totalQtd>0?Math.round(resolvidas/totalQtd*100):0;
+  const pct=totalCiclos>0?Math.round(resolvidas/totalCiclos*100):0;
+  const pctFechadas=totalCiclos>0?Math.round(fechadas/totalCiclos*100):0;
 
   // ── Tempo de fechamento: separa o que é responsabilidade da La Vie (até o
   // dossiê/finalista ser apresentado ao Mantenedor) do que é decisão do Cliente
@@ -5585,9 +5597,9 @@ function renderDashboard(){
   }
 
   document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge g">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${totalQtd>0?Math.round(fechadas/totalQtd*100):0}% do total</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">${pausadas?`ainda em processo · ${pausadas} pausada${pausadas===1?'':'s'} pelo cliente`:'ainda em processo'}</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total${fechadasCiclosAnt?` · ${fechadasCiclosAnt} reposiç${fechadasCiclosAnt===1?'ão':'ões'} em garantia`:''}</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge g">${pctFechadas}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${fechadasCiclosAnt?`${pctFechadas}% dos ciclos · ${fechadasCiclosAnt} seguida${fechadasCiclosAnt===1?'':'s'} de reposição`:`${pctFechadas}% do total`}</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">${[substAbertas?`${substAbertas} por reposição`:'', pausadas?`${pausadas} pausada${pausadas===1?'':'s'} pelo cliente`:''].filter(Boolean).join(' · ') || 'ainda em processo'}</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">reposição</span></div><div class="kpi-hero-num a">${substTotal}</div><div class="kpi-hero-lbl" style="margin-top:6px">Substituições</div><div class="kpi-hero-sub">${substAbertas} em aberto · ${substRepostas} já ${substRepostas===1?'reposta':'repostas'}</div></div>`;
 
