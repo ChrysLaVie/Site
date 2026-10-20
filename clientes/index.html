@@ -5218,15 +5218,23 @@ function renderIndicadoresFunil(){
     }
   });
 
-  // 3) Candidatos por vaga — total avaliado em cada posição, maior pro menor
-  const porVaga = vagas.map(v=>({ v, n:cands.filter(c=>c.vagaId===v.id).length })).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  // 3) Candidatos por vaga — total avaliado em cada cargo, maior pro menor.
+  // Posições com o mesmo título (ex.: 8 de "Consultor Especialista" no Auto
+  // Club) são um processo seletivo só: a Chrys vai fechando as posições com o
+  // mesmo grupo de candidatos. Por isso agrupa pelo título, não pelo id.
+  const _tituloBase = v => String(v.titulo||'').split('–')[0].trim();
+  const _grupos = {};
+  vagas.forEach(v=>{ const k=_tituloBase(v); (_grupos[k]=_grupos[k]||{titulo:k, ids:new Set(), posicoes:0}).ids.add(v.id); _grupos[k].posicoes+=(v.qtd||1); });
+  const porVaga = Object.values(_grupos)
+    .map(g=>({ titulo:g.titulo, posicoes:g.posicoes, nVagas:g.ids.size, n:cands.filter(c=>g.ids.has(c.vagaId)).length }))
+    .filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
   const corBarraVaga = i => { // gradiente charcoal → bege conforme a posição no ranking
     const passos=[CH.charcoal,'#4E4E4E','#666666','#7E7E7E','#969696','#AEAEAE'];
     return passos[Math.min(i,passos.length-1)];
   };
   renderChart('chart-candidatos-vaga', {
     type:'bar',
-    data:{ labels:porVaga.map(x=>x.v.titulo.split('–')[0].trim()), datasets:[{ data:porVaga.map(x=>x.n), backgroundColor:porVaga.map((_,i)=>corBarraVaga(i)), borderRadius:5, maxBarThickness:26 }] },
+    data:{ labels:porVaga.map(x=>x.nVagas>1?`${x.titulo} (${x.posicoes} posições)`:x.titulo), datasets:[{ data:porVaga.map(x=>x.n), backgroundColor:porVaga.map((_,i)=>corBarraVaga(i)), borderRadius:5, maxBarThickness:26 }] },
     options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:ctx=>`${ctx.parsed.x} candidatos` } } },
       scales:{ x:{ beginAtZero:true, ticks:{ color:CH.mid, font:{size:11} }, grid:{ color:CH.bege_lt } },
