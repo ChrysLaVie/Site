@@ -1,0 +1,803 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><link rel="icon" type="image/png" href="/logo.png" media="(prefers-color-scheme: light)"><link rel="icon" type="image/png" href="/logo-branco.png" media="(prefers-color-scheme: dark)"><link rel="icon" type="image/png" href="/logo.png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Jornada AVEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #f2f5fb;
+  --surface: #ffffff;
+  --surface-2: #e8eef8;
+  --ink: #0d1b3d;
+  --muted: #52607a;
+  --line: #d3dcec;
+  --brand: #0b4294;
+  --brand-2: #1d6fe0;
+  --accent: #f8d912;
+  --accent-ink: #0d1b3d;
+  --btn: #0b4294;
+  --btn-ink: #ffffff;
+  --title: #0b4294;
+  --ok: #1b7a5f;
+  --ok-soft: #dcefe8;
+  --warn: #9a5b00;
+  --warn-soft: #f8ebcf;
+  --bad: #b3261e;
+  --bad-soft: #f7dcda;
+  --road: #0b4294;
+  --road-2: #082f6b;
+  --road-ink: #ffffff;
+  --road-muted: #c4d5f3;
+  --focus: #1d6fe0;
+  --f-display: "Rubik", "Arial Black", Arial, sans-serif;
+  --f-body: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --track: .22em;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #08122b;
+    --surface: #0f1c3d;
+    --surface-2: #16264f;
+    --ink: #e9eef9;
+    --muted: #9fb0d0;
+    --line: #22356a;
+    --btn: #2f74e3;
+    --title: #f8d912;
+    --ok: #52c7a3;
+    --ok-soft: #14332a;
+    --warn: #f0b400;
+    --warn-soft: #3a2f10;
+    --bad: #ff8a80;
+    --bad-soft: #3b1a18;
+    --road: #0a3580;
+    --road-2: #061d48;
+    --focus: #6fa3ff;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #08122b;
+  --surface: #0f1c3d;
+  --surface-2: #16264f;
+  --ink: #e9eef9;
+  --muted: #9fb0d0;
+  --line: #22356a;
+  --btn: #2f74e3;
+  --title: #f8d912;
+  --ok: #52c7a3;
+  --ok-soft: #14332a;
+  --warn: #f0b400;
+  --warn-soft: #3a2f10;
+  --bad: #ff8a80;
+  --bad-soft: #3b1a18;
+  --road: #0a3580;
+  --road-2: #061d48;
+  --focus: #6fa3ff;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--f-body);
+  padding-inline: 16px;
+}
+button, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+
+.wrap { max-width: 1120px; margin-inline: auto; }
+
+/* ---------- topo: pista ---------- */
+.road {
+  background: var(--road);
+  color: var(--road-ink);
+  margin-inline: -16px;
+  padding: 22px 16px 26px;
+}
+.road .wrap { display: grid; gap: 16px; }
+.suite { font-family: var(--f-mono); font-size: 11px; letter-spacing: var(--track); text-transform: uppercase; color: var(--road-muted); font-weight: 600; }
+.brand h1 {
+  font-family: var(--f-display);
+    font-weight: 800;
+  font-size: clamp(26px, 5vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.brand .sub { color: var(--road-muted); font-size: 14px; }
+.tabrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.tabrow .rowlabel { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--road-muted); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab {
+  background: transparent;
+  border: 1px solid #ffffff33;
+  color: var(--road-ink);
+  padding: 7px 14px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+}
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.meter { display: grid; gap: 8px; }
+.meter-top { display: flex; justify-content: space-between; gap: 12px; font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--road-muted); }
+.meter-top b { color: var(--road-ink); font-weight: 500; }
+.lane {
+  position: relative;
+  height: 14px;
+  background: var(--road-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.lane::before {
+  content: "";
+  position: absolute; inset: 6px 0 auto 0; height: 2px;
+  background: repeating-linear-gradient(90deg, #ffffff40 0 14px, transparent 14px 26px);
+}
+.lane-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); transition: width .5s ease; }
+.lane-fill::after {
+  content: ""; position: absolute; inset: 6px 0 auto 0; height: 2px;
+  background: repeating-linear-gradient(90deg, var(--accent-ink) 0 14px, transparent 14px 26px);
+}
+@media (prefers-reduced-motion: reduce) { .lane-fill { transition: none; } }
+
+/* ---------- jornada ---------- */
+.shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; padding-block: 28px 56px; align-items: start; }
+.rail { list-style: none; margin: 0; padding: 0; position: sticky; top: env(safe-area-inset-top, 0px); display: grid; gap: 4px; }
+.stop {
+  display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center;
+  width: 100%; text-align: left; background: none; border: 0; border-radius: 6px; padding: 8px 8px;
+  position: relative;
+}
+.stop:hover { background: var(--surface-2); }
+.stop[aria-current="true"] { background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.node {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--f-mono); font-size: 12px; font-weight: 500;
+  background: var(--surface); border: 2px solid var(--line); color: var(--muted);
+  position: relative; z-index: 1;
+}
+.stop[aria-current="true"] .node { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.stop.done .node { background: var(--ok); border-color: var(--ok); color: #fff; }
+.stop-name { font-weight: 600; line-height: 1.2; }
+.stop-meta { font-size: 12.5px; color: var(--muted); }
+.rail li { position: relative; }
+.rail li:not(:last-child)::after {
+  content: ""; position: absolute; left: 24px; top: 44px; bottom: -8px; width: 0;
+  border-left: 2px dashed var(--line);
+}
+
+.day-head { display: grid; gap: 6px; margin-bottom: 18px; }
+.day-head h2::after { content: ""; display: block; width: 56px; height: 5px; border-radius: 3px; background: var(--accent); margin-top: 10px; }
+.brandbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; }
+.brand { display: grid; gap: 4px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; font-weight: 600; letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); }
+.day-head h2 { color: var(--title); font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, 3.6vw, 32px); line-height: 1.1; text-wrap: balance; }
+
+.mods { display: grid; gap: 10px; }
+.mod { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.mod.open { border-color: var(--ink); }
+.mod-head {
+  display: grid; grid-template-columns: 26px 1fr auto; gap: 12px; align-items: center;
+  width: 100%; text-align: left; background: none; border: 0; padding: 14px 16px;
+}
+.check {
+  width: 24px; height: 24px; border-radius: 4px; border: 2px solid var(--line);
+  display: grid; place-items: center; font-size: 14px; line-height: 1; color: transparent;
+}
+.mod.done .check { background: var(--ok); border-color: var(--ok); color: #fff; }
+.mod-title { font-weight: 600; font-size: 16px; line-height: 1.3; }
+.mod-sub { color: var(--muted); font-size: 13.5px; }
+.chev { color: var(--muted); font-family: var(--f-mono); transition: transform .2s; }
+.mod.open .chev { transform: rotate(90deg); }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.tag {
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px; background: var(--surface-2); color: var(--muted);
+}
+.tag.live { background: var(--warn-soft); color: var(--warn); }
+
+.mod-body { padding: 4px 16px 18px 54px; display: grid; gap: 16px; }
+.slot {
+  border: 1.5px dashed var(--line); border-radius: 6px; padding: 16px; color: var(--muted);
+  display: grid; gap: 4px;
+}
+.slot b { color: var(--ink); font-weight: 600; }
+.video { aspect-ratio: 16 / 9; max-width: 100%; place-content: center; text-align: center; background: var(--surface-2); border-style: solid; border-color: transparent; }
+.video .play { width: 46px; height: 46px; border-radius: 50%; background: var(--road); margin: 0 auto 6px; display: grid; place-items: center; }
+.video .play::after { content: ""; border-left: 14px solid var(--accent); border-block: 8px solid transparent; margin-left: 4px; }
+a.slot { text-decoration: none; cursor: pointer; }
+.video.linked { border: 1.5px solid var(--brand-2); background: var(--surface); }
+.video.linked span { color: var(--ok); font-weight: 600; }
+.video.linked:hover { border-color: var(--brand); }
+.imgslot { aspect-ratio: 21 / 8; place-content: center; text-align: center; }
+.content { border-style: solid; color: var(--ink); text-align: left; gap: 10px; }
+.content b { font-size: 13px; font-family: var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--title); font-weight: 700; }
+.content p { color: var(--ink); }
+.content ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.content li::marker { color: var(--brand); }
+.content .src { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+.lead-box { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 10px 12px; background: var(--surface-2); border-radius: 6px; }
+.lead-box .k { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn {
+  border: 1px solid var(--btn); background: var(--btn); color: var(--btn-ink);
+  padding: 9px 16px; border-radius: 5px; font-weight: 600;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* quiz */
+.quiz { border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 14px; }
+.quiz h3 { font-size: 14px; font-family: var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.q { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.q legend { font-weight: 600; padding: 0; margin-bottom: 6px; }
+.opt { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 5px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--ink); background: var(--surface-2); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.result { padding: 10px 12px; border-radius: 5px; font-weight: 600; }
+.result.pass { background: var(--ok-soft); color: var(--ok); }
+.result.fail { background: var(--bad-soft); color: var(--bad); }
+
+/* ---------- produção ---------- */
+.stats { display: flex; gap: 10px 28px; flex-wrap: wrap; margin-bottom: 18px; }
+.stat { display: grid; }
+.stat b { font-family: var(--f-display); font-weight: 800; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+.intro { color: var(--muted); max-width: 66ch; margin-bottom: 18px; }
+.tasks { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.task { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; padding: 14px 16px; align-items: center; border-top: 1px solid var(--line); }
+.task:first-child { border-top: 0; }
+.task-title { font-weight: 600; line-height: 1.35; }
+.task-meta { font-size: 13px; color: var(--muted); display: flex; gap: 6px 14px; flex-wrap: wrap; margin-top: 3px; }
+.task-meta .mono { font-family: var(--f-mono); font-size: 12px; }
+.sel { border: 1px solid var(--line); background: var(--surface); border-radius: 5px; padding: 7px 10px; min-width: 150px; }
+.sel.s-doing { border-color: var(--warn); background: var(--warn-soft); }
+.sel.s-done { border-color: var(--ok); background: var(--ok-soft); }
+.legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+.note { margin-top: 22px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 6px 6px 0; color: var(--muted); font-size: 14px; max-width: 72ch; }
+
+/* ---------- identidade AVEP ---------- */
+.road { background: linear-gradient(120deg, var(--road) 0%, var(--brand-2) 100%); position: relative; padding-bottom: 32px; }
+.stripe { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: linear-gradient(90deg, #ffffff 0 33.33%, var(--accent) 33.33% 66.66%, var(--road-2) 66.66% 100%); }
+.logo { height: 58px; width: auto; display: block; }
+.brand h1, .day-head h2 { text-transform: uppercase; letter-spacing: .01em; }
+
+.facts { display: grid; gap: 0; margin: 0; }
+.facts div { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.facts div:first-child { border-top: 0; }
+.facts dt { color: var(--muted); font-size: 13.5px; }
+.facts dd { margin: 0; font-weight: 500; }
+.tbd { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 1px 8px; border-radius: 3px; background: var(--warn-soft); color: var(--warn); }
+.phase-label { font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: var(--track); text-transform: uppercase; color: var(--muted); padding: 14px 8px 4px; }
+.rail li.phase-label:first-child { padding-top: 0; }
+.rail li.phase-label::after { display: none; }
+
+@media (max-width: 800px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-block: 20px 48px; }
+  .rail { position: static; grid-auto-flow: column; grid-auto-columns: minmax(150px, 1fr); overflow-x: auto; padding-bottom: 6px; gap: 6px; }
+  .rail li::after { display: none; }
+  .rail li.phase-label { display: none; }
+  .facts div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .mod-body { padding-left: 16px; }
+  .task { grid-template-columns: minmax(0, 1fr); }
+  .sel { width: 100%; }
+}
+</style>
+
+<div id="app"></div>
+
+<script>
+(function () {
+  var CO = {
+    name: 'AVEP', tagline: 'AVEP Brasil · conduzido pela La Vie Consultoria',
+    days: [
+      { id: 'p1', phase: 'Jornada do(a) candidato(a)', node: 'P', name: 'Conheça a AVEP', when: 'Antes e durante a seleção', modules: [
+        { id: 'pre-empresa', title: 'Quem é a AVEP e onde você vai trabalhar', period: 'Pré-boarding', lead: 'Página aberta para candidatos',
+          kinds: ['Leitura', 'Vídeo', 'Imagens'],
+          summary: 'Antes de se candidatar, a pessoa precisa saber que empresa é essa, o que ela vende e onde fica. Quem chega à entrevista sabendo isso faz perguntas melhores e desiste menos depois.',
+          blocks: [
+            { type: 'content', title: 'A AVEP em poucas linhas', body: [
+              'A AVEP Brasil é uma associação de proteção veicular que começou em 2004 com caminhoneiros e transportadores. Hoje protege também carros, motos, vans e veículos de aplicativo, com sedes administrativas em Minas Gerais, Rio de Janeiro, Espírito Santo e Goiás.',
+              '• Funciona por rateio: o custo dos eventos do mês é dividido entre os associados.',
+              '• Mais de 20 anos de mercado e mais de R$ 15 milhões pagos em indenizações, segundo a apresentação institucional.',
+              '• O(a) consultor(a) atende quem quer proteger o próprio veículo: faz a cotação, explica o regulamento e acompanha a adesão até a vistoria.'
+            ], source: 'Apresentação Institucional AVEP' },
+            { type: 'facts', title: 'Onde fica', rows: [
+              ['Cidade', 'Goiânia/GO'],
+              ['Bairro', null],
+              ['Endereço da unidade', null],
+              ['Como chegar', null],
+              ['Estacionamento', null]
+            ], source: 'A preencher com a AVEP' },
+            { type: 'video', label: 'Tour pela unidade e recado da liderança da AVEP' },
+            { type: 'image', label: 'Fotos do time e do espaço de trabalho' }
+          ],
+          task: { id: 't-pre-empresa', text: 'Confirmar endereço, como chegar e estacionamento, e gravar o tour pela unidade', owner: 'A definir', origin: 'sugerida' } },
+        { id: 'pre-vaga', title: 'A vaga: contrato, salário, comissão e benefícios', period: 'Pré-boarding', lead: 'Página aberta para candidatos',
+          kinds: ['Leitura'],
+          summary: 'Tudo o que a pessoa precisa saber para decidir se quer a vaga, sem surpresa depois da contratação. Os campos em amarelo ainda precisam ser confirmados pela AVEP antes de publicar.',
+          blocks: [
+            { type: 'facts', title: 'Condições da vaga', rows: [
+              ['Cargo', 'Consultor(a) de proteção veicular'],
+              ['Contrato', 'CLT'],
+              ['Salário fixo', null],
+              ['Comissão', null],
+              ['Premiação por meta', null],
+              ['Quando a comissão é paga', null],
+              ['Benefícios', null],
+              ['Jornada', null],
+              ['Modelo de trabalho', null],
+              ['Período de experiência', null]
+            ], source: 'A preencher com a AVEP. Só publicar com os valores aprovados pela diretoria.' },
+            { type: 'content', title: 'Quanto dá para ganhar na prática', body: [
+              'Mostrar uma simulação simples ajuda mais do que falar em "potencial ilimitado". Exemplo do formato:',
+              '• Mês de adaptação: salário fixo + comissão de X adesões.',
+              '• Mês dentro da meta: salário fixo + comissão de Y adesões + premiação.',
+              'Os números precisam vir da média real do time. Prometer ganho que a maioria não alcança gera desligamento nos primeiros meses.'
+            ], source: 'Recomendação da La Vie' }
+          ],
+          task: { id: 't-pre-vaga', text: 'Fechar com a diretoria salário fixo, regra de comissão, premiação, benefícios, jornada e uma simulação de ganhos com a média real do time', owner: 'A definir', origin: 'sugerida' } },
+        { id: 'pre-processo', title: 'Como funciona o processo seletivo', period: 'Pré-boarding', lead: 'La Vie Consultoria',
+          kinds: ['Leitura'],
+          summary: 'O(a) candidato(a) sabe desde o começo quais são as etapas, quanto tempo leva e quando vai ter resposta.',
+          blocks: [
+            { type: 'content', title: 'As etapas', body: [
+              '• Inscrição pelo site da La Vie, com envio do currículo.',
+              '• Avaliação de perfil comportamental (DISC), feita online.',
+              '• Entrevista com a La Vie.',
+              '• Entrevista com a liderança comercial da AVEP.',
+              '• Devolutiva para todos os participantes, aprovados ou não.'
+            ], source: 'Processo de R&S da La Vie' },
+            { type: 'facts', title: 'Prazos', rows: [
+              ['Duração total do processo', null],
+              ['Prazo da devolutiva', null],
+              ['Previsão de início', null]
+            ], source: 'A definir por vaga' }
+          ],
+          task: { id: 't-pre-processo', text: 'Definir os prazos do processo e o canal da devolutiva', owner: 'La Vie', origin: 'sugerida' } }
+      ]},
+      { id: 'a1', phase: 'Admissão', node: 'A', name: 'Admissão', when: 'Depois da aprovação', modules: [
+        { id: 'adm-docs', title: 'Proposta e documentos', period: 'Admissão', lead: 'La Vie Consultoria',
+          kinds: ['Leitura', 'Checklist'],
+          summary: 'Depois do aceite da proposta, a pessoa recebe o comunicado de admissão padronizado, na identidade da AVEP, com a lista completa de documentos. Desde 21/09 o envio aos aprovados é feito pela La Vie.',
+          blocks: [
+            { type: 'content', title: 'Documentos do comunicado de admissão', body: [
+              '• Carteira de Identidade (RG), obrigatório.',
+              '• CPF, obrigatório.',
+              '• Título de Eleitor, obrigatório.',
+              '• Certificado de Reservista, se masculino.',
+              '• CNH, se houver.',
+              '• Carteira de Trabalho (CTPS) digital, obrigatório.',
+              '• Cartão do PIS/PASEP/NIT, ou espelho do PIS, obrigatório.',
+              '• Comprovante de Endereço, obrigatório.',
+              'O envio é por foto ou PDF, pelo mesmo canal em que a pessoa recebe o comunicado.'
+            ], source: 'Comunicado de admissão AVEP, criado em 21/09 e enviado aos aprovados pela La Vie.' },
+            { type: 'facts', title: 'Combinados da admissão', rows: [
+              ['Para quem enviar os documentos', null],
+              ['Prazo de entrega', null],
+              ['Quem assina a proposta', null]
+            ], source: 'A preencher com o RH da AVEP' }
+          ],
+          task: { id: 't-adm-docs', text: 'Comunicado de admissão padronizado criado em 21/09; o envio aos aprovados é feito pela La Vie. Manter a lista validada com a contabilidade', owner: 'La Vie', origin: 'lista' } },
+        { id: 'adm-contrato', title: 'Exame admissional, contrato e primeiro dia', period: 'Admissão', lead: 'Letícia (RH)',
+          kinds: ['Leitura', 'Checklist'],
+          summary: 'O que acontece entre a entrega dos documentos e o primeiro dia de trabalho, para a pessoa chegar sabendo onde ir e o que levar.',
+          blocks: [
+            { type: 'content', title: 'Passo a passo', body: [
+              '• Exame admissional (ASO) numa clínica indicada pela AVEP, sem custo para o(a) contratado(a). Precisa ser feito antes do início.',
+              '• Assinatura do contrato de trabalho e do contrato de experiência.',
+              '• Registro no eSocial antes do primeiro dia de trabalho.',
+              '• Cadastro dos acessos: Power CRM, SGA, e-mail e grupos de trabalho.',
+              '• Mensagem de boas-vindas com data, horário, endereço e o nome de quem vai receber.'
+            ], source: 'Rotina de admissão CLT, adaptada pela La Vie' },
+            { type: 'facts', title: 'Primeiro dia', rows: [
+              ['Data e horário', null],
+              ['Quem recebe', 'Ana (Gerente)'],
+              ['O que levar', null],
+              ['Uniforme ou roupa', null]
+            ], source: 'A preencher a cada nova contratação' }
+          ],
+          task: { id: 't-adm-contrato', text: 'Definir a clínica do exame admissional, o modelo de contrato de experiência e a mensagem padrão de boas-vindas', owner: 'Letícia (RH)', origin: 'sugerida' } }
+      ]},
+      { id: 'd0', phase: 'Integração', node: 'C', name: 'Chegada', when: 'Ao chegar', modules: [
+        { id: 'avep-historia', title: 'A história da AVEP', period: 'Na chegada', lead: 'Vídeo e leitura no portal',
+          kinds: ['Vídeo', 'Leitura', 'Imagens', 'Prova'],
+          summary: 'Antes de qualquer treinamento, o(a) novo(a) consultor(a) precisa saber onde está entrando: de onde a AVEP veio e como ela funciona hoje.',
+          blocks: [
+            { type: 'content', title: 'Quem é a AVEP', body: [
+              'A AVEP Brasil começou em março de 2004 com caminhoneiros e transportadores. Hoje protege também carros, motos, vans e veículos de aplicativo, com sedes administrativas em Minas Gerais, Rio de Janeiro, Espírito Santo e Goiás.',
+              '• Não existe mensalidade fixa. Todo mês, o custo dos consertos e reembolsos é dividido entre os associados, proporcional ao valor de cada veículo. Esse é o rateio colaborativo.',
+              '• Não tem análise de perfil do motorista, como nas seguradoras. Basta estar habilitado.',
+              '• Tetos de aceitação: carro de passeio até R$ 150 mil, caminhão e cavalo mecânico até R$ 500 mil, caminhão 3/4 até R$ 300 mil, semirreboque até R$ 150 mil e implemento ou carroceria até R$ 75 mil.',
+              'Pela apresentação institucional, a AVEP já pagou mais de R$ 15 milhões em indenizações e recupera 87% dos veículos roubados.'
+            ], source: 'Apresentação Institucional AVEP (Veículos Pesados)' },
+            { type: 'content', title: 'Como falamos com o associado', body: [
+              'A AVEP é uma associação, então o consultor não fala como corretor de seguro.',
+              '• Use: associado, proteção veicular, rateio, evento, participação obrigatória, inspeção prévia, termo de filiação.',
+              '• Evite: seguro, seguradora, apólice, sinistro, prêmio, segurado. E não chame a participação de "franquia" na frente do cliente, mesmo que a palavra circule aqui dentro.'
+            ], source: 'Regulamento AVEP Brasil e relatório do Encontro 3 (La Vie)' },
+            { type: 'video', label: 'Vídeo da história da AVEP' },
+            { type: 'image', label: 'Fotos e marcos da empresa' },
+            { type: 'content', title: 'Módulo 1.1 da apostila: a empresa e o papel do comercial', body: [
+              'A integração começa pela cultura: a história da empresa, a postura esperada e o compromisso com cada pessoa do time.',
+              '• Os 3 pilares, na ordem de prioridade das decisões: primeiro o que é melhor para a empresa, depois como a decisão afeta o time, por último como o indivíduo se encaixa no papel.',
+              '• A missão da equipe comercial: aumentar o número de associados e gerar receita para a associação.',
+              '• A negociação recomendada é a integrativa, o ganha-ganha: soluções que atendem a necessidade do cliente a um preço justo.',
+              '• A venda se baseia em relacionamento: o consultor dá suporte contínuo ao associado, o que gera indicações espontâneas.'
+            ], source: 'Treinamento Inicial do Consultor (Bee Educação), módulo 1.1, adaptado pela La Vie' },
+            { type: 'doc', url: 'https://drive.google.com/file/d/1G1c_NxK0OfrkAchMeI03_gybQjFzH0jD/view', label: 'Apostila: Treinamento Inicial do Consultor (PDF)', note: 'Módulo 1.1 · Apresentação da empresa e onboarding comercial' },
+            { type: 'quiz', qid: 'q-11', title: 'Teste de fixação · Apresentação e onboarding comercial (1.1)', qs: [
+              { q: 'Qual é a ordem de prioridade dos 3 pilares na tomada de decisão?', o: ['Indivíduo, time, empresa', 'Empresa, time, indivíduo', 'Time, indivíduo, empresa'], a: 1 },
+              { q: 'Qual é a missão principal da equipe comercial?', o: ['Aumentar o número de associados e gerar receita para a associação', 'Cuidar do pós-venda e dos eventos', 'Administrar o rateio do mês'], a: 0 },
+              { q: 'Que tipo de negociação o treinamento recomenda?', o: ['Distributiva: convencer o cliente de que a nossa posição é a única certa', 'Nenhuma: a venda é só tirar pedido', 'Integrativa: o ganha-ganha, com soluções que atendem o cliente a preço justo'], a: 2 }
+            ] }
+          ],
+          task: { id: 't-avep-historia', text: 'Gravar o vídeo da história e confirmar com a diretoria a cota de participação vigente (a apresentação fala em 4%, a operação usa 2%, 4%, 8% e 12%)', owner: 'A definir', origin: 'sugerida' } }
+      ]},
+      { id: 'd1', phase: 'Integração', node: 'D1', name: 'Dia 1', when: 'Onboarding e regulamento', modules: [
+        { id: 'avep-ana', title: 'Onboarding com a Ana', period: 'Dia 1', lead: 'Ana (Gerente)',
+          kinds: ['Encontro', 'Roteiro'], live: true,
+          summary: 'A Ana recebe o(a) novo(a) consultor(a) e apresenta a casa. O roteiro definitivo vai sair da entrevista com ela.',
+          blocks: [
+            { type: 'content', title: 'Pauta sugerida pela La Vie', body: [
+              '• Quem é quem: diretoria, Helen e Leonardo na liderança comercial, e as áreas que dão suporte (financeiro, RH e marketing).',
+              '• O que se espera nos primeiros 90 dias e como vai ser o acompanhamento.',
+              '• Apresentação do padrinho, o consultor mais experiente que vai acompanhar o novato nas primeiras semanas.',
+              '• Combinados do dia a dia: horário, acessos, uniforme e a quem pedir ajuda.'
+            ], source: 'Sugestão da La Vie, a ajustar depois da entrevista com a Ana' },
+            { type: 'video', label: 'Mensagem de boas-vindas da Ana (opcional)' }
+          ],
+          task: { id: 't-avep-ana', text: 'Entrevistar a Ana e fechar o roteiro do onboarding (a mesma entrevista serve para a jornada da Auto Club)', owner: 'A definir', origin: 'lista' } },
+        { id: 'avep-regulamento', title: 'Treinamento do regulamento', period: 'Dia 1', lead: 'Portal, com avaliação',
+          kinds: ['Leitura', 'Vídeo', 'Prova'],
+          summary: 'O(a) consultor(a) estuda o regulamento e faz a prova antes de seguir. É aqui que ele aprende o que pode e o que não pode prometer ao cliente.',
+          blocks: [
+            { type: 'content', title: 'O que diz o Regulamento AVEP Brasil', body: [
+              'A AVEP é uma associação civil de proteção veicular, regida pelo Código Civil. Não é seguradora e não vende seguro.',
+              '• Filiação: a diretoria analisa o pedido em até 15 dias. O candidato só vira associado depois de pagar a taxa de matrícula.',
+              '• Veículos aceitos: leves (moto, carro e caminhonete) e pesados (caminhão, cavalo mecânico e semirreboque). A AVEP pode recusar veículo de leilão, ex-sinistrado de seguradora, ex-táxi, com restrição de roubo ou furto e com chassi remarcado.',
+              '• Toda inclusão passa por inspeção prévia, com fotos e decalque do chassi. A inspeção também é obrigatória na troca de veículo, na exclusão de avaria e depois de boleto em atraso.',
+              '• A mensalidade tem duas partes: a taxa administrativa, que é fixa, e o rateio dos prejuízos do mês, que varia.',
+              '• Quem atrasa perde o direito ao amparo na hora. Depois de 60 dias, pode ser excluído. Para voltar, paga o atrasado e faz nova inspeção.',
+              '• Se o conserto passar de 75% do valor do veículo na FIPE, a indenização é integral. Abaixo disso, é reparo parcial. A AVEP tem até 30 dias, contados da entrega de todos os documentos, para pagar ou autorizar o conserto.',
+              '• Quem usa um benefício se compromete a ficar 12 meses em dia. Se sair antes, a diferença sai da indenização.',
+              '• Cobre colisão, capotamento, queda de objeto, granizo, enchente, incêndio acidental, roubo e furto qualificado, além da assistência 24h.',
+              '• Não cobre danos morais e corporais, lucros cessantes, multas, desgaste natural, motorista embriagado ou sem CNH válida, competição, avaria já registrada na inspeção e conserto feito sem autorização. Danos a terceiros só têm amparo se o associado contratar esse benefício à parte.',
+              '• Rastreador é obrigatório para pesados. Sem ele, ou desligado sem aviso, a indenização de roubo ou furto cai 30%.',
+              '• Quem se desliga não recebe de volta o que pagou. Se pedir o desligamento depois do fechamento do mês, ainda paga o boleto daquele mês.'
+            ], source: 'Regulamento AVEP Brasil (66 artigos). Resumo para consulta rápida, não substitui o texto integral.' },
+            { type: 'content', title: 'A lei nova da proteção veicular', body: [
+              'Em janeiro de 2025 saiu a Lei Complementar 213, que colocou as associações de proteção veicular sob supervisão da Susep. Em maio de 2026, a Resolução CNSP 491 definiu as regras.',
+              '• As associações que já funcionavam se cadastraram na Susep até julho de 2025 e estão em processo de regularização.',
+              '• Até maio de 2028, cada associação precisa contratar uma administradora autorizada pela Susep, que passa a cuidar da gestão técnica, financeira e contábil dos grupos.',
+              '• Continua não sendo seguro. O custo dos eventos segue dividido entre os participantes.',
+              'Por isso o consultor não deve mais dizer que proteção veicular "não é regulamentada". O certo é explicar que a associação está em regularização junto à Susep, dentro da lei nova. Antes de usar isso numa venda, confirme com a diretoria a situação do cadastro da AVEP.'
+            ], source: 'Lei Complementar 213/2025, Resolução CNSP 491/2026 e comunicados da Susep' },
+            { type: 'video', label: 'Vídeo explicando os pontos principais' },
+            { type: 'quiz' },
+            { type: 'doc', url: 'https://drive.google.com/file/d/1G1c_NxK0OfrkAchMeI03_gybQjFzH0jD/view', label: 'Apostila: Treinamento Inicial do Consultor (PDF)', note: 'Módulo 1.2 · Planos, benefícios e regulamento' },
+            { type: 'quiz', qid: 'q-12', title: 'Teste de fixação · Planos, benefícios e regulamento (1.2)', qs: [
+              { q: 'O que é o Clube Certo?', o: ['Benefício de descontos para o associado, em farmácias, cinemas e oficinas', 'Um plano de cobertura para motos', 'O sistema de cadastro da matriz'], a: 0 },
+              { q: 'Como o consultor especialista apresenta os planos?', o: ['Mostra a tabela e espera o cliente escolher', 'Faz uma consultoria personalizada, com soluções específicas para cada cliente', 'Encaminha o cliente para o 0800'], a: 1 },
+              { q: 'Para que servem os materiais de apoio do treinamento?', o: ['Para decorar os preços', 'Por exigência da Susep', 'Para visualizar as informações e saber consultá-las na hora do atendimento'], a: 2 }
+            ] }
+          ],
+          quiz: [
+            { q: 'A partir de quanto do valor FIPE o conserto vira indenização integral?', o: ['50%', '75%', '90%'], a: 1 },
+            { q: 'Com quantos dias de atraso o associado pode ser excluído?', o: ['30 dias', '60 dias', '90 dias'], a: 1 },
+            { q: 'O cliente pergunta se proteção veicular é regulamentada. Qual resposta está certa?', o: ['Não, associação não tem fiscalização', 'Sim, é um seguro como qualquer outro', 'A associação está em regularização junto à Susep, pela Lei Complementar 213/2025'], a: 2 },
+            { q: 'Qual palavra o consultor deve evitar com o cliente?', o: ['Rateio', 'Franquia', 'Associado'], a: 1 }
+          ],
+          task: { id: 't-avep-reg', text: 'Validar o resumo com a diretoria e o jurídico, confirmar se este é o regulamento vigente para Goiânia depois da separação do grupo, e gravar o vídeo', owner: 'A definir', origin: 'lista' } }
+      ]},
+      { id: 'd2', phase: 'Integração', node: 'D2', name: 'Dia 2', when: 'Processos operacionais', modules: [
+        { id: 'avep-processos', title: 'Alinhamento dos processos operacionais', period: 'Dia 2', lead: 'Helen e Leonardo, pessoalmente',
+          kinds: ['Encontro', 'Vídeo', 'Leitura', 'Prova'], live: true,
+          summary: 'Helen e Leonardo alinham os processos com o grupo de consultores que cada um lidera. A gravação fica no portal para quem chegar depois.',
+          blocks: [
+            { type: 'content', title: 'Como uma venda anda no Power CRM', body: [
+              'O Power CRM separa cada negociação em seis estágios: lead recebido, cotação recebida, em negociação, em vistoria, liberado para cadastro e finalizado.',
+              '• Os leads chegam pelo Rio de Janeiro, direto para cada consultor, em volume igual por praça.',
+              '• Para cotar, bastam nome, telefone e placa ou CRLV. CNH e os outros documentos ficam para depois do fechamento.',
+              '• O sistema puxa a FIPE sozinho, mas confira o valor antes de passar para o cliente. Às vezes vem diferente.',
+              '• No fechamento, complete RG, CPF e e-mail e anexe CNH e comprovante de endereço (pessoa física) ou contrato social e cartão CNPJ (pessoa jurídica), junto com o CRLV e a proposta.',
+              '• Depois do aceite, o cadastro segue para Belo Horizonte. Pós-venda e eventos são atendidos pela central 0800 em Minas.',
+              '• Toda ligação e mensagem precisa ser registrada no Power CRM, mesmo quando sai do celular. É de lá que vêm os números de cada consultor.'
+            ], source: 'Mapeamento do funil com a Darci, relatório do Encontro 3 (La Vie, 15/09/2026)' },
+            { type: 'video', label: 'Gravação do alinhamento com Helen e Leonardo' },
+            { type: 'image', label: 'Fluxograma do processo de venda' },
+            { type: 'content', title: 'Módulo 1.3 da apostila: processos operacionais', body: [
+              '• Remuneração e limites da taxa de adesão reforçados, com a regra de repasse da empresa.',
+              '• Controle financeiro do consultor com planilha de acompanhamento.',
+              '• Adesivo: onde instalar, o desconto que garante e os direitos do associado.',
+              '• Rastreador: prazos, locais de instalação e as consequências de não instalar.',
+              '• Vistoria: o consultor gera e envia o link ao associado, analisa o resultado e resolve as pendências.',
+              '• Cadastro do veículo no SGA com preenchimento preciso e completo.',
+              '• Reativação de ex-associado, desde que já fora da base ativa.'
+            ], source: 'Treinamento Inicial do Consultor (Bee Educação), módulo 1.3, adaptado pela La Vie' },
+            { type: 'doc', url: 'https://drive.google.com/file/d/1G1c_NxK0OfrkAchMeI03_gybQjFzH0jD/view', label: 'Apostila: Treinamento Inicial do Consultor (PDF)', note: 'Módulo 1.3 · Alinhamento dos processos operacionais' },
+            { type: 'quiz', qid: 'q-13', title: 'Teste de fixação · Processos operacionais (1.3)', qs: [
+              { q: 'Como funciona a vistoria no processo comercial?', o: ['O consultor gera e envia o link de vistoria ao associado e depois analisa o resultado', 'A vistoria é feita só pela matriz, sem o consultor', 'Só veículo de leilão passa por vistoria'], a: 0 },
+              { q: 'No cadastro do veículo no SGA, o que é essencial?', o: ['Preencher só os campos obrigatórios', 'Preenchimento preciso e completo das informações', 'Deixar o preenchimento para o financeiro'], a: 1 },
+              { q: 'O que a instalação do adesivo garante ao associado?', o: ['A dispensa da vistoria', 'Um plano de cobertura maior', 'A inclusão do desconto previsto'], a: 2 }
+            ] }
+          ],
+          task: { id: 't-avep-proc', text: 'Helen e Leonardo validam o passo a passo e gravam o treinamento de processos', owner: 'Helen e Leonardo', origin: 'lista' } }
+      ]},
+      { id: 'd3', phase: 'Integração', node: 'D3', name: 'Dia 3', when: 'Dia de vendas', modules: [
+        { id: 'avep-vendas', title: 'Os 7 passos da venda', period: 'Dia 3', lead: 'Treinamento de vendas',
+          kinds: ['Vídeo', 'Leitura', 'Prática', 'Prova'],
+          summary: 'Dia inteiro de vendas: o método de sete passos e os hábitos de quem vende todo dia.',
+          blocks: [
+            { type: 'content', title: 'Método 7+1', body: [
+              'Os sete passos: apresentação, conexão, T.D. (o combinado feito antes da proposta para facilitar a quebra de objeções), discurso de benefícios, preço e valor, pedido de indicação e confirmação.',
+              '• Lead novo é atendido em até 5 minutos. Mande uma mensagem avisando que vai ligar e ligue em seguida, sem perguntar se pode.',
+              '• Quem não atende entra num roteiro de até 10 tentativas, alternando ligação e WhatsApp em horários diferentes.',
+              '• No fim de toda conversa, peça o contato de pelo menos 5 pessoas que também têm veículo.'
+            ], source: 'Treinamento Inicial do Consultor (Bee Educação), adaptado pela La Vie' },
+            { type: 'content', title: 'Gatilhos de venda, usados com honestidade', body: [
+              '• Reciprocidade: entregue algo útil antes de pedir a venda, como uma boa orientação sobre o veículo.',
+              '• Compromisso: quando o cliente diz que proteger o caminhão é prioridade, lembre isso na hora de fechar.',
+              '• Prova social: depoimentos e números reais de associados.',
+              '• Autoridade: mais de 20 anos de mercado e, depois de confirmado o cadastro, a regularização junto à Susep.',
+              '• Escassez: só quando o prazo é real e vem de uma campanha oficial.',
+              'Inventar prazo ou dizer que "restam poucas vagas" quando não é verdade é publicidade enganosa pelo Código de Defesa do Consumidor (art. 37). Num mercado que vive de confiança, isso custa caro.'
+            ], source: 'Treinamento Inicial do Consultor (Bee Educação), revisado pela La Vie' },
+            { type: 'video', label: 'Performance comercial', url: 'https://drive.google.com/file/d/1RHMJy6jTASJP4gPIH_mntBEz0trt0T7x/view', note: 'Treinamento pronto · módulo 1.4' },
+            { type: 'quiz', qid: 'q-14', title: 'Teste de fixação · Performance comercial (1.4)', qs: [
+              { q: 'Em quanto tempo um lead novo deve ser atendido?', o: ['Até o fim do dia', 'Até 5 minutos', 'Em até 24 horas'], a: 1 },
+              { q: 'Quantas tentativas o roteiro prevê para quem não atende?', o: ['Até 10, alternando ligação e WhatsApp em horários diferentes', '3 ligações e desiste', 'Ilimitadas, sempre por ligação'], a: 0 },
+              { q: 'De onde saem os números de performance de cada consultor?', o: ['Da memória do líder', 'Do caderno de cada um', 'Do registro de atividades no Power CRM'], a: 2 }
+            ] },
+            { type: 'video', label: 'Os 7 passos da venda', url: 'https://drive.google.com/file/d/1pPD-RQAqPxHrc_dTrQ-Sj3CvkKDIQSSb/view', note: 'Treinamento pronto · módulo 1.4.1' },
+            { type: 'quiz', qid: 'q-141', title: 'Teste de fixação · Os 7 passos da venda (1.4.1)', qs: [
+              { q: 'O que é o T.D. dentro dos sete passos?', o: ['O combinado feito antes da proposta para facilitar a quebra de objeções', 'O desconto máximo permitido na venda', 'O documento de transferência do veículo'], a: 0 },
+              { q: 'Quantas indicações pedir no fim de toda conversa?', o: ['Nenhuma, indicação não faz parte do método', 'Pelo menos 5 pessoas que também têm veículo', 'Apenas 1, para não incomodar'], a: 1 },
+              { q: 'Qual gatilho só pode ser usado quando o prazo é real e vem de campanha oficial?', o: ['Escassez', 'Reciprocidade', 'Prova social'], a: 0 }
+            ] },
+            { type: 'video', label: 'Processos vinculados à venda', url: 'https://drive.google.com/file/d/1jHyEXIV2MNErMBpHZ74XLelNrAJQz1MG/view', note: 'Treinamento pronto · módulo 1.4.2' },
+            { type: 'quiz', qid: 'q-142', title: 'Teste de fixação · Processos vinculados à venda (1.4.2)', qs: [
+              { q: 'O que basta para fazer uma cotação?', o: ['RG, CPF, CNH e comprovante de endereço', 'Nome, telefone e placa ou CRLV', 'Contrato social e cartão CNPJ'], a: 1 },
+              { q: 'O sistema puxa a FIPE sozinho. O que fazer antes de passar o valor ao cliente?', o: ['Repassar direto, o sistema não erra', 'Somar uma margem de segurança', 'Conferir o valor, porque às vezes vem diferente'], a: 2 },
+              { q: 'Para onde segue o cadastro depois do aceite do cliente?', o: ['Belo Horizonte', 'Rio de Janeiro', 'Fica em Goiânia'], a: 0 }
+            ] }
+          ],
+          task: { id: 't-avep-vendas', text: 'Gravar a aula com casos reais da AVEP e montar o banco de objeções do time', owner: 'A definir', origin: 'sugerida' } }
+      ]},
+      { id: 'd4', phase: 'Integração', node: 'D4', name: 'Dia 4', when: 'Ferramentas e prática', modules: [
+        { id: 'avep-ferramentas', title: 'Treinamento das ferramentas', period: 'Dia 4, manhã', lead: 'Portal e prática guiada',
+          kinds: ['Vídeo', 'Leitura', 'Prova'],
+          summary: 'Power CRM e SGA na prática, com tutoriais gravados para consultar depois.',
+          blocks: [
+            { type: 'content', title: 'O que o Power CRM já faz', body: [
+              'O sistema tem registro de atividades, metas por consultor, ranking, relatórios, importação de listas e link público de cotação (Power Links). O SGA cuida do cadastro do associado, com acessos separados para leves e pesados.',
+              '• Placa já vinculada a outro consultor trava a cotação e precisa de liberação da administração. Peça na hora para não perder o lead.',
+              '• Quem tiver dúvida no sistema procura o ponto focal do Power CRM definido pela diretoria.'
+            ], source: 'Relatório do Encontro 3 (La Vie)' },
+            { type: 'video', label: 'Curso completo do Power CRM', url: 'https://www.youtube.com/playlist?list=PLkx4o3GGrL5fylzae6xrR87PsunJnr8wr', note: 'Playlist oficial · 29 vídeos no YouTube' },
+            { type: 'quiz', qid: 'q-crm', title: 'Teste de fixação · Power CRM', qs: [
+              { q: 'Quais recursos o Power CRM já oferece?', o: ['Apenas cadastro de clientes', 'Metas, ranking, relatórios, importação de listas e link público de cotação', 'Somente disparo de e-mails'], a: 1 },
+              { q: 'A placa do cliente aparece vinculada a outro consultor. O que fazer?', o: ['Pedir a liberação à administração na hora, para não perder o lead', 'Cadastrar o veículo com outra placa', 'Desistir do lead'], a: 0 },
+              { q: 'A quem recorrer em caso de dúvida no sistema?', o: ['A qualquer colega que estiver perto', 'Ao 0800 de eventos', 'Ao ponto focal do Power CRM definido pela diretoria'], a: 2 }
+            ] },
+            { type: 'video', label: 'Tutoriais do SGA' }
+          ],
+          task: { id: 't-avep-ferr', text: 'Gravar os tutoriais do SGA e nomear o ponto focal do Power CRM. O curso do Power CRM já está no ar', owner: 'A definir', origin: 'sugerida' } },
+        { id: 'avep-dinamica', title: 'Dinâmica dos 30 contatos e vistoria na prática', period: 'Dia 4, tarde', lead: 'Dinâmica presencial',
+          kinds: ['Dinâmica', 'Prática', 'Prova'], live: true,
+          summary: 'Fechamento da semana. O(a) consultor(a) liga para gente de verdade, com o líder ao lado, e acompanha uma vistoria do começo ao fim.',
+          blocks: [
+            { type: 'content', title: 'Lista dos 30 contatos', body: [
+              'O consultor escreve 30 nomes e telefones de pessoas que têm carro, moto ou caminhão. Começa por quem ele mais conhece e termina em quem conhece pouco.',
+              '• As ligações seguem a ordem da lista. Começar por gente de confiança tira a vergonha de errar ou de pedir um tempo para responder.',
+              '• O líder e um colega acompanham as ligações e dão retorno no fim do dia.',
+              '• Só entram contatos da rede do próprio consultor. Quem disser que não quer receber mensagem sai da lista.'
+            ], source: 'Treinamento Inicial do Consultor (Bee Educação), adaptado pela La Vie' },
+            { type: 'content', title: 'Vistoria na prática', body: [
+              '• O consultor acompanha uma inspeção prévia completa: fotos do veículo e das placas, decalque do chassi e registro das avarias que já existem.',
+              '• Avaria registrada na inspeção não é coberta depois. Mostre ao cliente o que ficou anotado.',
+              '• Veículo de leilão sofre depreciação, que às vezes só aparece no laudo. Avise o cliente de que a cotação pode mudar por isso.'
+            ], source: 'Regulamento AVEP Brasil e relatório do Encontro 3' },
+            { type: 'video', label: 'Lista quente', url: 'https://drive.google.com/file/d/1sEQEAl9AwXFtVGhSj27JOCepOhvuCp9B/view', note: 'Treinamento pronto · módulo 1.5' },
+            { type: 'quiz', qid: 'q-15', title: 'Teste de fixação · Lista quente (1.5)', qs: [
+              { q: 'Quantos nomes entram na lista dos contatos?', o: ['10', '30', '100'], a: 1 },
+              { q: 'Por quem começar as ligações?', o: ['Por quem o consultor mais conhece, para tirar a vergonha de errar', 'Por desconhecidos, para treinar sem medo', 'Pela ordem alfabética'], a: 0 },
+              { q: 'Quem pode entrar na lista?', o: ['Qualquer número comprado em lista pronta', 'Clientes de outros consultores', 'Somente contatos da rede do próprio consultor'], a: 2 }
+            ] }
+          ],
+          task: { id: 't-avep-din', text: 'Definir quem acompanha a dinâmica e se venda fechada nesse dia gera comissão', owner: 'A definir', origin: 'sugerida' } }
+      ]},
+      { id: 'd90', phase: 'Integração', node: '90', name: 'Primeiros 90 dias', when: 'Depois da primeira semana', modules: [
+        { id: 'avep-90dias', title: 'Acompanhamento dos primeiros 90 dias', period: 'Semanas 2 a 13', lead: 'Helen ou Leonardo, com o padrinho',
+          kinds: ['Encontro', 'Prova'], live: true,
+          summary: 'Uma semana de treinamento não forma ninguém. O que fixa o aprendizado é prática acompanhada e revisão nas semanas seguintes.',
+          blocks: [
+            { type: 'content', title: 'Como vai ser o acompanhamento', body: [
+              '• Padrinho: um consultor experiente conversa com o novato pelo menos uma vez por semana no primeiro mês.',
+              '• Dia 7: conversa com o líder sobre a primeira semana e nova rodada da prova do regulamento.',
+              '• Dia 30: certificação. Prova, uma simulação de venda com o líder e uma cotação real registrada do começo ao fim no Power CRM.',
+              '• Dias 60 e 90: revisão dos números com o líder (ligações, cotações e vendas) e ajuste do plano de desenvolvimento.'
+            ], source: 'Recomendação da La Vie' }
+          ],
+          task: { id: 't-avep-90', text: 'Definir padrinhos e metas de 30, 60 e 90 dias. Como a AVEP ainda não mede números por consultor, o primeiro passo é ativar o registro no Power CRM', owner: 'Helen e Leonardo', origin: 'sugerida' } }
+      ]}
+    ]
+  };
+
+  var LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjAAAAC/CAYAAADgiOZLAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAAD2AAAA9gAXp4RY0AAAAHdElNRQfqCg4RIgEcNUInAABaA0lEQVR42u2dd4AdZbXAf2fu3d1sdjebnmxCQpJN6E0QEFRQbKhUFRUVQcVn770929Nn74rYHiKKBRFUFLBQpPdekmx6stnUze7dfu+c98eZm0ySLbfP3N3vpxsge+/Mmfna+c53ijCBUVUAAeYCzwSOAw4CWgAPGAJqgTSwCXgKeAC4D9gCICJRP0b4WeqAQ4AjgMXATKAG2AWsB5YDjwBb4yT7RCRoL4ApWL87Dmu3FqAB63+OyqHAILAZeBIb5/dQgXEemofmAccDxwKHAfOBacHvykUmeO5BIAXsBLYBG7A5bwOwFlgH9AHq5o3yknqqhYameob6Br0hMtMUXajIXBFmA3OA6QrTBG1SqAGpEyWNrVd9iHaqsgNhm6hsAe3wkQ0kZVNyYNKgn9ylja3bo37MkjAhe2IwYXjAQuCVwLnYwj99jHeiwHbgMeBq4E/ARiIa1KFFcBrwfOA8bPKbjy2CYdKY4rISuD6QfQWQdhNSZQnabSbwIuD1wDMwJdopLfFhG/A4cBVwDbaQl1SRCfpBAlgKvAo4AzgYG89xYAjYEbyLTdjm517gUWze68IpNEWjj82Azj7paWlqULy5graiPAPkKOBAbK6YCkxRmCQoEPwpQPi/d/8XAD5KN+guRXYgbJY9m/DHVdmYSGa2C5quX7Q16tdQEBOu54UsFecAH8R2vokCLpUG7gK+CVwHDFVqIIcUlzrgFOCd2GLYkOMlfEx5+THwS2zX5SwyZSZotyTwbOBDWJtNiloux6hkgDuArwE3UKJxHvSFqZgC+w7M4lINAzANtAP3A/8BbsIWxX6cMpMzqbbZqOKJJ5NRORzlOQgnKHKswAJUaxURRJF91ZK8ULJXCF0io8ou4DERvQ+4U1TuVKFjiMb0VFYgrVG/odyYUL0tmDSagfcCH6A0O50OTIn5EdBT7gEc2rUdBrwNs7rMLvByA8Afgc8BK9zkUz6CdqsH3gR8HFgQtUyOvNiMKTGXAr2FjpXQ5mMJ8FnM8jI56ocrkCHsiO1OzEp1K3ZU7TZDI9DVNgcvITWaYZkgLwR9OXCUIjMFkqZlQHmXZg39myDQjbIW0ZuA60X13sk7B7cNTKnRSQdvifqVjcqE6WXBxNEIfAKzvJRy59sL/C+myPSVY/CGJr5G4ALgfZi/TiludgOm1C0HN/mUmqDtJgHvx/rflKhlchREN/Bl4NvAQL7jJDSGDwG+C7w46gcqIQPAw9jR+tXAatzxNAA7ls8n7XsyKZluFjhRhPMUfY6oLEUKsv6XDgUNzDOBnaYb1ftB/qzwZ1F/HTDUuKwj6tc4LBOid4Wc5N4NfIXy7Hi6MKvO/1EGU2rwDLOAzwBvKcMzXAW8C9jiJp3SEbKYXQR8Azs2cFQvO7HNwxXkOc6DvrAQO7p9adQPUibS2PH0r4DfAmuYoEdLqdUtJHuSZOoyzb74Lwa5ADhF7BQgpqvv7iOntKouF+SPoL+v6+p6IlNT4086clfUAu5FLF9hKQntek7CJp0lZbzdU8DrgAfL4Ow3A9v9vRnzoyg1g8AXga9SQX+e8U7QdscDvwaWRS2PoyQ8DrwWeCzXcRL0gwbsGOodjP+5N405/f4Ys8hsh4lh3e3taGWoswuvtqZBfP+FIG9F9bkIU6qt2RVUVJcj/FbhCl9klYA/ZUl71KIB1fY2CyCYOJqAnwGvrsAtLwPeA6RK6OyXBD4V/NSUUfYN2MR8+0SYaMpN0HZTsEn8/KjlcZSU72OO2GMq+6FN1GsxH5qJdIQ4gB1RfwPzlRnXx0p9bS1kEpIk7T9TRd4BnCXo1OpeahXAV+RRUX4swh8G/PodtV6/NrZuilSycR22GZo4zqByJttzgBfsc/9i5T8N27WVU3kBOCC4T2Oxsk90Qu/vdODlUcvjKDlnYXl7ch3nc7CxNZGUF7BIybOA3wAfAWapatFzY9zYvnIqQ6tbSePP1ox+GPitqF4gytTqVl7A5BdPlKOBbylcVuv1niq+1qRWtkQq2bhVYEIDJLsoN1Xo1lMxX5JCI4OGu947sQmwEpyBLbrjbpKJgBasL0y0RWsicCCWeylXXowdJU5UDsCiHS/F8h5542V+SbXNoU7qavr9nuejcrnA51XkQESk6nWXMAKI1it6BipXqMdHVHSWbljGxsdzzeBRWsatAhPifODkCt/zuVh4s5RgkD6L/CbKYmnGFt25FbznuCKUKPF1WPs5xifPwywMIxL0hcnYxqA+aoEjphZLGvorzCqTrHYlpqutBR9vCsi7BX4p8BKU2vGkt+yNmIuvMF+Vz6Lys9RA93GTpk2WXasrb40Z7wrMkVjETqVD1SZhOVoOKvQCocipM6j8Dv5kTPErhQI2UTkM63u1UQviKBtLyS2X1CLM6uAwDgd+CLwdqK/WOSbVNgdPWeSh31D4EsgCRKr/xChHRLRWhLNALq/tS7w66Q/VpFZW6qDAGJcKTCjvxn9hqbmj4AhsAaspYoDOBY6JQPZa4GLgUHBHSfkQvKta4K0E788xbmlkFEtlaNwcGPw49jAP+BLwMaCpmuaYXSvmorsOQ9U7EeGnqFwsyAS0rlmGYIHDBL7va/L9qjR1rWyhd/msikgwLhWYgOcCr4nw/oJZMU6EgpWAFixvRBQchikx5QjZHpeE2vg5VCbizREtNeRWvmMRzhI3HFOAjwKfBpqrQYnpXjkHwU+ktu04HdGforwQ0QlicxmO7KPLLJDPi3if99CZvleZQ49xp8AEg2A65sdRGTVwZHZH9RT4/WlY/peoeA2mCDorTO5MxfkQTRSEsY+nhejnoThTjyUG/AyBEhPXuWbXinlk/GTCk8S5KD8W5Ehbvyew/hJChHq1ue+rCAtSbeX3iRlXCkyo45+JFcqLA2cAL9tHvlypI9pif/OwCKjmCGWoCvbpe6dHLY8jNgjOeXcs6rAs6R8hpnWhulfOxSOTSHiZ1yh8R0QqfiSowZ+5LSMaLnlUMUS0FuFNqnxdVefbcVL5FJnxeDywEHMOi8tAmIIpAbdhJenzIYNVjo5S0XwptihfEaEMsSakvCzE2joufc8RD8bVRrFM1GGWmB3AD1R1MC4J73pWtIBqwhfvVQJfQ3R+pa0uivaLsl2RrSK6FdgJ0onShzCAFYKsA2lSZSoiMxGdhTJLRJqpmMC7TVKvEhgU+Kjvsblcdxs3CkwoY+1FwDOjlmcfno35w3xLVfOpC5ICdhHtMVIDphDeoqqu0uzICPAG4ISoBXFUDMU2GY7S0Ig59W4CfpfnXFkWule14KUg3cAZonwdoULKi/aoSgfC46J6l8CjWEX0beKxtQ6/ZwjR+sV7F1nctWIe+NR4SZ2OHV3OUtXFIpygyPGgCwSmg5TVSUWEBOj5IP3AJ1MrW7Y1Li19+YFxo8AEHI0pMHF7riTmEHs9VkclV7YA7USrwIDlMnkd8HXMIuTYn6OAN+F22xOJIaAnaiHGGbOBz2NFIO9S1cg2TANr5rGrN0P9ZO/ZqHwF0QX2mxIX6kXND1jwFd0IcpMoNyjcJdCO6gCe5ze2jq0ANC/bBNYvO4COTFsznp++uUearkBoRDlMlReAniYix6nSUL7XK0lsTtyhIl9Itc3rLXXpgbgt9AURWF/qsdwri6OWZwQOwZSYj6vqQI6DcgOwnCBleYQksCKS1wMPRyxLrAglKns7lhfEMXFIQfnM4xOYg7CsvW8m/2P3kjGYVibXyWGqfB2bvymL8oIMIDwA/A74l8KqOunr7WYqM1rXFnX9ROsuuw09g8CO1Io5t6F6B573Y9BjQV6tygtF9IA93yrpMyaBd6Ha7qM/7F45N920tHRDpup3iyH/g+djWR7jzPnYcdKYBApOH/AvTKOOmoOwvDpVm3iqjJyKZV52TCxWADujFmKc8gLgvcCkKOab1Mq5CDoT5bMiepKIUrqFXTHVhUFBbgXei/Aq7c98dxKTHpvS2t5b27qraOVlOBqXddB40Ba/cenmjrSvf0/7/ttE9NUgl6jKZsoSEa6NwMc84aWCUMropKpXYAJmYOFbM6MWZAzmYE6eU/MYlNcDT0cteMCrCcKqHbuV5xlYm0Z9zOeoPDdj1ZYdpSd77F7xaNLU8hYYoAbkPcC5QRGgEl09UIRUVqJ8QpHX1OL9VFQ2NR2+hZrWNRV7zqnLOph2UMdgxpc7fdUPAq9V+KNCb2nvJIhoC/B5hSNA6WqbV5IrV7UCE1ICXoVVbK4GTseienINq14D/JJ4WGFmYoritIluhQk9/7kE1ccdE4o1mALjKB8zgA8CB1RqvulcMY/6+gF0EmcovAORmtLeQXpU+bnCeaL+98TPbK5t3agNJfYNyYfmZe2o5/V7+LcgXCyq71PVxyhpILagyDNAP05Gm71MuiRXrVoFJtShl2L+B1HmS8mHBiy53YKxPhgcI/nAlcDdUQse8ALgHHDJ7TB/q7fj8nxMRP4MPAYuKq/MPAd4I5Ao93wzsG4OHkrfYN0yVD4loiVKQKh2aKSsUeXDIrxfPHkIz0s3Luso+uqloHnJJhqWdoDvd/as3PxzhNcpXK1KaTQNdtuwXqGeXJis00TPquLrJlWtAhOQwKKOjo5akDw5HriAHAZlMDluBC4hHhEPWQVsUdSCREUoZP9Cqq/vOYrnceCnwJBTXspOEnPmParcN0oPQcLTOtB3i3BcaY6NFFRAuRm4yJPMT0BTjUs2kUtUUaVpWtbBnNNRfH0U5V1YvaodpTLGiEi9CO9NDyWO9Uvgb1OVCkxo0c8qAtU2ixQyKP8GXBe14AHHYot32XdFMeY44hmy7ygvO4D/Jb90CI7iaMXmy9pyzTepJ2bjT0qgykuwfE4lQFEVX4WrgIvF825paN3iN7bGP3CtaVkHSKYDL/1lVf0YSnvJTpSUVoT3qzClu624iitVqcAENGKWgKiKHRZLKxbVM6aXfbDL6wR+hOWFiZoEpsA8AybWUVIoZP/tuArDE40U8FXgD0DkSdZyRHP8iTvnYBunssw3WpeAfmaryHtRphd/QQWVIYTLUXkfSFvjko2VfmdF0dS6hUSmbjDp116GZUleVZILi6Bwpqe83CdBqq3wo6Rq3j2+GDg7aiGK5JXAtcD1OSZsugP4DfChqAVnj//He7Bw73FPaOJ8MXBW1PI4KsomLJHjpUBs0tyPwRbMWtTJ6FbqWqAJmI/5FC4O/n1q1A8Q4gAsmeZ9UDq/DIDOtgNolHZ6dFZQvLbItrVTowzo/4F8SjPpbcnmQuv5RsvkZRtItbWkVeWPgvaDfgeVJcW+IkGaUH1HQvUWJFGwB3PVKTDBIjKX8VFkcBYW1XM3Y+STEBFUdQj4GRbJdHjUwmMRONcAf40yY2aFybZZ8bs0RzUwBNyJWV5uBNJV1M93Ab8FNo8mczCnZmOFE0ALdrx9KvASLIlbiaNxCuIMbP57pFQXfOLf9STIkPJnL0F4k6jWFu+QoD7IH1T0v1G2TTl4C6ZLVieNre0MbG/ym2d0/WVbW0uDin4HlTnFDgNFThTRV23f4X1vYN1c6hbmf7RWVUdIoYF2HuMnH8lpmCUmV9PoU9ggLukupECmY4t5ibz140uobV4NnBK1PI6y0wnchFk7zwf+TnUpL5CjKUFEEBEVEV9EhkRkHfBX4JOYpfHDmOUj6rpPiwJ5pFTHSAsXNlMzmBFBXyXo0RTZvrZCyd9F+XjC146hoYaIX1lpqJvRzY7V80gk5Y/Af4PuKvaaArWIXjB9RmbRUIFJQqrOAgMcjPmO1EYtSInIpqH/N2OcMQZWGLCU02cSj9w3p2F5eC4Zr1aY0GSZ7Xt1UcuEJZt6AOin+pzY40gGi/LrwBJHPow56m6BiRcqHTzvkKquAb6PhY1fDLwFs4BHIhbwMuAXlKjEgI8wVJM4UOx4qrgNvSqIPKrwGUTXIglmHLIyoldVeiYvbifVNndIVH+JeIuBD4MmC55+BNT8KM8WP/HdQi5RNQpMsIjUYQPosKjlKTHHYU6xn8uxAms75tB7HNEfo9Vii/o/gPEzWvcngRUmK3s4Z45cBbwflwm2lPiYIpOmepx0y0qwaVIscd/nseO0zwHPjEikY4J7/7nYC3WvmAOeB37mTEUOLb61ZYcoX8p0TH4wuWQXDS3bInpF5aOxdTOptpYB4HuqegRwRjHDRJAEqq9Ryfw2tXJuR2OedZKqRoEJOBF4PVV29JUjF2Bh0veMZskIWWH+jjkAvzFqwbFcKG8G/ltVq83MPioh68tJWN+LA2uxvEA7YeJZBxyVJdu/Ah+8vwHrMZ+g0yMQpx54KeZ35xfT90UE/Mwc4JUqxVn0VUmLcCkq1yTm9o5L5SVLY2s7qbaWduB/BA5RWFrMDKQiRwu80Ff5de+qOUxekntyv6pQBIJFpAlz3C1dJah4sRirpp3roWkvFhGxPmrBMRviG4ATohakTDRhIfsHFHuhEqDAFcC94JQXR+XI+spgTrTvwTZcUYRgn0gOmczHQhEQTkA4vljPFxG9R1V/rPgDcUxQV2pEodbnXpAfCgwU0w0EJqvqWYLflPHza4nYKzChHfDLMc17PPMK4IVjfSi0aN0D/AozfUfNAmyRbxqHeWFeQlC/KgY8BPwfkHHKiyNCVmLOvbdHcO+lBFGYhc41PesOwKtNJIFzUSYXLooC0g3yPVTWNeV5BFKtNCxtJ50QX4Rfo3pLMWqslbeU5wlyiOTpTxN7BSZgPmZ9mRK1IGVmavCcc3JMbpfGFrOHoxY84CxssR8XBG0wD4u0aopaHszqdgmlSijlcBRASHF+Cvg0sLrCIjRhfjAFr1/+YAZ/MLNMVU4u2gVe+TMqf5toGwrxwcffKubkvaNQHUYARGcierrikVo1M+fvxlqBCYVNvw7zQZgIPI/8wqrbgJ8Qj2RyUzArzNxqt8IE8nvAa4FnRy1PwE3AH3EOpo6ICfW//wDfxfLlVJIToTDLSc/KlqzB4EQsI3pBqP2xDfgFaHfj0ugqSkfB5GXtCKDi3wzcKKqFG2JUPIVTkfQM1UTOX4utAhNaAI/EIo+qzeG4ULJRPcvG+mAwiSgWkXJL1IIHPBt4DeBVuxKDJfC6mHgk8dqBRZ7tiFoQhwN2zz8+lh38nxW+/aHAjEK+qIAH9QLPFyk8DFgARW5UuKvCzx4bGls7QL0U5pfXWeTljgY5RPDY1pbbYUtsFZiAWmwBOThqQSpMVmkbs3hZMIlsA37IGNl8K0QdpoBVbZsF73xS8ByHRC1PwFXAzeAcdx2xYytmBe6s4D2nUuAco4CqzlI4qeAcJgqK7kS4whPtzUzgMamWxPk/CjdJcedIM1GeWScJajU341osFZjQov1cbDc/0fCwqJ7j8/jOTcDVUQsecCimeJatemwFOBk7PorDzLQKizjrdcqLI06E+uO/sVptlaKBHKzUowj+DIpPyHcfonf5As2tE+v4KExG03iedCH8CdGBgs+RzGPklH4/U5erM28sFZiAaZjz5OyoBYmIrONyY45WmB7gx1TeoW5YkbDF/ySormrVgaxTCJypo5YHS6wWJ0dth2M4urANVKXKDdQCSyC/+WX7+kV4mgHheEQLdsxXyKByg/j+zsYZP67QI8eTqcu24msGQW8HVmgxie1EDxdPZ3tebm0aOwUm1BnPJJpESXFid+h4joP0QeAy4hFWHafonZwIveM4RVPdC1yOC5t2xJ87qOwGai55lvWoHezH97wG0MPyDdndhw7gH+AhzedU8JHjScMTHSQ7+9eg3FroWxUBRWapymF+jlpQ7BSYgAOxaJb6qAWJmObgPeRq6sxgeWHuj1rwgNMJ8qdUkRUmm8+mMWpBsMiyHwPrnPLiiCuhvrmOyloKZ5HvBkkBZS7K0uJurXep6pqqmdXKjJwJQ82TfYQbQAcLu4qCMk3gcFVFN4ydqzBWCkywyCWwtPr5+H+MZ56NhZGPWoE1NImsxha9OIRVZzPYFp01s9yEwqbfgIVXxoEbKEHNF4ejQvRgWXorta5PI49Q6l2PLcjaXGYLLCzslhYqLCL3+uJ1eW5fsRsxBeQpTJEt6AoIgtKa9CXZ25ce8xuxUmACjgYuwhQZx55IrMNgdEtGSIn5E3Bj1IIHnIwpBRJXK0xIrqOwmk5x6HtbgB8Qj8gyh2NUQnPPSiq3eWrCogVzwqsbBNM4DtQCk6IqIMpOlEeSKA2tEyPzbk6IgMhmkEcL1WHFvrfYF5pzOUWKjQITLCKTgbdTRHKhEpLGzjnjsOpmo3pyzUeyE8sZsiVqwbE+dhFBFee4KjHsCf8u0rRcMn4H3AYubNpRVawH+it0r8mQexFGEaFhsEcEWqVABxjL/cJmhcdiO5NFRQI0o13AIxTjyQsLkdyO8GOjwAQ8jyALbQx4GvgItqOIA68FngM5W2FuBv4QtdABBwFvJU+Hu0oQepfPA86LWp6Ap4GfAgNRC+Jw5EknlcvKW0M+1lKBntp6Dym8KGtQAHKTeLJ5UqKoAtbjjsZF7UhCAFYg9BR2FQFhrqKNuaiYsVBggkVkBha6Oj1qeYBB4BdYhsnLiYcVZi4W1dOcxzP8BFgeteABrwFOjVqIEZgOvBvIvQhH+cgAPwceg/ysL6qKqoqqeuPgJ7ZHjo5R6aNyUZBJ8jruFVDPAzmgyPROq1U10+8X6Ks6nlEF1XWo9hZxjQaBmbmM/sjT84fqHb0SOC1qeQLuAK7EFpMrsEiaE6IWij1RPVeo6oiLm4hk3+tjWA6RLxB9OvyZmIJ6v6puj8OxSGiBPJccqoBXiDswxTmnekfBMzQCi4EjsOPGuZh5PfqXnD+KLYIdwJOq+hjmmN4Vhz7jGJMklet3Sh6by4HBDDVJLyHCjEL7UuCo2paqqc80DsUhTiJeqL3XdUCPKLMK6gkiHjCLHDYwkSswAUsw35c4hE2nMP+R9uC/12AVgA/Hsj9GSQMW1XMLdtY8IoES42MK2BnEoyDhizEF7LLRFLAKsxjrezk7A5aRLqzvbRztQyHFqxF4EXb09VyghXg4IJeKDObHdTtwlapeH7wjV8wyvjRQuT44RB6J8+pqBEyxL6gIJICqKLCuKd1Hpir3B+UlcMLtBLYjsqiQa6jiAVNzGeKRHiEFE3ESc/I8OkpZQvwFC18NL7DXEJ+onhOxqJ5ciyVuwBSw7qgFxxTUt2N5fiIl1PfeCBwbtTwBfwf+CiMfHYUslsdiR4S/AM4HDmB8KS8Ez9MCvCr0rCcxPgqFjlfyTi5XBP3k42+jHiANILVFeAX4wHYF8J0Csz8CSBpkexEX8YDmXN5uZApMaAI6Dsv7Egd/nA3YDnhfc3Vn8PcdUQuITepvIojqGY3QM/wFuD5qwQOOAy4EkjFYhI7FlOc49L1NWB9LjfSBUJ6kczHL2vlYUbuJwBTgFViixvOBmhj0H8f+LKFylvQUeTi6+yiK1ioFVqBWENG0iPYoQtOyiVv/aCTU/ucrWvCGWURFROtyycYb9cRdj/lFRL4jD/g1+5RGDykB/8EqAseBZVjIb32OdZK6MCtMHJIWRG5xC95ZA/A2YFHULwTbDl5J0PeGs76ElJdXAt/DfF0mIkuAb2FWyDgowQ72SgR5KJXzt+sij5wzngiC1AiSY6Wd/Z6SwLqQESztiWNvREEUFaUHS0UymP+PDIB4KmP7gkfiAxOadHanmo8BD2MOr/ul/wv8SQYwM/aLsLDgqDkPuJbguCsHso7J7yd6586s38n7VLWiFZZDfe80zJIRBx4HfgYMjvEuTgW+ihX6nMjMBv4H84+5LmphHLuZSw6W4RKyDXIP1w1GlqeFzn+WBCZDPKJSY4n538qg4n8eS8SZN2reu+1eDvaVKJ1452BhwdMilCHLIJZ342kYNXQ1u9B8iXhE9bwLuFdVd4y28IUUsJ9iRQoPi1h2MOXhWuCvETj0zsTCpuPQ97KK8dMjfSBQuuYDnyQeFqM4MA/4FPCEqq52Tr3REdoUHAocWcFbbyEv376snAWXGzQTg2NEGlo3gfkJrQp+ykrFj5BCnf3VwCmVvv8I3EKQ9G200GTM4/03wN1RCxzwAuBsyDnD7VOYElOpRFOjkc37M6NSNww5wGajduLAbVjf01GOjjzinUcnKk7EnLDdUVL0eMDLKTBFfwEoFomZR8MLxRufpUTXcZSCiiowoUnmECwza9RWDIAdwA/JPe3+RsZwtqwgkzElYNFYHwwWRyWUoj4GPA+LMKlk0rJlmO9LHEL2s2HTm8ewIMwj8PmIWuCY4WEOvYuiFsTBYZgCUyl6gRXgSm1MZKJw4q3BomgqaWocjT8ThEiPNRBCv/9b8BMHnkFQ/DJHh952bNGMU1h12WtfhcKm30xlz+lH4xpyC88/FVP6HfuzGPNLc0RAMK5qMEVyWQVvnWKUY1fHxCAKBeZZ2G4yDqwFfkwenuyBErCLvZPdRUmCUC6THC0ZN2D+J3HgaEyhHVMBK5TQdU8EXkc87L9rsciwscKmPey4Kw4WozhSiyVprHXHSJGRPcqr5LhaF/w4JjAVM0kHk0szduQxL+oHx/xZfgncDwWZIbMp3z8U9YOwJ6rnUXKrBNuNLZ6nAgsill0whfYvwF1ldOjNZjGO+nnBjvKuAO6FMfveDCq7s61GlmKRSRuiFmSiEFIW52BFbwsukFggD5BHBFLpHpwazPdwfmply3hLHBkTFIUna0QendQ6uo2gIgrMPmHTZ0T7cnbzEKbApAtcMIewiKTTsTIDUXMOdiTxlxzrJN2N5b35eNSCAwsxxfZRSjwphfreS4lX37uM3NKgT8UWZ8fIzMYiypwCU1kmAe8FXlbh+/rY/FX5au1CPcpnqFzBygmIKMLX0pnMo2N9spJOgS3YItUY2XvZQx92dFRQmFdICchG9Xyd6B2Sp2Nh1XeTm0NyBst781LiUcbhLEwBu7oMVph55FfJu5z0A5cCKyEny18dRdRumSBMpnLp6yc8wdxXiwVivIvKO5evBx6BiBx4xfW1ciM5rqdl94EJneO/DvN/iQP/Bv4EhQ+A0PfiFNVzGhbVM6ovTEj25VgOklyOncpN9nhxbqkuGHoHryE+YdM3EWR0zrHveYy/GkelJoF7RxUhGFN1WCbwzxLNpuAxbPPomOBUyon3MOBiTGuPmu2YA+72Emnvm7GMg51RPximtf4Xgc9EjkrM77E8OHHgFCw/UK7OyLmQ7XtxWOC2YyH7xRQ6czgiIRiTM7Bj5y9SwRxOITLAP4EeFz7tKKsCs4+2Hpcw0D8AN5fiQqEBdAPmhBoHjsKienI1624jPotqDWaWLrrOT6jvXUw8Mg8DXA38C1zuCkf1oKqoahIrxHoJlhF6akTibCIYQw5H2RSY0A76OQS76hiwEvM/KHX9nR5sYK+P+gGxqJ4LgOPH/OCed/AvLB9OHDgcy9VSVwIrzElYfoo4sBrre/159j2f3Jx9JzI+zqmy5ASKi2DFdj+EHZefR7SW9H8DbVG/G0c8KPcRUtavYU7UD8oep9VHSnnR0GJ0LxYaG4eJ9ADMuW5KjsntejEFbE3UgmMK2Ospwl8qeOapwTsomU9NEaSxvvdQAd8dII88RROUPqyemWNvCtoBBIrLFOCZ2HHRNcAXqEDCyTHYheWv6o1YDkdMKIv3eGjRPBsrHhgHdisYpTbfB1FJaeAXWFTPMVE/LFbl+xoCh9EceBAL7f0M0fuLZCPWHlTVrnzaK9T3Xo61RRy4H7gcyBTQ97Il6R0jsx1b3Bx7k8CiE4dUdbTNqmBrwUxgCTZ/HYsdGcUhZ1eWewmO/90RrAPKG/62EEsc1hD1Q2Ia+48of+bGNuyY4FtEnzl1CqYE3Kaqm3OoVp3GFtmXk8PxUwV4KZZf4rcFhFUfQHz6Xg8Wsr+2wO8rBe6kJxBryb2W2URiPvBbxi7eWoult2jEcrtMJpos7aMxgOWt2hm1II74UHIFJhQ2fQFwQtQPGHA9gZNtuTT3QAlQzOJxNpbgLmqeDbwW+J6q5mJ5Wo0ttkcQvQLWhClgt2KOe2MS9L0Eltk3Ln3vHwRlG9yusSxksNxH7lhhf+qIT825YrkDm8fdOHLspqRadsh8n61vEwctvgOLsuks942CgZWN6onDTiGbbGrMCLDQpHAtFqYYB7J1s7w8HHqPwJyAo04sCLAVs/ztdJNu2WjHLWzjnV7g54xdtd0xwSiHgjEJC5uO2uEry2+B/0BFJ7ibgD9G/eABhxLk4MnRoTebJ2db1IJjSsibMaVkVEJh028lPrWD4pTkcLxyLS6p2XjneuC6qIVwxI9yKDDPx0Lt4sBTWL2ioUopL8F9sn4Pq6N+AZiD3muBkyHnBHE3Y/ly4sDBmFIyogIW+vtTiU/fexrLctzndo1lIzu+K18Tx1EpNhGfRKGOmFEyBSaUpfGdRJOhcV8GMbPj4xHd/yEsqicOYdXZqJ6mHD+frdezImrBA16NZekdTQGbBrybeBQ+zGB977GoBRnHdAPfJAhNd0riuESx9AOVtqA7qoSSKDChReUVwAujfqiAOzGvda10xw/ulwF+BdwX9YsIOB0Lrc61xMAj2OQRhyRqs7GcLtP2/UXoWc7FytzHgTuBK3HRQ+WiF/g28BtwC9s45hbMipl2bewYjlIeIS0B3ob5wERNF+bH0R6VAMGAy0b1xKFYYhOmBByQo+yK5c25J2rBA16CVaweTgFbhIVNx6Fqcw/W9zaAW1zLwE7gf7EK8KXOqO2IDxuB/6H8qS8cVUzRCkywmNQAFxGPBG4AfwP+DrFYQK7FaiXFgROxqB7J0RdmPbYYp6IWHAvrfgeW1jybLRTMx+dCLOlWHLgu+IlD3xtP+MADmBL+dSDl3u+4pRfLpXUzuHHkGJlS5YE5FltEos7gCub09UOgOyYdfwemBDyL6EsqJLDw9r8DD4+WIC7IawOWP+ds4FURyw6WYO8C4Mvs8S06DngjpshEzUasrbuiFmQc0Q2swvIrXYlZNUueTdsRG7KW359RWOZqxzhDH55G59RG6gaGJmUSTPV80iA7gUxRCkywwDVgO+OFUT8otqjF5tgjpARkw6rfGbVMwEFYVM8HyS1F/S5sUX4O0dcV8jBL33VY6YPJ2LHlkojlyvI74HYYN7vGzVQ+kk6x2kbbMcXlfsynqJ1AaR0n79YxPH/Djo7yKiHiGL/0NEyiZii9xPd4D/BMFfqAPyR8/9cFKzChI4gXEvgmxIDHsXpEgzHr/EOYM9oLMQUial6NVZ++cbQPhRSw27HF+X1RC47lF3oH8F7gNOCVUQsU8Di2axxPDofXAZ+ispZVxeo/9WFHCc7aMnG4A/gYdnTtcNDd1oLaRvUjIG8XQAVE9dhMwksVe4Q0CwtdnVbkdUrBEBb6+3TUgoQJKQGPYsrV/1DeGlS5MAvzJbhfVbfnUCdpEPgp8CLgsIhlB4t2uxM71opD3xvA3s94S6jWA3Q4BcJRAR4APkSQ9sL1OUeI2cCzsj1CAERmAM8pyIk35Dz5GuC5UT9dwC0ElZfj1vkDeXwsrPvuqOUJeDH5Wc6exHKbxKEy8nQsEuW0qAUJuB3L+FzxkH2HYxzwEGbdvQviN387okPsx5N9Nv2KglJXTBTSwVjJgLqoHxLL0vhDrO5RnNkQyBkHJ89J2FHM4hxLDPhY3o07ohYc69dziEfIfifV0fccjjhyF+YbOJ58xxwVIm8FJlTx983Ep9LptQT+HHEdACG5riM+YdXHYlE9yRzDqjcTHwUsLvyFmPc9hyOGKFap/e3AnSLirJeOvMlLgQktcicB50ctfMBa4BLM4S/WBAM0m2Rvc9TyYIroReSQvyc0udwI/DVqwWPCBixRoctJ4nDkzgCWpfy/gIejFsZRvRRyhDQFM/mNmdG1AiihdP1VtIjciR3HxCHV/GJsFzQ5x6OkrAK2MWrBI8YHLgfujVoQh6OK2Ap8EfgAsAaqat52xIxCFJjdNXViwENYwcSqSXgUyDmAhdw+EbU8AecSOMTmeJR0D7Z4x0EBi4qHsVpRFat07nBUOfcCF2OZlHeIiFNeHEWRswITLGzzsfDbxqgFx/JEXAK0RS1IgTyFKTFDUQuCRfW8C5g51geDCWcIUxwnqvl3AMvrszJqQRyOKmA75jv3Biz/VNzydDmqlJwUmFDY9GuBk6MWOuDfWHbbqtPiQ8USfwfcFrU8AacC55FDnaRA/uVY3p04KGCVJptZuer6nsNRQQaxsXIx8GFgubO6OEpJPkdIhwFvIfokbGAa/Y+wOkNVSTCI24lPVE895lS3NI/vXI1NUBOJHVibbY1aEIcjpvjY8f5HsGCPa4B+p7g4Ss2YCkywG5+ELW6HRC1wwB8JFs5xMChuwMyqceAYrNhjrmHVW7DFvGoVyQK4GvgXjIu+53CUkkGsRtnHsCzZ3yfI5OzGiqMc5GqBORk7PopDL1yFHV30jZNBkcKsSXGp//EGrOrzqA69+4RVXxO10BViNRY23Re1IA5HTFCs4Ov1WGTROcA3gTaX28VRbkY9DgoWsKmYg+fsqIXFirz9H/BI1IKUglCdpHuwKtqfiFomYAGWofcRrBbOWPRjCuVpwKKohS8jijkuPwjO+uKY8OzCAhFux5I5PoJlpXbFNx0VY0QFJrT7PhOrmxMH7sPCd8dTxV+ADLY4vgw4OmphsBpJ1wJ/VNURF+uQAnY/1i6fprDQ/Gog2/fcBO2YaGSwzUwnVhPtdiwk+mGshIYbE45IGMshN7sbj0PYdC8WNr0uakFKSUgJyEb1fJvo60s1Y1a32xkjY3Agf1YBezlwXMSyl4MerO+tiVoQhyNP/Bw+o6HP9mDWlW2YcrIRO7Z/Cng0+Ls+qij3lmP8MqwCE6p3dAGBP0QMuIEghf14GzghJeYqzPpxetQyAc/Bqo1/dzQrTIjV2CL/PWBy1MKXmH8Cf4Lx1/fGoA6YoqqJqAWpAIqlBOhn/CzOm4HPAjsZ3n9RsGP5AcwBtxdTTvox37wuoJvxZ/EeFyiKKCCyRwWdYM20nwITOjo6CivYGIew6d3RLuN8IG3FHHqPB2ZELEsN8FbMSffJ0T4YUsD+hDnxnRGx7KVkC9YmnVELEgEvwUqGjOtBF+BjC/dOYJWq3ouFAu+keo9IurEIx81VKr8DxYafAqQVBgTpV3SrqHSq0Avah1ADUg80CDpHlSaBOkRqAdl9mXHGSMpJHRY23Rq1gAG/JT4J38pCSAn4J+Z/8uaoZWJP7p9PqepADpNgNkfKSUSvgJWKq4BbYcJZX8CcshdFLUQEZDDrw2NYsslrVXVDFbZ/1Qns2IMCqHSDLhfkKUQfwI7y1oop1mmsr2awtk4ASbWcXi1AqyrHgB6JcDDIAQIeqma1qQLCcbDDSbyXAhOyvjwfi+OPA9mU+wNRC1JuAiWmDwvVfT5WaDFSkYDXY0d3N+cgO8AtwB+wApHVTtYvySXhmlgkgGnAc4FnAa8Gvq6qN+LS4DvKiqJIH1Yi55/ADQhPZkQ3gqSbl7TneqHVXcvn3MGAXkE9zYK3ROBZoGcichwwE1TiruNKoMYBvqrs1rtEBdD0cBaY6cC7yaEuTgXwgV9gzmMTaQf8IPBLLKon6iO8uZgj94Oqumu0NggpYJcCLwCWRSx7MQxhfe/xqAVxREoNcAqWxPMrwKWq2juB5iJHJTDbwRDIfcCv1NO/grR7tUPpxgXbCrrklIM6slfu7FvT8gDwoO9zuSrPVHg1KucI2hJra4wCqtsReVyEo7L6jIr0gjy8e3EMWV9eQVCZOAbcDlwJ5Vdetq9tYdKgl/TFrxU7N0SVIckkBht21aT7G9Naf1j5A6ACJSCNKTAvJx5O1C/FQryvzNGh91EsX88Xsd1sNXIP8GvGj0OnozhmA5/HFJrv5nik6nCMiaI+yANiQRA3JIYS7er5fsPBm4b9/F9vgJcfNJ/OVJ9XW19XlxGptaMhhhLpzODkQzqG3vIO9OeX7PlO/aJ2uxWkUm3zbgbuAv9y4K2qeo6ITI/6PQxHOqMka7wuVf066CSEw1EZQrla4fdJ2Et5WYKZ/uujFhw7g/4RsKGUF9V1M6BuQHpSDZMUbxpwsCiHk9ZF6vnzUCaD1mG2tQES6b6eGUObQdZ0t819UpUnBNnRuGNSL+mEysllK0i8Jnj+HxJ9VE8T8E7MF2TjaB8MhVVfgTnzxqX4Zz70UIa+56h6moCPYzXMfq2q1erc64gPWwT5OfAzQVepCJMP3Xva6XyqhZqk1Cl+swqtIEekMv7iZH3dAQpNYuuVBwz6SenvXtmyDWHNdz7MClQfFdEtmtGUiPiNyzpobN0E0N/TNvcu0IdV5TpUP4DIScRswzn14A62PjGLmbPrHuzqHLrIEzkA6MfT9aIyFD6eSABvBI6NWuiAv1HCsOmelS1IRryeIV3IUM1zgBeAnggyD5gMUmMRabrbc2j3bc2DOw30CdIB3Nczvf9foP/pWbtgpYpmaMvQ+PyczydHJeRP8hfgXCy0OmpOxPxhvqmqmRyOktZjO4pjiF4By5e/Y/1vIh1bOnJjGqbEPIg5+TocebE7rkj1PkQ+7wn/UBhoaN2Tcmtw61RqZnZKz6q5s1X1WQovBHk26IFAA0KtgChqXizBRRXJxixlgH6EHSAP48m/gVt6V89+3B9MDDQe3E5D62Z622b0Ncr2P6WYc7/AhxQuEpWmOLnGzDpsd93cLuCJ8O/CCsxxwIXEw6tnI7b4pYq9UHfbPBCp8f3MIST0PEHOBlmmUL/7QSX8j2H8muy/k4I0IdoEshTVV4Cs9ofS1yP8hvk8klo5r79x6aac5BqLQAnIVt0+meh9kmqwiKTryb2Uw18xZeCVEcueD9kK4Z1OeXGMwGFYlOaHVdU59TryQix66CoR+QLwZEPIMTfV1oKiicFdcuBgV/3ZwHmCHo4wxb67965a9l68gn8oAgmUBkQagAUivAzV9b6fuJUkl3evmHcPQtdks8ZoVxtrFT4pyGOIfgY4IB6qwOh4wU6/AXgb8QiZVCxs+i4ofAfc3bYAe7TMQtT/NCLXAJ9R5SjCykveZHuK1CIcLPA+lD/h8RUV/5CNj8+QzhVzSvk+bgF+X8oLFsFBWG6YmhyrVXcCP2CMbL4x40rM98rhGI2zgMNh9KKnDsdeKIMoPwXeBzzZ2GrKS6qthV1rZ6OiMwR5G1b1/uvASYhM2f9Co61gYj97r50eIgcCF6jye0R/JKInd7e1JFNtLUxp7cBLJFJebc3PVXmXKk9XQ6/O1q05ATg7amECnsDCpgve2XStmAuka1NtLeeC9ztBPyHKEivrXmJpBUR0ngjvAX4/pa7mzUnPa+xePhftnF+KO/QDP8FCeuPAOcAzIedq1XdguTSqgceBn2MRSA7HaBwIPC9qIRzVg8KgCt9T5FMZ0S2JwIOja8UcfN9PeEOJ56JymaLfRDiaMvmjiDBNhNcDv0H1owqzu1fOpXHRRhgcyjQm6/8C8i5UHyfmWowXvKTziEfisQEsBPfpQr7c8/Q8dq2dg+fJTLHKzpcKPAuVmvJawwQUT5AjBfkOql8TjwW9qwZJrWkp/Kp7lIBHsKieTDmfIkcOwAp85hrePYgppE/m+PmoGArkfAKc74sjJ54PTIpaCEf8UdUhUf0p8GVBdzYv2Uz9IetJrZmDV0ODeN5bgcsFzhCkMn1K9UAR+bygl4pwzPa7ZqGewqLV6tfrv0T4kIquirMS42E7iZOiFiTgNuy4RPNdQFJty9BEhsSQHIDyLYVPizALqMxRXnAPFRqBtyHyY785eTgZJdVWtBKjWEjvPRV4klx4EebMmIvssMeykY5a8FG4HTu6jJvyEithHHuxDJgatRCOmGMKwB8U/Tzq72xcuufYSNPeVDLep4GvCbqISmoLNs8lUc5R5Oe1sxOnDtTXS/eaeUifklH/HyifUNgSVyXGA44EFkYtCFYB9YdYtdP80RQq3lJFvq/o6ySiBHACqIinystEuURVjvW8DF0r5hV76fXB++mO4rn2YUnwM/b72KOAxdm3JNv34uirkwRqoxbCMSwNWKJHh2NYVBWEuwX5okhia9PSDnY8PJ+etrmgzBD4kiofENUmUygi2K+IAHosyqV1qb6XNS3YJF5iCFXx075ejfAdhIE4KjFZC8yYu+kKcA3wD8hvB9z39CyLNIL5wP8inCMikcayC7v9p54LfDvje4d4quzcWFggUeh9/BmLAoqaemBpnt/ZhCkJu6IWfhiy0VJxs76A1SWrtjD0iUINpsQ4HPtjgULtwOf6Bv2n6uvsrxOT06R9naLopxHeKqJ1UWfDFQRRDkb4Vmr13Oc1HNCM+FCT8NJibh1Xx1B/wQNmEb2Zeh1W/yeV7wKSSSTw1G8GPifKuRInNdEcfE8BvqpJ5iX7izYKdWNh1aVJOFM4SfII6w616e78KjFiAxay3xO1ICOQ9VNzxI9sAT2HYz9U8AV+qonMPydNgsQBm0itnEMC6hIi70V4G1AT/fIbIIIiBwHf6FnTe3QiIQRRUjtU+QbCiooeceWAh+0iokSBy4H78v1iz4rZeJl0jS+8VUXfACRi0xl2I4jKGeLzQRLUd68pzOIcs6ievPtNIH8KU8A25vPdMuIDvyLwLYqh9cUxPvAn2H0dKCh3qcovSCfSTUs6GFrbQl/aA0/ORHifIHHIeL8XwenBsXjyWURmp9paEE+omZR4SOASVGJVVNkj+p3nQ8BlQDqfBaSrrQXEI5OoORX4IDApdrrLbtRT4WLJyDkd/VPs/LMAgvczCPyUaKN6MhTeb7I1huIwuWZrNg055cVRJhToi+jefcQjcnGCoahKn8APEV3btLSdbRumMTAE9Uk9BOVTipQ0MalSStuIAHImyls9ajxUSPdnfJTfKNwZp7RHHuabMBjR/bNh0215C64ZFJ0B+j6QFilQe9Hhm92nlANfBFGaQd8/t7ZrUQna/ylMiYlKGx6kACtKSAH7OdFXee7H+l7ZilmViAxuEYorythto8CWiOTbhstpVGGCnP7CfxRuzP5tbX8dafXrVHgXyDGl3C4p+AKZoITAHjGKWGhUSSK81WfoRD/jM3lxEhU6BP2lRLfu7EcSm8C3YPk9Ks2/gT9Cfub7rhVzaWidRqpt56tFeOHu4hIFICq+olsFHga5H1itorsAFaQJOBD0GLUaUXP3RDcVckN5pqq+aTCT/sKulXMyzUvzD7gKSgz4WFTPmVguikrTRYG5egJWYMrDNzEn1Si4GfgDBYTsV5gBoreSOoZniNzaZg2muFc6mqwNU9QdFUNQ6BG4Iu3LtroaP/hbSIg8D+W1xZwUqKKgO0V4UpV7RWS5oDtRySBaL8p84CgVngksAKmTAtZHEVA4UNB3ex6P9a0Z6hZTiG4AvVuRU+IwayaxgmSrqLwCswNLM78t3y+KCN1tu+YL8sagxHahtCH8HpWrwV8umuhJptszQ7WLaWxto3f5TDRZk1ClHnSRqJwN8hoVjhBU8uoVFk3sgbymLlHzO1We8DfNw5tXcO2kzZjz6XHAlEIvUiAPUqAjcaCAKXAVlv35RRWWHWAn5ouzLebKC5iymPcYcVSEFKOE3oeKsq7DlJiDKiibAg/jFJgKowjyJHBjMqHUL+4gtbIFkEZFLwTN++hoj/6hHSL8SZU/gD6IkqJWhhoXWhdMLZ+NgicJqbNTCU4HPV+FZ4lKMm8lxm7+Mh9OFuGGmto0ff2T2hOJzLVYfb5IUpWESQLbsdDc51JZD9irMAtMQc6TnvgvBymscrbSh+jvge+qyqMipBtbw9YQO9GafNA2MBNxKtU27zGEJ1T1KpR3gLwJ0Sn5vTJB0IOBV9Z5mSd7+xIFGflCE+P1WMXq1xf0HgojjUUSdRV6gUD+Diys+ngqnwzsT8BNFb5noWzDrKRRWNoco7MCU4bHYjXwAJVVYNYD94JzTt9Ddrot1/swVUOVv4O/FYS+NS0MDSmex/GivFjzbAsFREmr6D+BryVE78yo19/Yur/e3HjQFjD3h76hJ2etSu7sv6RnzuRrUXmjCu8G5uX75IpMFeECz5NbMuna/kQiA8gNgr4PdGHUQTPZWkjXUNlaO6uw+j557w5Sq+ciCZ2Ccg6qtfm8wOBYcJeiX1DlPfjyoCkvYxsTGls3kUZ9D54W5RMIH1akvaCDRuXsfj8529ciSkraQMiGVW8o+EL58yhBLpoSTIz/xJSJSrKGoNJ53Cf2QD4fSwDodtLx42bG8AcI2rAPuI7KOvPehY1Vx27KnyhOle3AP0QSPijelgESiAecgzAj77srA4j+RNA3J8W7aSCT6W9aOvZ6VXPoVuTkbk1L7ca0V/c1RN8G+kS+y5XYudEpvq9H+qp4KB7+KtD/UMT6VSqyCsxyggKKFbhnBos6esheUO4vYfMT08EXNMPRiBybX/IfRVRTKF9U5DuIdDcuaycX5SXL1NZ2Gpa2o57X53s1v0D5CMqW/PqEoMgygWcjPvr0ocW+z3uBK6hMgH4/5jy8qkTX68Hy/6ypgOxgysBl2BFYNXEzBTi6O8rKGqxdcuVG4O4KybYLmxP6466kV5JgA5uhvHPlEygrVJWmpR2kp9eA+AtQfX7eN1WGBH6CyqdRr71+ySamLcvvNHnqkvXUMJghIdcJvAfRJwt4/AXAqbcG+veQ7/UBt+peXsPR4AUdPKtU/KUC97wXy/uSyXdwNdbVkWyZKyJyEjAn928qqPgIP0b9H4lqf1Meisu+NLVuJJEeyniqvwO+IaoD+bSjCFOAU0h7NSmvs2A5gvc3hIUCP1zwhXJ+ifwecx4u2voS+v59WC6WSoRV30+BfS9i1mOh5y4aKT5ci/kP5joWtmDW0s4KyHY1+SlXEwNVUO0FHSz96N/tqfJoOr29AzKsa6tDxUNFTkByK72y1/VE/wz8D7C7flIhNC5px0uj6bT8G+S/Qbbm/u1AS1Fe9Fytb1IVPM/Hh8dBN5fToJXLmuqF/n0b8BngP+UTiU7gO8DaQi+Qbt88iQKKT6pwuyLfFS/R119bfE3BhmXtqEca4edIvtllFYHjvATTi11Hg8lzOfB9oLfoBxuZG4DPA50lXvx9LKz6zjLKDnbc9h3MH6FqCB0jXYkdCzii53HMYp1T/qDQZ67DlPVy8jDwbaC7ypT0sqOACjsVKdh/b2QERfsRvT9ZO12blm5hGs34dHkKxyjSkHNrqKJIm8JXVdhSjPKSpaG1nWTSA7y/KPxSwc/dfCIAh4HOV1u7EPP/WlP697jbUuZ7OWhHHuw1wJ4E3o0tVqXe7aUxv5c/73PP3B/MB/WZocrheX61V9BLvbS/oXPhZGYdWJqgDr+mB9XEDkV+JJCzVqsAwqEizC2hBe4PmCWm1O2WwXykPkDpjo6AvfrAWuB/sZxE5SAdvJtr97lvVRDIuwb4MuV7R47c2IH11bzyGAVt2At8HbN0l8P4vgH4b5zvy7CI5yGS6BMpWw6qPkLpJQQPj6ZmgWfkN+NIBtUrBsV/wC9hN2ls3YhqZgD1fyaqT+fsD2TGpWkicoyIkPSUGk+3SZl8LwX1Bd3he2NX6dhtgQlN6o8AbwW+S+nCN4eAX2KDt6/QBUREEdFFgk7N/VsKKveD3KgJjwNqSpe3bMrCbnyG8DVzu6remvNzWMdpULS1FHKEHHq/BPyW0ikxHcBXgXcCT4lIyRf/0PWyFp5Shwz7WMTbV4CealNe9uEfmJU0DxOwo4SksH5UUP6g4PPrgQ9jdcFKeWy6AfgYZuWpOiW9Eig+4GcUvQG0xP6eiiApwVsfTqqqSqNq7oVvA3VlncAf6nwv09y6Odev5oR4QjIpKxG52gJZc1CQ7HEagKWqMGnRIEO++KisKpMPTAp4KBfZwkdI4U6/HvgU8EYsZLaYCIhuTBn6OMXm3RABkYWI5F6d19K1XE9P+9ZyVPwUSVCD14fIX8lvQqpRZHGJi0+2Ax/BksQVc5zUh1ldXg98AWgv54QYXDuN+WF9Aut/pWAAU5w/RvQFMIsi5O/0K2wBLPgY1lEQm7E58QfAYJHjYTlm6f4lpYkuux94G1Yjrdr8uypGU+tmRBVPuRnln6VNvw+qbFLVnj2p9gVgBsisXK8RtNztICvLETEli1vJpMkA/xLJPQAlSNuxYHJjnde3pj5YV3UNosX7Y2Tvsec93qhagAIDNlEGA6Af2yVcCLwPGyT5pKUexOrevBP4HCVIGqb2vzmgk3L+hrBT4UFtaKGxtfTW9ymt7fgiiJltN2nuQyIhyrxSRaKF2q0dUwLeg0Xb5NNmA5ifxTuAtwD/EpGBSkyIoTIDlwFvwiwyxaSsXoktOB8G1pXDelRpQkrMr7HNxXWU1+/JYX3wFmw8/IgiLMiw1zhdjdVwex/mt1LIQtARyHQBttF0yssYNCzdjC+yBZHPA3eLUrpTGmEHQjqrdwRuvXMEzaPwraJwm0hmQMugwDTIbagICo8rrJMcFyCxDMMze/sGGjKqWd/eHYFZq2iCd6UKtyHyxWQi0blx164xvzdiJr3sQFDVbVjo7PXAucBZwDOARvauSKzYIOzGlJ0/Yz4HGyhRuvbANNcIJML5Ccd4K9sot+OmObVsBl2P5JbR2L6iTbl2oJzfkSWJ68J8Pm7C2uwM9rRZIvTiwm12L3vabBMRpNgPZE8D/8KOMs8FzgNOCGT3Rvm6YgrQKuCvmNPrw4A/nib14B1lgFsxP4yzgPODd9Q0xjty5IaPmbEfwI6L/kRgwStVXwrasRObW/8NvBJry6OAyYzcjoPYnHojFhV4B1CRTcZ4wU8KU57ovKfnoOaLVHg76NkC84BaRZDd+e7sX+zPPVOmpebf532bpb8XIRM2JSCSx5hUFOlBaPM1wWBrd1meP7l4C5mN07frYGKtijwzj54zGX+vchjdFHEMmrVUCaRBOzCr/w8aa5NPdQ0McchxY6dNGjMVcDAwVFXXYZEuvwYWA0cCS7Asqoo5t63GLBFrsAyVpV087IGD0gE5XNcKOvSosqN0Qgx7I7DG7Mzze7kfheVz1T1tthqLvPkVe9rsQGB68NEd2IL/KNZ2O4m4NlBIcd6KRXpcDRwCPAs4DAufr8H8fDzs5e8M5L8HszptpHgzf2wJvaPt2DHEn4FDsfTeRwCzgHr2njjT2OIXo1qysSGb0WIQ8y96CutLT2I+WWUZE6FxuhLzD7wMa8cTgIOxvl6H9fVd2Fh9AMuhtYEirUETleYDzRLf3db8lAof9+BHKMcBxwgsQnQaMAmkJsiEG2z0NI1IGmEI6A2KKBqiHio3q8rQ3hl/NRiHubSTALoL6EJghpRHgan3MuxcL34SNudkCAhEE5iEms4QFNJZq+ZfWECNLwWkH6sE8KQgdyv+SkF6ZWHuvsE51zIIhXNuC37uLcvbHe2R7T37wfvMUXASCHmY8AqQyzpsAqjJVa5Auc+olG89CbXZ1uDnnnK+hzLJvg24DbgtOIetxd51BusGHmbmH1eWljzf0fbg/dwWvJMaTIEJu/EP4RSY0chWlq54Pwq1Y0fwc3PQ15NYf09j7Rf3wqNVRZALrB/zSVrur158JfheD/21olKPUhuYWnxUh0Q1TcJLDyRq05rx0uL5On3xmpFvYGqxT5A3IydMQSh7jaG6QfDzKKRrxiR8AqfN4N09jh1fRkbkxZjyQyF75p9zLUVtFpiL7crLKJdOB5mdq2oVKC6pUh8hjWdCfjKOYcju6LF35N5TFRNybC+Zk6RjdLzFq8EUyX5K4Vxtq34PeWwaBJmm6EwRoXvFHJqWdeT61ZzpXjWLjFIrysLgpmPLZcpYHzGbV6rxvHwXuTqmKggyW5CDAXqXl77g9s4VC4L29xaIHc/kiADS6TbEDofDMf4Q80rtVM0jrYVQI8hRiSFPRMq0PGsC8BaqsCDnDbedpXV7khkQqUTS9NyoLgXG4t42Ar25Himqnds9x1Op873SZ2Kv8dJITY2I8GyQ5ly/J8qQKGudAcbhcDjGIwLoJvKPFHy+X6NN5TguHFjVYoYh5DiQRTk/iQAq7VojfZnBsRPMVYqqUmCCRHZrBUKx9rmgL1F0SbmsHZpOzwHOzCfqTdEhRVdJGULlHA6HwxEttkZJtwgbc157zKf2GEVPziMlR84M+YoHDaieJUp9Hr45adB1OihMOTQ+ycCrSoEJjl3WAe25Kqf2MVmE8HqpTSdTa2aXTJreFfNoSE0SlFcCR+fT4URkiwhr3AmSw+FwjD8ERfC7UH08Zy9ec2ObDlwIMiXV1lIO0Z4LvDi/DTfdiuT+HBWiyhQYwPIz3JfXwi94Chf6QzXPkSGPrlWl6RS++PQ09h+J6DuBSXlaUx4C2Rqz/uBwOByOEiAqqEcP8KCQnz1F4UxFz/V9GCyBErNj3Ty621pQkbkq8gFgRl7PAptFeSxuy1V1KTC+4HsMonLnXgmDckCQA0D/2xdaxS/O7KF6OKm2FvBkjsJnFDksj29n/3/P5O70rowXty7hcDgcjmJpWNaO+B4gD6DSkV/1Z20Q9GOep8/uI0lP25yiZKlNg4g0YNmfT8u/rI7ejejOuAWdVJUC07isHfEFFe5WWJ7vyxTlVBH5hifeku6VhWu1qbbt+KqzUf0fgXPy+rIKKroJ9OaepgTNi+NznuhwOByO0mFJYHgAeDwfC70goHIoyjcTOnR8csCTnhWFrVmplXNRzTSh/vsF3in5p08ZQLjRR/o9zykwRZHO+AwOZVZgSbvyw+LSzlb0x4KemFo+30vlocikHmiha8McROVwT+QHChepksxLl7X0Nfd7Ig8nyhUm53A4HI7ISYgySKILK2+ieW26BVTkROAnQ7V6xqA3lOxsm5nz1ztXLaS/bRrqMR/kiwqfRLUhH/mDYJknQe7yBCYvKX1emmKouhV02kEd1NUkMsBvVdiRv0VLRdEXKfIbEv5HVVi0Y+UCb2fbghG/0fX0HDqfmCVM0Rav33szwq+B8wRJ5meJU1TpB7kynfF6S1QHy+FwOBwxxMOjVjIg8neFJ/Ndr4KqOceoyE9qtOYrSZJHdK+YU5NaMfqRUmr9fJL+4PS01r0C5dcC7xKVyQUcHamqXlPbXb/GS8dPXahKB4xU21wQGlEuRXld/o2ym4zCQyjXCXoLHo+rSjeoaRY+nodOVs87WJVTQF8mcIKK1BZ6R1X9pyqvB7ZMWbY56lfpcDgcjjLS1TaPtOd5NX76swKfRsUraOVVFHQlcJ0K/wYeEpUdQAZRUPFUtBZYIsjJKC8FPQVozJr+876l6nLgHBF5stHKB8SK6lRgVh2I+n2A93zgChGZV/jVFFR80J2IbFVYD7oT8FGmCixAZBZWALGo0gsKXcBbk5L4fc9QLzMPLnONSYfD4XBETvfKuSh6kOD9XoSji7mW2sFOF8g2UTYAWxEdQqVJ0fkIc0GmC9TlXKxx+BsNIXw2IXzNVzINToEpHbuemIfnkZSk/yWEj1CEGWZ3I+/X1kU0/jD3UOQyxXuP4KeaYtgZHA6Hw1F6ulfOI9P9XUk0vfctAt9FmFy2mwUltItZuxRFkFtQXgdsalwaz/UqfodaOVLXNAAJTSNcgsrtxYV3yV7/2O/vS4CqPIbybfH9lFfjfF8cDodjotC0dBPJKe9TRK5S4epyZNndjez+oyBM/5EORb/hqW6Kc7mbqlVgJi3YTk1/HZlkeg3o5xTWxSvAaw+qugP0SzWT9JGBrgQNC+Plye1wOByO8tLYuglRvxPRLwvcm185nAph9QYHEL6bEP8GTShxPi2oWgUGYNKRa/AySTJJbga+IOj2qGUKE2jZPYJ8HdU/pfth5nEbohbL4XA4HFFQk2TXDZufVOSTYg658UFBhTTCZYpeklFvqCFmYdP7UtUKDEDTks0k8TNewv8V8GXQ7qhlAkAVUelH9Qfi6Q+8hAw0LnVRRw6HwzFRaTxwA80vmE3N5vZ/IXwMdGPUMhlmekG5SuFz+NLZuzDGZ0cB8ZcwR1Ir5wJSj+jbgY+DlK5qY74oqGhKlO+jfBVhl1NeHA6HwwFYaQAlqSJnAV9DpTXi1TitcCXKpxDWx/nYKMy4UWAAUqvngGiNphPnY0dKBxYa/14w5vzdAXwd8S9V9VzEkcPhcDj2onvlXHzf9zzPOw3kqwjHRrMgawqVnyHel0G3NrZWT3mbqj9CCtO4uAN/KDnkq/cbQS9E+LcK6YrUnwpqNKrofcB/icj3hYRTXhwOh8OxH01LNzMlM8nvavT+CfpGlN+g2l+ZuyuoorAK+Kj4/qeRwa0Ny/MqUh0548oCk2VH21SavTn0+rsOAC4WeLPCgnyKaeXO7oC4Laj8Bo9L7r1v8vLnn9KNzN0S9atwOBwOR8xJrZyLwHQVOU+Vdwt6WFC7r8Ro8KekgOtAvyVe4n58PxPHTLtjMS4VGICtG1toSKXxRZMkkscDbwI5E5ibNcgU/PC7cwQpqHQi3Kjoz/D0lppEZrBt60wOP+6pqF+Bw+FwOKqErrZ5qIrnkTkYkQtFOQf0YESyieUKu3C2hKQASp/Af1T4BcL1vnq7EuLTuKT6lJfsI417Um0tqOokEXkG8EpUX4CwlGyNiBzYrbcCIH3AatBbUfkjyD1AV+PS6jk7dDgcDkf8SK2aDypJ1fTBAucCL0PkEJRpeWfYtax0Q8B64G5VuUrgP/XSua2fKdrQGu8w6bGYEApMlt6Vc/EULyM6T5FnqXAccBxwsCBTgRrQhKqZ7kTUB/FRhoAuhBWqPIDwgMAdIqwjpjUiHA6Hw1G99D05jZr+PhlomjpdRU4AfSYqxyEcDsxSpRbBE0hYeSTxFfURSQv0KLpG4EHgftC7vHT66b4DZ6XrOnZp44HjY82aUApMmK5VcwCSojJFYArIHGABaLOqTAY8Ee0B6cYKZrUjdCnsAoacc67D4XA4KkHPyhYEPB+aEJ0CMkuVhQhTRWkETYL0KtqNyGaBDYp2CdrZ0Fkz2N+Y0fqD3ZrlcDgcDofD4XA4HA6Hw+FwOBwOh8PhcDgcDofD4XA4HA6Hw+FwOIpkwkYhORwOR6lR3Z0yDEBF3BTrcJQLUdU6oHaUz2jonz6QAdKA7wZndAQTpQdMAhKjfZQ9bbhX+wG4NowHoYWvDqgZ5aNDwABucYwFoXE4G3gGcAQwA5tT+4CtwJPAQ8G/u3kzAoJ2SmLz5XANkAb6ceOqIuSwfvlYe2RGa48k8A7gQhix5KECg1gD7wI2YwPyblV9EOhxDR4Zs4CvAUcTKCTDoNiCNwSksPZbC9wPPKiqm1z7xYYm4IvA8zBFc1884Fbg00BX1MJOdIJJeDrwWmwOPQiYwt5FcjPYvLkS+C1wpapuBrd5iIATgG9gi2aYJHA78AFs0XRUhqnAt4Gj2Fv/EGAb8DHggVGvoKrf0MLoUNVfqOrhqpodzI4KEbzzBap6d4Ht16uqN6vqWaqadO0XLUF7tqrq42O029Oqusi1V7QE7TVfVf9PVftzHHNDqnq1qi51c2ZlCd736araM0Lb/ENVJ7s2qQxBe8xR1btG0S9OGas9iql2ORt4E/BT4MisUI6KU+hLrwdOBS4BzgLXfjFgHrBojM/MBxZELehEJhgnDcDHgTdix365kMRq23wR2306Koub4OKFFvi73ZSiXPdJwKcw87ej+piHtd8ycEpMxBzB/ubtfanDjgwdERAaH6cBr6ewOfQs4GVRP4vDUe2MNfj6gO1ANyP7WAC8GDgl6odx7Ed/8JMZ43PPwE2oUeMBxzL2mEwSKDBO2YyMScArgGnD/C4D3A1cCtzB8GNvMvAqoN61ocNROGNNlj/DLCznAD/EnNGGYxrwXHCTaozYAXwSO+b7FHAj5ow9HILtKMfa/TvKQDBmGoFDh/n1cBuHZQy/eDoqwzTgxBF+9x/gDcB7g3/eOMLnDgYWRv0gDkc1M5YCswPznv838FFMiRmJRdgk7IgHPcD1WOTDV7Gz+qtH+fxicj/Ld5SexUDLPn+XwSL+9t0VHIBb/KJkDhYqPRx/w+bMQWA18AeGj2yZHVzH4XAUyFgKTDjOrx/4K5bLYDiaGD2fjKPyCOwO1+wArmLk8Nt6nAIaJUuBufv83SC2eRja5+/nAweCs3hGRDN2lLcvih27h1nD8GOuIfhxOBwFMpYCs+/s2IvlEhmOAcb2tXBEy0asDYdDGD0hnqMMhBSQQzDfiDCdWAK0nfv8/SSGP25yVIaR/AEF8yWbFfq7DuBh4DHg0dDP44w8lzocjhxIjvH7fRWY6cHPcKzHDci4k2Tk8hF9mLO2o/I0YhFI+7IJ28FvZv/jhqMxq1kfjkqznZH9yU7DEnB9mT1H8G9h/7lWgS1RP4jDUc2MpcD47FFipgCvwcyn+5IC7sRZYGJJaJffirXjcKzGLYZR0USQS2kfNmJZkzuG+d3h2BGEa7PKsxnYwP5HfmB+ZO/GNnpfBZ4G1rusuw5H6RnrCGke8CzgfCxh3RtH+NxtwD/BpceOGVnNRbDIlfOxXftwn7sZl0Y7KhZiY21fNmKWzc3D/G4OsCRqwScoXZhv0kjUARcBv8bKDDQ6XyWHo/SMZYF5MxaGm2Rk/4iVwFew2gWO+NAInIft3g/ETNsnjPDZJ7DoCUc0HM3wDp0bsKOK9cP8rhk7dronauEnIGngGuB1WETYcAhwHPAT4ErgW6q6HFcs0OEoGWMpMGNFFa0DPogVmHPWl3gxDcv/AqO34zb2mLpdG1aQ0K78SPZvo15sfIH5wQywd5j7JOCw7HVcu1UGEcm2273Aj4DPMLxVM0sTcDG2efhf4FpVHXDt5XAUT7GlBASYiUuAFldqGV15WQN8GPgdbmcYFVOxKsb7ksL8X8DaabjjvYNwNXUqTjBO0sD3MevzzjG+4gHHYArPR4Amd6TkcBRPsQrMAuA72KB0abGrj7VYmO5gkddxFM58LIndvvSwxwKzluGddQ9i75BdR4UIlJgU8DVsE7Aqh6/NwLJjfww3XzocRZNLJt61WNjgSLkPpmDHSK8GxA3KquJU7IzeFQesMKFxsoDhq0tvwcYf2A5/OEfehZgC5IiAQInpB36JBTj8nf2TDu5LPRaldHbU8jsc1c5YCsyVwCsxT/qPY86ew9EMvI3hIykc0aBYtEQntpsfSbM8AfgA0OCUz0g4jOGPYNvYYxnrZ/gd/iSGD792VIhAickAt2MBD19meGUzTDNwATDVjTmHo3DGUmA6gPuxEOlvYDuHNSN89hm4nXyc2Iopladjk+WVjHxU9GKCRGpuQq0otdi4GY4BLDvvkdhR0XA+MIL5VhR7FOwoAhEJl+v4EhZCfTsjbxrA2t1lU3Y4imCsKKSwV6dilVZvxQo37ksdpsC4cNx4MIClMH8y+O/bMYfPlw3z2RZsIbw7aqEnGI1YQrrhOIugwnvASMUDD8WcQnc5J+zyEyj4c7BEdfsqKH1Y7p4bMAvaV4FzGT779VzM9+lOF0XmcBTGWArMboLwwTTD56QAG6Suumq8CM+KW4CbgJcy/IR6CNYf0lELPYFoxaoSD8cMRlZawmQXwoeifpjxTsg6+X4sNDrs75LANgD/hR0hrcSO3ecDJw5zOWH/6uMOhyMPCjE9j5bzwJUSiCGh3d0GzB9mOGbjjiIqzaGMXFssV+Zglazd8V/lmIGlj2gJ/czGfADDuXpWAFcwsmNvPSPXJnM4HGOQ84IVTI5TGdnkrVi0kiO+pBjZwtKAU2AqQjCWBFNg6ou7GpOBg6N+pgnGSCU3mggcskObhjWMXOR2NOd6h8MxBrkUc8xSg9XSOXmEz6aBp6J+IMeojLbbGyvrsqO0NDO6E+dwC9tI7XcE5k/jqsGXkVAW3s4RPjIHy8vzdMgaNhtTMofDbfgcjuFJYNbp2ao6UhmjvrEUmAXASVi9jxcD52C7jOFYBzwW9VM7RqWGka0sk3EWmEoyjaAUwDA8APximL+/GHO23pcjsHHpFJjKsBJz2N3XetYMvCH4/U7MN+k89j5WyrKdPZmWHQ7H3kzFIp9HmtMEuHosBeZNwIWMXswxy99wAzLuJBl5F9+EU2AqyWhJ6O4AfhiOTFHV7JHTMcN8fj62yWiP+qEmCA9iVpjhjv8uwtppPaagHjPCNdowRcdFIDkc+5PEghxG476xFqwabPcwlvLSBvwKcEXK4k2akc/cm7AdpKMyHM3wO/MMsHqYv1csmd1wGbEnA0dF/UATiFXALSP8rg44BXg9lutluAlRsay9m6J+EIejitFS7Lg7sXwH90X9NI4x6WVkJ95mxtZ4HUUScuB9BsNvDAYZua7OKoaP9KsjUGBcJFJF6AF+ikX1FcJdwOW4AqoOR1EUq8CsAj6KG4xxZLjG2MLwRQHBwkJPArcIVoDpwLIRfjfIyNmu1zNyBMxBOAta2QnNcbdgWXe35XmJR7H8MLkUf3SUFrdAxYti20OSwC4s8ZI/ygcVy2UwhO3it2CZXa/BHHczTnmJhAw2gXaw985csDbdN//EGmA5dr64704+gSXcasH5UpSbudjmYbh2W4OVgRiO7cAjmKUsPF4TWPjuTGw8O8pIEI2UwRytO7ASK8czcoADWJv+E/gmVp7F+b5Unn5sbpvM3kfpNdjYcju3ypLBxsVY+sdweMBOUdVlwIGM3ng+lpp+gD2VcftwVpfICKwk2WJ+zezdfoIN1geBnlD4ZwJzKpzG8O2tWPmB7a5dy0PQDtOxyKFa9m+3LqwNBvZx4gVr76OwCvD7fi9bOqLLtV1lCFkqW7DK7idi43EWtkimsLnyAeC24KfbtU/lCdpqBjZ+Euw9fjxMgXkYtxmvCEF71GK+gPuuX7kgwMb/B+RLNl66mp0WAAAAAElFTkSuQmCC';
+  var STATUS = { todo: 'A fazer', doing: 'Em andamento', done: 'Pronto' };
+  var KEY = 'jornada-avep-v1';
+
+  var state = { view: 'jornada', day: null, open: null, done: {}, tasks: {}, quizzes: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) { state.done = saved.done || {}; state.tasks = saved.tasks || {}; state.quizzes = saved.quizzes || {}; }
+  } catch (e) {}
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ done: state.done, tasks: state.tasks, quizzes: state.quizzes })); } catch (e) {}
+  }
+
+  var allMods = [];
+  CO.days.forEach(function (d) { d.modules.forEach(function (m) { m.day = d.id; allMods.push(m); }); });
+  var next = allMods.filter(function (m) { return !state.done[m.id]; })[0] || allMods[0];
+  state.day = next.day; state.open = next.id;
+
+  function dayDone(d) { return d.modules.filter(function (m) { return state.done[m.id]; }).length; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function renderLines(lines) {
+    var html = '', i = 0;
+    while (i < lines.length) {
+      if (lines[i].charAt(0) === '•') {
+        var items = [];
+        while (i < lines.length && lines[i].charAt(0) === '•') { items.push(lines[i].slice(1).trim()); i++; }
+        html += '<ul>' + items.map(function (it) { return '<li>' + esc(it) + '</li>'; }).join('') + '</ul>';
+      } else {
+        html += '<p>' + esc(lines[i]) + '</p>';
+        i++;
+      }
+    }
+    return html;
+  }
+
+  function quiz(m, b) {
+    var qs = (b && b.qs) || m.quiz;
+    var qid = (b && b.qid) || m.id;
+    var qTitle = (b && b.title) || 'Prova (modelo, ajuste as perguntas ao conteúdo final)';
+    var qState = state.quizzes[qid] || (state.quizzes[qid] = { answers: {}, sent: false });
+    var body = qs.map(function (q, qi) {
+      return '<fieldset class="q"><legend>' + (qi + 1) + '. ' + esc(q.q) + '</legend>' + q.o.map(function (o, oi) {
+        var cls = 'opt';
+        if (qState.sent) cls += oi === q.a ? ' right' : (qState.answers[qi] === oi ? ' wrong' : '');
+        return '<label class="' + cls + '"><input type="radio" name="' + qid + '-q' + qi + '" data-mod="' + qid + '" data-q="' + qi + '" value="' + oi + '"' +
+          (qState.answers[qi] === oi ? ' checked' : '') + (qState.sent ? ' disabled' : '') + '> ' + esc(o) + '</label>';
+      }).join('') + '</fieldset>';
+    }).join('');
+    var right = qs.filter(function (q, i) { return qState.answers[i] === q.a; }).length;
+    var pass = right / qs.length >= 0.7;
+    var res = qState.sent
+      ? '<div class="result ' + (pass ? 'pass' : 'fail') + '">' + right + ' de ' + qs.length + ' corretas. ' + (pass ? 'Aprovado: nota mínima de 70%.' : 'Abaixo dos 70%. Refaça a prova.') + '</div>'
+      : '';
+    var allAnswered = qs.every(function (q, i) { return qState.answers[i] !== undefined; });
+    var btn = qState.sent
+      ? '<button class="btn ghost" data-act="quiz-reset" data-mod="' + qid + '">Refazer prova</button>'
+      : '<button class="btn" data-act="quiz-send" data-mod="' + qid + '"' + (allAnswered ? '' : ' disabled') + '>Enviar respostas</button>';
+    return '<div class="quiz"><h3>' + esc(qTitle) + '</h3>' + body + res + '<div>' + btn + '</div></div>';
+  }
+
+  function block(b, m) {
+    if (b.type === 'quiz') return quiz(m, b);
+    if (b.type === 'content') return '<div class="slot content"><b>' + esc(b.title) + '</b>' + renderLines(b.body) + (b.source ? '<div class="src">Fonte: ' + esc(b.source) + '</div>' : '') + '</div>';
+    if (b.type === 'facts') return '<div class="slot content"><b>' + esc(b.title) + '</b><dl class="facts">' + b.rows.map(function (r) {
+      return '<div><dt>' + esc(r[0]) + '</dt><dd>' + (r[1] ? esc(r[1]) : '<span class="tbd">A confirmar</span>') + '</dd></div>';
+    }).join('') + '</dl>' + (b.source ? '<div class="src">Fonte: ' + esc(b.source) + '</div>' : '') + '</div>';
+    if (b.type === 'video') return b.url
+      ? '<a class="slot video linked" href="' + esc(b.url) + '" target="_blank" rel="noopener"><div class="play"></div><b>' + esc(b.label) + '</b><span>' + esc(b.note || 'Assistir agora') + '</span></a>'
+      : '<div class="slot video"><div class="play"></div><b>' + esc(b.label) + '</b><span>Vídeo a gravar</span></div>';
+    if (b.type === 'doc') return '<a class="slot video linked" style="aspect-ratio:auto;padding:16px" href="' + esc(b.url) + '" target="_blank" rel="noopener"><b>' + esc(b.label) + '</b><span>' + esc(b.note || 'Abrir PDF') + '</span></a>';
+    if (b.type === 'image') return '<div class="slot imgslot"><b>' + esc(b.label) + '</b><span>Imagem a inserir</span></div>';
+    return '<div class="slot"><b>' + esc(b.label) + '</b><span>Texto a escrever</span></div>';
+  }
+
+  function moduleHtml(m) {
+    var open = state.open === m.id, done = !!state.done[m.id];
+    var tags = m.kinds.map(function (k) { return '<span class="tag">' + esc(k) + '</span>'; }).join('') +
+      (m.live ? '<span class="tag live">Presencial</span>' : '');
+    var head = '<button class="mod-head" data-act="toggle" data-id="' + m.id + '" aria-expanded="' + open + '">' +
+      '<span class="check" aria-hidden="true">✓</span>' +
+      '<span><span class="mod-title">' + esc(m.title) + '</span><br><span class="mod-sub">' + esc(m.period) + ' · ' + esc(m.lead) + '</span>' +
+      '<span class="tags">' + tags + '</span></span><span class="chev" aria-hidden="true">›</span></button>';
+    var body = '';
+    if (open) {
+      body = '<div class="mod-body"><p>' + esc(m.summary) + '</p>' +
+        m.blocks.map(function (b) { return block(b, m); }).join('') +
+        '<div class="actions"><button class="btn ' + (done ? 'ghost' : 'ok') + '" data-act="done" data-id="' + m.id + '">' +
+        (done ? 'Desmarcar como concluído' : 'Marcar como concluído') + '</button></div></div>';
+    }
+    return '<article class="mod' + (open ? ' open' : '') + (done ? ' done' : '') + '">' + head + body + '</article>';
+  }
+
+  function jornada() {
+    var d = CO.days.filter(function (x) { return x.id === state.day; })[0];
+    var lastPhase = null;
+    var rail = CO.days.map(function (x) {
+      var n = dayDone(x), full = n === x.modules.length;
+      var label = x.phase && x.phase !== lastPhase ? '<li class="phase-label">' + esc(x.phase) + '</li>' : '';
+      lastPhase = x.phase || lastPhase;
+      return label + '<li><button class="stop' + (full ? ' done' : '') + '" data-act="day" data-id="' + x.id + '"' + (x.id === state.day ? ' aria-current="true"' : '') + '>' +
+        '<span class="node">' + (full ? '✓' : x.node) + '</span><span><span class="stop-name">' + esc(x.name) + '</span><br><span class="stop-meta">' + esc(x.when) + ' · ' + n + '/' + x.modules.length + '</span></span></button></li>';
+    }).join('');
+    return '<div class="shell"><ol class="rail" aria-label="Etapas da jornada">' + rail + '</ol><section>' +
+      '<div class="day-head"><span class="eyebrow">' + (d.phase ? esc(d.phase) + ' · ' : '') + esc(d.name) + ' · ' + esc(d.when) + '</span><h2>' + esc(d.modules.length > 1 ? d.modules.length + ' etapas nesta parada' : d.modules[0].title) + '</h2></div>' +
+      '<div class="mods">' + d.modules.map(moduleHtml).join('') + '</div></section></div>';
+  }
+
+  function producao() {
+    var tasks = allMods.map(function (m) { return m.task; });
+    var count = { todo: 0, doing: 0, done: 0 };
+    tasks.forEach(function (t) { count[state.tasks[t.id] || 'todo']++; });
+    var rows = allMods.map(function (m) {
+      var t = m.task, s = state.tasks[t.id] || 'todo';
+      var dayName = CO.days.filter(function (d) { return d.id === m.day; })[0].name;
+      return '<div class="task"><div><div class="task-title">' + esc(t.text) + '</div><div class="task-meta">' +
+        '<span class="mono">' + esc(dayName) + '</span><span>Responsável: ' + esc(t.owner) + '</span>' +
+        '<span class="tag' + (t.origin === 'lista' ? ' live' : '') + '">' + (t.origin === 'lista' ? 'Tarefa da lista' : 'Sugerida') + '</span></div></div>' +
+        '<select class="sel s-' + s + '" id="sel-' + t.id + '" data-task="' + t.id + '" aria-label="Status: ' + esc(t.text) + '">' +
+        Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (k === s ? ' selected' : '') + '>' + STATUS[k] + '</option>'; }).join('') + '</select></div>';
+    }).join('');
+    return '<div class="shell" style="grid-template-columns:minmax(0,1fr)"><section>' +
+      '<div class="day-head"><span class="eyebrow">Para RH e gestores</span><h2>Conteúdo a produzir</h2></div>' +
+      '<p class="intro">Cada etapa da jornada da AVEP, da candidatura à integração, precisa de um treinamento pronto. Aqui fica o acompanhamento do que já foi criado e do que falta, com um responsável por tarefa.</p>' +
+      '<div class="stats"><div class="stat"><b>' + count.todo + '</b><span>A fazer</span></div><div class="stat"><b>' + count.doing + '</b><span>Em andamento</span></div><div class="stat"><b>' + count.done + '</b><span>Prontos</span></div></div>' +
+      '<div class="tasks">' + rows + '</div>' +
+      '<div class="legend"><span class="tag">Vídeo</span><span class="tag">Leitura</span><span class="tag">Imagens</span><span class="tag">Prova</span><span class="tag">Dinâmica</span><span class="tag">Checklist</span><span class="tbd">A confirmar</span><span class="tag live">Presencial</span></div>' +
+      '<p class="note">Neste protótipo, o progresso é salvo só neste navegador. Para o time inteiro enxergar o mesmo andamento, a plataforma precisa de login e banco de dados.</p>' +
+      '</section></div>';
+  }
+
+  function render() {
+    var total = allMods.length, n = allMods.filter(function (m) { return state.done[m.id]; }).length;
+    var pct = total ? Math.round(n / total * 100) : 0;
+    var top = '<header class="road"><div class="wrap">' +
+      '<div class="brandbar"><img class="logo" src="' + LOGO + '" alt="AVEP Brasil">' +
+      '<div class="brand"><span class="suite">Pré-boarding · Admissão · Integração</span><h1>Jornada do(a) consultor(a)</h1><span class="sub">' + esc(CO.tagline) + '</span></div></div>' +
+      '<div class="tabrow"><span class="rowlabel">Ver</span><div class="tabs">' +
+      '<button class="tab" data-act="view" data-id="jornada" aria-pressed="' + (state.view === 'jornada') + '">Minha jornada</button>' +
+      '<button class="tab" data-act="view" data-id="producao" aria-pressed="' + (state.view === 'producao') + '">Conteúdo a produzir</button></div></div>' +
+      '<div class="meter"><div class="meter-top"><span>Percurso concluído</span><b>' + n + ' de ' + total + ' etapas · ' + pct + '%</b></div>' +
+      '<div class="lane" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><div class="lane-fill" style="width:' + pct + '%"></div></div></div>' +
+      '</div><div class="stripe" aria-hidden="true"></div></header>';
+    document.getElementById('app').innerHTML = top + '<main class="wrap">' + (state.view === 'jornada' ? jornada() : producao()) + '</main>';
+  }
+
+  var app = document.getElementById('app');
+  app.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]'); if (!el) return;
+    var act = el.getAttribute('data-act'), id = el.getAttribute('data-id');
+    if (act === 'view') { state.view = id; }
+    else if (act === 'day') { state.day = id; var d = CO.days.filter(function (x) { return x.id === id; })[0]; state.open = d.modules[0].id; }
+    else if (act === 'toggle') { state.open = state.open === id ? null : id; }
+    else if (act === 'done') { state.done[id] = !state.done[id]; save(); }
+    else if (act === 'quiz-send') { var mid = el.getAttribute('data-mod'); (state.quizzes[mid] || (state.quizzes[mid] = { answers: {}, sent: false })).sent = true; save(); }
+    else if (act === 'quiz-reset') { state.quizzes[el.getAttribute('data-mod')] = { answers: {}, sent: false }; save(); }
+    render();
+  });
+  app.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.matches('input[data-q]')) {
+      var mid = t.getAttribute('data-mod'), qi = +t.getAttribute('data-q');
+      var qState = state.quizzes[mid] || (state.quizzes[mid] = { answers: {}, sent: false });
+      qState.answers[qi] = +t.value; save(); render();
+    } else if (t.matches('select[data-task]')) { state.tasks[t.getAttribute('data-task')] = t.value; save(); render(); }
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
