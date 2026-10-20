@@ -5282,10 +5282,16 @@ function renderIndicadoresFunil(){
     cands.forEach(c=>{ const k=(c.canal==='curriculo'||c.canal==='outro'||!c.canal)?'whatsapp':c.canal; const o=porCanal[k]||(porCanal[k]={n:0,fin:0,con:0}); o.n++; if(faseFinal(c)) o.fin++; if(contratado(c)) o.con++; });
     const linhas = Object.entries(porCanal).sort((a,b)=>b[1].n-a[1].n);
     const el = document.getElementById('dash-origem');
-    if(el) el.innerHTML = linhas.length ? `<div class="chart-card-sub" style="margin-bottom:6px">Origem dos candidatos</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <tr style="color:var(--mid)"><th style="text-align:left;font-weight:500;padding:3px 0">Canal</th><th style="text-align:right;font-weight:500">Candidatos</th><th style="text-align:right;font-weight:500">Fase final</th><th style="text-align:right;font-weight:500">Contratados</th></tr>
-        ${linhas.map(([k,o])=>`<tr style="border-top:1px solid var(--bege)"><td style="padding:4px 0">${CANAL_LABEL[k]||k}</td><td style="text-align:right">${o.n}</td><td style="text-align:right">${o.fin}</td><td style="text-align:right;font-weight:600">${o.con}</td></tr>`).join('')}
+    // Colunas numéricas com largura fixa e centralizadas, cabeçalho curto em
+    // caixa alta: antes os títulos "Candidatos Fase final Contratados" ficavam
+    // colados e a tabela amontoada no card estreito.
+    const _th = (t,al='center') => `<th style="text-align:${al};font-weight:600;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mid);padding:4px 6px;line-height:1.25;vertical-align:bottom">${t}</th>`;
+    const _td = (t,extra='') => `<td style="text-align:center;padding:7px 6px;font-variant-numeric:tabular-nums;${extra}">${t}</td>`;
+    if(el) el.innerHTML = linhas.length ? `<div class="chart-card-sub" style="margin:4px 0 8px">Origem dos candidatos</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">
+        <colgroup><col><col style="width:21%"><col style="width:21%"><col style="width:21%"></colgroup>
+        <tr>${_th('Canal','left')}${_th('Total')}${_th('Fase final')}${_th('Contratados')}</tr>
+        ${linhas.map(([k,o])=>`<tr style="border-top:1px solid var(--bege)"><td style="padding:7px 6px 7px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${CANAL_LABEL[k]||k}</td>${_td(o.n)}${_td(o.fin)}${_td(o.con, o.con?'font-weight:700;color:var(--green)':'color:var(--light)')}</tr>`).join('')}
       </table>` : '';
   }catch(e){ console.warn('origem dos candidatos', e); }
 
