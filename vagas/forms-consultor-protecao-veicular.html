@@ -225,6 +225,20 @@ const PERFIL_QUESTIONS = [
   { id: 'p10', q: 'Qual o seu valor ideal de ganho mensal?' }
 ];
 
+// Triagem comercial de múltipla escolha (pedido da Chrys em 21/10/2026): tempo
+// de vendas, produto x serviço (quem já vendeu consórcio, empréstimo, plano de
+// saúde, seguro ou proteção entende melhor a venda da Auto Club) e se a pessoa
+// já prospectou ativamente ou só trabalhou com leads. As respostas vão junto
+// com as de perfil, marcadas com "[Triagem]", e entram no dossiê de match.
+const TRIAGEM_QUESTIONS = [
+  { id: 't1', q: 'Quanto tempo de experiência você tem com vendas?', opcoes: ['Nenhuma', 'Menos de 1 ano', 'De 1 a 3 anos', 'Mais de 3 anos'] },
+  { id: 't2', q: 'O que você já vendeu?', opcoes: ['Só produtos', 'Só serviços', 'Produtos e serviços'] },
+  { id: 't3', q: 'Você já vendeu algum destes serviços? Marque todos que já vendeu.', multi: true, opcoes: ['Consórcio', 'Empréstimo ou crédito', 'Plano de saúde ou odontológico', 'Seguro', 'Proteção veicular', 'Nenhum desses'] },
+  { id: 't4', q: 'Como você conseguia seus clientes?', opcoes: ['Só com leads que a empresa passava', 'Prospecção ativa (eu mesmo buscava os clientes)', 'Os dois: leads e prospecção ativa'] },
+  { id: 't5', q: 'Quais formas de prospecção você já praticou? Marque todas.', multi: true, opcoes: ['Abordagem em campo (porta a porta, eventos, parceiros)', 'Ligações e WhatsApp para lista fria', 'Redes sociais', 'Indicações de clientes', 'Nunca prospectei'] }
+];
+const SERVICOS_QUE_CONTAM = ['Consórcio', 'Empréstimo ou crédito', 'Plano de saúde ou odontológico', 'Seguro', 'Proteção veicular'];
+
 const COMERCIAL_QUESTIONS = [
   { id: 'c1', q: 'Em até 8 linhas, convença o recrutador a contratar você para esta vaga. Considere que ele tem apenas 1 minuto para tomar a decisão.' },
   { id: 'c2', q: 'Qual foi a maior quantia de dinheiro que você já ganhou em um único mês? Explique como alcançou esse resultado, o que precisou fazer para chegar lá e o que fez com esse dinheiro.' },
@@ -298,9 +312,25 @@ function pontuarDiscursoComercial(respostasTexto) {
   PALAVRAS_COMERCIAIS.forEach(p => { if (texto.includes(p)) hits++; });
   return hits;
 }
-function montarDossieMatch(discPrimary, discSecondary, respostasTexto) {
+function montarDossieMatch(discPrimary, discSecondary, respostasTexto, triagem) {
   let pontos = 0;
   const linhas = [];
+  // Triagem comercial: experiência com serviços (consórcio, empréstimo, plano
+  // de saúde, seguro, proteção) e prospecção ativa pesam a favor.
+  const t = Array.isArray(triagem) ? triagem : [];
+  const resp = id => { const r = t.find(x => x && x.id === id); return r ? String(r.resposta || '') : ''; };
+  if (t.length) {
+    const servicos = SERVICOS_QUE_CONTAM.filter(sv => resp('t3').includes(sv));
+    const tempo = resp('t1');
+    const prosp = resp('t4');
+    const ativa = /ativa/i.test(prosp);
+    if (servicos.length) { pontos += 2; linhas.push(`• Já vendeu serviços do tipo da vaga: ${servicos.join(', ')} (Alto)`); }
+    else if (/serviço/i.test(resp('t2'))) { pontos += 1; linhas.push(`• Já vendeu serviços, mas não dos tipos da vaga (Médio)`); }
+    else linhas.push(`• Experiência só com venda de produtos (Baixo)`);
+    if (ativa) { pontos += 1; linhas.push(`• Prospecção: ${prosp}${resp('t5') ? ' · ' + resp('t5') : ''} (Alto)`); }
+    else linhas.push(`• Prospecção: ${prosp || 'não informou'} (Baixo)`);
+    linhas.push(`• Tempo de vendas: ${tempo || 'não informou'}`);
+  }
   const hits = pontuarDiscursoComercial(respostasTexto);
   const nivelDiscurso = hits >= 5 ? 'Alto' : (hits >= 2 ? 'Médio' : 'Baixo');
   pontos += hits >= 5 ? 2 : (hits >= 2 ? 1 : 0);
@@ -316,7 +346,7 @@ function montarDossieMatch(discPrimary, discSecondary, respostasTexto) {
     const perfilTxt = discSecondary ? `${DISC_NOMES[discPrimary]} / ${DISC_NOMES[discSecondary]}` : DISC_NOMES[discPrimary];
     linhas.push(`• Perfil comportamental: ${perfilTxt} — perfil buscado pra vaga é ${DISC_IDEAL.map(d=>DISC_NOMES[d]).join('/')} (${nivelDisc})`);
   }
-  const nivelGeral = pontos >= 3 ? 'Alto' : (pontos >= 1 ? 'Médio' : 'Baixo');
+  const nivelGeral = (t.length ? pontos >= 5 : pontos >= 3) ? 'Alto' : ((t.length ? pontos >= 2 : pontos >= 1) ? 'Médio' : 'Baixo');
   return `🎯 DOSSIÊ DE MATCH (automático) — Nível geral: ${nivelGeral}\n${linhas.join('\n')}\nGerado a partir do DISC e das respostas abertas (varredura por palavras-chave, não é leitura de conteúdo). Pré-filtro — revisão humana antes da entrevista.`;
 }
 
@@ -343,8 +373,10 @@ async function pushCandidatoParaRS(formPayload) {
     const discPrimary = c.primary_profile || null;
     const discSecondary = c.secondary_profile || null;
 
-    const dossie = montarDossieMatch(discPrimary, discSecondary, formPayload.respostas_texto);
+    const dossie = montarDossieMatch(discPrimary, discSecondary, formPayload.respostas_texto, formPayload.triagem);
     let obs = dossie + '\n\n' + `Questionário completo (perfil e avaliação comercial) recebido.`;
+    const triagemObs = (formPayload.respostas_perfil || []).filter(r => String(r.pergunta || '').startsWith('[Triagem]'));
+    if (triagemObs.length) obs += ` Triagem: ${triagemObs.map(r => String(r.pergunta).replace('[Triagem] ', '').replace(/\?.*$/, '?') + ' ' + r.resposta).join(' | ')}.`;
     if (discPrimary) {
       obs += ` Perfil DISC: ${DISC_NOMES[discPrimary] || discPrimary}${discSecondary ? ' / ' + (DISC_NOMES[discSecondary] || discSecondary) : ''}.`;
     }
@@ -477,6 +509,12 @@ function renderForm() {
     </div>
 
     <div class="card">
+      <h3>Triagem rápida: sua experiência em vendas</h3>
+      <p class="body-text" style="margin-bottom:1.2rem;">Marque a opção que melhor descreve você. Nas perguntas com mais de uma opção, marque todas que se aplicam.</p>
+      <div id="triagemList"></div>
+    </div>
+
+    <div class="card">
       <h3>Sobre você</h3>
       <p class="body-text" style="margin-bottom:1.2rem;">Responda com atenção e da forma mais completa possível. Não existem respostas certas ou erradas; use exemplos reais sempre que puder.</p>
       <div id="perfilList"></div>
@@ -513,6 +551,23 @@ function renderForm() {
       </div>
     `).join('');
   }
+  document.getElementById('triagemList').innerHTML = TRIAGEM_QUESTIONS.map((item, i) => `
+    <div class="quiz-q" data-id="${item.id}">
+      <div class="quiz-q-title"><span class="quiz-num">${i + 1}.</span>${esc(item.q)}</div>
+      ${item.multi
+        ? item.opcoes.map((o, j) => `<div class="quiz-opt"><input type="checkbox" id="ans-${item.id}-${j}" name="ans-${item.id}" value="${esc(o)}"><label for="ans-${item.id}-${j}">${esc(o)}</label></div>`).join('')
+        : `<select id="ans-${item.id}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.95rem;color:var(--charcoal);">
+            <option value="">Selecione...</option>
+            ${item.opcoes.map(o => `<option>${esc(o)}</option>`).join('')}
+          </select>`}
+    </div>
+  `).join('');
+  // Resposta de uma pergunta de triagem: texto do select, ou as opções
+  // marcadas (separadas por vírgula) nas de múltipla marcação.
+  function respostaTriagem(item) {
+    if (!item.multi) { const el = document.getElementById(`ans-${item.id}`); return el ? el.value.trim() : ''; }
+    return [...document.querySelectorAll(`input[name="ans-${item.id}"]:checked`)].map(el => el.value).join(', ');
+  }
   renderQuestionBlock('perfilList', PERFIL_QUESTIONS);
   renderQuestionBlock('comercialList', COMERCIAL_QUESTIONS);
 
@@ -525,6 +580,7 @@ function renderForm() {
   const submitBtn = document.getElementById('submitBtn');
 
   function allQuestionsAnswered() {
+    if (!TRIAGEM_QUESTIONS.every(item => respostaTriagem(item).length > 0)) return false;
     return [...PERFIL_QUESTIONS, ...COMERCIAL_QUESTIONS].every(item => {
       const el = document.getElementById(`ans-${item.id}`);
       return el && el.value.trim().length > 0;
@@ -541,6 +597,7 @@ function renderForm() {
     );
   }
   [nome, email, whatsapp, cClt, cRem, cPres].forEach(el => el.addEventListener('input', check));
+  document.getElementById('triagemList').addEventListener('change', check);
   document.getElementById('perfilList').addEventListener('input', check);
   document.getElementById('comercialList').addEventListener('input', check);
 
@@ -553,7 +610,9 @@ function renderForm() {
       pergunta: item.q,
       resposta: (document.getElementById(`ans-${item.id}`).value || '').trim()
     }));
-    const respostasPerfil = collectAnswers(PERFIL_QUESTIONS);
+    const triagem = TRIAGEM_QUESTIONS.map(item => ({ id: item.id, pergunta: item.q, resposta: respostaTriagem(item) }));
+    const respostasPerfil = triagem.map(r => ({ pergunta: '[Triagem] ' + r.pergunta, resposta: r.resposta }))
+      .concat(collectAnswers(PERFIL_QUESTIONS));
     const respostasComerciais = collectAnswers(COMERCIAL_QUESTIONS);
 
     const result = await saveForm({
@@ -573,7 +632,8 @@ function renderForm() {
     });
 
     if (result.ok) {
-      const respostasTexto = [...respostasComerciais, ...respostasPerfil].map(r => r.resposta).join(' ');
+      // Só as respostas abertas entram na varredura de palavras; a triagem de múltipla escolha tem peso próprio no dossiê.
+      const respostasTexto = [...respostasComerciais, ...respostasPerfil.filter(r => !String(r.pergunta).startsWith('[Triagem]'))].map(r => r.resposta).join(' ');
       await pushCandidatoParaRS({
         ...result.payload,
         nome: nome.value.trim(),
@@ -582,7 +642,8 @@ function renderForm() {
         linkedin: _lvLinkedin(),
         vaga_titulo: prefill.vaga,
         observacoes: document.getElementById('f-observacoes').value.trim() || null,
-        respostas_texto: respostasTexto
+        respostas_texto: respostasTexto,
+        triagem
       });
       app.innerHTML = `
         <div class="card success-card">
