@@ -5561,7 +5561,13 @@ function renderDashboard(){
   const _vagasSubst=vagas.filter(v=>v.dataReabertura || (v.historicoReaberturas&&v.historicoReaberturas.length));
   const substTotal=_vagasSubst.reduce((s,v)=>s+Math.max(1,(v.historicoReaberturas||[]).length),0);
   const substAbertas=_vagasSubst.filter(v=>v.status!=='encerrada' && v.status!=='cancelada').length;
-  const substRepostas=_vagasSubst.filter(v=>v.status==='encerrada').length;
+  // Repostas conta ciclos, não vagas: uma vaga reaberta duas vezes e já fechada
+  // são 2 reposições feitas; a que ainda está aberta tem as anteriores feitas e
+  // a atual em andamento. Assim "em aberto + repostas" bate com o total do card.
+  const substRepostas=_vagasSubst.reduce((s,v)=>{
+    const n=Math.max(1,(v.historicoReaberturas||[]).length);
+    return s + (v.status==='encerrada' ? n : v.status==='cancelada' ? n : n-1);
+  },0);
   // Canceladas contam como resolvidas (foi o cliente quem cancelou, não é falha do RH)
   const resolvidas=fechadas+canceladas;
   const pct=totalCiclos>0?Math.round(resolvidas/totalCiclos*100):0;
@@ -5718,10 +5724,10 @@ function renderDashboard(){
   }
 
   document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalQtd}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${vagas.length} posiç${vagas.length===1?'ão':'ões'} no total${fechadasCiclosAnt?` · ${fechadasCiclosAnt} reposiç${fechadasCiclosAnt===1?'ão':'ões'} em garantia`:''}</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge g">${pctFechadas}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${fechadasCiclosAnt?`${pctFechadas}% dos ciclos · ${fechadasCiclosAnt} seguida${fechadasCiclosAnt===1?'':'s'} de reposição`:`${pctFechadas}% do total`}</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge">total</span></div><div class="kpi-hero-num">${totalCiclos}</div><div class="kpi-hero-lbl" style="margin-top:6px">Total de Vagas</div><div class="kpi-hero-sub">${fechadasCiclosAnt?`${totalQtd} contratada${totalQtd===1?'':'s'} + ${fechadasCiclosAnt} reposiç${fechadasCiclosAnt===1?'ão':'ões'} em garantia`:`${totalQtd} posiç${totalQtd===1?'ão':'ões'} contratada${totalQtd===1?'':'s'}`}</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge g">${pctFechadas}%</span></div><div class="kpi-hero-num g">${fechadas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Vagas Fechadas</div><div class="kpi-hero-sub">${fechadasCiclosAnt?`${fechadasAtuais} em vigor + ${fechadasCiclosAnt} antes da reposição`:`${pctFechadas}% do total`}</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">em curso</span></div><div class="kpi-hero-num a">${emAberto}</div><div class="kpi-hero-lbl" style="margin-top:6px">Saldo em Aberto</div><div class="kpi-hero-sub">${[substAbertas?`${substAbertas} por reposição`:'', pausadas?`${pausadas} pausada${pausadas===1?'':'s'} pelo cliente`:''].filter(Boolean).join(' · ') || 'ainda em processo'}</div></div>
-    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge r">${totalQtd>0?Math.round(canceladas/totalQtd*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>
+    <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge r">${totalCiclos>0?Math.round(canceladas/totalCiclos*100):0}%</span></div><div class="kpi-hero-num r">${canceladas}</div><div class="kpi-hero-lbl" style="margin-top:6px">Canceladas</div><div class="kpi-hero-sub">a pedido do cliente</div></div>
     <div class="kpi-hero"><div class="kpi-hero-top" style="justify-content:flex-end"><span class="kpi-hero-badge a">reposição</span></div><div class="kpi-hero-num a">${substTotal}</div><div class="kpi-hero-lbl" style="margin-top:6px">Substituições</div><div class="kpi-hero-sub">${substAbertas} em aberto · ${substRepostas} já ${substRepostas===1?'reposta':'repostas'}</div></div>`;
 
   // Tempo La Vie x Cliente e Progresso Geral viram donuts (em vez de banner de
@@ -5763,7 +5769,7 @@ function renderDashboard(){
     </div>
     <div style="display:flex;justify-content:space-around;margin-top:10px;font-size:12px">
       <div><strong style="color:${CH.green}">${resolvidas}</strong> <span style="color:var(--light)">${resolvidas===1?'resolvida':'resolvidas'} (${fechadas} ${fechadas===1?'fechada':'fechadas'}, ${canceladas} ${canceladas===1?'cancelada':'canceladas'})</span></div>
-      <div><strong style="color:${CH.bege}">${emAberto}</strong> <span style="color:var(--light)">em aberto de ${totalQtd}</span></div>
+      <div><strong style="color:${CH.bege}">${emAberto}</strong> <span style="color:var(--light)">em aberto de ${totalCiclos}</span></div>
     </div>`;
   renderChart('chart-progresso', {
     type:'doughnut',
