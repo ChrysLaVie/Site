@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Conectar backup ao Google Drive · La Vie</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",sans-serif;max-width:560px;margin:40px auto;padding:0 16px;color:#222;line-height:1.5;background:#fff}
+  h2{color:#4C3D8F;margin-bottom:4px}
+  label{display:block;margin:18px 0 6px;font-weight:600}
+  input{width:100%;box-sizing:border-box;padding:10px;font-size:15px;border:1px solid #cfcfe0;border-radius:6px}
+  button{margin-top:22px;padding:12px 20px;font-size:15px;background:#4C3D8F;color:#fff;border:0;border-radius:6px;cursor:pointer}
+  .muted{color:#666;font-size:14px}
+  .erro{color:#b00020;font-weight:600}
+</style>
+</head>
+<body>
+<h2>Conectar o backup ao Google Drive</h2>
+<p>Projeto: <b id="proj">…</b></p>
+<p class="muted">O ID e a chave secreta ficam guardados só no cofre do banco do Supabase. Depois de continuar, o Google vai pedir sua permissão para o robô gravar no seu Drive.</p>
+<form id="f" method="post">
+  <label for="client_id">ID do cliente</label>
+  <input id="client_id" name="client_id" required autocomplete="off">
+  <label for="client_secret">Chave secreta do cliente</label>
+  <input id="client_secret" name="client_secret" type="password" required autocomplete="off">
+  <button type="submit">Continuar para o Google</button>
+</form>
+<p id="aviso" class="erro" hidden>Link incompleto: falta o projeto ou o código de configuração.</p>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var proj = { rs: ['pdtwypuqfnglfaadubvz', 'R&S (painel de clientes)'], site: ['doinfhruwdwctnuoujxl', 'Site de Vagas e DISC'] }[q.get('p')];
+  var cod = q.get('s');
+  if (!proj || !cod) { document.getElementById('f').hidden = true; document.getElementById('aviso').hidden = false; return; }
+  document.getElementById('proj').textContent = proj[1];
+  document.getElementById('f').action = 'https://' + proj[0] + '.supabase.co/functions/v1/backup-drive?setup=' + encodeURIComponent(cod);
+  if (q.get('id')) document.getElementById('client_id').value = q.get('id');
+})();
+</script>
+</body>
+</html>
