@@ -1640,10 +1640,31 @@ function gcalLink(a, versao){
 // direto na agenda do Google, sem esse retrabalho.
 const GCAL_CLIENT_ID = '777938564621-9kf6102dpckufeo41taikacass58iudl.apps.googleusercontent.com';
 const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
-let _gcalToken = sessionStorage.getItem('gcal_token') || null;
+// O token do Google dura 1 hora e, antes, ficava só na aba (sessionStorage):
+// fechou a aba ou passou uma hora, a agenda "desconectava" e pedia para
+// conectar de novo a cada entrevista. Agora o token fica guardado com a
+// validade (vale em qualquer aba) e, quando vence, é renovado sozinho no
+// momento de usar (prompt vazio: o Google devolve outro token sem perguntar
+// nada, porque a conta já autorizou). A conexão só se desfaz quando a Chrys
+// clica em Desconectar ou revoga o acesso na conta Google.
+const _GCAL_LS = 'gcal_token_v2';
+let _gcalToken = null, _gcalTokenAte = 0;
+try{ const s = JSON.parse(localStorage.getItem(_GCAL_LS) || 'null'); if(s && s.token){ _gcalToken = s.token; _gcalTokenAte = +s.ate || 0; } }catch(e){}
 let _gcalTokenClient = null;
+let _gcalResolve = null; // resolve/reject da renovação em andamento
 
-function gcalConectado(){ return !!_gcalToken; }
+function _gcalAutorizado(){ try{ return localStorage.getItem('gcal_autorizado') === '1' || !!_gcalToken; }catch(e){ return !!_gcalToken; } }
+function _gcalTokenValido(){ return !!_gcalToken && Date.now() < _gcalTokenAte; }
+function gcalConectado(){ return _gcalAutorizado(); }
+
+function _gcalGuardar(resp){
+  _gcalToken = resp.access_token;
+  _gcalTokenAte = Date.now() + ((resp.expires_in || 3600) - 120) * 1000;
+  try{
+    localStorage.setItem(_GCAL_LS, JSON.stringify({ token: _gcalToken, ate: _gcalTokenAte }));
+    localStorage.setItem('gcal_autorizado', '1');
+  }catch(e){}
+}
 
 function gcalInitTokenClient(){
   if(_gcalTokenClient || !window.google?.accounts?.oauth2) return;
@@ -1651,25 +1672,48 @@ function gcalInitTokenClient(){
     client_id: GCAL_CLIENT_ID,
     scope: GCAL_SCOPE,
     callback: (resp) => {
-      if(resp.error){ showToast('❌ Não foi possível conectar ao Google Calendar'); return; }
-      _gcalToken = resp.access_token;
-      sessionStorage.setItem('gcal_token', _gcalToken);
+      const pend = _gcalResolve; _gcalResolve = null;
+      if(resp.error){
+        if(pend) pend.reject(new Error(resp.error)); else showToast('❌ Não foi possível conectar ao Google Calendar');
+        return;
+      }
+      _gcalGuardar(resp);
       renderGcalStatus();
-      showToast('✅ Google Calendar conectado!');
+      if(pend) pend.resolve(_gcalToken); else showToast('✅ Google Calendar conectado!');
+    },
+    error_callback: (err) => {
+      const pend = _gcalResolve; _gcalResolve = null;
+      if(pend) pend.reject(new Error(err && err.type || 'popup'));
+      else if(err && err.type !== 'popup_closed') showToast('❌ Não foi possível conectar ao Google Calendar');
     }
   });
+}
+
+// Devolve um token válido: o guardado, se ainda vale; senão renova em silêncio.
+// Chamar de dentro de um clique (salvar entrevista, por exemplo), porque o
+// Google pode precisar abrir e fechar uma janelinha para renovar.
+function gcalToken(){
+  if(_gcalTokenValido()) return Promise.resolve(_gcalToken);
+  if(!_gcalAutorizado()) return Promise.resolve(null);
+  gcalInitTokenClient();
+  if(!_gcalTokenClient) return Promise.resolve(null);
+  return new Promise((resolve, reject) => {
+    _gcalResolve = { resolve, reject };
+    try{ _gcalTokenClient.requestAccessToken({ prompt: '' }); }
+    catch(e){ _gcalResolve = null; reject(e); }
+  }).catch(e => { console.warn('Renovação do Google Calendar falhou:', e); return null; });
 }
 
 function gcalConectar(){
   gcalInitTokenClient();
   if(!_gcalTokenClient){ showToast('Aguarde a página carregar por completo e tente de novo.'); return; }
-  _gcalTokenClient.requestAccessToken({ prompt: _gcalToken ? '' : 'consent' });
+  _gcalTokenClient.requestAccessToken({ prompt: _gcalAutorizado() ? '' : 'consent' });
 }
 
 function gcalDesconectar(){
   if(_gcalToken) google.accounts.oauth2.revoke(_gcalToken, ()=>{});
-  _gcalToken = null;
-  sessionStorage.removeItem('gcal_token');
+  _gcalToken = null; _gcalTokenAte = 0;
+  try{ localStorage.removeItem(_GCAL_LS); localStorage.removeItem('gcal_autorizado'); sessionStorage.removeItem('gcal_token'); }catch(e){}
   renderGcalStatus();
 }
 
@@ -1677,7 +1721,7 @@ function renderGcalStatus(){
   const el = document.getElementById('gcal-status');
   if(!el) return;
   el.innerHTML = gcalConectado()
-    ? `<span style="color:var(--green)">🟢 Google Calendar conectado</span> <button class="btn btn-ghost btn-sm" onclick="gcalDesconectar()">Desconectar</button>`
+    ? `<span style="color:var(--green)">🟢 Google Calendar conectado</span> <span style="font-size:11px;color:var(--light)">(renova sozinho)</span> <button class="btn btn-ghost btn-sm" onclick="gcalDesconectar()">Desconectar</button>`
     : `<button class="btn btn-ghost btn-sm" onclick="gcalConectar()">🔗 Conectar Google Calendar</button>`;
 }
 
@@ -1719,14 +1763,23 @@ async function gcalSincronizarEvento(a){
     const url = a.googleEventId
       ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${a.googleEventId}?sendUpdates=all`
       : `https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all`;
-    const resp = await fetch(url, {
+    const enviar = async (token) => fetch(url, {
       method: metodo,
-      headers: { 'Authorization': `Bearer ${_gcalToken}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if(resp.status === 401){ // token expirou — pede de novo silenciosamente não dá (precisa de interação), só avisa
-      showToast('⚠️ Sessão do Google Calendar expirou — clique em "Conectar Google Calendar" de novo.');
-      _gcalToken = null; sessionStorage.removeItem('gcal_token'); renderGcalStatus();
+    let token = await gcalToken();
+    if(!token){ showToast('⚠️ Google Calendar não respondeu. Clique em "Conectar Google Calendar" e salve de novo.'); return null; }
+    let resp = await enviar(token);
+    if(resp.status === 401){
+      // Token recusado: renova uma vez em silêncio e tenta de novo.
+      _gcalToken = null; _gcalTokenAte = 0;
+      token = await gcalToken();
+      if(token) resp = await enviar(token);
+    }
+    if(resp.status === 401){
+      showToast('⚠️ Sessão do Google Calendar expirou. Clique em "Conectar Google Calendar" de novo.');
+      gcalDesconectar();
       return null;
     }
     if(!resp.ok){ console.warn('Google Calendar recusou o evento:', await resp.text()); return null; }
