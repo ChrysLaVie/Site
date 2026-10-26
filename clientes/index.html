@@ -719,7 +719,7 @@ header {
   <div id="ev-home">
     <h1 class="page-title">Roteiros de Entrevista</h1>
     <p class="page-sub" id="ev-subtitle">Selecione a vaga para conduzir a entrevista guiada</p>
-    <div class="filters-bar" style="margin-top:20px"><input class="filter-input wide" id="rot-search" placeholder="🔍 Buscar roteiro..." oninput="filterRoteiros()"></div>
+    <div class="filters-bar" style="margin-top:20px"><input class="filter-input wide" id="rot-search" placeholder="🔍 Buscar roteiro..." oninput="filterRoteiros()"><button class="filter-toggle" id="rot-toggle-encerradas" onclick="toggleRotEncerradas()" title="Incluir roteiros de vagas encerradas, pausadas e canceladas">Vagas encerradas</button></div>
     <div id="roteiros-container" style="margin-top:16px"></div>
   </div>
   <div id="ev-interview" style="display:none">
@@ -4071,14 +4071,49 @@ const VAGAS_ROTEIRO = [
 
 
 // Override renderRoteiros to filter by sector
+// Roteiro x vaga: os roteiros são fixos no código e as vagas vêm do banco, então
+// o vínculo é pelo título (normalizado, aceitando pequenas diferenças como
+// "Coordenador(a) Financeiro e de Gestão" x "Coordenador Financeiro / Gestão").
+// Por padrão só aparecem roteiros com vaga aberta; o botão "Vagas encerradas"
+// mostra todos, igual à aba Candidatos.
+let rotShowEncerradas=false;
+function _rotTokens(t){
+  const stop=new Set(['de','do','da','dos','das','e','a','o','em','para']);
+  return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\(a\)/g,'').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w && !stop.has(w));
+}
+function _rotCasaVaga(r,v){
+  const a=_rotTokens(r.nome), b=_rotTokens(v.titulo); if(!a.length||!b.length) return false;
+  const sa=new Set(a), sb=new Set(b);
+  const inter=a.filter(w=>sb.has(w)).length;
+  if(inter===sa.size || inter===sb.size) return true;
+  return inter/new Set([...a,...b]).size>=0.6;
+}
+function roteiroStatus(r){
+  const vs=getVagasVisiveis().filter(v=>_rotCasaVaga(r,v));
+  if(vs.some(v=>v.status==='aberta')) return 'aberta';
+  if(vs.some(v=>v.status==='pausada')) return 'pausada';
+  if(vs.some(v=>v.status==='encerrada')) return 'encerrada';
+  if(vs.some(v=>v.status==='cancelada')) return 'cancelada';
+  return 'sem_vaga';
+}
+function toggleRotEncerradas(){
+  rotShowEncerradas=!rotShowEncerradas;
+  const b=document.getElementById('rot-toggle-encerradas'); if(b) b.classList.toggle('active',rotShowEncerradas);
+  renderRoteiros(); filterRoteiros();
+}
 function renderRoteiros(){
-  const roteiros=getRoteirosVisiveis();
+  const _todosRot=getRoteirosVisiveis();
+  const _stRot={}; _todosRot.forEach(r=>{_stRot[r.id]=roteiroStatus(r);});
+  const roteiros=rotShowEncerradas?_todosRot:_todosRot.filter(r=>_stRot[r.id]==='aberta');
+  const _rotTag=id=>{const st=_stRot[id]; const L={pausada:'pausada',encerrada:'vaga fechada',cancelada:'cancelada',sem_vaga:'sem vaga'}; return L[st]?`<span style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);border:1px solid var(--light);border-radius:4px;padding:1px 5px">${L[st]}</span>`:'';};
   const s={};roteiros.forEach(v=>{if(!s[v.setor])s[v.setor]=[];s[v.setor].push(v);});
   const c=document.getElementById('roteiros-container');c.innerHTML='';
-  if(!roteiros.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum roteiro de entrevista cadastrado ainda para ${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:'este cliente'}.</p></div>`;return;}
+  if(!roteiros.length){
+    if(_todosRot.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhuma vaga aberta com roteiro agora. Clique em <b>Vagas encerradas</b> para ver os roteiros das vagas já fechadas.</p></div>`;return;}
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>Nenhum roteiro de entrevista cadastrado ainda para ${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:'este cliente'}.</p></div>`;return;}
   Object.entries(s).forEach(([setor,vagas])=>{
     const w=document.createElement('div');w.style.marginBottom='28px';
-    w.innerHTML=`<div class="section-label" style="margin-bottom:10px">${setor}</div><div class="vagas-grid">${vagas.map(v=>`<div class="vaga-card" onclick="abrirRoteiro('${v.id}')" data-nome="${v.nome.toLowerCase()}"><div class="vaga-name">${v.nome}</div><div class="vaga-meta"><span>⏱ ${v.duracao}</span></div></div>`).join('')}</div>`;
+    w.innerHTML=`<div class="section-label" style="margin-bottom:10px">${setor}</div><div class="vagas-grid">${vagas.map(v=>`<div class="vaga-card" onclick="abrirRoteiro('${v.id}')" data-nome="${v.nome.toLowerCase()}"><div class="vaga-name">${v.nome}</div><div class="vaga-meta"><span>⏱ ${v.duracao}</span>${_rotTag(v.id)}</div></div>`).join('')}</div>`;
     c.appendChild(w);
   });
 }
