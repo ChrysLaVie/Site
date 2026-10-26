@@ -3165,6 +3165,7 @@ const DOC_TIPOS = {
   disc:      { rotulo:'Perfil DISC',            ordem:3, unico:true  },
   formulario:{ rotulo:'Formulário da vaga',     ordem:4, unico:true  },
   roteiro:   { rotulo:'Roteiro da entrevista',  ordem:5, unico:true  },
+  transcricao:{ rotulo:'Transcrição da entrevista', ordem:5.5, unico:false },
   match:     { rotulo:'Match automático (DISC + formulário)', ordem:6, unico:true },
   outro:     { rotulo:'',                       ordem:7, unico:false }
 };
@@ -3173,6 +3174,7 @@ function _docTipo(d){
   const n=String(d.nome||''), p=String(d.path||d.url||'');
   if(d.resultadoSite==='disc') return 'disc';
   if(d.resultadoSite==='formulario') return 'formulario';
+  if(d.transcricaoDocId || /^transcri[çc][ãa]o da entrevista/i.test(n)) return 'transcricao';
   if(/dossi[êe] de entrevista/i.test(n)) return 'roteiro';
   if(/DISC\s*\+\s*formul/i.test(n)) return 'match';
   if(/dossi[êe]/i.test(n) || /^(avaliacao|analise)_/i.test(n)) return 'dossie';
@@ -4133,7 +4135,7 @@ function abrirRoteiro(id){
   const _ativasEv=['triagem','entrevista_rh','entrevista_gestor','vivencia'];
   const _vagaDeEv = c => getVagasVisiveis().find(v=>v.id===c.vagaId);
   const candOptions = getCandsVisiveis().filter(c => _ativasEv.includes(c.etapa) && (_vagaDeEv(c)||{}).status==='aberta').slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'})).map(c=>`<option value="${c.id}">${escapeHtmlAg(c.nome)}${_vagaDeEv(c)?' · '+escapeHtmlAg(_vagaDeEv(c).titulo):''}</option>`).join('');
-  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field" style="grid-column:1/-1"><label>Candidato</label><select id="f-cand-select" onchange="onCandRoteiroChange()"><option value="">— selecione —</option>${candOptions}<option value="__novo__">+ Novo candidato (ainda não está no funil)</option></select></div><div class="cand-field" id="f-nome-wrap" style="display:none"><label>Nome completo</label><input id="f-nome" placeholder="Nome completo"></div><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div><div class="cand-field"><label>Como soube da vaga</label><input id="f-como-soube" placeholder="Ex.: LinkedIn, indicação..."></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="14" max="100" placeholder="Ex.: 32"></div><div class="cand-field"><label>Estado civil</label><select id="f-estado-civil"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União estável</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select></div><div class="cand-field"><label>Naturalidade</label><input id="f-naturalidade" placeholder="Cidade/UF"></div><div class="cand-field"><label>Quantidade de filhos</label><input id="f-qtd-filhos" type="number" min="0" max="20" placeholder="Ex.: 2"></div><div class="cand-field"><label>Onde mora atualmente</label><input id="f-onde-mora" placeholder="Cidade/bairro"></div>`;
+  document.getElementById('ev-cand-bar').innerHTML=`<div class="cand-field" style="grid-column:1/-1"><label>Candidato</label><select id="f-cand-select" onchange="onCandRoteiroChange()"><option value="">— selecione —</option>${candOptions}<option value="__novo__">+ Novo candidato (ainda não está no funil)</option></select></div><div class="cand-field" id="f-nome-wrap" style="display:none"><label>Nome completo</label><input id="f-nome" placeholder="Nome completo"></div><details id="f-dados-pessoais" style="grid-column:1/-1"><summary style="cursor:pointer;font-size:12px;color:var(--mid)"><b style="color:var(--charcoal)">Dados do candidato</b> <span id="f-dados-resumo">· preenchidos com o que já temos no sistema; o que faltar pode ficar em branco (a transcrição registra)</span></summary><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:12px"><div class="cand-field"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div><div class="cand-field"><label>Entrevistador</label><input id="f-entrev" placeholder="Quem conduz" value="${getUserName()}"></div><div class="cand-field"><label>Como soube da vaga</label><input id="f-como-soube" placeholder="Ex.: LinkedIn, indicação..."></div><div class="cand-field"><label>Idade</label><input id="f-idade" type="number" min="14" max="100" placeholder="Ex.: 32"></div><div class="cand-field"><label>Estado civil</label><select id="f-estado-civil"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União estável</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select></div><div class="cand-field"><label>Naturalidade</label><input id="f-naturalidade" placeholder="Cidade/UF"></div><div class="cand-field"><label>Quantidade de filhos</label><input id="f-qtd-filhos" type="number" min="0" max="20" placeholder="Ex.: 2"></div><div class="cand-field"><label>Onde mora atualmente</label><input id="f-onde-mora" placeholder="Cidade/bairro"></div></div></details>`;
   document.getElementById('ev-cond-card').innerHTML=`<div class="cond-title">Condições da Vaga</div><div class="cond-grid">${Object.entries(curRoteiro.conditions).map(([k,v])=>`<div class="cond-item"><label>${k}</label><span>${v}</span></div>`).join('')}</div>`;
   renderSections();renderEval();updateProg();window.scrollTo(0,0);
 }
@@ -4149,22 +4151,50 @@ function onCandRoteiroChange(){
   } else if(sel.value){
     const c=getCandsVisiveis().find(x=>x.id===sel.value);
     nomeWrap.style.display='none';
-    if(c){ document.getElementById('f-cpf').value=c.cpf||document.getElementById('f-cpf').value; }
+    if(c) preencherDadosRoteiro(c);
   } else {
     nomeWrap.style.display='none';
   }
 }
+// Puxa o que já sabemos da pessoa: CPF e canal do cadastro, idade do formulário
+// da vaga e os dados pessoais da entrevista mais recente dela (em qualquer vaga
+// deste cliente, achando a mesma pessoa por e-mail, telefone, CPF ou nome).
+function _digitos(s){ return String(s||'').replace(/\D/g,''); }
+function dadosConhecidosCandidato(c){
+  const tel=_digitos(c.tel).slice(-8), em=String(c.email||'').trim().toLowerCase(), nm=normNome(c.nome), cpf=_digitos(c.cpf);
+  const mesma=x=> x.id===c.id || (em && String(x.email||'').trim().toLowerCase()===em) || (tel.length===8 && _digitos(x.tel).slice(-8)===tel) || (cpf.length===11 && _digitos(x.cpf)===cpf) || (nm && normNome(x.nome)===nm);
+  const pessoas=getCands().filter(mesma);
+  const ids=new Set(pessoas.map(x=>x.id));
+  const cpfs=new Set(pessoas.map(x=>_digitos(x.cpf)).filter(x=>x.length===11));
+  const entrevs=(_entrevistas||[]).filter(e=> ids.has(e.candidatoId) || (cpfs.size && cpfs.has(_digitos(e.cpf))) || (nm && normNome(e.nome)===nm))
+    .slice().sort((a,b)=>String(b.data||b.criadoEm||b.id).localeCompare(String(a.data||a.criadoEm||a.id)));
+  const pega=campo=>{ for(const e of entrevs){ const v=e[campo]; if(v!==undefined && v!==null && String(v).trim()!=='') return String(v); } return ''; };
+  let idade=pega('idade');
+  if(!idade){ for(const p of pessoas){ for(const d of (p.documentos||[])){ const o=d&&d.dadosOrigem; if(o && o.idade){ idade=String(o.idade); break; } } if(idade) break; } }
+  const cpfCad=(pessoas.map(x=>x.cpf).find(x=>_digitos(x).length===11))||pega('cpf');
+  const canal=c.canal?(CANAL_LABEL[c.canal]||c.canal):'';
+  return { cpf:cpfCad||'', idade, estadoCivil:pega('estadoCivil'), naturalidade:pega('naturalidade'), qtdFilhos:pega('qtdFilhos'), ondeMora:pega('ondeMora'), comoSoube:pega('comoSoube')||canal };
+}
+function preencherDadosRoteiro(c){
+  const d=dadosConhecidosCandidato(c);
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el && v!=='' && !el.value) el.value=v; };
+  set('f-cpf',d.cpf); set('f-idade',d.idade); set('f-naturalidade',d.naturalidade); set('f-qtd-filhos',d.qtdFilhos); set('f-onde-mora',d.ondeMora); set('f-como-soube',d.comoSoube);
+  const ec=document.getElementById('f-estado-civil'); if(ec && d.estadoCivil && !ec.value){ if(![...ec.options].some(o=>o.value===d.estadoCivil)) ec.add(new Option(d.estadoCivil,d.estadoCivil)); ec.value=d.estadoCivil; }
+  const partes=[d.idade?d.idade+' anos':'', d.estadoCivil, d.ondeMora].filter(Boolean);
+  const r=document.getElementById('f-dados-resumo');
+  if(r) r.textContent= partes.length ? '· '+partes.join(' · ')+' (clique para conferir)' : '· nada registrado ainda; pode deixar em branco, a transcrição registra';
+}
 function backToRoteiros(){document.getElementById('ev-interview').style.display='none';document.getElementById('ev-home').style.display='block';}
 function toggleSec(si){document.getElementById('sb-'+si).classList.toggle('active');}
-function toggleCheck(si,qi){secState[si].checks[qi]=!secState[si].checks[qi];document.getElementById('qc-'+si+'-'+qi).classList.toggle('checked',secState[si].checks[qi]);}
+function toggleCheck(si,qi){secState[si].checks[qi]=!secState[si].checks[qi];document.getElementById('qc-'+si+'-'+qi).classList.toggle('checked',secState[si].checks[qi]);secState[si].done=secState[si].checks.every(Boolean);const b=document.getElementById('sb-'+si);if(b)b.classList.toggle('done',secState[si].done);updateProg();}
 function saveNote(si,qi,v){if(!secState[si].notes)secState[si].notes=[];secState[si].notes[qi]=v;}
 function markDone(si){
   secState[si].done=!secState[si].done;const blk=document.getElementById('sb-'+si),btn=document.getElementById('db-'+si);blk.classList.toggle('done',secState[si].done);
   if(secState[si].done){btn.textContent='↩ Reabrir seção';btn.classList.add('undone');blk.classList.remove('active');if(si+1<curRoteiro.sections.length){const nb=document.getElementById('sb-'+(si+1));nb.classList.add('active');nb.scrollIntoView({behavior:'smooth',block:'start'});}}
   else{btn.textContent='✓ Marcar seção como concluída';btn.classList.remove('undone');}updateProg();
 }
-function updateProg(){const tot=curRoteiro.sections.length,done=Object.values(secState).filter(s=>s.done).length;document.getElementById('ev-prog-label').textContent=`${done} de ${tot} seções concluídas`;document.getElementById('ev-prog-fill').style.width=`${done/tot*100}%`;}
-function renderSections(){document.getElementById('ev-sections').innerHTML=curRoteiro.sections.map((sec,si)=>`<div class="sec-block ${si===0?'active':''}" id="sb-${si}"><div class="sec-header" onclick="toggleSec(${si})"><div class="sec-header-l"><div class="sec-num">${si+1}</div><div><div class="sec-name">${sec.name}</div><div class="sec-time">⏱ ${sec.time}</div></div></div><div class="sec-chevron">⌄</div></div><div class="sec-body"><ul class="q-list">${sec.questions.map((q,qi)=>`<li class="q-item"><div class="q-check" id="qc-${si}-${qi}" onclick="toggleCheck(${si},${qi})"></div><div style="flex:1"><div class="q-text" onclick="toggleCheck(${si},${qi})">${q}</div><textarea class="q-note" placeholder="Anotação..." rows="1" oninput="saveNote(${si},${qi},this.value)"></textarea></div></li>`).join('')}</ul><button class="done-btn" id="db-${si}" onclick="markDone(${si})">✓ Marcar seção como concluída</button></div></div>`).join('');}
+function updateProg(){const all=Object.values(secState).flatMap(s=>s.checks),tot=all.length,done=all.filter(Boolean).length;document.getElementById('ev-prog-label').textContent=`${done} de ${tot} perguntas feitas · a transcrição registra as respostas`;document.getElementById('ev-prog-fill').style.width=`${tot?done/tot*100:0}%`;}
+function renderSections(){document.getElementById('ev-sections').innerHTML=curRoteiro.sections.map((sec,si)=>`<div class="sec-block active" id="sb-${si}"><div class="sec-header" onclick="toggleSec(${si})"><div class="sec-header-l"><div class="sec-num">${si+1}</div><div><div class="sec-name">${sec.name}</div><div class="sec-time">⏱ ${sec.time}</div></div></div><div class="sec-chevron">⌄</div></div><div class="sec-body"><ul class="q-list">${sec.questions.map((q,qi)=>`<li class="q-item"><div class="q-check" id="qc-${si}-${qi}" onclick="toggleCheck(${si},${qi})"></div><div style="flex:1"><div class="q-text" onclick="toggleCheck(${si},${qi})" style="cursor:pointer">${q}</div></div></li>`).join('')}</ul></div></div>`).join('');}
 function renderEval(){document.getElementById('ev-eval').innerHTML=`<div class="eval-title">Ficha de Avaliação</div><div class="eval-grid">${curRoteiro.avaliacao.map(c=>`<div class="eval-item"><label>${c}</label><div class="stars">${[1,2,3,4,5].map(n=>`<div class="star" id="star-${c.replace(/\s/g,'_')}-${n}" onclick="setStar('${c}',${n})"></div>`).join('')}</div></div>`).join('')}</div><div class="section-label" style="margin-bottom:8px">Resultado Final</div><div class="result-row"><button class="result-btn ap-btn" id="btn-ap" onclick="setResult('approved')">✓ Aprovado(a)</button><button class="result-btn rp-btn" id="btn-rp" onclick="setResult('reprovado')">✗ Reprovado(a)</button><button class="result-btn nc-btn" id="btn-nc" onclick="setResult('nao_compareceu')" title="O candidato faltou à entrevista">Não compareceu</button></div><div class="obs-field"><label>Observações gerais</label><textarea id="obs-geral" placeholder="Pontos fortes, pontos de atenção..."></textarea></div><div class="action-row"><button class="save-btn" id="save-btn" onclick="salvarEntrevista()">💾 Salvar no histórico</button><button class="print-btn" onclick="imprimirRoteiro()">🖨 Imprimir</button></div>`;}
 function setStar(c,n){evalState[c]=n;const k=c.replace(/\s/g,'_');for(let i=1;i<=5;i++)document.getElementById('star-'+k+'-'+i).classList.toggle('on',i<=n);}
 function setResult(r){resultado=r;document.getElementById('btn-ap').classList.toggle('sel',r==='approved');document.getElementById('btn-rp').classList.toggle('sel',r==='reprovado');const bn=document.getElementById('btn-nc');if(bn)bn.classList.toggle('sel',r==='nao_compareceu');}
