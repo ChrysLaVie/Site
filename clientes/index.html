@@ -4953,7 +4953,22 @@ function _popularFiltroDash(){
   const sel=document.getElementById('dash-vaga-filtro'); if(!sel) return;
   const vagas=getVagasVisiveis();
   const atual=sel.value;
-  const rotulo=v=>v.titulo+(v.status==='encerrada'?' · fechada':v.status==='cancelada'?' · cancelada':v.status==='pausada'?' · pausada':' · em aberto');
+  // Rótulo com OS, data de fechamento e nome do contratado: no Auto Club são 8
+  // posições com o mesmo título, e sem isso a lista era 8 vezes "Consultor
+  // Especialista" (impossível saber qual escolher para o relatório).
+  const cands=getCandsVisiveis();
+  const fmtD=d=>d?new Date(String(d).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
+  const rotulo=v=>{
+    const os=v.ordemServico?` · ${String(v.ordemServico).replace(/^OS\s*(Cambury\s*)?N[ºo°]?\s*/i,'OS ')}`:'';
+    if(v.status==='encerrada'){
+      const ap=cands.filter(c=>_candidatoNoCicloVaga(c,v)&&(c.etapa==='admissao'||c.etapa==='aprovacao')).sort((a,b)=>(a.etapa==='admissao'?-1:1))[0];
+      const nome=ap?` (${String(ap.nome).split(' ')[0]})`:'';
+      return `${v.titulo}${os} · fechada ${fmtD(v.dataEncerramento)}${nome}`;
+    }
+    if(v.status==='cancelada') return `${v.titulo}${os} · cancelada`;
+    if(v.status==='pausada') return `${v.titulo}${os} · pausada`;
+    return `${v.titulo}${os} · em aberto${v.dataReabertura?' (reposição)':''}`;
+  };
   sel.innerHTML='<option value="">Todas as vagas</option>'+vagas.map(v=>`<option value="${v.id}">${rotulo(v)}</option>`).join('');
   sel.value = vagas.some(v=>v.id===atual) ? atual : '';
 }
@@ -5176,18 +5191,24 @@ function _relatorioFechamentoHTML(v){
 }
 
 async function gerarRelatorioFechamento(vagaId){
-  const v = _vagas.find(x => x.id===vagaId);
-  if(!v) return;
-  if(v.status!=='encerrada' || !v.dataEncerramento){ showToast('O relatório fica disponível quando a vaga é fechada'); return; }
+  // Sem vaga escolhida: todas as posições fechadas do cliente, uma página cada,
+  // da mais antiga para a mais recente.
+  const lista = vagaId
+    ? _vagas.filter(x => x.id===vagaId)
+    : getVagasVisiveis().filter(x => x.status==='encerrada' && x.dataEncerramento).sort((a,b)=>String(a.dataEncerramento).localeCompare(String(b.dataEncerramento)));
+  if(!lista.length){ showToast(vagaId ? 'Vaga não encontrada' : 'Nenhuma vaga fechada ainda'); return; }
+  const v = lista[0];
+  if(vagaId && (v.status!=='encerrada' || !v.dataEncerramento)){ showToast('O relatório fica disponível quando a vaga é fechada'); return; }
   if(typeof html2pdf==='undefined'){ showToast('Gerador de PDF ainda carregando, tente de novo em instantes'); return; }
-  showToast('📄 Gerando relatório de fechamento...');
+  showToast(lista.length>1 ? `📄 Gerando relatório com ${lista.length} posições fechadas...` : '📄 Gerando relatório de fechamento...');
   const box = document.createElement('div');
   box.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:-1';
-  box.innerHTML = _relatorioFechamentoHTML(v);
+  box.innerHTML = '<div>'+lista.map(_relatorioFechamentoHTML).join('')+'</div>';
   document.body.appendChild(box);
   try{
     if(document.fonts && document.fonts.ready) await document.fonts.ready;
-    const nome = `Relatorio de fechamento - ${v.titulo} - ${(EMPRESAS[currentEmpresa]||{}).nome||''}`
+    const empNome = (EMPRESAS[currentEmpresa]||{}).nome||'';
+    const nome = (vagaId ? `Relatorio de fechamento - ${v.titulo} - ${empNome}` : `Relatorio de fechamento - ${empNome} - ${lista.length} posicoes fechadas`)
       .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9 ()._-]/g,'').replace(/\s+/g,' ').trim() + '.pdf';
     await html2pdf().set({ margin:0, filename:nome, image:{type:'jpeg',quality:0.96},
       html2canvas:{ scale:2, useCORS:true, backgroundColor:'#FAF8F3' },
@@ -5195,7 +5216,7 @@ async function gerarRelatorioFechamento(vagaId){
       .from(box.firstElementChild).save();
   }catch(e){
     console.warn('Relatório de fechamento:', e);
-    showToast('Não foi possível gerar o relatório agora');
+    showToast('Não foi possível gerar o relatório agora: '+(e && e.message ? e.message : e));
   }finally{
     box.remove();
   }
@@ -5689,7 +5710,14 @@ function renderDashboard(){
   if(_cardCandVaga){ _cardCandVaga.style.display=_dashVagaFiltroId()?'none':''; _cardCandVaga.parentElement.style.gridTemplateColumns=_dashVagaFiltroId()?'1fr':'1fr 1fr'; }
   const _vagaSel = _dashVagaFiltroId() ? vagas[0] : null;
   const _btnRel = document.getElementById('dash-btn-relatorio');
-  if(_btnRel) _btnRel.style.display = (_vagaSel && _vagaSel.status==='encerrada' && _vagaSel.dataEncerramento) ? '' : 'none';
+  // Com uma vaga fechada filtrada: relatório dela. Em "Todas as vagas": um PDF
+  // com todas as posições fechadas do cliente (uma página por posição), que é
+  // o que faz sentido no Auto Club, onde o processo é um só.
+  const _temFechada = vagas.some(v=>v.status==='encerrada' && v.dataEncerramento);
+  if(_btnRel){
+    _btnRel.style.display = ((_vagaSel && _vagaSel.status==='encerrada' && _vagaSel.dataEncerramento) || (!_vagaSel && _temFechada)) ? '' : 'none';
+    _btnRel.textContent = _vagaSel ? '📄 Relatório de fechamento' : '📄 Relatório de fechamento (todas as fechadas)';
+  }
   // Show sector context for gestores
   const subEl = document.getElementById('dash-subtitle');
   if(subEl) {
