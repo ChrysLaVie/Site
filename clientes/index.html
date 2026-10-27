@@ -4262,7 +4262,16 @@ function renderEval(){document.getElementById('ev-eval').innerHTML=`<div class="
 function setStar(c,n){evalState[c]=n;const k=c.replace(/\s/g,'_');for(let i=1;i<=5;i++)document.getElementById('star-'+k+'-'+i).classList.toggle('on',i<=n);}
 function setResult(r){resultado=r;document.getElementById('btn-ap').classList.toggle('sel',r==='approved');document.getElementById('btn-rp').classList.toggle('sel',r==='reprovado');const bn=document.getElementById('btn-nc');if(bn)bn.classList.toggle('sel',r==='nao_compareceu');}
 const RESULTADO_LABEL={approved:'Aprovado',reprovado:'Reprovado',nao_compareceu:'Não compareceu'};
+// Trava contra cliques repetidos: em 27/10 uma oscilação de rede ("Failed to
+// fetch") fez a Chrys clicar várias vezes e cada clique criou outra entrevista
+// e outro PDF no cadastro (13 entrevistas e 7 dossiês da mesma pessoa).
+// Agora: o botão fica travado enquanto salva, e uma nova tentativa para o
+// mesmo candidato e roteiro (na mesma sessão) reaproveita o id da entrevista
+// anterior, trocando o PDF em vez de somar outro.
+let _salvandoEntrevista=false;
+const _entrevIdPorChave={};
 async function salvarEntrevista(){
+  if(_salvandoEntrevista){ showToast('Aguarde, salvando a entrevista...'); return; }
   // Se um candidato existente foi selecionado, usa o nome dele (evita digitar
   // errado e criar duplicata); só usa o campo de texto livre quando for
   // "+ Novo candidato".
@@ -4295,7 +4304,9 @@ async function salvarEntrevista(){
       nota: (secState[si] && secState[si].notes && secState[si].notes[qi]) || ''
     }))
   }));
-  const rec={id:Date.now().toString(),nome:nome.trim(),cpf,candidatoId:candidatoIdSelecionado,
+  const _chaveEntrev=(candidatoIdSelecionado||normNome(nome))+'|'+curRoteiro.id;
+  const _idReaproveitado=_entrevIdPorChave[_chaveEntrev]||null;
+  const rec={id:_idReaproveitado||Date.now().toString(),nome:nome.trim(),cpf,candidatoId:candidatoIdSelecionado,
     comoSoube:(document.getElementById('f-como-soube')||{}).value||'',
     idade:(document.getElementById('f-idade')||{}).value||'',
     estadoCivil:(document.getElementById('f-estado-civil')||{}).value||'',
@@ -4303,9 +4314,26 @@ async function salvarEntrevista(){
     qtdFilhos:(document.getElementById('f-qtd-filhos')||{}).value||'',
     ondeMora:(document.getElementById('f-onde-mora')||{}).value||'',
     entrevistador:(document.getElementById('f-entrev')||{}).value||getUserName(),vaga:curRoteiro.nome,roteiroId:curRoteiro.id,vagaId:(candidatoIdSelecionado&&(getCands().find(x=>x.id===candidatoIdSelecionado)||{}).vagaId)||null,setor:curRoteiro.setor,resultado,avaliacoes:{...evalState},avgStar:avg,observacoes:(document.getElementById('obs-geral')||{}).value||'',secoesConcluidas:Object.values(secState).filter(s=>s.done).length,totalSecoes:curRoteiro.sections.length,respostas,registradoPor:getUserName()};
+  _salvandoEntrevista=true;
+  const _btnSalvar=document.getElementById('save-btn');
+  if(_btnSalvar){ _btnSalvar.disabled=true; _btnSalvar.textContent='⏳ Salvando...'; }
+  let _entrevGravada=false;
+  rec.data=new Date().toISOString();
   try{
-    await upsertEntrev(rec);
-    _entrevistas.unshift(rec);
+    try{ await upsertEntrev(rec); }
+    catch(e1){
+      // O banco recusa uma segunda entrevista da mesma pessoa no mesmo roteiro
+      // em menos de 30 min (gatilho trg_lv_entrevista_sem_duplicata) e devolve
+      // o id da que já existe: reaproveita esse id e grava por cima.
+      const m=/LV_DUPLICADA:(\S+)/.exec(e1.message||'');
+      if(!m) throw e1;
+      rec.id=m[1]; _entrevIdPorChave[_chaveEntrev]=rec.id;
+      await upsertEntrev(rec);
+    }
+    _entrevGravada=true;
+    _entrevIdPorChave[_chaveEntrev]=rec.id;
+    const _posAntiga=_entrevistas.findIndex(x=>x.id===rec.id);
+    if(_posAntiga>=0) _entrevistas[_posAntiga]=rec; else _entrevistas.unshift(rec);
     // ── Auto-criar candidato no funil se não existir ──
     const candidatoIdFinal = await syncCandidatoFromEntrevista(rec);
     // Grava na entrevista o candidato e a vaga reais (antes ficava só o id do
@@ -4316,15 +4344,24 @@ async function salvarEntrevista(){
       try{ await upsertEntrev(rec); }catch(e){ console.warn('Entrevista salva, mas sem o vínculo com o candidato:', e); }
     }
     // Falta não gera dossiê de entrevista: não houve entrevista.
-    if(rec.resultado!=='nao_compareceu') await anexarDossiePDFAutomatico(rec, candidatoIdFinal);
+    if(rec.resultado!=='nao_compareceu') await anexarDossiePDFAutomatico(rec, candidatoIdFinal, {substituir:true});
     const btn=document.getElementById('save-btn');
-    btn.textContent='✓ Salvo!';btn.classList.add('saved');
+    btn.disabled=false; btn.textContent='✓ Salvo!';btn.classList.add('saved');
     setTimeout(()=>{btn.textContent='💾 Salvar no histórico';btn.classList.remove('saved');},3000);
     if(rec.resultado==='nao_compareceu'){
       showToast('Não comparecimento registrado no histórico do candidato');
       if(candidatoIdFinal && MSG_TEMPLATES.noShow && confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?')) abrirMensagem(candidatoIdFinal,'noShow');
     } else showToast('✅ Entrevista salva e candidato adicionado ao funil!');
-  }catch(e){alert('Erro: '+e.message);}
+  }catch(e){
+    const semRede=/failed to fetch|networkerror|load failed/i.test(e.message||'');
+    const motivo=semRede ? 'a conexão com o banco falhou por um instante (internet ou servidor)' : e.message;
+    if(_entrevGravada) alert('A entrevista foi gravada no histórico, mas um passo seguinte falhou: '+motivo+'.\n\nClique em Salvar de novo: a tentativa reaproveita a mesma entrevista, sem duplicar.');
+    else alert('Não foi possível salvar: '+motivo+'.\n\nClique em Salvar de novo.');
+  }finally{
+    _salvandoEntrevista=false;
+    const b=document.getElementById('save-btn');
+    if(b){ b.disabled=false; if(b.textContent==='⏳ Salvando...') b.textContent='💾 Salvar no histórico'; }
+  }
 }
 
 // Reimprime o dossiê de uma entrevista já salva, a qualquer momento — usa só
