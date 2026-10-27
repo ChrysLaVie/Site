@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel Mestrado ADM · UFG</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1F3864;--navy-d:#0B1530;--gold:#B08D57;--gold-l:#D9BC8C;
+  --bg:#F6F3EC;--panel:#FFFFFF;--panel2:#FBF9F4;--fg:#1A1F2B;--muted:#5E6577;--line:#E3DDCF;
+  --me:#1F3864;--ok:#2E7D5B;--warn:#A86A12;--bad:#B3261E;--shadow:0 12px 40px rgba(11,21,48,.18);
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1220;--panel:#161C2E;--panel2:#121829;--fg:#E8EBF3;--muted:#9AA3B8;--line:#273049;--me:#2A4A82;--ok:#5FBF92;--warn:#E0A44A;--bad:#F08A80;--shadow:0 12px 40px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1220;--panel:#161C2E;--panel2:#121829;--fg:#E8EBF3;--muted:#9AA3B8;--line:#273049;--me:#2A4A82;--ok:#5FBF92;--warn:#E0A44A;--bad:#F08A80;--shadow:0 12px 40px rgba(0,0,0,.5);color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5}
+body.chat-open{overflow:hidden}
+@media (min-width:1100px){body.chat-open{overflow:auto}body.chat-open .wrap{margin-right:min(440px,38vw)}}
+.wrap{max-width:76rem;margin:0 auto;padding:clamp(12px,3vw,28px);padding-bottom:6rem;display:flex;flex-direction:column;gap:16px;transition:margin .25s}
+.hero{background:linear-gradient(120deg,var(--navy-d) 0%,var(--navy) 100%);color:#EEF2FA;border-radius:16px;padding:clamp(18px,3.5vw,30px);border-bottom:3px solid var(--gold);display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(176,141,87,.32),rgba(176,141,87,0) 70%);pointer-events:none}
+.kick{margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-l)}
+h1{margin:0;font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:clamp(1.55rem,4vw,2.2rem);line-height:1.15}
+.take{margin:0;color:#C8D2E8}.take b{color:var(--gold-l);font-weight:600}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;position:relative;z-index:1}
+.search{flex:1 1 16rem;padding:.65rem .85rem;border-radius:10px;border:1px solid #2C4677;background:#13254A;color:#EEF2FA;font:inherit}
+.search::placeholder{color:#93A3C6}
+.askbtn{font:inherit;font-weight:600;display:inline-flex;align-items:center;gap:8px;padding:.65rem 1.1rem;border-radius:10px;background:var(--gold);color:#1A1F2B;border:1px solid var(--gold-l);cursor:pointer}
+.askbtn:hover{background:var(--gold-l)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.tab{flex:0 0 auto;font:inherit;padding:.5rem .9rem;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--navy);border-color:var(--gold);color:#EEF2FA}
+.tab .n{margin-left:.4rem;opacity:.75;font-variant-numeric:tabular-nums}
+.page[hidden]{display:none}.page{display:flex;flex-direction:column;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr));gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:2px}
+.kpi .v{font-family:"Source Serif 4",Georgia,serif;font-size:2rem;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h2{margin:0;font-family:"Source Serif 4",Georgia,serif;font-size:1.2rem;font-weight:600}
+.note{margin:0;font-size:13px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:minmax(6rem,8rem) 1fr 2rem;align-items:center;gap:8px;font-size:13px}
+.track{height:14px;border-radius:7px;background:var(--line);overflow:hidden}
+.fill{height:100%;border-radius:7px;background:var(--navy)}.bar.ok .fill{background:var(--gold)}
+.q{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr));gap:10px}
+.item{text-align:left;font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--navy);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;min-width:0}
+.item:hover{border-color:var(--gold)}
+.item .t{font-weight:600}
+.item .f{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.item .nx{font-size:13px}.item .nx::before{content:"Próximo: ";color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.stage{border-color:var(--gold);color:var(--gold)}.chip.alert{border-color:var(--bad);color:var(--bad)}.chip.date{border-color:var(--warn);color:var(--warn)}
+.board{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;align-items:flex-start}
+.col{flex:0 0 min(80vw,16rem);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:8px}
+.col h3{margin:0;font-size:14px;display:flex;justify-content:space-between;padding:4px}.col h3 span{color:var(--gold)}
+.col .items{grid-template-columns:1fr}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.list li{display:flex;gap:10px;align-items:baseline;cursor:pointer}
+.list .d{color:var(--gold);font-weight:600;min-width:5.5rem;font-variant-numeric:tabular-nums}
+.list .s{font-size:13px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.row{cursor:pointer}tr.past td{color:var(--muted)}tr.nextrow td{font-weight:600}
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:16px}
+.person{display:flex;flex-direction:column;padding:6px 0;border-bottom:1px solid var(--line)}.person:last-child{border-bottom:0}
+.person span{font-size:13px;color:var(--muted)}
+.pq{font-family:"Source Serif 4",Georgia,serif;font-size:1.25rem;line-height:1.45;margin:0;border-left:3px solid var(--gold);padding-left:14px}
+.detail{border-left:4px solid var(--gold)}.detail[hidden]{display:none}
+.dhead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.btn{font:inherit;border-radius:8px;cursor:pointer;padding:6px 12px;border:1px solid var(--line);background:none;color:var(--muted)}
+.btn.prim{background:var(--navy);color:#fff;border-color:var(--navy)}
+dl{display:grid;grid-template-columns:minmax(6rem,9rem) 1fr;gap:6px 12px;margin:0}
+dt{color:var(--muted);font-size:13px;padding-top:2px}dd{margin:0;overflow-wrap:anywhere}dd a{color:var(--gold)}
+.empty{font-size:13px;color:var(--muted)}
+/* FAB + gaveta de perguntas */
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;font:inherit;font-weight:600;display:flex;align-items:center;gap:8px;padding:.85rem 1.2rem;border-radius:999px;border:1px solid var(--gold-l);background:var(--navy);color:#fff;box-shadow:var(--shadow);cursor:pointer}
+.fab .dot{width:9px;height:9px;border-radius:50%;background:var(--gold)}
+body.chat-open .fab{display:none}
+.scrim{position:fixed;inset:0;background:rgba(11,21,48,.35);z-index:39;opacity:0;pointer-events:none;transition:opacity .25s}
+body.chat-open .scrim{opacity:1;pointer-events:auto}
+@media (min-width:1100px){.scrim{display:none}}
+.drawer{position:fixed;z-index:40;background:var(--bg);box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .28s ease}
+@media (min-width:700px){.drawer{top:0;right:0;bottom:0;width:min(440px,92vw);border-left:1px solid var(--line);transform:translateX(105%);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}
+@media (max-width:699px){.drawer{left:0;right:0;bottom:0;height:86%;border-radius:18px 18px 0 0;transform:translateY(105%);padding-bottom:env(safe-area-inset-bottom,0px)}}
+body.chat-open .drawer{transform:none}
+.dr-head{background:linear-gradient(120deg,var(--navy-d),var(--navy));color:#EEF2FA;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:2px solid var(--gold)}
+@media (max-width:699px){.dr-head{border-radius:18px 18px 0 0}}
+.dr-head h2{margin:0;font-family:"Source Serif 4",Georgia,serif;font-size:1.15rem}
+.dr-head small{display:block;color:#AFC0E2;font-size:12px}
+.dr-head .x{font:inherit;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:999px;padding:6px 12px;cursor:pointer}
+.dr-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.ctx{font-size:12px;color:var(--muted)}
+.ctxchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);background:none;cursor:pointer;font:inherit;font-size:12px}
+.sug{display:flex;flex-wrap:wrap;gap:6px}
+.sug button{font:inherit;font-size:13px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;text-align:left}
+.sug button:hover{border-color:var(--gold)}
+.msg{padding:12px 14px;border-radius:12px;overflow-wrap:anywhere}
+.msg.eu{align-self:flex-end;background:var(--me);color:#F3F5FA;max-width:88%;border-bottom-right-radius:4px}
+.msg.ia{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-bottom-left-radius:4px}
+.msg.ia p{margin:0 0 .55em}.msg.ia p:last-child{margin:0}.msg.ia ul{margin:.2em 0 .55em;padding-left:1.2em}
+.msg.ia h3{font-family:"Source Serif 4",Georgia,serif;font-size:1rem;margin:.3em 0}
+.pens{color:var(--muted);font-style:italic}
+.dr-foot{padding:10px 12px;border-top:1px solid var(--line);background:var(--bg)}
+.inbox{display:flex;gap:8px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px}
+.inbox:focus-within{border-color:var(--gold)}
+textarea{flex:1;font:inherit;color:var(--fg);background:transparent;border:0;resize:none;outline:none;min-height:42px;max-height:9rem;padding:9px}
+.send{font:inherit;font-weight:600;border:0;border-radius:9px;padding:9px 14px;background:var(--navy);color:#fff;cursor:pointer}
+.send:disabled{opacity:.5;cursor:default}
+.footrow{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px}
+.footrow .note{font-size:12px}
+
+.gate{position:fixed;inset:0;z-index:100;background:linear-gradient(120deg,var(--navy-d),var(--navy));display:flex;align-items:center;justify-content:center;padding:20px}
+.gate[hidden]{display:none}
+.gbox{width:min(26rem,100%);background:var(--panel);color:var(--fg);border-radius:16px;padding:28px;border-top:4px solid var(--gold);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.gbox h1{font-size:1.5rem}.gbox p{margin:0;color:var(--muted);font-size:13px}
+.gbox label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.gbox input{font:inherit;padding:.65rem .8rem;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
+.gbox input:focus{outline:none;border-color:var(--gold)}
+.gerr{color:var(--bad);font-size:13px;min-height:1.2em}
+.gbox .send{width:100%;padding:11px}
+.topright{display:flex;gap:6px;align-items:center}
+.who{font-size:12px;color:#AFC0E2}
+.keybox{background:var(--panel);border:1px dashed var(--gold);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.keybox input{font:inherit;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="kick">PPGADM · FACE · UFG · ADM0066 Métodos Qualitativos</p>
+    <h1>Painel Mestrado ADM · UFG</h1>
+    <p class="take" id="takeaway">Carregando…</p>
+    <div class="acts">
+      <input class="search" id="busca" type="search" placeholder="Buscar aula, exercício, autor, pessoa…" aria-label="Buscar">
+      <button class="askbtn" type="button" data-ask="">💬 Pergunte ao Mestrado</button>
+      
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-page="visao">Visão geral</button>
+    <button class="tab" role="tab" data-page="cronograma">Cronograma<span class="n"></span></button>
+    <button class="tab" role="tab" data-page="exercicios">Exercícios e avaliação<span class="n"></span></button>
+    <button class="tab" role="tab" data-page="dissertacao">Dissertação<span class="n"></span></button>
+    <button class="tab" role="tab" data-page="carreira">Aluno regular e carreira<span class="n"></span></button>
+    <button class="tab" role="tab" data-page="materiais">Materiais<span class="n"></span></button>
+    <button class="tab" role="tab" data-page="agenda">Agenda<span class="n"></span></button>
+    <button class="tab" role="tab" data-page="pessoas">Pessoas<span class="n"></span></button>
+  </nav>
+
+  <section class="card detail" id="detalhe" hidden>
+    <div class="dhead"><div><h2 id="d-nome"></h2><div class="chips" id="d-chips"></div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn prim" id="d-perg" type="button">💬 Perguntar sobre isto</button><button class="btn" id="d-fechar" type="button">Fechar</button></div></div>
+    <dl id="d-campos"></dl>
+  </section>
+
+  <section class="page" id="visao">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="card"><h2>Andamento da disciplina</h2><p class="note">Aulas, exercícios e avaliações por situação</p><div class="bars" id="andamento"></div></div>
+      <div class="card"><h2>Próximos marcos</h2><p class="note">A partir de hoje. Clique para abrir</p><ul class="list" id="marcos"></ul></div>
+      <div class="card"><h2>Próximos passos e atenção</h2><p class="note">Itens sinalizados, a confirmar ou em aberto</p><div class="items" id="atencao"></div></div>
+    </div>
+  </section>
+  <section class="page" id="cronograma" hidden><p class="note">Aulas, exercícios e avaliações por situação. Clique num card para ver o detalhe.</p><div class="board" id="board"></div></section>
+  <section class="page" id="exercicios" hidden>
+    <div class="card"><h2>Exercícios do Grupo 4</h2><p class="note">Estratégia: Teoria Fundamentada (TFD), depois análise temática</p><div class="items" id="l-exercicios"></div></div>
+    <div class="card"><h2>Avaliação final</h2><p class="note">Seminário, trabalho final e notas</p><div class="items" id="l-avaliacao"></div></div>
+  </section>
+  <section class="page" id="dissertacao" hidden>
+    <div class="card"><h2>Pergunta de pesquisa</h2><p class="pq" id="pergunta">—</p><p class="note">Tema e classificação preliminares, ainda sem validação do orientador</p></div>
+    <div class="card"><h2>Frentes da dissertação</h2><div class="items" id="l-dissertacao"></div></div>
+  </section>
+  <section class="page" id="carreira" hidden><div class="card"><h2>Aluno regular e carreira docente</h2><p class="note">Edital nº 01/2026, requisitos e títulos para a docência</p><div class="items" id="l-carreira"></div></div></section>
+  <section class="page" id="materiais" hidden><div class="card"><h2>Materiais produzidos e de apoio</h2><p class="note">Compilados no padrão UFG, roteiros e bibliografia</p><div class="items" id="l-materiais"></div></div></section>
+  <section class="page" id="agenda" hidden><div class="card"><h2>Agenda de marcos</h2><p class="note">Semestre 2026.2 e seleção. Terças, 18h às 22h, Sala 209, CAB</p>
+    <div class="tablewrap"><table><thead><tr><th>Data</th><th>Item</th><th>Situação</th><th>Próximo passo</th></tr></thead><tbody id="t-agenda"></tbody></table></div></div></section>
+  <section class="page" id="pessoas" hidden><div class="team" id="time"></div></section>
+</div>
+
+<button class="fab" type="button" data-ask=""><span class="dot"></span>Pergunte ao Mestrado</button>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Pergunte ao Mestrado" aria-hidden="true">
+  <div class="dr-head"><div><h2>Pergunte ao Mestrado</h2><small id="kbinfo">Respostas só com o que está no projeto</small></div><button class="x" id="fechar" type="button">Voltar ao painel ✕</button></div>
+  <div class="dr-body" id="drbody">
+    <div class="keybox" id="keybox" hidden><b>Chave da API do Claude</b><span>Para responder, esta versão usa a chave de API de quem está usando. Ela fica guardada só neste navegador. Obtenha em console.anthropic.com.</span><input id="apikey" type="password" placeholder="sk-ant-…" autocomplete="off"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="send" id="savekey" type="button">Salvar chave</button><button class="btn" id="delkey" type="button">Remover</button></div></div>
+    <div class="sug" id="sug">
+      <button type="button">O que tenho pela frente nas próximas semanas?</button>
+      <button type="button">Me explica estudo de caso × TFD</button>
+      <button type="button">Quais são as seis fases de Braun &amp; Clarke?</button>
+      <button type="button">O que falta validar na minha dissertação?</button>
+      <button type="button">O que preciso para virar aluno regular?</button>
+    </div>
+    <div id="msgs" style="display:flex;flex-direction:column;gap:12px" aria-live="polite"></div>
+  </div>
+  <div class="dr-foot">
+    <div id="ctxrow" class="ctx" hidden></div>
+    <div class="inbox"><textarea id="q" rows="1" placeholder="Escreva sua pergunta…" aria-label="Pergunta"></textarea><button class="send" id="enviar" type="button">Enviar</button></div>
+    <div class="footrow"><span class="note" id="aviso"></span><div style="display:flex;gap:6px"><button class="btn" id="cfgkey" type="button">Chave da API</button><button class="btn" id="limpar" type="button">Nova conversa</button></div></div>
+  </div>
+</aside>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
+const dataBR=d=>{if(!d)return'';const[y,m,dd]=String(d).slice(0,10).split('-');return`${dd}/${m}/${y}`;};
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const hoje=()=>{const t=new Date();return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;};
+const ETAPAS=['Concluído','A confirmar','Próximo','Programado','Pendente'];
+let ROWS=[],PESSOAS=[],KB='',busca='',atual=null;
+const casa=r=>!busca||norm(Object.values(r).join(' ')).includes(busca);
+
+/* ---------- Painel ---------- */
+function chips(r,sem){const o=[el('span','chip',r.tipo)];if(!sem)o.push(el('span','chip stage',r.etapa));if(r.alerta)o.push(el('span','chip alert',r.alerta));if(r.data_marco)o.push(el('span','chip date',dataBR(r.data_marco)));return o;}
+function card(r,sem){const b=el('button','item');b.type='button';b.addEventListener('click',()=>abrir(r.id));b.append(el('span','t',r.nome));const c=el('div','chips');c.append(...chips(r,sem));b.append(c);if(r.resumo)b.append(el('span','f',r.resumo));if(r.proximo_passo)b.append(el('span','nx',r.proximo_passo));return b;}
+function preencher(sel,rows){const b=$(sel);b.replaceChildren(...rows.map(r=>card(r)));if(!rows.length)b.append(el('p','empty',busca?'Nada encontrado nesta aba.':'Sem itens.'));}
+function contar(p,n){const s=document.querySelector(`.tab[data-page="${p}"] .n`);if(s)s.textContent=n;}
+function abrir(id){const r=ROWS.find(x=>x.id===id);if(!r)return;atual=r;$('#d-nome').textContent=r.nome;$('#d-chips').replaceChildren(...chips(r));const dl=$('#d-campos');dl.replaceChildren();
+  for(const[rot,k]of[['Data','data_marco'],['Conteúdo','resumo'],['Próximo passo','proximo_passo'],['Responsável','responsavel'],['Referências','referencias']]){if(!r[k])continue;dl.append(el('dt',null,rot),el('dd',null,k==='data_marco'?dataBR(r[k]):r[k]));}
+  if(r.link){const dd=el('dd');const a=el('a',null,'Abrir');a.href=r.link;a.target='_blank';a.rel='noopener';dd.append(a);dl.append(el('dt',null,'Link'),dd);}
+  const d=$('#detalhe');d.hidden=false;d.scrollIntoView({behavior:'smooth',block:'start'});}
+$('#d-fechar').addEventListener('click',()=>{$('#detalhe').hidden=true;atual=null;});
+$('#d-perg').addEventListener('click',()=>{if(atual)abrirChat(atual);});
+function mostrar(p){document.querySelectorAll('.page').forEach(x=>x.hidden=x.id!==p);document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.page===p)));if(location.hash.slice(1)!==p)history.replaceState(null,'','#'+p);}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>mostrar(t.dataset.page)));
+$('#busca').addEventListener('input',e=>{busca=norm(e.target.value.trim());desenhar();});
+
+function desenhar(){
+  const H=hoje(),n=f=>ROWS.filter(f).length;
+  const k={Aulas:n(r=>r.tipo==='Aula'&&r.etapa==='Concluído'&&!r.nome.startsWith('ENANPAD')),Ex:n(r=>r.tipo==='Exercício'&&r.etapa==='Concluído'),Comp:n(r=>r.tipo==='Material'&&r.nome.startsWith('Compilado')),Pend:n(r=>['Pendente','A confirmar','Próximo'].includes(r.etapa)),Marcos:n(r=>r.data_marco&&r.tipo!=='Material')};
+  $('#kpis').replaceChildren(...[[k.Aulas,'Aulas realizadas'],[k.Ex,'Exercícios apresentados'],[k.Comp,'Compilados de aula'],[k.Pend,'Pendências abertas'],[k.Marcos,'Marcos com data']].map(([v,l])=>{const d=el('div','kpi');d.append(el('span','v',String(v)),el('span','l',l));return d;}));
+  const futAll=ROWS.filter(r=>r.data_marco&&r.data_marco>=H&&r.tipo!=='Material').sort((a,b)=>a.data_marco.localeCompare(b.data_marco));
+  const t=$('#takeaway');t.replaceChildren(el('b',null,String(k.Aulas)),' aulas realizadas, ',el('b',null,String(k.Ex)),' exercícios apresentados e ',el('b',null,String(k.Pend)),' pendências em aberto.');
+  if(futAll[0])t.append(' Próximo marco: ',el('b',null,futAll[0].nome),' em ',el('b',null,dataBR(futAll[0].data_marco)),'.');
+  const crAll=ROWS.filter(r=>['Aula','Exercício','Avaliação'].includes(r.tipo));const mx=Math.max(1,...ETAPAS.map(e=>crAll.filter(r=>r.etapa===e).length));
+  $('#andamento').replaceChildren(...ETAPAS.map(e=>{const q=crAll.filter(r=>r.etapa===e).length;const row=el('div','bar'+(e==='Concluído'?' ok':''));const tr=el('div','track');const f=el('div','fill');f.style.width=(q/mx*100)+'%';tr.append(f);row.append(el('span',null,e),tr,el('span','q',String(q)));return row;}));
+  const R=ROWS.filter(casa),pd=(a,b)=>(a.data_marco||'9').localeCompare(b.data_marco||'9');
+  const cr=R.filter(r=>['Aula','Exercício','Avaliação'].includes(r.tipo)).sort(pd);const bd=$('#board');bd.replaceChildren();
+  for(const e of ETAPAS){const its=cr.filter(r=>r.etapa===e);if(!its.length&&e==='A confirmar')continue;const c=el('div','col');const h=el('h3',null,e);h.append(el('span',null,String(its.length)));const b=el('div','items');b.append(...its.map(r=>card(r,true)));c.append(h,b);bd.append(c);}
+  contar('cronograma',cr.length);
+  const ex=R.filter(r=>r.tipo==='Exercício').sort(pd),av=R.filter(r=>r.tipo==='Avaliação').sort(pd);preencher('#l-exercicios',ex);preencher('#l-avaliacao',av);contar('exercicios',ex.length+av.length);
+  const di=R.filter(r=>r.tipo==='Dissertação');preencher('#l-dissertacao',di);contar('dissertacao',di.length);
+  const ca=R.filter(r=>r.tipo==='Carreira').sort(pd);preencher('#l-carreira',ca);contar('carreira',ca.length);
+  const ma=R.filter(r=>r.tipo==='Material');preencher('#l-materiais',ma);contar('materiais',ma.length);
+  const p1=ROWS.find(r=>r.id==='p1');$('#pergunta').textContent=p1?p1.resumo:'—';
+  const fut=R.filter(r=>r.data_marco&&r.data_marco>=H&&r.tipo!=='Material').sort((a,b)=>a.data_marco.localeCompare(b.data_marco));
+  const ul=$('#marcos');ul.replaceChildren();for(const r of fut.slice(0,7)){const li=el('li');li.addEventListener('click',()=>abrir(r.id));const x=el('div');x.append(el('div',null,r.nome),el('div','s',r.proximo_passo));li.append(el('span','d',dataBR(r.data_marco)),x);ul.append(li);}if(!fut.length)ul.append(el('li','empty','Sem marcos à frente.'));
+  preencher('#atencao',R.filter(r=>r.alerta||['A confirmar','Próximo','Pendente'].includes(r.etapa)));
+  const ag=R.filter(r=>r.data_marco&&r.tipo!=='Material').sort((a,b)=>a.data_marco.localeCompare(b.data_marco));const tb=$('#t-agenda');tb.replaceChildren();
+  for(const r of ag){const tr=el('tr','row');if(r.data_marco<H)tr.classList.add('past');if(futAll[0]&&r.id===futAll[0].id)tr.classList.add('nextrow');tr.addEventListener('click',()=>abrir(r.id));tr.append(el('td',null,dataBR(r.data_marco)),el('td',null,r.nome),el('td',null,r.etapa),el('td',null,r.proximo_passo));tb.append(tr);}
+  contar('agenda',ag.length);
+  const P=PESSOAS.filter(casa),tm=$('#time');tm.replaceChildren();
+  for(const a of['Discente','Docentes','Grupo 4','A definir']){const ps=P.filter(p=>p.area===a);if(!ps.length)continue;const c=el('div','card');c.append(el('h2',null,a));for(const p of ps){const d=el('div','person');d.append(el('b',null,p.nome),el('span',null,p.papel));c.append(d);}tm.append(c);}
+  contar('pessoas',P.length);
+}
+
+/* ---------- Perguntas (gaveta) ---------- */
+let sample=null,turns=[],ctl=null,ocupado=false,ctxItem=null;
+const LS='painel-mestrado-chat-v1';
+try{const s=JSON.parse(localStorage.getItem(LS)||'null');if(s&&Array.isArray(s.turns))turns=s.turns.slice(-16);}catch(_){}
+const salvar=()=>{try{localStorage.setItem(LS,JSON.stringify({turns:turns.slice(-16)}));}catch(_){}};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function md(t){const L=esc(t).split('\n');let h='',li=false;const inl=s=>s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g,'$1<strong>$2</strong>');
+  for(const l of L){const b=l.match(/^\s*[-•]\s+(.*)/);if(b){if(!li){h+='<ul>';li=true;}h+='<li>'+inl(b[1])+'</li>';continue;}if(li){h+='</ul>';li=false;}const hh=l.match(/^#{1,4}\s+(.*)/);if(hh){h+='<h3>'+inl(hh[1])+'</h3>';continue;}if(l.trim())h+='<p>'+inl(l)+'</p>';}if(li)h+='</ul>';return h;}
+function bolha(c,txt,html){const d=el('div','msg '+c);if(html)d.innerHTML=txt;else d.textContent=txt;$('#msgs').append(d);d.scrollIntoView({block:'end'});return d;}
+function redesenharChat(){$('#msgs').replaceChildren();for(const t of turns)bolha(t.role==='user'?'eu':'ia',t.role==='user'?t.show||t.content:md(t.content),t.role!=='user');$('#sug').hidden=turns.length>0;}
+function setCtx(r){ctxItem=r||null;const row=$('#ctxrow');if(!r){row.hidden=true;row.replaceChildren();return;}row.hidden=false;const b=el('button','ctxchip','Sobre: '+r.nome+'  ✕');b.type='button';b.title='Remover o foco neste item';b.addEventListener('click',()=>setCtx(null));row.replaceChildren(b);row.style.marginBottom='6px';}
+function abrirChat(item){document.body.classList.add('chat-open');$('#drawer').setAttribute('aria-hidden','false');setCtx(item||null);redesenharChat();if(item&&!turns.length)$('#q').value='Me explica este item e o que preciso fazer.';setTimeout(()=>$('#q').focus(),280);}
+function fecharChat(){document.body.classList.remove('chat-open');$('#drawer').setAttribute('aria-hidden','true');}
+document.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',()=>abrirChat(null)));
+$('#fechar').addEventListener('click',fecharChat);$('#scrim').addEventListener('click',fecharChat);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('chat-open'))fecharChat();});
+const dia=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+const instr=()=>`Você é o assistente do Painel Mestrado de Gildo França Jr. (PPGADM/UFG, ADM0066 Métodos Qualitativos em Administração). Hoje é ${dia}.
+Responda em português do Brasil, de forma didática e direta: exemplo simples antes do termo técnico. Use somente a BASE abaixo. Se algo não estiver na base, diga que ainda não está registrado no projeto e sugira o que ele pode trazer. Não invente datas, autores, páginas nem notas. Compare prazos com a data de hoje. Formato: parágrafos curtos; listas com "- " quando ajudar; **negrito** só no essencial; sem tabelas.
+
+=== BASE DO PROJETO ===
+${KB}
+=== FIM DA BASE ===`;
+const erros={not_granted:'Para perguntar, permita o uso do Claude nesta página.',rate_limited:'Muitas perguntas seguidas. Espere alguns segundos.',cancelled:''};
+const KEYLS='painel-mestrado-apikey';const MODEL='claude-sonnet-4-6';
+const getKey=()=>{try{return localStorage.getItem(KEYLS)||'';}catch(_){return'';}};
+function mostrarKeybox(f){$('#keybox').hidden=!f;if(f){$('#apikey').value=getKey();$('#apikey').focus();}}
+$('#cfgkey').addEventListener('click',()=>mostrarKeybox($('#keybox').hidden));
+$('#savekey').addEventListener('click',()=>{const k=$('#apikey').value.trim();if(!k)return;try{localStorage.setItem(KEYLS,k);}catch(_){}mostrarKeybox(false);$('#aviso').textContent='Chave salva neste navegador.';});
+$('#delkey').addEventListener('click',()=>{try{localStorage.removeItem(KEYLS);}catch(_){}$('#apikey').value='';mostrarKeybox(false);});
+async function chamar(msgs,system,signal){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal,headers:{'content-type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:1500,system,messages:msgs})});
+  if(!r.ok){let m='';try{m=(await r.json()).error?.message||'';}catch(_){}const e=new Error(m||('HTTP '+r.status));e.status=r.status;throw e;}
+  const d=await r.json();return (d.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
+}
+async function perguntar(txt){
+  txt=(txt||'').trim();if(!txt||ocupado)return;
+  if(!getKey()){mostrarKeybox(true);$('#aviso').textContent='Informe a chave da API para perguntar.';return;}
+  ocupado=true;$('#enviar').textContent='Parar';$('#aviso').textContent='';$('#sug').hidden=true;
+  const full=ctxItem?`[Pergunta sobre o item "${ctxItem.nome}" (${ctxItem.tipo}, ${ctxItem.etapa}${ctxItem.data_marco?', '+dataBR(ctxItem.data_marco):''})] ${txt}`:txt;
+  bolha('eu',ctxItem?txt+'  · '+ctxItem.nome:txt);$('#q').value='';ajusta();
+  const resp=bolha('ia','<span class="pens">Pensando…</span>',true);
+  const hist=turns.slice(-8).map(t=>({role:t.role,content:t.content}));
+  const msgs=[...hist,{role:'user',content:full}];
+  ctl=new AbortController();
+  try{const text=await chamar(msgs,instr(),ctl.signal);
+    resp.innerHTML=md(text);turns.push({role:'user',content:full,show:ctxItem?txt+'  · '+ctxItem.nome:txt},{role:'assistant',content:text});salvar();
+  }catch(e){resp.remove();if(e.name==='AbortError'){}else if(e.status===401){$('#aviso').textContent='Chave da API inválida.';mostrarKeybox(true);}else if(e.status===429){$('#aviso').textContent='Muitas perguntas seguidas. Espere um pouco.';}else{$('#aviso').textContent='Não foi possível responder: '+(e.message||'tente de novo.');}}
+  finally{ocupado=false;ctl=null;$('#enviar').textContent='Enviar';}
+}
+const ajusta=()=>{const q=$('#q');q.style.height='auto';q.style.height=Math.min(q.scrollHeight,144)+'px';};
+$('#q').addEventListener('input',ajusta);
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();perguntar($('#q').value);}});
+$('#enviar').addEventListener('click',()=>{if(ocupado&&ctl){ctl.abort();return;}perguntar($('#q').value);});
+$('#limpar').addEventListener('click',()=>{if(ctl)ctl.abort();turns=[];salvar();setCtx(null);redesenharChat();$('#aviso').textContent='';});
+document.querySelectorAll('#sug button').forEach(b=>b.addEventListener('click',()=>perguntar(b.textContent)));
+
+/* ---------- Início (cofre cifrado) ---------- */
+const DADOS={"itens": [{"id": "a01", "nome": "Apresentação da disciplina", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-08-11", "resumo": "Disciplina organizada em torno das cinco estratégias qualitativas de Creswell (estudo de caso, etnografia, fenomenologia, teoria fundamentada, narrativa). Avaliação: três exercícios, seminário final e trabalho final de metodologia.", "proximo_passo": "Compilado entregue (Registro da aula 11/08)", "responsavel": "Profa. Daniela Rosim", "referencias": "Creswell (2014)", "alerta": "", "link": ""}, {"id": "a02", "nome": "Tema 1 · Tipos de pesquisa", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-08-18", "resumo": "Exploratória, descritiva e explicativa. Correção-chave da professora: os três tipos são estágios de um corpo de pesquisa, não fases internas de um único estudo. \"Explicativa\" é o rótulo; \"causal\" é a característica que a define.", "proximo_passo": "Compilado Tema 1 entregue", "responsavel": "Profa. Daniela Rosim", "referencias": "Creswell (2014)", "alerta": "", "link": ""}, {"id": "a03", "nome": "Tema 2 · Paradigmas", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-08-25", "resumo": "Paradigmas de pesquisa em Administração (Burrell & Morgan).", "proximo_passo": "Sem pendência", "responsavel": "Profa. Daniela Rosim", "referencias": "Burrell & Morgan", "alerta": "", "link": ""}, {"id": "a04", "nome": "Tema 3 · Aspectos gerais da pesquisa qualitativa", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-09-01", "resumo": "Características da pesquisa qualitativa (ambiente natural, desenho emergente, reflexividade, proposições em vez de hipóteses). Distinção estudo de caso × TFD: o caso parte de proposição teórica prévia; a TFD parte de um problema geral para gerar teoria por comparação constante e saturação.", "proximo_passo": "Compilado Tema 3 entregue", "responsavel": "Profa. Daniela Rosim", "referencias": "Creswell (2014)", "alerta": "", "link": ""}, {"id": "a05", "nome": "Tema 4 · Estudo de caso e triangulação", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-09-15", "resumo": "Aprofundamento do estudo de caso e triangulação. Aplicação à dissertação: triangular entrevistas com gestores, documentos do diagnóstico e indicadores antes e depois.", "proximo_passo": "Gildo ausente nesta aula: conteúdo recapitulado no chat", "responsavel": "Profa. Daniela Rosim", "referencias": "Creswell (2014)", "alerta": "", "link": ""}, {"id": "a06", "nome": "ENANPAD · sem aula", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-09-22", "resumo": "Sem aula por causa do ENANPAD.", "proximo_passo": "Sem pendência", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "a07", "nome": "Tema 5 · Análise de conteúdo temática", "tipo": "Aula", "etapa": "Concluído", "data_marco": "2026-10-13", "resumo": "Análise temática reflexiva de Braun & Clarke: corpus, conjunto de dados, item e extrato; decisões de prevalência, escopo, indutiva/dedutiva e semântica/latente; as seis fases da análise. Protocolo aplicado à dissertação.", "proximo_passo": "Compilado 13/10 entregue (com Resumo Executivo)", "responsavel": "Profa. Daniela Rosim", "referencias": "Braun & Clarke", "alerta": "", "link": ""}, {"id": "a08", "nome": "Análises automatizadas · Software × IA", "tipo": "Aula", "etapa": "Próximo", "data_marco": "2026-10-27", "resumo": "Debates e experiências sobre análise qualitativa com software (ex.: NVivo) e com IA.", "proximo_passo": "Enviar a transcrição da aula para gerar o compilado no padrão UFG", "responsavel": "Profa. Daniela Rosim", "referencias": "", "alerta": "", "link": ""}, {"id": "a09", "nome": "Tema 6 · Coleta e análise de dados virtuais", "tipo": "Aula", "etapa": "Programado", "data_marco": "2026-11-03", "resumo": "Aula expositiva com o convidado Nelsio sobre dados virtuais.", "proximo_passo": "Enviar a transcrição da aula para gerar o compilado", "responsavel": "Nelsio (convidado)", "referencias": "", "alerta": "", "link": ""}, {"id": "e1", "nome": "Exercício 1 · Cinco estratégias (TFD)", "tipo": "Exercício", "etapa": "Concluído", "data_marco": "2026-09-08", "resumo": "Grupo 4 escolheu a Teoria Fundamentada. Artigo analisado: Oliveira & Angelo (2000), mães acompanhantes de crianças hospitalizadas. Crítica: não declara a vertente, não detalha a codificação, sem modelo em figura nem memorandos.", "proximo_passo": "Apresentado (Gildo ausente no dia)", "responsavel": "Grupo 4", "referencias": "Oliveira & Angelo (2000); Harley et al. (2009)", "alerta": "", "link": ""}, {"id": "e2", "nome": "Exercício 2 · Coleta de dados (TFD)", "tipo": "Exercício", "etapa": "Concluído", "data_marco": "2026-09-29", "resumo": "Técnicas de coleta na TFD com o artigo de Conde, Felix & Moreira (2023, RAC) sobre identidade de trabalhadores de aplicativo. Parte de Gildo: encadeamento e fechamento.", "proximo_passo": "Apresentado", "responsavel": "Grupo 4", "referencias": "Creswell (2014, cap. 7); Conde, Felix & Moreira (2023)", "alerta": "", "link": ""}, {"id": "e3", "nome": "Exercício 3 · Análise e interpretação (TFD)", "tipo": "Exercício", "etapa": "Concluído", "data_marco": "2026-10-06", "resumo": "Técnicas de análise na TFD (Strauss & Corbin e Charmaz). Gildo apresentou os slides 5 a 8 (codificação construtivista de Charmaz). Corrigida a inversão P4/P5 do modelo antes da apresentação.", "proximo_passo": "Apresentado", "responsavel": "Grupo 4", "referencias": "Creswell (2014, cap. 8); Charmaz; Strauss & Corbin", "alerta": "", "link": ""}, {"id": "e4", "nome": "Exercício 4 · Análise temática na prática", "tipo": "Exercício", "etapa": "A confirmar", "data_marco": "2026-10-20", "resumo": "Análise temática da música \"Amor de Índio\" (Beto Guedes/Ronaldo Bastos). Quatro temas levantados; a versão da Chrys ficou mais rigorosa e a recomendação foi o grupo adotar a estrutura dela.", "proximo_passo": "Confirmar se foi apresentado e como ficou", "responsavel": "Grupo 4", "referencias": "Braun & Clarke", "alerta": "Confirmar entrega", "link": ""}, {"id": "s1", "nome": "Seminário final", "tipo": "Avaliação", "etapa": "Pendente", "data_marco": "2026-11-10", "resumo": "Apresentações nos dias 10/11, 17/11 e 24/11.", "proximo_passo": "Definir o dia e o conteúdo do Grupo 4", "responsavel": "Grupo 4", "referencias": "", "alerta": "Data do grupo a definir", "link": ""}, {"id": "s2", "nome": "Trabalho final (1ª Avaliação)", "tipo": "Avaliação", "etapa": "Pendente", "data_marco": "2026-12-01", "resumo": "Entrega às 18h do trabalho final de metodologia.", "proximo_passo": "Estruturar o trabalho a partir do projeto da dissertação", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": ""}, {"id": "s3", "nome": "Notas", "tipo": "Avaliação", "etapa": "Programado", "data_marco": "2026-12-08", "resumo": "Lançamento e discussão das notas.", "proximo_passo": "Acompanhar no SIGAA", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "p1", "nome": "Pergunta de pesquisa", "tipo": "Dissertação", "etapa": "Em construção", "data_marco": "", "resumo": "Como o diagnóstico tributário influencia a mudança na gestão de grandes empresas, contribuindo para a criação ou o fortalecimento de uma cultura de conformidade organizacional?", "proximo_passo": "Validar com orientador", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": ""}, {"id": "p2", "nome": "Classificação metodológica", "tipo": "Dissertação", "etapa": "Em construção", "data_marco": "", "resumo": "Explicativa (causal), ex-post-facto, qualitativa, estudo de caso, na Linha 3 (Gestão Organizacional e Inteligência de Dados).", "proximo_passo": "Validar com orientador", "responsavel": "Gildo", "referencias": "", "alerta": "Ainda não validada", "link": ""}, {"id": "p3", "nome": "Originalidade", "tipo": "Dissertação", "etapa": "Em construção", "data_marco": "", "resumo": "Examina mudanças comportamentais e de processos de gestão após intervenções diagnósticas externas, não apenas resultados financeiros.", "proximo_passo": "Reforçar com revisão de literatura", "responsavel": "Gildo", "referencias": "Martinez et al.; Matias (UFMG); Aguiar (FGV)", "alerta": "", "link": ""}, {"id": "p4", "nome": "Desenho de coleta e análise", "tipo": "Dissertação", "etapa": "Em construção", "data_marco": "", "resumo": "Triangulação de entrevistas com gestores, documentos do diagnóstico e indicadores antes e depois; análise temática reflexiva (Braun & Clarke) com protocolo já esboçado no compilado de 13/10.", "proximo_passo": "Levar o protocolo para o trabalho final", "responsavel": "Gildo", "referencias": "Braun & Clarke; Creswell (2014)", "alerta": "", "link": ""}, {"id": "p5", "nome": "Declaração de Uso de IA", "tipo": "Dissertação", "etapa": "Pendente", "data_marco": "", "resumo": "Seção obrigatória pelo edital se houver uso de IA na redação do projeto; os exercícios também pedem declarar o uso de IA.", "proximo_passo": "Incluir no projeto e no trabalho final", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": ""}, {"id": "c1", "nome": "Seleção para aluno regular", "tipo": "Carreira", "etapa": "Pendente", "data_marco": "2026-12-23", "resumo": "Edital nº 01/2026. Resultado até 23/12/2026; taxa de inscrição de R$ 150; exige proficiência em inglês e Estágio Docência no curso.", "proximo_passo": "Conferir no edital o prazo de inscrição e os documentos", "responsavel": "Gildo", "referencias": "", "alerta": "Prazo de inscrição a confirmar", "link": ""}, {"id": "c2", "nome": "Matrícula como aluno regular", "tipo": "Carreira", "etapa": "Programado", "data_marco": "2026-12-28", "resumo": "Janela de matrícula de 28/12/2026 a 22/01/2027, se aprovado.", "proximo_passo": "Aguardar resultado da seleção", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": ""}, {"id": "c3", "nome": "Proficiência em inglês", "tipo": "Carreira", "etapa": "Pendente", "data_marco": "", "resumo": "Requisito para o aluno regular.", "proximo_passo": "Escolher a forma de comprovação", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": ""}, {"id": "c4", "nome": "Especialização lato sensu", "tipo": "Carreira", "etapa": "Em construção", "data_marco": "", "resumo": "Título de especialista para habilitar a docência em pós-graduação.", "proximo_passo": "Definir curso", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": ""}, {"id": "c5", "nome": "Currículo Lattes", "tipo": "Carreira", "etapa": "Concluído", "data_marco": "", "resumo": "Lattes ativo e vinculado ao perfil do SIGAA.", "proximo_passo": "Atualizar com a disciplina ao final do semestre", "responsavel": "Gildo", "referencias": "", "alerta": "", "link": "https://lattes.cnpq.br/4349186320062523"}, {"id": "m1", "nome": "Compilado · Aula 11/08", "tipo": "Material", "etapa": "Concluído", "data_marco": "2026-08-11", "resumo": "Registro da aula de apresentação da disciplina (Word e PDF).", "proximo_passo": "Arquivado", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "m2", "nome": "Compilado · Tema 1", "tipo": "Material", "etapa": "Concluído", "data_marco": "2026-08-18", "resumo": "Tipos de pesquisa aplicados à dissertação (Word e PDF).", "proximo_passo": "Arquivado", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "m3", "nome": "Compilado · Tema 3", "tipo": "Material", "etapa": "Concluído", "data_marco": "2026-09-01", "resumo": "Aspectos gerais da pesquisa qualitativa (Word e PDF).", "proximo_passo": "Arquivado", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "m4", "nome": "Compilado · Tema 5", "tipo": "Material", "etapa": "Concluído", "data_marco": "2026-10-13", "resumo": "Análise temática de Braun & Clarke, com Resumo Executivo e protocolo da dissertação (Word e PDF).", "proximo_passo": "Arquivado", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "m5", "nome": "Roteiros dos Exercícios 1 a 4", "tipo": "Material", "etapa": "Concluído", "data_marco": "", "resumo": "Roteiros slide a slide, falas e pontos de discussão de cada exercício do Grupo 4.", "proximo_passo": "Usar como base no seminário final", "responsavel": "", "referencias": "", "alerta": "", "link": ""}, {"id": "m6", "nome": "Creswell (2014)", "tipo": "Material", "etapa": "Concluído", "data_marco": "", "resumo": "Investigação Qualitativa e Projeto de Pesquisa: livro-base da disciplina (caps. 7 e 8 mais usados).", "proximo_passo": "Referência permanente", "responsavel": "", "referencias": "", "alerta": "", "link": ""}], "pessoas": [{"nome": "Gildo França Jr.", "area": "Discente", "papel": "Discente externo PPGADM/UFG, Grupo 4"}, {"nome": "Profa. Daniela Rosim", "area": "Docentes", "papel": "Professora da ADM0066 e coordenadora do programa"}, {"nome": "Nelsio", "area": "Docentes", "papel": "Convidado do Tema 6 (dados virtuais)"}, {"nome": "Chrysthyan Kelly (Chrys)", "area": "Grupo 4", "papel": "La Vie Consultoria; tema de pesquisa: Recruitment Analytics"}, {"nome": "Ákeson Helder", "area": "Grupo 4", "papel": "Integrante do Grupo 4"}, {"nome": "Orientador(a)", "area": "A definir", "papel": "Ainda não definido; validará tema e classificação"}], "kb": "# BASE DE CONHECIMENTO · PROJETO MESTRADO ADM · UFG (Gildo França Jr.)\n\n## 1. Quem é e situação acadêmica\n- Gildo França Jr., discente externo (aluno especial) do PPGADM/FACE/UFG, semestre 2026.2. Sócio-fundador da Lobe Consultoria (tributária e contábil), com metodologia própria de diagnóstico tributário aplicada a centenas de empresas em vários estados.\n- O PPGADM/UFG é mestrado ACADÊMICO (não profissional). É a credencial certa para o objetivo de longo prazo: virar aluno regular e seguir carreira docente na pós-graduação. Estágio Docência é componente obrigatório do aluno regular.\n- Também busca um título de especialização lato sensu para habilitar a docência em pós-graduação.\n- Currículo Lattes: https://lattes.cnpq.br/4349186320062523 (vinculado ao perfil do SIGAA).\n\n## 2. Disciplina ADM0066 · Métodos Qualitativos em Administração\n- Profa. Daniela Rosim (também coordenadora do programa). Terças, 18h às 22h, Sala 209, Centro de Aulas Baru (CAB). 64 h, 4 créditos.\n- Organizada em torno das cinco estratégias qualitativas de Creswell: estudo de caso, etnografia, fenomenologia, teoria fundamentada (TFD/grounded theory) e pesquisa narrativa. Livro-base: Creswell (2014), Investigação Qualitativa e Projeto de Pesquisa (caps. 7 coleta e 8 análise são os mais usados).\n- Avaliação: exercícios em grupo/duplas (máx. 15 min cronometrados, declarar uso de IA), seminário final e trabalho final (1ª Avaliação, entrega 01/12 às 18h).\n- Grupo 4: Gildo, Chrysthyan Kelly Ferreira Alves (Chrys, da La Vie Consultoria, tema próprio sobre Recruitment Analytics) e Ákeson Helder.\n- Convidado: Nelsio (dados virtuais).\n\n## 3. Cronograma atualizado (SIGAA, 2026.2)\n11/08 apresentação · 18/08 Tema 1 tipos de pesquisa · 25/08 Tema 2 paradigmas · 01/09 Tema 3 aspectos gerais · 08/09 Exercício 1 · 15/09 Tema 4 estudo de caso e triangulação · 22/09 sem aula (ENANPAD) · 29/09 Exercício 2 (coleta) · 06/10 Exercício 3 (análise e interpretação) · 13/10 Tema 5 análise de conteúdo temática · 20/10 Exercício 4 (operacionalizando a análise temática) · 27/10 análises automatizadas (software x IA) · 03/11 Tema 6 dados virtuais (Nelsio) · 10/11, 17/11 e 24/11 seminário final · 01/12 18h entrega do trabalho final · 08/12 notas.\n- Faltas de Gildo: 08/09, 15/09 e 22/09 (este sem aula).\n- Observação: houve uma versão anterior do cronograma com outras datas; a professora atualizou no SIGAA e vale a versão acima.\n\n## 4. Conteúdo das aulas\n### Tema 1 (18/08) · Tipos de pesquisa\n- Exploratória, descritiva e explicativa. Correção-chave da professora: os três tipos são ESTÁGIOS de um corpo de pesquisa ao longo do tempo, não fases internas de um único estudo.\n- \"Explicativa\" é o rótulo (a caixa); \"causal\" é a característica que a define (o que vai dentro). A tabela da professora usava \"Causal\" como cabeçalho.\n### Tema 2 (25/08) · Paradigmas\n- Paradigmas de pesquisa em Administração (Burrell & Morgan).\n### Tema 3 (01/09) · Aspectos gerais da pesquisa qualitativa\n- Analogia da perspectiva: a metodologia define de onde o pesquisador olha.\n- Características: ambiente natural, múltiplos métodos interativos, desenho emergente, fundamentalmente interpretativa, holística, reflexividade, raciocínio complexo e simultâneo, proposições (não hipóteses), credibilidade pela coerência, foco em processo e múltiplas realidades.\n- Estudo de caso x TFD: o estudo de caso parte de uma proposição teórica prévia e de uma pergunta definida; a TFD parte de um problema geral para gerar teoria nova por comparação constante e saturação teórica.\n- Papel do pesquisador em campo e procedimentos de coleta.\n### Tema 4 (15/09) · Estudo de caso e triangulação\n- Triangulação de fontes fortalece o estudo de caso. Aplicado à dissertação: entrevistas com gestores + documentos do diagnóstico + indicadores antes e depois.\n### Tema 5 (13/10) · Análise temática reflexiva (Braun & Clarke)\n- Termos: corpus, conjunto de dados, item de dados, extrato.\n- Quatro decisões: prevalência (o que conta como tema), escopo (descrição rica do conjunto ou aspecto específico), indutiva x dedutiva (teórica), semântica x latente.\n- Seis fases: familiarização; geração de códigos iniciais; busca de temas; revisão dos temas; definição e nomeação; produção do relatório.\n- Distinção de Bardin (análise de conteúdo) e uso de software como NVivo.\n### 27/10 · Análises automatizadas (software x IA): debates e experiências.\n### 03/11 · Tema 6 · Coleta e análise de dados virtuais (Nelsio).\n\n## 5. Exercícios do Grupo 4 (estratégia: Teoria Fundamentada)\n- Exercício 1 (08/09, apresentado; Gildo ausente): características da TFD, justificativa da escolha e como ela influencia pergunta, coleta, análise e narrativa. Escolheram TFD para se diferenciar da maioria (que iria de estudo de caso). Artigo: Oliveira & Angelo (2000), Rev. Esc. Enf. USP, mães acompanhantes de crianças hospitalizadas (TFD + Interacionismo Simbólico, 18 mães, 5 grupos amostrais). Crítica: não declara a vertente, não detalha a codificação, sem modelo em figura, sem memorandos; o objeto tem cara de fenomenologia. Exemplo do livro: Harley et al. (2009). Critérios de rigor da TFD (Strauss & Corbin, Charmaz, Creswell). Lição: criticar de forma comparativa/analítica, não reclassificar o artigo de forma taxativa.\n- Exercício 2 (29/09, apresentado): técnicas de coleta na TFD (Creswell cap. 7), artigo Conde, Felix & Moreira (2023, RAC) sobre construção de identidade de trabalhadores de aplicativo. Gildo fez o encadeamento e fechamento, ligando a teoria de coleta ao artigo e a Oliveira & Angelo (2000). Três slides no modelo visual do grupo.\n- Exercício 3 (06/10, apresentado): técnicas de análise na TFD (Creswell cap. 8; Strauss & Corbin; Charmaz) com o artigo de Conde, Felix & Moreira (2023). Gildo apresentou os slides 5 a 8, codificação construtivista de Charmaz; abertura com \"pergunta de retomada\". Corrigido antes: P4 e P5 estavam invertidas. No artigo, P4 = pertencimento personalizado → identidade GRUPAL (\"Os careca\"); P5 = pertencimento despersonalizado → identidade INDIVIDUAL (\"dentro do grupo, eu sou o tranquilo\") (Figura 2, p. 8, e p. 10).\n- Exercício 4 (20/10): análise temática da música \"Amor de Índio\" (Beto Guedes/Ronaldo Bastos, 1978). Proposta de quatro temas: o sagrado no cotidiano, o amor como cuidado, os ciclos da natureza, plenitude/destino, com classificação indutiva e semântica/latente. A versão da Chrys ficou mais rigorosa (menos temas, mais bem justificados, codificação verso a verso, leitura crítica alternativa) e a recomendação foi o grupo adotar a estrutura dela. Status de apresentação a confirmar.\n\n## 6. Dissertação (preliminar, sem orientador definido)\n- Tema: como o diagnóstico tributário influencia a mudança de gestão e a cultura de conformidade em grandes empresas.\n- Pergunta: \"Como o diagnóstico tributário influencia a mudança na gestão de grandes empresas, contribuindo para a criação ou o fortalecimento de uma cultura de conformidade organizacional?\"\n- Lógica antes/depois: o diagnóstico cria uma cultura de conformidade onde não havia ou fortalece boas práticas existentes, reduzindo exposição e validando rotinas com mais frequência. Foco em GRANDES empresas.\n- Classificação: explicativa (causal), ex-post-facto, qualitativa, estudo de caso; Linha 3 do PPGADM (Gestão Organizacional e Inteligência de Dados). Ainda não validada com orientador.\n- Originalidade: mudanças comportamentais e de processos de gestão após intervenções diagnósticas externas, não só resultados financeiros. Literatura próxima: Martinez et al. (SciELO, governança tributária), dissertação de Matias (UFMG), Aguiar (FGV).\n- Desenho: triangulação (entrevistas com gestores, documentos do diagnóstico, indicadores antes e depois); análise temática reflexiva de Braun & Clarke, com protocolo esboçado no compilado de 13/10.\n- Se houver uso de IA na redação do projeto, a seção \"Declaração de Uso de IA\" é obrigatória pelo edital.\n- Cuidado: diferenciar o enquadramento acadêmico do trabalho aplicado da Lobe.\n\n## 7. Seleção para aluno regular\n- Edital nº 01/2026. Taxa de inscrição R$ 150. Exige proficiência em inglês; Estágio Docência faz parte do curso. Resultado até 23/12/2026. Matrícula de 28/12/2026 a 22/01/2027. Prazo de inscrição: a confirmar no edital.\n\n## 8. Materiais produzidos\n- Compilados de aula (Word + PDF, padrão UFG: logo, navy #1F3864 e dourado #B08D57, Resumo Executivo, Parte 1 conteúdo, Parte 1B anotações da aula, Parte 2 aplicação ao projeto, Parte 3 pendências, Referências): aula 11/08, Tema 1, Tema 3, Tema 5 (13/10).\n- Roteiros slide a slide dos Exercícios 1 a 4, mensagens de WhatsApp para o grupo, cronograma em formato WhatsApp.\n\n## 9. Referências principais\nCreswell (2014); Strauss & Corbin; Charmaz; Braun & Clarke; Bardin; Burrell & Morgan; Oliveira & Angelo (2000); Conde, Felix & Moreira (2023, RAC); Harley et al. (2009).\n\n## 10. Itens do painel (situação atual)\n- [Aula · Concluído · 2026-08-11] Apresentação da disciplina: Disciplina organizada em torno das cinco estratégias qualitativas de Creswell (estudo de caso, etnografia, fenomenologia, teoria fundamentada, narrativa). Avaliação: três exercícios, seminário final e trabalho final de metodologia. Próximo passo: Compilado entregue (Registro da aula 11/08).\n- [Aula · Concluído · 2026-08-18] Tema 1 · Tipos de pesquisa: Exploratória, descritiva e explicativa. Correção-chave da professora: os três tipos são estágios de um corpo de pesquisa, não fases internas de um único estudo. \"Explicativa\" é o rótulo; \"causal\" é a característica que a define. Próximo passo: Compilado Tema 1 entregue.\n- [Aula · Concluído · 2026-08-25] Tema 2 · Paradigmas: Paradigmas de pesquisa em Administração (Burrell & Morgan). Próximo passo: Sem pendência.\n- [Aula · Concluído · 2026-09-01] Tema 3 · Aspectos gerais da pesquisa qualitativa: Características da pesquisa qualitativa (ambiente natural, desenho emergente, reflexividade, proposições em vez de hipóteses). Distinção estudo de caso × TFD: o caso parte de proposição teórica prévia; a TFD parte de um problema geral para gerar teoria por comparação constante e saturação. Próximo passo: Compilado Tema 3 entregue.\n- [Aula · Concluído · 2026-09-15] Tema 4 · Estudo de caso e triangulação: Aprofundamento do estudo de caso e triangulação. Aplicação à dissertação: triangular entrevistas com gestores, documentos do diagnóstico e indicadores antes e depois. Próximo passo: Gildo ausente nesta aula: conteúdo recapitulado no chat.\n- [Aula · Concluído · 2026-09-22] ENANPAD · sem aula: Sem aula por causa do ENANPAD. Próximo passo: Sem pendência.\n- [Aula · Concluído · 2026-10-13] Tema 5 · Análise de conteúdo temática: Análise temática reflexiva de Braun & Clarke: corpus, conjunto de dados, item e extrato; decisões de prevalência, escopo, indutiva/dedutiva e semântica/latente; as seis fases da análise. Protocolo aplicado à dissertação. Próximo passo: Compilado 13/10 entregue (com Resumo Executivo).\n- [Aula · Próximo · 2026-10-27] Análises automatizadas · Software × IA: Debates e experiências sobre análise qualitativa com software (ex.: NVivo) e com IA. Próximo passo: Enviar a transcrição da aula para gerar o compilado no padrão UFG.\n- [Aula · Programado · 2026-11-03] Tema 6 · Coleta e análise de dados virtuais: Aula expositiva com o convidado Nelsio sobre dados virtuais. Próximo passo: Enviar a transcrição da aula para gerar o compilado.\n- [Exercício · Concluído · 2026-09-08] Exercício 1 · Cinco estratégias (TFD): Grupo 4 escolheu a Teoria Fundamentada. Artigo analisado: Oliveira & Angelo (2000), mães acompanhantes de crianças hospitalizadas. Crítica: não declara a vertente, não detalha a codificação, sem modelo em figura nem memorandos. Próximo passo: Apresentado (Gildo ausente no dia).\n- [Exercício · Concluído · 2026-09-29] Exercício 2 · Coleta de dados (TFD): Técnicas de coleta na TFD com o artigo de Conde, Felix & Moreira (2023, RAC) sobre identidade de trabalhadores de aplicativo. Parte de Gildo: encadeamento e fechamento. Próximo passo: Apresentado.\n- [Exercício · Concluído · 2026-10-06] Exercício 3 · Análise e interpretação (TFD): Técnicas de análise na TFD (Strauss & Corbin e Charmaz). Gildo apresentou os slides 5 a 8 (codificação construtivista de Charmaz). Corrigida a inversão P4/P5 do modelo antes da apresentação. Próximo passo: Apresentado.\n- [Exercício · A confirmar · 2026-10-20] Exercício 4 · Análise temática na prática: Análise temática da música \"Amor de Índio\" (Beto Guedes/Ronaldo Bastos). Quatro temas levantados; a versão da Chrys ficou mais rigorosa e a recomendação foi o grupo adotar a estrutura dela. Próximo passo: Confirmar se foi apresentado e como ficou. ALERTA: Confirmar entrega.\n- [Avaliação · Pendente · 2026-11-10] Seminário final: Apresentações nos dias 10/11, 17/11 e 24/11. Próximo passo: Definir o dia e o conteúdo do Grupo 4. ALERTA: Data do grupo a definir.\n- [Avaliação · Pendente · 2026-12-01] Trabalho final (1ª Avaliação): Entrega às 18h do trabalho final de metodologia. Próximo passo: Estruturar o trabalho a partir do projeto da dissertação.\n- [Avaliação · Programado · 2026-12-08] Notas: Lançamento e discussão das notas. Próximo passo: Acompanhar no SIGAA.\n- [Dissertação · Em construção] Pergunta de pesquisa: Como o diagnóstico tributário influencia a mudança na gestão de grandes empresas, contribuindo para a criação ou o fortalecimento de uma cultura de conformidade organizacional? Próximo passo: Validar com orientador.\n- [Dissertação · Em construção] Classificação metodológica: Explicativa (causal), ex-post-facto, qualitativa, estudo de caso, na Linha 3 (Gestão Organizacional e Inteligência de Dados). Próximo passo: Validar com orientador. ALERTA: Ainda não validada.\n- [Dissertação · Em construção] Originalidade: Examina mudanças comportamentais e de processos de gestão após intervenções diagnósticas externas, não apenas resultados financeiros. Próximo passo: Reforçar com revisão de literatura.\n- [Dissertação · Em construção] Desenho de coleta e análise: Triangulação de entrevistas com gestores, documentos do diagnóstico e indicadores antes e depois; análise temática reflexiva (Braun & Clarke) com protocolo já esboçado no compilado de 13/10. Próximo passo: Levar o protocolo para o trabalho final.\n- [Dissertação · Pendente] Declaração de Uso de IA: Seção obrigatória pelo edital se houver uso de IA na redação do projeto; os exercícios também pedem declarar o uso de IA. Próximo passo: Incluir no projeto e no trabalho final.\n- [Carreira · Pendente · 2026-12-23] Seleção para aluno regular: Edital nº 01/2026. Resultado até 23/12/2026; taxa de inscrição de R$ 150; exige proficiência em inglês e Estágio Docência no curso. Próximo passo: Conferir no edital o prazo de inscrição e os documentos. ALERTA: Prazo de inscrição a confirmar.\n- [Carreira · Programado · 2026-12-28] Matrícula como aluno regular: Janela de matrícula de 28/12/2026 a 22/01/2027, se aprovado. Próximo passo: Aguardar resultado da seleção.\n- [Carreira · Pendente] Proficiência em inglês: Requisito para o aluno regular. Próximo passo: Escolher a forma de comprovação.\n- [Carreira · Em construção] Especialização lato sensu: Título de especialista para habilitar a docência em pós-graduação. Próximo passo: Definir curso.\n- [Carreira · Concluído] Currículo Lattes: Lattes ativo e vinculado ao perfil do SIGAA. Próximo passo: Atualizar com a disciplina ao final do semestre.\n- [Material · Concluído · 2026-08-11] Compilado · Aula 11/08: Registro da aula de apresentação da disciplina (Word e PDF). Próximo passo: Arquivado.\n- [Material · Concluído · 2026-08-18] Compilado · Tema 1: Tipos de pesquisa aplicados à dissertação (Word e PDF). Próximo passo: Arquivado.\n- [Material · Concluído · 2026-09-01] Compilado · Tema 3: Aspectos gerais da pesquisa qualitativa (Word e PDF). Próximo passo: Arquivado.\n- [Material · Concluído · 2026-10-13] Compilado · Tema 5: Análise temática de Braun & Clarke, com Resumo Executivo e protocolo da dissertação (Word e PDF). Próximo passo: Arquivado.\n- [Material · Concluído] Roteiros dos Exercícios 1 a 4: Roteiros slide a slide, falas e pontos de discussão de cada exercício do Grupo 4. Próximo passo: Usar como base no seminário final.\n- [Material · Concluído] Creswell (2014): Investigação Qualitativa e Projeto de Pesquisa: livro-base da disciplina (caps. 7 e 8 mais usados). Próximo passo: Referência permanente.\n\n## 11. Pessoas\n- Gildo França Jr. (Discente): Discente externo PPGADM/UFG, Grupo 4\n- Profa. Daniela Rosim (Docentes): Professora da ADM0066 e coordenadora do programa\n- Nelsio (Docentes): Convidado do Tema 6 (dados virtuais)\n- Chrysthyan Kelly (Chrys) (Grupo 4): La Vie Consultoria; tema de pesquisa: Recruitment Analytics\n- Ákeson Helder (Grupo 4): Integrante do Grupo 4\n- Orientador(a) (A definir): Ainda não definido; validará tema e classificação", "atualizado": "2026-10-27"};
+const b2a=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+const ini=location.hash.slice(1);mostrar(document.getElementById(ini)&&document.querySelector(`.tab[data-page="${ini}"]`)?ini:'visao');
+function carregar(p){ROWS=p.itens||[];PESSOAS=p.pessoas||[];KB=p.kb||'';$('#kbinfo').textContent='Base do projeto de '+String(p.atualizado||'').split('-').reverse().join('/');desenhar();}
+carregar(DADOS);
+})();
+</script>
+</body>
+</html>
