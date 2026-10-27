@@ -752,6 +752,8 @@ header {
       <input type="text" id="sala-padrao-input" placeholder="Cole aqui o link fixo do seu Meet ou Zoom (uma vez só)" style="width:100%">
     </div>
     <button class="btn btn-primary btn-sm" onclick="salvarSalaPadrao()">Salvar sala</button>
+    <button class="btn btn-ghost btn-sm" id="btn-meet-auto" onclick="meetTranscricaoAutomatica()" title="Liga, na sala fixa do Meet, a transcrição completa e as anotações do Gemini em toda reunião, sem precisar clicar em nada na hora">🎙 Transcrição automática na sala</button>
+    <div id="meet-auto-status" style="flex-basis:100%;font-size:11.5px;color:var(--mid)"></div>
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 14px;gap:12px;flex-wrap:wrap">
@@ -1809,6 +1811,61 @@ async function carregarSalaPadrao(){
   }
   const inp=document.getElementById('sala-padrao-input');
   if(inp) inp.value=_salaPadrao;
+}
+
+// ── Transcrição automática na sala fixa do Meet ──────────────────────────────
+// Toda entrevista usa a mesma sala (huu-cipp-ras). Em 27/10 uma reunião saiu
+// só com o resumo do Gemini, sem a transcrição, e o dossiê depende da
+// transcrição completa. A API do Meet permite marcar na própria sala que a
+// transcrição e as anotações do Gemini começam sozinhas em toda reunião
+// (config.artifactConfig). Precisa da Google Meet API ativada no projeto do
+// Google Cloud da La Vie e de a Chrys autorizar o escopo uma vez.
+const MEET_SCOPE = 'https://www.googleapis.com/auth/meetings.space.settings';
+let _meetTokenClient = null, _meetResolve = null;
+function _meetToken(){
+  return new Promise((resolve, reject) => {
+    if(!window.google?.accounts?.oauth2){ reject(new Error('Google ainda carregando; tente de novo em instantes')); return; }
+    if(!_meetTokenClient){
+      _meetTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GCAL_CLIENT_ID, scope: MEET_SCOPE,
+        callback: r => { const p=_meetResolve; _meetResolve=null; if(r.error){ p&&p.reject(new Error(r.error)); return; } p&&p.resolve(r.access_token); },
+        error_callback: e => { const p=_meetResolve; _meetResolve=null; p&&p.reject(new Error((e&&e.type)||'janela do Google fechada')); }
+      });
+    }
+    _meetResolve = { resolve, reject };
+    _meetTokenClient.requestAccessToken({ prompt: '' });
+  });
+}
+function _renderMeetAutoStatus(ac, code){
+  const el=document.getElementById('meet-auto-status'); if(!el) return;
+  const t=ac&&ac.transcriptionConfig&&ac.transcriptionConfig.autoTranscriptionGeneration;
+  const n=ac&&ac.smartNotesConfig&&ac.smartNotesConfig.autoSmartNotesGeneration;
+  el.innerHTML = `Sala ${code}: transcrição automática <b style="color:${t==='ON'?'var(--green)':'var(--red)'}">${t==='ON'?'ligada':'desligada'}</b> · anotações do Gemini <b style="color:${n==='ON'?'var(--green)':'var(--red)'}">${n==='ON'?'ligadas':'desligadas'}</b>`;
+}
+async function meetTranscricaoAutomatica(){
+  const m=/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/i.exec(_salaPadrao||'');
+  if(!m){ alert('Salve primeiro a sala fixa com o link do Google Meet.'); return; }
+  const code=m[1].toLowerCase();
+  const btn=document.getElementById('btn-meet-auto'); if(btn){ btn.disabled=true; btn.textContent='⏳ Ligando...'; }
+  try{
+    const token=await _meetToken();
+    const H={ 'Authorization':'Bearer '+token, 'Content-Type':'application/json' };
+    const g=await fetch('https://meet.googleapis.com/v2/spaces/'+code, { headers:H });
+    if(!g.ok) throw new Error('Meet API '+g.status+': '+(await g.text()).slice(0,300));
+    const sp=await g.json();
+    const body={ config:{ artifactConfig:{ transcriptionConfig:{ autoTranscriptionGeneration:'ON' }, smartNotesConfig:{ autoSmartNotesGeneration:'ON' } } } };
+    const mask='config.artifactConfig.transcriptionConfig.autoTranscriptionGeneration,config.artifactConfig.smartNotesConfig.autoSmartNotesGeneration';
+    const p=await fetch('https://meet.googleapis.com/v2/'+sp.name+'?updateMask='+encodeURIComponent(mask), { method:'PATCH', headers:H, body:JSON.stringify(body) });
+    if(!p.ok) throw new Error('Meet API '+p.status+': '+(await p.text()).slice(0,300));
+    const r=await p.json(); const ac=(r.config&&r.config.artifactConfig)||{};
+    _renderMeetAutoStatus(ac, code);
+    const ok = ac.transcriptionConfig && ac.transcriptionConfig.autoTranscriptionGeneration==='ON';
+    showToast(ok ? '✅ Transcrição automática ligada na sala '+code : '⚠️ A API respondeu, mas a transcrição não ficou ligada');
+  }catch(e){
+    const msg=String(e.message||e);
+    const apiOff=/has not been used|is disabled|403/.test(msg);
+    alert('Não deu para ligar a transcrição automática: '+msg+(apiOff?'\n\nA Google Meet API precisa estar ativada no projeto do Google Cloud da La Vie (o mesmo do Google Calendar).':''));
+  }finally{ if(btn){ btn.disabled=false; btn.textContent='🎙 Transcrição automática na sala'; } }
 }
 
 async function salvarSalaPadrao(){
