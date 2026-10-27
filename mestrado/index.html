@@ -208,7 +208,7 @@ textarea{flex:1;font:inherit;color:var(--fg);background:transparent;border:0;res
   <div class="dr-foot">
     <div id="ctxrow" class="ctx" hidden></div>
     <div class="inbox"><textarea id="q" rows="1" placeholder="Escreva sua pergunta…" aria-label="Pergunta"></textarea><button class="send" id="enviar" type="button">Enviar</button></div>
-    <div class="footrow"><span class="note" id="aviso"></span><div style="display:flex;gap:6px"><button class="btn" id="cfgkey" type="button">Chave da API</button><button class="btn" id="limpar" type="button">Nova conversa</button></div></div>
+    <div class="footrow"><span class="note" id="aviso"></span><div style="display:flex;gap:6px;align-items:center"><select class="btn" id="quem" title="Quem está perguntando"><option value="">Quem é você?</option><option value="chrys">Sou a Chrys</option><option value="gildo">Sou o Gildo</option></select><button class="btn" id="cfgkey" type="button">Chave da API</button><button class="btn" id="limpar" type="button">Nova conversa</button></div></div>
   </div>
 </aside>
 
@@ -284,14 +284,20 @@ document.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',()
 $('#fechar').addEventListener('click',fecharChat);$('#scrim').addEventListener('click',fecharChat);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('chat-open'))fecharChat();});
 const dia=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-const instr=()=>`Você é o assistente do Painel Mestrado de Gildo França Jr. (PPGADM/UFG, ADM0066 Métodos Qualitativos em Administração). Hoje é ${dia}.
-Responda em português do Brasil, de forma didática e direta: exemplo simples antes do termo técnico. Use somente a BASE abaixo. Se algo não estiver na base, diga que ainda não está registrado no projeto e sugira o que ele pode trazer. Não invente datas, autores, páginas nem notas. Compare prazos com a data de hoje. Formato: parágrafos curtos; listas com "- " quando ajudar; **negrito** só no essencial; sem tabelas.
+const QLS='painel-mestrado-quem';
+const getQuem=()=>{try{return localStorage.getItem(QLS)||'';}catch(_){return'';}};
+const QUEMP={chrys:'Chrysthyan Kelly (Chrys), da La Vie Consultoria, colega do Gildo no Grupo 4 da ADM0066, com tema próprio sobre Recruitment Analytics',gildo:'Gildo França Jr., o dono deste painel'};
+const quemTxt=()=>{const q=getQuem();if(q==='chrys')return `QUEM ESTÁ PERGUNTANDO AGORA: ${QUEMP.chrys}. Chame-a de Chrys e trate-a por "você". Ela NÃO é o Gildo: a base descreve o percurso do Gildo (faltas, pendências, Lattes, seleção, itens com responsável "Gildo"), então ao falar disso diga "o Gildo" ou "dele", nunca "você". O que vale para ela são as informações da disciplina e do Grupo 4 (cronograma, exercícios, avaliações, leituras). Se ela perguntar algo só dela que não esteja na base, diga que ainda não está registrado no painel.`;if(q==='gildo')return `QUEM ESTÁ PERGUNTANDO AGORA: ${QUEMP.gildo}. Chame-o de Gildo e trate-o por "você". Quando a base citar a Chrys, refira-se a ela como "a Chrys".`;return 'Não se sabe quem está perguntando: não chame a pessoa pelo nome e fale do Gildo na terceira pessoa.';};
+const instr=()=>`Você é o assistente do Painel Mestrado do Grupo 4 (PPGADM/UFG, ADM0066 Métodos Qualitativos em Administração). A base foi montada a partir do projeto de Gildo França Jr., mas o painel é usado por ele e pela colega Chrys. Hoje é ${dia}.
+${quemTxt()}
+Responda em português do Brasil, de forma didática e direta: exemplo simples antes do termo técnico. Use somente a BASE abaixo. Se algo não estiver na base, diga que ainda não está registrado no projeto e sugira o que a pessoa pode trazer. Não invente datas, autores, páginas nem notas. Compare prazos com a data de hoje. Formato: parágrafos curtos; listas com "- " quando ajudar; **negrito** só no essencial; sem tabelas.
 
 === BASE DO PROJETO ===
 ${KB}
 === FIM DA BASE ===`;
 const erros={not_granted:'Para perguntar, permita o uso do Claude nesta página.',rate_limited:'Muitas perguntas seguidas. Espere alguns segundos.',cancelled:''};
 const KEYLS='painel-mestrado-apikey';const MODEL='claude-sonnet-4-6';
+(()=>{const sel=$('#quem');sel.value=getQuem();sel.addEventListener('change',()=>{try{localStorage.setItem(QLS,sel.value);}catch(_){}turns=[];salvar();redesenharChat();$('#aviso').textContent=sel.value?'Ok, '+(sel.value==='chrys'?'Chrys':'Gildo')+'.':'';});})();
 const getKey=()=>{try{return localStorage.getItem(KEYLS)||'';}catch(_){return'';}};
 function mostrarKeybox(f){$('#keybox').hidden=!f;if(f){$('#apikey').value=getKey();$('#apikey').focus();}}
 $('#cfgkey').addEventListener('click',()=>mostrarKeybox($('#keybox').hidden));
@@ -304,6 +310,7 @@ async function chamar(msgs,system,signal){
 }
 async function perguntar(txt){
   txt=(txt||'').trim();if(!txt||ocupado)return;
+  if(!getQuem()){$('#quem').focus();$('#aviso').textContent='Escolha quem está perguntando.';return;}
   if(!getKey()){mostrarKeybox(true);$('#aviso').textContent='Informe a chave da API para perguntar.';return;}
   ocupado=true;$('#enviar').textContent='Parar';$('#aviso').textContent='';$('#sug').hidden=true;
   const full=ctxItem?`[Pergunta sobre o item "${ctxItem.nome}" (${ctxItem.tipo}, ${ctxItem.etapa}${ctxItem.data_marco?', '+dataBR(ctxItem.data_marco):''})] ${txt}`:txt;
