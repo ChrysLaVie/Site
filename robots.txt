@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /clientes/
+Disallow: /database/
+Disallow: /tests/
+
+Sitemap: https://lavieconsultoria.com/sitemap.xml

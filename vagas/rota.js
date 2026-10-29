@@ -26,7 +26,14 @@
       var scripts = [].slice.call(d.querySelectorAll('script'));
       scripts.forEach(function (s) { s.dataset.lugar = d.head.contains(s) ? 'head' : 'body'; s.parentNode.removeChild(s); });
       document.documentElement.lang = d.documentElement.lang || 'pt-BR';
+      // A marcação do Google Vagas (JSON-LD) e o link canônico da página da vaga
+      // ficam na página montada, para o Google ainda encontrá-los depois do JS.
+      var manter = [].slice.call(document.head.querySelectorAll('script[data-manter], link[rel="canonical"]'));
       document.head.innerHTML = d.head.innerHTML;
+      manter.forEach(function (el) {
+        if (el.rel === 'canonical') [].forEach.call(document.head.querySelectorAll('link[rel="canonical"]'), function (c) { c.remove(); });
+        document.head.appendChild(el);
+      });
       document.body.innerHTML = d.body.innerHTML;
       for (var i = 0; i < d.body.attributes.length; i++) document.body.setAttribute(d.body.attributes[i].name, d.body.attributes[i].value);
       return scripts.reduce(function (p, s) { return p.then(function () { return rodar(s); }); }, Promise.resolve());
