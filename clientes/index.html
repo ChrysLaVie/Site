@@ -972,6 +972,7 @@ header {
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
     <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid)">🕒 Atualizações</label>
     <div style="display:flex;gap:6px;margin:8px 0 10px"><input id="mc-nota" placeholder="Ex.: cobrei formulário e teste pelo WhatsApp" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();registrarNota();}"><button type="button" class="btn btn-primary btn-sm" onclick="registrarNota()">Registrar</button><button type="button" class="btn btn-ghost btn-sm" id="mc-btn-noshow" onclick="marcarNaoCompareceu()" title="Candidato faltou à Entrevista La Vie ou à Entrevista Final" style="color:var(--amber);white-space:nowrap">Não compareceu</button></div>
+    <div id="mc-notas-rapidas" style="display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px"></div>
     <div id="mc-notas-list" style="display:flex;flex-direction:column;gap:4px;font-size:12px"></div>
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
@@ -3201,6 +3202,40 @@ async function marcarNaoCompareceu(){
   showToast('Não comparecimento registrado');
   if(MSG_TEMPLATES.noShow && confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?')) abrirMensagem(c.id,'noShow');
 }
+// Atualizações prontas: um clique registra no histórico. As de cobrança e
+// convite usam o mesmo formato das mensagens do painel (tipo 'cobranca' /
+// 'convite'), para contar em "Cobrado em" e na reprovação em lote.
+const NOTAS_RAPIDAS = [
+  { rotulo:'DISC solicitado via WhatsApp', tipo:'cobranca', obs:'DISC solicitado via WhatsApp.' },
+  { rotulo:'Formulário solicitado via WhatsApp', tipo:'cobranca', obs:'Formulário da vaga solicitado via WhatsApp.' },
+  { rotulo:'DISC e formulário solicitados via WhatsApp', tipo:'cobranca', obs:'DISC e formulário da vaga solicitados via WhatsApp.' },
+  { rotulo:'Currículo solicitado via WhatsApp', tipo:'cobranca', obs:'Currículo solicitado via WhatsApp.' },
+  { rotulo:'Convite para Entrevista La Vie via WhatsApp', tipo:'convite', oque:'Entrevista La Vie', obs:'Convite para Entrevista La Vie enviado via WhatsApp.' },
+  { rotulo:'Orientações da fase final enviadas', tipo:'observacao', obs:'Orientações e localização da fase final enviadas via WhatsApp.' },
+  { rotulo:'Confirmou presença', tipo:'observacao', obs:'Candidato confirmou presença pelo WhatsApp.' },
+  { rotulo:'Pediu para remarcar', tipo:'observacao', obs:'Candidato pediu para remarcar.' },
+  { rotulo:'Sem resposta no WhatsApp', tipo:'observacao', obs:'Sem resposta no WhatsApp.' },
+  { rotulo:'Enviou documentos', tipo:'observacao', obs:'Candidato enviou os documentos pelo WhatsApp.' }
+];
+function renderNotasRapidas(){
+  const el=document.getElementById('mc-notas-rapidas'); if(!el) return;
+  if(typeof isClienteExterno==='function' && isClienteExterno()){ el.innerHTML=''; return; }
+  el.innerHTML = NOTAS_RAPIDAS.map((n,i)=>`<button type="button" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;border-radius:14px;white-space:nowrap" title="Registrar agora: ${n.obs.replace(/"/g,'&quot;')}" onclick="registrarNotaRapida(${i})">${n.rotulo}</button>`).join('');
+}
+async function registrarNotaRapida(i){
+  const n=NOTAS_RAPIDAS[i]; if(!n) return;
+  const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
+  const c=_cands[idx];
+  const ultima=(c.historico||[]).filter(h=>h&&h.obs===n.obs).slice(-1)[0];
+  if(ultima && Date.now()-new Date(ultima.data).getTime() < 10*60*1000){ showToast('Essa atualização já foi registrada há pouco'); return; }
+  if(registrarNotaRapida._salvando) return; registrarNotaRapida._salvando=true;
+  const reg={ tipo:n.tipo, data:new Date().toISOString(), obs:n.obs, usuario:getUserName() };
+  if(n.tipo==='cobranca' || n.tipo==='convite') reg.etapaCobrada=c.etapa;
+  if(n.oque) reg.oque=n.oque;
+  c.historico=[...(c.historico||[]), reg];
+  try{ await upsertCand(c); }catch(e){ c.historico=c.historico.slice(0,-1); alert('Não foi possível salvar a atualização: '+(e.message||e)); return; }finally{ registrarNotaRapida._salvando=false; }
+  renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){} showToast('🕒 '+n.rotulo);
+}
 async function registrarNota(){
   const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
   const inp=document.getElementById('mc-nota'); const texto=(inp.value||'').trim(); if(!texto){ inp.focus(); return; }
@@ -3247,7 +3282,7 @@ function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;d
   // atual do candidato não estiver na lista, adiciona ela igual pra não perder.
   if(c.etapa && !opcoesEtapa.some(e=>e.id===c.etapa)) opcoesEtapa.push({id:c.etapa, label:ETAPA_LABEL[c.etapa]||c.etapa});
   selE.innerHTML=opcoesEtapa.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
-  document.getElementById('mc-etapa').value=c.etapa;{const bn=document.getElementById('mc-btn-noshow'); if(bn) bn.style.display=(_ETAPAS_COM_ENTREVISTA.includes(c.etapa)&&!isClienteExterno())?'':'none';}document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';_docsMostrarAnteriores=false;openModal('modal-mover-cand');renderDocsList();renderNotasCand();document.getElementById('mc-nota').value='';if((c.documentos||[]).some(d=>d&&d.resultadoSite))_converterResultadosDoCandidato(c.id);}
+  document.getElementById('mc-etapa').value=c.etapa;{const bn=document.getElementById('mc-btn-noshow'); if(bn) bn.style.display=(_ETAPAS_COM_ENTREVISTA.includes(c.etapa)&&!isClienteExterno())?'':'none';}document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';_docsMostrarAnteriores=false;openModal('modal-mover-cand');renderDocsList();renderNotasCand();renderNotasRapidas();document.getElementById('mc-nota').value='';if((c.documentos||[]).some(d=>d&&d.resultadoSite))_converterResultadosDoCandidato(c.id);}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
   const nome=document.getElementById('mc-nome').value.trim();
