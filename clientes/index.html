@@ -2563,6 +2563,20 @@ Tenho disponibilidade nestes horários:
 Qual deles fica melhor para você? Obrigada pela compreensão.
 
 ${ASSINATURA}`},
+  avisoFinal24h:{nome:'Último aviso: sem resposta em 24 horas',campos:[],texto:
+`Olá, {nome}! Tudo bem?
+
+Aqui é a Chrys, da La Vie Consultoria.
+
+Estou tentando falar com você sobre o processo seletivo para a vaga de {vaga} e ainda não tive retorno. Sei que a rotina é corrida, então deixo aqui um último lembrete.
+
+Se você ainda tem interesse em continuar, me responda por aqui em até 24 horas. Sem retorno nesse prazo, vou entender que não tem mais interesse e a sua candidatura nesta vaga será encerrada. O seu currículo continua no nosso banco de talentos para futuras oportunidades.
+
+Se preferir não seguir, é só me avisar, sem problema nenhum.
+
+Fico no aguardo. Um abraço!
+
+${ASSINATURA}`},
   noShow:{nome:'Candidato não compareceu',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
@@ -2671,7 +2685,7 @@ Atenciosamente,
 ${ASSINATURA}`}
 };
 // Menu manual (💬) — todas que você dispara sem mudar etapa:
-const MSG_MENU=['inicial','pendenteDisc','pendenteForm','confirmaOnline','confirmaPresencial','reagendar','noShow','encaminhaAdmissao','bancoTalentos','vagaEncerrada'];
+const MSG_MENU=['inicial','pendenteDisc','pendenteForm','avisoFinal24h','confirmaOnline','confirmaPresencial','reagendar','noShow','encaminhaAdmissao','bancoTalentos','vagaEncerrada'];
 
 // ── Preenche {nome}/{vaga} e abre pop-up para [CAMPOS], depois WhatsApp/e-mail ──
 let _msgCtx=null;
@@ -3215,7 +3229,8 @@ const NOTAS_RAPIDAS = [
   { rotulo:'Confirmou presença', tipo:'observacao', obs:'Candidato confirmou presença pelo WhatsApp.' },
   { rotulo:'Pediu para remarcar', tipo:'observacao', obs:'Candidato pediu para remarcar.' },
   { rotulo:'Sem resposta no WhatsApp', tipo:'observacao', obs:'Sem resposta no WhatsApp.' },
-  { rotulo:'Enviou documentos', tipo:'observacao', obs:'Candidato enviou os documentos pelo WhatsApp.' }
+  { rotulo:'Enviou documentos', tipo:'observacao', obs:'Candidato enviou os documentos pelo WhatsApp.' },
+  { rotulo:'💬 Último aviso (24 horas)', mensagem:'avisoFinal24h', obs:'Abre a mensagem educada de último aviso; registra ao enviar.' }
 ];
 function renderNotasRapidas(){
   const el=document.getElementById('mc-notas-rapidas'); if(!el) return;
@@ -3224,6 +3239,7 @@ function renderNotasRapidas(){
 }
 async function registrarNotaRapida(i){
   const n=NOTAS_RAPIDAS[i]; if(!n) return;
+  if(n.mensagem){ abrirMensagem(document.getElementById('mc-id').value, n.mensagem); return; }
   const id=document.getElementById('mc-id').value; const idx=_cands.findIndex(x=>x.id===id); if(idx<0) return;
   const c=_cands[idx];
   const ultima=(c.historico||[]).filter(h=>h&&h.obs===n.obs).slice(-1)[0];
@@ -4940,6 +4956,8 @@ async function _registrarCobranca(candId, tplKey, canal){
   if(tplKey==='pendenteDisc' || tplKey==='pendenteForm'){
     const oque = tplKey==='pendenteDisc' ? 'teste DISC' : 'formulário da vaga';
     reg={ tipo:'cobranca', etapaCobrada:c.etapa, data:new Date().toISOString(), obs:`Cobrança do ${oque} enviada por ${canal}.`, usuario:getUserName() };
+  } else if(tplKey==='avisoFinal24h'){
+    reg={ tipo:'cobranca', etapaCobrada:c.etapa, avisoFinal:true, data:new Date().toISOString(), obs:`Último aviso enviado por ${canal}: sem resposta em 24 horas, a candidatura será encerrada.`, usuario:getUserName() };
   } else if(_CONVITE_TPLS[tplKey]){
     reg={ tipo:'convite', etapaCobrada:c.etapa, oque:_CONVITE_TPLS[tplKey], data:new Date().toISOString(), obs:`Convite para ${_CONVITE_TPLS[tplKey]} enviado por ${canal}.`, usuario:getUserName() };
   }
