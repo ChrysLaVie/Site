@@ -288,10 +288,10 @@
     <div class="bar"><span id="barFill"></span></div>
   </div>
 
-  <!-- Envio por e-mail com PDF anexo via FormSubmit (mesmo esquema das páginas
-       antigas Solicitar vaga e Plano de Cargos). Destino: chrys@lavieconsultoria.com.
-       No primeiro envio desta página o FormSubmit pode pedir para clicar em
-       "Activate Form" no e-mail de confirmação. -->
+  <!-- Envio: a resposta é gravada na tabela solicitacoes_empresas do Supabase do site,
+       com o PDF guardado no bucket materiais-clientes. O banco avisa a La Vie por e-mail
+       (envio próprio, pelo Resend) em até dois minutos, com o PDF em anexo.
+       Se a gravação falhar, a pessoa recebe o botão para mandar pelo WhatsApp. -->
   <form id="form" novalidate>
     <input type="text" name="_honey" id="honey" tabindex="-1" autocomplete="off" aria-hidden="true"
            style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
@@ -936,15 +936,14 @@
 
 <script>
   const WHATSAPP_NUMERO = '5562992741488';
-  const ENDPOINT_EMAIL = 'https://formsubmit.co/ajax/chrys@lavieconsultoria.com';
   // Fora do site no ar (prévia, arquivo aberto no computador) nada é enviado.
   const NO_AR = /(^|\.)lavieconsultoria\.com$/.test(location.hostname);
 
-  // Supabase do site: guarda os materiais enviados e uma cópia de cada resposta
+  // Supabase do site: guarda os materiais, o PDF e cada resposta (o banco avisa a La Vie por e-mail)
   const SB_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8';
   const BUCKET = 'materiais-clientes';
-  const TABELA_RESPOSTAS = 'solicitacoes_empresas'; // deixe '' para não gravar cópia no banco
+  const TABELA_RESPOSTAS = 'solicitacoes_empresas';
 
   const form = document.getElementById('form');
   const todasEtapas = Array.from(document.querySelectorAll('.step'));
@@ -1198,8 +1197,7 @@
   function slug(t){
     return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w.]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
   }
-  async function enviarArquivos(empresa){
-    const pasta = `${new Date().toISOString().slice(0,10)}-${slug(empresa).slice(0,40) || 'empresa'}-${Math.random().toString(36).slice(2,10)}`;
+  async function enviarArquivos(pasta){
     const links = [];
     for (const f of arquivos){
       const caminho = `${pasta}/${slug(f.name) || 'arquivo'}`;
@@ -1218,27 +1216,49 @@
     return links;
   }
 
-  // Cópia da resposta no banco do site, para o controle comercial da La Vie.
-  // Se falhar, o e-mail continua sendo o caminho principal.
-  async function salvarNoBanco(v){
-    if (!TABELA_RESPOSTAS) return false;
+  function pastaEnvio(empresa){
+    let acaso;
+    try{ acaso = crypto.randomUUID().replace(/-/g,''); }catch(e){ acaso = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2); }
+    return `${new Date().toISOString().slice(0,10)}-${slug(empresa).replace(/\./g,'-').slice(0,40) || 'empresa'}-${acaso}`;
+  }
+  // Guarda o PDF das respostas no bucket; o link segue para o e-mail de aviso como anexo.
+  async function enviarPDF(pasta){
     try{
-      const respostas = {};
-      secoesAtivas().forEach(sec => { respostas[sec.titulo] = {}; sec.campos.forEach(c => { if (v[c.k]) respostas[sec.titulo][c.r] = v[c.k]; }); });
-      const r = await fetch(`${SB_URL}/rest/v1/${TABELA_RESPOSTAS}`, {
+      const nome = nomeArquivo();
+      const blob = gerarPDF().output('blob');
+      const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${pasta}/${nome}`, {
         method: 'POST',
-        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({
-          servicos: v.servicos ? v.servicos.split(', ') : [],
-          blocos: Array.from(blocos()),
-          empresa: v.empresa, cnpj: v.cnpj || null, contato: v.contato, email: v.email, telefone: v.telefone,
-          cliente_atual: clienteAtual() === 'Sim',
-          origem: v.origem || null,
-          respostas
-        })
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/pdf' },
+        body: blob
       });
-      return r.ok;
-    }catch(e){ return false; }
+      if (!r.ok) return null;
+      return { url: `${SB_URL}/storage/v1/object/public/${BUCKET}/${pasta}/${nome}`, nome };
+    }catch(e){ return null; }
+  }
+  // Grava a resposta no banco do site. É o envio de verdade: o banco avisa a La Vie por e-mail.
+  async function salvarNoBanco(v, pdf){
+    const respostas = secoesAtivas().map(sec => ({ titulo: sec.titulo, campos: sec.campos.map(c => ({ r: c.r, v: v[c.k] || '-' })) }));
+    const corpo = JSON.stringify({
+      servicos: v.servicos ? v.servicos.split(', ') : [],
+      blocos: Array.from(blocos()),
+      empresa: v.empresa, cnpj: v.cnpj || null, contato: v.contato, email: v.email, telefone: v.telefone,
+      cliente_atual: clienteAtual() === 'Sim',
+      origem: v.origem || null,
+      respostas,
+      pdf_url: pdf ? pdf.url : null, pdf_nome: pdf ? pdf.nome : null
+    });
+    for (let tentativa = 1; tentativa <= 3; tentativa++){
+      try{
+        const r = await fetch(`${SB_URL}/rest/v1/${TABELA_RESPOSTAS}`, {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: corpo
+        });
+        if (r.ok) return true;
+      }catch(e){ /* tenta de novo */ }
+      await new Promise(ok => setTimeout(ok, 1200 * tentativa));
+    }
+    return false;
   }
 
   /* ---------- WhatsApp ---------- */
@@ -1408,28 +1428,15 @@
     try{
       if (!NO_AR){ concluir(valores()); return; }
 
+      const pasta = pastaEnvio(form.empresa.value);
       if (arquivos.length && !arquivosLinks.length && ativo('pccs diag')){
         btnEnviar.textContent = 'Enviando arquivos…';
-        arquivosLinks = await enviarArquivos(form.empresa.value);
+        arquivosLinks = await enviarArquivos(pasta);
         btnEnviar.textContent = 'Enviando…';
       }
       const v = valores();
-      const dados = new FormData();
-      dados.append('_subject', `${perfil().assunto} · ${v.empresa}`);
-      dados.append('_captcha', 'false');
-      dados.append('_template', 'table');
-      dados.append('_replyto', v.email);
-      dados.append('_honey', document.getElementById('honey').value);
-      secoesAtivas().forEach(sec => sec.campos.forEach(c => dados.append(c.r, v[c.k] || '-')));
-      try{
-        const blob = gerarPDF().output('blob');
-        dados.append('attachment', new File([blob], nomeArquivo(), { type: 'application/pdf' }));
-      }catch(err){ /* envia sem PDF se o gerador falhar */ }
-
-      const copia = salvarNoBanco(v);
-      const r = await fetch(ENDPOINT_EMAIL, { method:'POST', body:dados, headers:{ 'Accept':'application/json' } });
-      await copia;
-      if (!r.ok) throw new Error('Falha no envio');
+      const pdf = await enviarPDF(pasta);
+      if (!(await salvarNoBanco(v, pdf))) throw new Error('Falha no envio');
       concluir(v);
     }catch(err){
       atualizarWhats();

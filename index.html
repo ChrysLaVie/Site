@@ -1585,8 +1585,9 @@ hamburgerBtn.addEventListener('click', () => toggleMenu(!navLinks.classList.cont
 navOverlay.addEventListener('click', () => toggleMenu(false));
 navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggleMenu(false)));
 
-// Contato rápido: envia por e-mail (FormSubmit) e guarda uma cópia no banco do site.
-// Antes este botão só mostrava "Mensagem enviada!" sem enviar nada.
+// Contato rápido: grava a mensagem no banco do site (tabela solicitacoes_empresas);
+// o banco avisa a La Vie por e-mail em até dois minutos. Se a gravação falhar,
+// a pessoa recebe o link para mandar a mesma mensagem pelo WhatsApp.
 document.getElementById('btnContato').addEventListener('click', async function() {
   const botao = this;
   const nome = document.getElementById('nome');
@@ -1599,6 +1600,7 @@ document.getElementById('btnContato').addEventListener('click', async function()
     } else { group && group.classList.remove('has-error'); }
   });
   if (!valid) return;
+  if (document.getElementById('contatoHoney').value) return; // campo isca: só robô preenche
 
   const v = {
     nome: nome.value.trim(),
@@ -1619,38 +1621,32 @@ document.getElementById('btnContato').addEventListener('click', async function()
     '\nE-mail: ' + v.email + '\nWhatsApp: ' + (v.whatsapp || '-') + '\nPrincipal desafio: ' + (v.desafio || '-') + '\nMensagem: ' + (v.mensagem || '-');
   document.getElementById('contatoWhats').href = 'https://wa.me/5562992741488?text=' + encodeURIComponent(resumo);
 
-  // Cópia no banco (controle comercial). Se falhar, o e-mail continua valendo.
   const SB_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8';
-  const copia = fetch(SB_URL + '/rest/v1/solicitacoes_empresas', {
-    method: 'POST',
-    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({
-      servicos: ['Contato rápido da home'], blocos: ['contato'],
-      empresa: v.empresa || null, contato: v.nome, email: v.email, telefone: v.whatsapp || null,
-      respostas: { 'Contato': { 'Principal desafio': v.desafio || '-', 'Mensagem': v.mensagem || '-' } }
-    })
-  }).catch(() => null);
-
-  try {
-    const dados = new FormData();
-    dados.append('_subject', 'Contato pelo site · ' + (v.empresa || v.nome));
-    dados.append('_captcha', 'false');
-    dados.append('_template', 'table');
-    dados.append('_replyto', v.email);
-    dados.append('_honey', document.getElementById('contatoHoney').value);
-    dados.append('Nome', v.nome);
-    dados.append('Empresa', v.empresa || '-');
-    dados.append('E-mail', v.email);
-    dados.append('WhatsApp', v.whatsapp || '-');
-    dados.append('Principal desafio', v.desafio || '-');
-    dados.append('Mensagem', v.mensagem || '-');
-    const r = await fetch('https://formsubmit.co/ajax/chrys@lavieconsultoria.com', { method: 'POST', body: dados, headers: { 'Accept': 'application/json' } });
-    await copia;
-    if (!r.ok) throw new Error('Falha no envio');
+  const corpo = JSON.stringify({
+    servicos: ['Contato rápido da home'], blocos: ['contato'],
+    empresa: v.empresa || null, contato: v.nome, email: v.email, telefone: v.whatsapp || null,
+    respostas: [{ titulo: 'Contato', campos: [
+      { r: 'Nome', v: v.nome }, { r: 'Empresa', v: v.empresa || '-' }, { r: 'E-mail', v: v.email },
+      { r: 'WhatsApp', v: v.whatsapp || '-' }, { r: 'Principal desafio', v: v.desafio || '-' }, { r: 'Mensagem', v: v.mensagem || '-' }
+    ] }]
+  });
+  let gravou = false;
+  for (let tentativa = 1; tentativa <= 3 && !gravou; tentativa++) {
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/solicitacoes_empresas', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: corpo
+      });
+      gravou = r.ok;
+    } catch (e) { /* tenta de novo */ }
+    if (!gravou) await new Promise(ok => setTimeout(ok, 1200 * tentativa));
+  }
+  if (gravou) {
     sucesso.style.display = 'block';
     botao.style.display = 'none';
-  } catch (e) {
+  } else {
     erro.style.display = 'block';
     botao.disabled = false;
     botao.textContent = rotulo;
