@@ -2717,7 +2717,7 @@ function _dadosDaAgendaDoCand(candId){
     const lista=(_agenda||[]).filter(a=>a.candidatoId===candId && a.status!=='cancelada' && a.data);
     const cand=getCands().find(x=>x.id===candId);
     if(!lista.some(a=>a.data>=hoje) && cand && cand.etapa==='vivencia'){
-      const f=_faseFinalConfig(); const dia=(f.dia&&f.dia>=hoje)?f.dia:'';
+      const f=_faseFinalConfig(); const dia=(f.dia&&f.dia>=hoje)?f.dia:hoje;
       return { valores:{'DATA':dia?_dataBR(dia):'','HORÁRIO':f.hora,'ENDEREÇO':f.local,'NOME DE REFERÊNCIA':f.ref||getUserName(),'LINK':''}, rotulo:`fase final${dia?' em '+_dataBR(dia):''} às ${f.hora} (padrão da Confirmação de presenças)` };
     }
     if(!lista.length) return null;
@@ -2747,7 +2747,7 @@ function _confTexto(it){
 }
 // Fase final presencial: padrão por cliente (o mesmo que vai no dossiê).
 const FASE_FINAL_PADRAO = {
-  autoclub:{ hora:'14:00', local:'R. Belo Horizonte, Qd. 109, Lt. 05, Jardim Guanabara, Goiânia/GO, CEP 74675-080 (perto do aeroporto)', ref:'proprietários da Auto Club' }
+  autoclub:{ hora:'14:00', local:'R. Belo Horizonte, Qd. 109, Lt. 05, Jardim Guanabara, Goiânia/GO, CEP 74675-080 (perto do aeroporto)', ref:'Letícia Feliciano ou Helen Feliciano' }
 };
 function _faseFinalConfig(){
   const pad=FASE_FINAL_PADRAO[currentEmpresa]||{};
@@ -2826,7 +2826,8 @@ function abrirMensagem(candId,tplKey){
     }
     corpo+=`<div style="font-size:12px;color:var(--mid);margin-bottom:8px">Confira os campos abaixo (eles entram no texto):</div>`;
     corpo+=tpl.campos.map((cp,i)=>{
-      const v=pre&&pre.valores[cp]?pre.valores[cp]:'';
+      let v=pre&&pre.valores[cp]?pre.valores[cp]:'';
+      if(!v && cp==='DATA') v=_dataBR(new Date().toISOString().slice(0,10)); // data do dia sempre preenchida
       return `<div class="form-field" style="margin-bottom:8px"><label>${cp}</label><input id="msgcampo-${i}" placeholder="${cp}" value="${(v+'').replace(/"/g,'&quot;')}"></div>`;
     }).join('');
   } else {
