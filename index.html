@@ -951,7 +951,7 @@ footer p a { opacity:1; }
     <h1 class="hero-title">Do diagnóstico<br>à <em>execução.</em></h1>
     <p class="hero-sub">Estruturamos empresas para crescer com consistência, controle e previsibilidade do planejamento à implementação real.</p>
     <div class="hero-actions">
-      <a href="#contato" class="btn-primary">Agendar Diagnóstico</a>
+      <a href="/empresas/?servico=diagnostico" class="btn-primary" target="_blank" rel="noopener noreferrer">Agendar Diagnóstico</a>
       <a href="#quem-somos" class="btn-ghost">Conheça a La Vie →</a>
     </div>
   </div>
@@ -1060,9 +1060,9 @@ footer p a { opacity:1; }
     <div class="servico-intro">
       <p>Para empresas que precisam estruturar equipes e desenvolver gestores, com metodologia aplicada e presença na execução.</p>
       <div class="servico-cta" style="display:flex;flex-wrap:wrap;gap:1.2rem 2rem;">
-        <a onclick="irParaContato('Gestão de Pessoas')">Quero estruturar meu RH →</a>
-        <a href="/plano-de-carreira/" target="_blank" rel="noopener noreferrer">Plano de Cargos e Salários →</a>
-        <a href="/solicitar-vaga/" target="_blank" rel="noopener noreferrer">Solicitar uma vaga →</a>
+        <a href="/empresas/?servico=liderancas" target="_blank" rel="noopener noreferrer">Quero estruturar meu RH →</a>
+        <a href="/empresas/?servico=pccs" target="_blank" rel="noopener noreferrer">Plano de Cargos e Salários →</a>
+        <a href="/empresas/?servico=vaga" target="_blank" rel="noopener noreferrer">Solicitar uma vaga →</a>
       </div>
     </div>
     <div class="servico-items">
@@ -1076,7 +1076,7 @@ footer p a { opacity:1; }
     <div class="servico-intro">
       <p>Para empresas que precisam reorganizar o negócio como um todo: finanças, indicadores e direção estratégica em um só lugar.</p>
       <div class="servico-cta">
-        <a onclick="irParaContato('Gestão Integrada')">Quero um diagnóstico →</a>
+        <a href="/empresas/?servico=gestao" target="_blank" rel="noopener noreferrer">Quero um diagnóstico →</a>
       </div>
     </div>
     <div class="servico-items">
@@ -1090,7 +1090,7 @@ footer p a { opacity:1; }
     <div class="servico-intro">
       <p>Para empresas que precisam organizar, padronizar e controlar sua operação, com certificações reconhecidas pelo mercado.</p>
       <div class="servico-cta">
-        <a onclick="irParaContato('Certificações ISO / EcoVadis / SASSMAQ')">Quero estruturar processos →</a>
+        <a href="/empresas/?servico=processos" target="_blank" rel="noopener noreferrer">Quero estruturar processos →</a>
       </div>
     </div>
     <div class="servico-items">
@@ -1391,11 +1391,15 @@ footer p a { opacity:1; }
       <h2 class="section-title">Vamos estruturar<br>sua <em>empresa?</em></h2>
       <p style="color:var(--muted);font-size:0.97rem;line-height:1.85;margin-bottom:3rem;font-weight:300;">Agende uma conversa estratégica com nossa equipe. Analisamos sua situação e identificamos as prioridades de estruturação.</p>
       <div class="contato-links">
-        <a href="/plano-de-carreira/" class="contato-link" target="_blank" rel="noopener noreferrer">
+        <a href="/empresas/?servico=diagnostico" class="contato-link" target="_blank" rel="noopener noreferrer">
+          <span class="contato-link-label">Diagnóstico de Gestão</span>
+          <span class="contato-link-value">Responder o diagnóstico →</span>
+        </a>
+        <a href="/empresas/?servico=pccs" class="contato-link" target="_blank" rel="noopener noreferrer">
           <span class="contato-link-label">Plano de Cargos e Salários</span>
           <span class="contato-link-value">Solicitar proposta →</span>
         </a>
-        <a href="/solicitar-vaga/" class="contato-link" target="_blank" rel="noopener noreferrer">
+        <a href="/empresas/?servico=vaga" class="contato-link" target="_blank" rel="noopener noreferrer">
           <span class="contato-link-label">Recrutamento e Seleção</span>
           <span class="contato-link-value">Solicitar uma vaga →</span>
         </a>
@@ -1426,13 +1430,18 @@ footer p a { opacity:1; }
         </select>
       </div>
       <div class="form-group">
-        <textarea rows="4" placeholder="Conte brevemente sobre sua empresa e o desafio que enfrenta..."></textarea>
+        <label for="mensagem" class="sr-only">Mensagem</label><textarea rows="4" id="mensagem" name="mensagem" placeholder="Conte brevemente sobre sua empresa e o desafio que enfrenta..."></textarea>
+        <input type="text" id="contatoHoney" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
       </div>
       <p style="font-size:0.78rem;color:var(--muted);margin-top:-0.3rem;">Ao enviar, você concorda com nossa <a href="/politica-de-privacidade" style="color:var(--charcoal);">Política de Privacidade</a>.</p>
       <button class="form-submit" id="btnContato">Enviar Mensagem</button>
       <div class="form-success" style="display:none;padding:1.5rem;background:var(--bg-alt);border-radius:var(--radius);text-align:center;margin-top:1rem;">
         <p style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--charcoal);">Mensagem enviada!</p>
         <p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">Nossa equipe entrará em contato em até 24 horas.</p>
+      </div>
+      <div class="form-erro" style="display:none;padding:1.5rem;background:var(--bg-alt);border-radius:var(--radius);text-align:center;margin-top:1rem;">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--charcoal);">Não foi possível enviar agora</p>
+        <p style="font-size:0.85rem;color:var(--muted);margin-top:0.5rem;">Sua mensagem não se perdeu: <a id="contatoWhats" href="https://wa.me/5562992741488" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">envie pelo WhatsApp →</a></p>
       </div>
     </div>
   </div>
@@ -1576,19 +1585,76 @@ hamburgerBtn.addEventListener('click', () => toggleMenu(!navLinks.classList.cont
 navOverlay.addEventListener('click', () => toggleMenu(false));
 navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => toggleMenu(false)));
 
-document.getElementById('btnContato').addEventListener('click', function() {
+// Contato rápido: envia por e-mail (FormSubmit) e guarda uma cópia no banco do site.
+// Antes este botão só mostrava "Mensagem enviada!" sem enviar nada.
+document.getElementById('btnContato').addEventListener('click', async function() {
+  const botao = this;
   const nome = document.getElementById('nome');
   const email = document.getElementById('email');
   let valid = true;
   [nome, email].forEach(field => {
     const group = field.closest('.form-group');
-    if (!field.value.trim() || (field.type==='email' && !/^\S+@\S+\.\S+$/.test(field.value))) {
+    if (!field.value.trim() || (field.type==='email' && !/^\S+@\S+\.\S+$/.test(field.value.trim()))) {
       group && group.classList.add('has-error'); valid = false;
     } else { group && group.classList.remove('has-error'); }
   });
   if (!valid) return;
-  document.querySelector('.form-success').style.display = 'block';
-  this.style.display = 'none';
+
+  const v = {
+    nome: nome.value.trim(),
+    empresa: document.getElementById('empresa').value.trim(),
+    email: email.value.trim(),
+    whatsapp: document.getElementById('whatsapp').value.trim(),
+    desafio: document.getElementById('desafioSelect').value,
+    mensagem: document.getElementById('mensagem').value.trim()
+  };
+  const sucesso = document.querySelector('.form-success');
+  const erro = document.querySelector('.form-erro');
+  erro.style.display = 'none';
+  botao.disabled = true;
+  const rotulo = botao.textContent;
+  botao.textContent = 'Enviando…';
+
+  const resumo = 'Olá! Enviei uma mensagem pelo site.\n\nNome: ' + v.nome + '\nEmpresa: ' + (v.empresa || '-') +
+    '\nE-mail: ' + v.email + '\nWhatsApp: ' + (v.whatsapp || '-') + '\nPrincipal desafio: ' + (v.desafio || '-') + '\nMensagem: ' + (v.mensagem || '-');
+  document.getElementById('contatoWhats').href = 'https://wa.me/5562992741488?text=' + encodeURIComponent(resumo);
+
+  // Cópia no banco (controle comercial). Se falhar, o e-mail continua valendo.
+  const SB_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8';
+  const copia = fetch(SB_URL + '/rest/v1/solicitacoes_empresas', {
+    method: 'POST',
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      servicos: ['Contato rápido da home'], blocos: ['contato'],
+      empresa: v.empresa || null, contato: v.nome, email: v.email, telefone: v.whatsapp || null,
+      respostas: { 'Contato': { 'Principal desafio': v.desafio || '-', 'Mensagem': v.mensagem || '-' } }
+    })
+  }).catch(() => null);
+
+  try {
+    const dados = new FormData();
+    dados.append('_subject', 'Contato pelo site · ' + (v.empresa || v.nome));
+    dados.append('_captcha', 'false');
+    dados.append('_template', 'table');
+    dados.append('_replyto', v.email);
+    dados.append('_honey', document.getElementById('contatoHoney').value);
+    dados.append('Nome', v.nome);
+    dados.append('Empresa', v.empresa || '-');
+    dados.append('E-mail', v.email);
+    dados.append('WhatsApp', v.whatsapp || '-');
+    dados.append('Principal desafio', v.desafio || '-');
+    dados.append('Mensagem', v.mensagem || '-');
+    const r = await fetch('https://formsubmit.co/ajax/chrys@lavieconsultoria.com', { method: 'POST', body: dados, headers: { 'Accept': 'application/json' } });
+    await copia;
+    if (!r.ok) throw new Error('Falha no envio');
+    sucesso.style.display = 'block';
+    botao.style.display = 'none';
+  } catch (e) {
+    erro.style.display = 'block';
+    botao.disabled = false;
+    botao.textContent = rotulo;
+  }
 });
 
 document.querySelectorAll('.tab-btn').forEach(btn => {

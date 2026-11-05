@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<link rel="icon" type="image/png" href="/logo.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="/logo-branco.png" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" href="/logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atendimento a Empresas · La Vie Consultoria</title>
+<meta name="description" content="Solicite uma vaga, peça proposta de Plano de Cargos, Carreira e Salários ou receba um diagnóstico de gestão da La Vie Consultoria.">
+<link rel="canonical" href="https://lavieconsultoria.com/empresas/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="La Vie Consultoria">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://lavieconsultoria.com/empresas/">
+<meta property="og:title" content="Atendimento a Empresas · La Vie Consultoria">
+<meta property="og:description" content="Solicite uma vaga, peça proposta de plano de cargos ou receba um diagnóstico de gestão.">
+<meta property="og:image" content="https://lavieconsultoria.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* Formulário único para empresas: uma coluna de etapas, uma de cada vez,
+     no mesmo padrão visual das páginas Solicitar vaga e Plano de Cargos. */
+  :root{
+    /* Mesma paleta e tokens do site principal (lavieconsultoria.com) */
+    --bg:        #F2F1ED;
+    --bg-alt:    #E8E4DE;
+    --dark:      #1a1917;
+    --charcoal:  #3A3A3A;
+    --muted:     #7A7A7A;
+    --sand:      #D8CFC4;
+    --sand-dark: #B8AFA4;
+    --white:     #FFFFFF;
+    --accent:    #8C8377; /* areia mais escura, para textos pequenos legíveis */
+    --border:    rgba(58,58,58,0.1);
+    --radius:    4px;
+    /* Semáforo de urgência da vaga (informativo, não decorativo) */
+    --high:#c0392b;
+    --high-soft:#fbeae7;
+    --high-text:#8a2d20;
+    --mid:#b8860b;
+    --mid-soft:#fbf3d9;
+    --mid-text:#8a6a00;
+    --low:#3f7d55;
+    --low-soft:#e7f4ea;
+    --whats:#25d366;
+    --whats-dark:#1ebc59;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+    --sans:'DM Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:112.5%}
+  body{
+    font-family:var(--sans);background:var(--bg);color:var(--charcoal);
+    line-height:1.7;font-weight:300;-webkit-font-smoothing:antialiased;
+    padding-block:56px;
+    padding-left:max(20px, env(safe-area-inset-left, 0px));
+    padding-right:max(20px, env(safe-area-inset-right, 0px));
+  }
+  .wrap{max-width:780px;margin:0 auto}
+  em{font-style:italic;color:var(--dark)}
+
+  .brandbar{display:flex;flex-direction:column;align-items:center;margin-bottom:20px}
+  .logo{height:170px;width:auto;object-fit:contain;max-width:100%}
+
+  header{text-align:center;margin-bottom:40px}
+  header .eyebrow{
+    display:block;font-size:0.68rem;letter-spacing:0.25em;text-transform:uppercase;
+    color:var(--accent);font-weight:500;margin-bottom:1.1rem;
+  }
+  h1{
+    font-family:var(--serif);font-weight:300;text-wrap:balance;
+    font-size:clamp(2.1rem,5vw,3.1rem);line-height:1.08;letter-spacing:-0.005em;
+    color:var(--charcoal);
+  }
+  header p{color:var(--muted);margin-top:1rem;max-width:54ch;font-weight:400;font-size:0.95rem;margin-left:auto;margin-right:auto}
+
+  .previa{
+    margin:0 auto 1.75rem;padding:0.8rem 1.1rem;background:var(--bg-alt);border:1px dashed var(--sand-dark);
+    border-radius:var(--radius);font-size:0.8rem;font-weight:400;color:var(--charcoal);text-align:center;
+  }
+
+  /* Progresso */
+  .progress{margin-bottom:1.75rem}
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.6rem;gap:1rem}
+  .progress-label{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;color:var(--charcoal)}
+  .progress-count{font-family:var(--serif);font-style:italic;color:var(--accent);font-size:1rem;white-space:nowrap}
+  .bar{height:3px;background:var(--sand);border-radius:2px;overflow:hidden}
+  .bar span{display:block;height:100%;width:0;background:var(--charcoal);transition:width .35s ease}
+
+  form{display:flex;flex-direction:column;gap:1.75rem}
+  .step{display:none}
+  .step.active{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    .step.active,.done.show{animation:none}
+    html{scroll-behavior:auto}
+  }
+  fieldset{
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2.4rem;min-width:0;
+  }
+  legend{
+    padding:0 0.6rem;margin-left:-0.6rem;display:flex;align-items:baseline;gap:0.6rem;
+  }
+  legend .num{font-family:var(--serif);font-size:1rem;font-style:italic;color:var(--accent)}
+  legend .titulo{font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;color:var(--charcoal)}
+  .intro{font-size:0.88rem;color:var(--muted);font-weight:400;margin-top:0.4rem}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem 1.1rem;margin-top:1.5rem}
+  .field{display:flex;flex-direction:column;gap:0.4rem;min-width:0}
+  .field.full{grid-column:1/-1}
+  label,.qlabel{font-size:0.78rem;font-weight:500;color:var(--charcoal)}
+  .hint{font-size:0.74rem;color:var(--muted);font-weight:400;margin-top:-0.15rem}
+  .req{color:var(--high)}
+  .off{display:none !important}
+  input[type=text],input[type=email],input[type=tel],input[type=url],input[type=number],select,textarea{
+    font-family:inherit;font-size:0.9rem;color:var(--charcoal);font-weight:400;
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
+    padding:0.8rem 0.9rem;width:100%;transition:border-color .15s;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--charcoal)}
+  textarea{resize:vertical;min-height:96px}
+  .invalid{border-color:var(--high) !important;background:var(--high-soft) !important}
+  .group-invalid .chip span,.group-invalid .need .opt{border-color:var(--high)}
+
+  /* Opções clicáveis (rádio e caixa) */
+  .chips{display:flex;flex-wrap:wrap;gap:0.55rem;margin-top:0.2rem}
+  .chips.stack{flex-direction:column}
+  .chip{position:relative;cursor:pointer}
+  .chip input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
+  .chip span{
+    display:flex;align-items:flex-start;gap:0.6rem;padding:0.7rem 1rem;
+    border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);
+    font-size:0.85rem;font-weight:400;transition:.15s;line-height:1.45;
+  }
+  .chip span::before{
+    content:"";flex:none;width:14px;height:14px;margin-top:2px;border:1px solid var(--sand-dark);
+    border-radius:50%;background:var(--white);transition:.15s;
+  }
+  .chip input[type=checkbox] + span::before{border-radius:3px}
+  .chip span b{font-weight:inherit}
+  .chip span small{display:block;color:var(--muted);font-size:0.76rem;margin-top:0.15rem}
+  .chip input:checked + span{background:var(--bg-alt);border-color:var(--charcoal);color:var(--dark)}
+  .chip input:checked + span::before{background:var(--charcoal);border-color:var(--charcoal);box-shadow:inset 0 0 0 3px var(--white)}
+  .chip input[type=checkbox]:checked + span::before{box-shadow:inset 0 0 0 2px var(--white)}
+  .chip input:focus-visible + span{outline:2px solid var(--sand-dark);outline-offset:2px}
+
+  /* Grupos da primeira etapa: os três pilares do site */
+  .pilares{display:flex;flex-direction:column;gap:1.3rem;margin-top:0.5rem}
+  .pilar-nome{
+    font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--accent);margin-bottom:0.45rem;font-weight:400;
+  }
+
+  /* Escala de 1 a 5 */
+  .escala .chip{flex:1;min-width:3rem}
+  .escala .chip span{justify-content:center;font-weight:500}
+  .escala .chip span::before{display:none}
+  .escala .chip input:checked + span{background:var(--charcoal);border-color:var(--charcoal);color:var(--white)}
+
+  /* Semáforo de urgência da vaga */
+  .need{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-top:0.2rem}
+  .need label{position:relative;cursor:pointer}
+  .need input{position:absolute;opacity:0;inset:0;cursor:pointer}
+  .need .opt{
+    display:flex;align-items:center;gap:0.6rem;justify-content:center;
+    padding:0.9rem 0.6rem;border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--bg);font-weight:500;font-size:0.85rem;transition:.15s;
+  }
+  .need .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .need .high .dot{background:var(--high)}
+  .need .mid  .dot{background:var(--mid)}
+  .need .low  .dot{background:var(--low)}
+  .need input:checked + .opt.high{background:var(--high-soft);border-color:var(--high);color:var(--high)}
+  .need input:checked + .opt.mid {background:var(--mid-soft); border-color:var(--mid); color:var(--mid-text)}
+  .need input:checked + .opt.low {background:var(--low-soft); border-color:var(--low); color:var(--low)}
+  .need input:focus-visible + .opt{outline:2px solid var(--sand-dark);outline-offset:2px}
+
+  /* Envio de arquivos */
+  .drop{
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.35rem;
+    border:1px dashed var(--sand-dark);border-radius:var(--radius);background:var(--bg);color:var(--muted);
+    padding:1.6rem 1rem;text-align:center;cursor:pointer;transition:.15s;
+  }
+  .drop:hover,.drop.over{border-color:var(--charcoal);background:var(--bg-alt)}
+  .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .drop strong{font-weight:500;font-size:0.85rem;color:var(--charcoal)}
+  .drop span{font-size:0.74rem;color:var(--muted);font-weight:400}
+  .files{list-style:none;display:flex;flex-direction:column;gap:0.4rem;margin-top:0.6rem}
+  .files li{
+    display:flex;align-items:center;justify-content:space-between;gap:0.8rem;
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+    padding:0.55rem 0.8rem;font-size:0.82rem;font-weight:400;
+  }
+  .files li .nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .files li .tam{color:var(--muted);font-size:0.74rem;margin-left:0.4rem}
+  .files li button{
+    padding:0.2rem 0.55rem;font-size:0.68rem;letter-spacing:0.1em;background:transparent;
+    border:1px solid var(--border);color:var(--muted);flex:none;
+  }
+  .files li button:hover{border-color:var(--charcoal);color:var(--charcoal)}
+  .file-erro{font-size:0.76rem;color:var(--high-text);font-weight:400}
+
+  .callout{
+    margin-top:1.5rem;padding:1rem 1.2rem;background:var(--bg);border-left:2px solid var(--sand-dark);
+    font-size:0.82rem;color:var(--charcoal);font-weight:400;border-radius:0 var(--radius) var(--radius) 0;
+  }
+
+  .actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;justify-content:space-between}
+  .actions .right{display:flex;gap:1rem;margin-left:auto}
+  button,.btn{
+    font-family:inherit;font-size:0.75rem;font-weight:500;cursor:pointer;letter-spacing:0.13em;
+    text-transform:uppercase;padding:0.95rem 1.9rem;border-radius:var(--radius);border:1px solid transparent;
+    transition:background .2s,border-color .2s,transform .15s;text-decoration:none;display:inline-block;text-align:center;line-height:1.7;
+  }
+  button:focus-visible,.btn:focus-visible{outline:2px solid var(--sand-dark);outline-offset:2px}
+  .btn-primary{background:var(--charcoal);color:var(--white)}
+  .btn-primary:hover{background:var(--dark);transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:.6;cursor:wait;transform:none}
+  .btn-whats{background:var(--whats);color:var(--white)}
+  .btn-whats:hover{background:var(--whats-dark)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--charcoal)}
+  .btn-ghost:hover{border-color:var(--charcoal);background:var(--bg-alt)}
+  .hidden{display:none !important}
+  .msg-erro{
+    display:none;border-radius:var(--radius);padding:1rem 1.2rem;font-size:0.85rem;font-weight:400;
+    background:var(--high-soft);border:1px solid var(--high);color:var(--high-text);
+  }
+  .msg-erro.show{display:block}
+  .msg-erro strong{font-family:var(--serif);font-weight:500;font-size:1.25rem;display:block;margin-bottom:0.2rem}
+
+  /* Tela final */
+  .done{
+    display:none;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+    padding:3.4rem 2.4rem;text-align:center;
+  }
+  .done.show{display:block;animation:fade .4s ease}
+  .done .check{
+    width:56px;height:56px;border-radius:50%;border:1px solid var(--sand-dark);margin:0 auto 1.6rem;
+    display:flex;align-items:center;justify-content:center;color:var(--charcoal);
+  }
+  .done h2{font-family:var(--serif);font-weight:300;font-size:2.3rem;line-height:1.1;color:var(--charcoal)}
+  .done p{color:var(--muted);font-weight:400;max-width:46ch;margin:1rem auto 0;font-size:0.95rem}
+  .done .actions{justify-content:center;margin-top:2rem}
+
+  footer{margin-top:3rem;text-align:center;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
+
+  @media(max-width:600px){
+    .grid{grid-template-columns:1fr}
+    .need{grid-template-columns:1fr}
+    fieldset{padding:1.6rem 1.25rem}
+    body{
+      padding-block:32px;
+      padding-left:max(16px, env(safe-area-inset-left, 0px));
+      padding-right:max(16px, env(safe-area-inset-right, 0px));
+    }
+    html{font-size:106.25%}
+    .logo{height:124px}
+    .actions button,.actions .btn{flex:1}
+    .actions .right{width:100%;margin-left:0}
+    .done{padding:2.6rem 1.4rem}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brandbar">
+    <img class="logo" src="data:image/png;base64,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" alt="La Vie Consultoria">
+  </div>
+
+  <header id="topo">
+    <div class="eyebrow" id="hEyebrow">Para empresas</div>
+    <h1 id="hTitulo">O que a sua empresa <em>precisa agora?</em></h1>
+    <p id="hTexto">Um formulário só para solicitar uma vaga, pedir proposta de plano de cargos ou receber um diagnóstico de gestão. Você responde apenas o que tem a ver com a sua necessidade.</p>
+  </header>
+
+  <div class="previa hidden" id="previa">Prévia para aprovação. Nesta versão as respostas não são enviadas: no site, elas chegam por e-mail para a equipe La Vie com o PDF em anexo.</div>
+
+  <div class="progress" id="progress">
+    <div class="progress-top">
+      <span class="progress-label" id="progressLabel">O que você precisa</span>
+      <span class="progress-count" id="progressCount">Etapa 1</span>
+    </div>
+    <div class="bar"><span id="barFill"></span></div>
+  </div>
+
+  <!-- Envio por e-mail com PDF anexo via FormSubmit (mesmo esquema das páginas
+       antigas Solicitar vaga e Plano de Cargos). Destino: chrys@lavieconsultoria.com.
+       No primeiro envio desta página o FormSubmit pode pedir para clicar em
+       "Activate Form" no e-mail de confirmação. -->
+  <form id="form" novalidate>
+    <input type="text" name="_honey" id="honey" tabindex="-1" autocomplete="off" aria-hidden="true"
+           style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+
+    <!-- ETAPA: O que você precisa -->
+    <section class="step" id="etapa-necessidade" data-title="O que você precisa">
+      <fieldset>
+        <legend><span class="num">01</span><span class="titulo">O que você precisa</span></legend>
+        <div class="grid">
+          <div class="field full" data-group="servicos" data-required>
+            <span class="qlabel">O que a sua empresa precisa agora? <span class="req">*</span></span>
+            <span class="hint">Marque uma ou mais opções. As perguntas seguintes se ajustam ao que você marcar.</span>
+            <div class="pilares">
+              <div>
+                <div class="pilar-nome">Pessoas e Lideranças</div>
+                <div class="chips stack">
+                  <label class="chip"><input type="checkbox" id="servicos-0" name="servicos" value="Recrutamento e Seleção" data-bloco="vaga"><span><b>Recrutamento e Seleção<small>Abrir uma ou mais vagas com a La Vie</small></b></span></label>
+                  <label class="chip"><input type="checkbox" id="servicos-1" name="servicos" value="Plano de Cargos, Carreira e Salários" data-bloco="pccs"><span><b>Plano de Cargos, Carreira e Salários<small>Cargos, faixas salariais e critérios de progressão</small></b></span></label>
+                  <label class="chip"><input type="checkbox" id="servicos-2" name="servicos" value="Lideranças e desempenho" data-bloco="diag"><span><b>Lideranças e desempenho<small>Avaliação de desempenho, treinamentos e desenvolvimento de gestores</small></b></span></label>
+                </div>
+              </div>
+              <div>
+                <div class="pilar-nome">Gestão Integrada</div>
+                <div class="chips stack">
+                  <label class="chip"><input type="checkbox" id="servicos-3" name="servicos" value="Gestão integrada do negócio" data-bloco="diag"><span><b>Gestão integrada do negócio<small>Finanças, indicadores e direção estratégica em um só lugar</small></b></span></label>
+                </div>
+              </div>
+              <div>
+                <div class="pilar-nome">Processos e Qualidade</div>
+                <div class="chips stack">
+                  <label class="chip"><input type="checkbox" id="servicos-4" name="servicos" value="Processos e certificações" data-bloco="diag"><span><b>Processos e certificações<small>Mapeamento de processos, ISO 9001, SASSMAQ e EcoVadis</small></b></span></label>
+                </div>
+              </div>
+              <div>
+                <div class="pilar-nome">Ainda em dúvida</div>
+                <div class="chips stack">
+                  <label class="chip"><input type="checkbox" id="servicos-5" name="servicos" value="Não sei por onde começar" data-bloco="diag"><span><b>Não sei por onde começar<small>Quero um diagnóstico e uma recomendação da La Vie</small></b></span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field full" data-group="cliente" data-required>
+            <span class="qlabel">Sua empresa já é cliente da La Vie? <span class="req">*</span></span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="cliente-0" name="cliente" value="Sim"><span>Sim</span></label>
+              <label class="chip"><input type="radio" id="cliente-1" name="cliente" value="Ainda não"><span>Ainda não</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="origem" data-cli="Ainda não">
+            <span class="qlabel">Como conheceu a La Vie?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="origem-0" name="origem" value="Indicação"><span>Indicação</span></label>
+              <label class="chip"><input type="radio" id="origem-1" name="origem" value="Instagram"><span>Instagram</span></label>
+              <label class="chip"><input type="radio" id="origem-2" name="origem" value="LinkedIn"><span>LinkedIn</span></label>
+              <label class="chip"><input type="radio" id="origem-3" name="origem" value="Google"><span>Google</span></label>
+              <label class="chip"><input type="radio" id="origem-4" name="origem" value="Outro"><span>Outro</span></label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Sua empresa -->
+    <section class="step" id="etapa-empresa" data-title="Sua empresa">
+      <fieldset>
+        <legend><span class="num">02</span><span class="titulo">Sua empresa</span></legend>
+        <div class="grid">
+          <div class="field full">
+            <label for="empresa">Razão social / Nome da empresa <span class="req">*</span></label>
+            <input type="text" id="empresa" name="empresa" required>
+          </div>
+          <div class="field">
+            <label for="cnpj">CNPJ</label>
+            <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" inputmode="numeric">
+          </div>
+          <div class="field" data-req-se="pccs diag">
+            <label for="segmento">Segmento de atuação <span class="req">*</span></label>
+            <input type="text" id="segmento" name="segmento" placeholder="Ex.: educação, indústria, varejo">
+          </div>
+          <div class="field">
+            <label for="cidade">Cidade</label>
+            <input type="text" id="cidade" name="cidade">
+          </div>
+          <div class="field">
+            <label for="uf">UF</label>
+            <input type="text" id="uf" name="uf" placeholder="GO" maxlength="2" style="text-transform:uppercase">
+          </div>
+          <div class="field">
+            <label for="contato">Seu nome <span class="req">*</span></label>
+            <input type="text" id="contato" name="contato" required>
+          </div>
+          <div class="field">
+            <label for="cargo_contato">Seu cargo</label>
+            <input type="text" id="cargo_contato" name="cargo_contato" placeholder="Ex.: Diretor(a), RH">
+          </div>
+          <div class="field">
+            <label for="email">E-mail <span class="req">*</span></label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="field">
+            <label for="telefone">Telefone / WhatsApp <span class="req">*</span></label>
+            <input type="tel" id="telefone" name="telefone" required placeholder="(00) 00000-0000">
+          </div>
+          <div class="field full" data-group="colaboradores" data-required data-se="pccs diag">
+            <span class="qlabel">Quantos colaboradores a empresa tem hoje? <span class="req">*</span></span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="colaboradores-0" name="colaboradores" value="Até 10"><span>Até 10</span></label>
+              <label class="chip"><input type="radio" id="colaboradores-1" name="colaboradores" value="11 a 20"><span>11 a 20</span></label>
+              <label class="chip"><input type="radio" id="colaboradores-2" name="colaboradores" value="21 a 50"><span>21 a 50</span></label>
+              <label class="chip"><input type="radio" id="colaboradores-3" name="colaboradores" value="51 a 99"><span>51 a 99</span></label>
+              <label class="chip"><input type="radio" id="colaboradores-4" name="colaboradores" value="100 a 199"><span>100 a 199</span></label>
+              <label class="chip"><input type="radio" id="colaboradores-5" name="colaboradores" value="200 a 499"><span>200 a 499</span></label>
+              <label class="chip"><input type="radio" id="colaboradores-6" name="colaboradores" value="500 ou mais"><span>500 ou mais</span></label>
+            </div>
+          </div>
+          <div class="field" data-se="pccs diag">
+            <label for="unidades">Número de unidades ou filiais</label>
+            <input type="number" id="unidades" name="unidades" placeholder="Ex.: 1" min="1">
+          </div>
+          <div class="field full" data-group="faturamento" data-se="diag">
+            <span class="qlabel">Faturamento médio mensal</span>
+            <span class="hint">Ajuda a dimensionar a proposta. Se preferir, deixe para a conversa.</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="faturamento-0" name="faturamento" value="Até R$ 300 mil"><span>Até R$ 300 mil</span></label>
+              <label class="chip"><input type="radio" id="faturamento-1" name="faturamento" value="R$ 300 mil a R$ 1 milhão"><span>R$ 300 mil a R$ 1 milhão</span></label>
+              <label class="chip"><input type="radio" id="faturamento-2" name="faturamento" value="R$ 1 a 3 milhões"><span>R$ 1 a 3 milhões</span></label>
+              <label class="chip"><input type="radio" id="faturamento-3" name="faturamento" value="R$ 3 a 5 milhões"><span>R$ 3 a 5 milhões</span></label>
+              <label class="chip"><input type="radio" id="faturamento-4" name="faturamento" value="R$ 5 a 10 milhões"><span>R$ 5 a 10 milhões</span></label>
+              <label class="chip"><input type="radio" id="faturamento-5" name="faturamento" value="Acima de R$ 10 milhões"><span>Acima de R$ 10 milhões</span></label>
+              <label class="chip"><input type="radio" id="faturamento-6" name="faturamento" value="Prefiro não informar"><span>Prefiro não informar</span></label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Presença digital -->
+    <section class="step" id="etapa-presenca" data-title="Presença digital" data-se="pccs diag">
+      <fieldset>
+        <legend><span class="num">03</span><span class="titulo">Presença digital</span></legend>
+        <p class="intro">Usamos o site e as redes da sua empresa para conhecer o negócio e preparar a proposta com a identidade visual de vocês.<span data-se="pccs"> Informe pelo menos um link ou envie um material.</span></p>
+        <div class="grid" id="grupoRedes">
+          <div class="field full">
+            <label for="site">Site</label>
+            <input type="text" id="site" name="site" placeholder="www.suaempresa.com.br" inputmode="url">
+          </div>
+          <div class="field">
+            <label for="instagram">Instagram</label>
+            <input type="text" id="instagram" name="instagram" placeholder="@suaempresa">
+          </div>
+          <div class="field">
+            <label for="linkedin">LinkedIn</label>
+            <input type="text" id="linkedin" name="linkedin" placeholder="linkedin.com/company/...">
+          </div>
+          <div class="field full">
+            <label for="outras_redes">Outras redes ou links</label>
+            <input type="text" id="outras_redes" name="outras_redes" placeholder="Facebook, YouTube, link de apresentação institucional">
+          </div>
+          <div class="field full">
+            <span class="qlabel">Materiais da empresa (opcional)</span>
+            <span class="hint">Logo, manual da marca, apresentação institucional, organograma. PDF, imagem, PowerPoint ou Word, até 5 arquivos de 15 MB.</span>
+            <label class="drop" id="drop">
+              <input type="file" id="arquivos" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.svg,.ppt,.pptx,.doc,.docx">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              <strong>Clique para escolher ou arraste os arquivos aqui</strong>
+              <span>Os arquivos chegam para a equipe La Vie junto com as respostas.</span>
+            </label>
+            <ul class="files" id="listaArquivos"></ul>
+            <span class="file-erro" id="arquivoErro"></span>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Detalhes da vaga -->
+    <section class="step" id="etapa-vaga" data-title="Detalhes da vaga" data-se="vaga">
+      <fieldset>
+        <legend><span class="num">04</span><span class="titulo">Detalhes da vaga</span></legend>
+        <div class="grid">
+          <div class="field full" data-group="urgencia">
+            <span class="qlabel">Nível de necessidade / urgência</span>
+            <div class="need">
+              <label><input type="radio" id="urgencia-high" name="urgencia" value="Alta"><span class="opt high"><span class="dot"></span> Alta</span></label>
+              <label><input type="radio" id="urgencia-mid" name="urgencia" value="Média"><span class="opt mid"><span class="dot"></span> Média</span></label>
+              <label><input type="radio" id="urgencia-low" name="urgencia" value="Baixa"><span class="opt low"><span class="dot"></span> Baixa</span></label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="cargo">Cargo / Título da vaga <span class="req">*</span></label>
+            <input type="text" id="cargo" name="cargo" required>
+          </div>
+          <div class="field">
+            <label for="senioridade">Senioridade</label>
+            <select id="senioridade" name="senioridade"><option value="">Selecione…</option><option>Estágio</option><option>Trainee / Aprendiz</option><option>Júnior</option><option>Pleno</option><option>Sênior</option><option>Especialista</option><option>Coordenação / Gestão</option></select>
+          </div>
+          <div class="field">
+            <label for="quantidade">Número de vagas</label>
+            <input type="number" id="quantidade" name="quantidade" value="1" min="1">
+          </div>
+          <div class="field">
+            <label for="modelo">Modelo de trabalho</label>
+            <select id="modelo" name="modelo"><option value="">Selecione…</option><option>Presencial</option><option>Híbrido</option><option>Remoto</option></select>
+          </div>
+          <div class="field">
+            <label for="contrato">Tipo de contrato</label>
+            <select id="contrato" name="contrato"><option value="">Selecione…</option><option>CLT</option><option>PJ</option><option>Temporário</option><option>Estágio</option><option>Freelance / Projeto</option></select>
+          </div>
+          <div class="field">
+            <label for="jornada">Jornada</label>
+            <input type="text" id="jornada" name="jornada" placeholder="Ex.: segunda a sexta, 8h às 17h">
+          </div>
+          <div class="field">
+            <label for="salario">Faixa salarial</label>
+            <input type="text" id="salario" name="salario" placeholder="Ex.: R$ 3.000 a R$ 4.500">
+          </div>
+          <div class="field full">
+            <label for="beneficios">Benefícios</label>
+            <textarea id="beneficios" name="beneficios" placeholder="VR, VT, plano de saúde, bônus, etc."></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Requisitos e atividades -->
+    <section class="step" id="etapa-requisitos" data-title="Requisitos e atividades" data-se="vaga">
+      <fieldset>
+        <legend><span class="num">05</span><span class="titulo">Requisitos e atividades</span></legend>
+        <div class="grid">
+          <div class="field full">
+            <label for="atividades">Descrição das atividades</label>
+            <textarea id="atividades" name="atividades" placeholder="Principais responsabilidades do dia a dia"></textarea>
+          </div>
+          <div class="field full">
+            <label for="requisitos">Requisitos obrigatórios</label>
+            <textarea id="requisitos" name="requisitos" placeholder="Experiências e conhecimentos indispensáveis"></textarea>
+          </div>
+          <div class="field full">
+            <label for="competencias">Competências desejáveis</label>
+            <textarea id="competencias" name="competencias" placeholder="Diferenciais, habilidades comportamentais, idiomas"></textarea>
+          </div>
+          <div class="field">
+            <label for="formacao">Formação</label>
+            <select id="formacao" name="formacao"><option value="">Selecione…</option><option>Ensino fundamental</option><option>Ensino médio</option><option>Técnico</option><option>Superior cursando</option><option>Superior completo</option><option>Pós-graduação</option><option>Não exigida</option></select>
+          </div>
+          <div class="field full">
+            <label for="vaga_observacoes">Observações sobre a vaga</label>
+            <textarea id="vaga_observacoes" name="vaga_observacoes" placeholder="Qualquer informação extra relevante"></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Cargos e salários hoje -->
+    <section class="step" id="etapa-cargos" data-title="Cargos e salários hoje" data-se="pccs">
+      <fieldset>
+        <legend><span class="num">06</span><span class="titulo">Cargos e salários hoje</span></legend>
+        <div class="grid">
+          <div class="field">
+            <label for="num_cargos">Quantos cargos diferentes existem?</label>
+            <input type="number" id="num_cargos" name="num_cargos" placeholder="Número aproximado" min="1">
+            <span class="hint">Nomes de cargo distintos na folha.</span>
+          </div>
+          <div class="field">
+            <label for="sistema_rh">Sistema de RH ou folha utilizado</label>
+            <input type="text" id="sistema_rh" name="sistema_rh" placeholder="Ex.: Domínio, TOTVS, Senior, planilha">
+          </div>
+          <div class="field full" data-group="regimes">
+            <span class="qlabel">Regimes de contratação</span>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" id="regimes-0" name="regimes" value="CLT"><span>CLT</span></label>
+              <label class="chip"><input type="checkbox" id="regimes-1" name="regimes" value="PJ"><span>PJ</span></label>
+              <label class="chip"><input type="checkbox" id="regimes-2" name="regimes" value="Estágio"><span>Estágio</span></label>
+              <label class="chip"><input type="checkbox" id="regimes-3" name="regimes" value="Jovem aprendiz"><span>Jovem aprendiz</span></label>
+              <label class="chip"><input type="checkbox" id="regimes-4" name="regimes" value="Temporário"><span>Temporário</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="organograma">
+            <span class="qlabel">Existe organograma?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="organograma-0" name="organograma" value="Sim, atualizado"><span>Sim, atualizado</span></label>
+              <label class="chip"><input type="radio" id="organograma-1" name="organograma" value="Sim, desatualizado"><span>Sim, desatualizado</span></label>
+              <label class="chip"><input type="radio" id="organograma-2" name="organograma" value="Não"><span>Não</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="descricoes">
+            <span class="qlabel">Existem descrições de cargos?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="descricoes-0" name="descricoes" value="Sim, atualizadas"><span>Sim, atualizadas</span></label>
+              <label class="chip"><input type="radio" id="descricoes-1" name="descricoes" value="Sim, desatualizadas"><span>Sim, desatualizadas</span></label>
+              <label class="chip"><input type="radio" id="descricoes-2" name="descricoes" value="Só de alguns cargos"><span>Só de alguns cargos</span></label>
+              <label class="chip"><input type="radio" id="descricoes-3" name="descricoes" value="Não"><span>Não</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="salarios">
+            <span class="qlabel">Como os salários são definidos hoje?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="salarios-0" name="salarios" value="Existe tabela ou faixa salarial definida"><span>Existe tabela ou faixa salarial definida</span></label>
+              <label class="chip"><input type="radio" id="salarios-1" name="salarios" value="Existe para alguns cargos"><span>Existe para alguns cargos</span></label>
+              <label class="chip"><input type="radio" id="salarios-2" name="salarios" value="Negociados caso a caso"><span>Negociados caso a caso</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="sindicato">
+            <span class="qlabel">Há convenção ou acordo coletivo (sindicato)?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="sindicato-0" name="sindicato" value="Sim"><span>Sim</span></label>
+              <label class="chip"><input type="radio" id="sindicato-1" name="sindicato" value="Não"><span>Não</span></label>
+              <label class="chip"><input type="radio" id="sindicato-2" name="sindicato" value="Não sei"><span>Não sei</span></label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="sindicato_qual">Se sim, qual sindicato?</label>
+            <input type="text" id="sindicato_qual" name="sindicato_qual">
+          </div>
+          <div class="field full" data-group="plano_anterior">
+            <span class="qlabel">A empresa já teve plano de cargos e salários ou de carreira?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="plano_anterior-0" name="plano_anterior" value="Sim, ainda em uso"><span>Sim, ainda em uso</span></label>
+              <label class="chip"><input type="radio" id="plano_anterior-1" name="plano_anterior" value="Sim, mas foi abandonado"><span>Sim, mas foi abandonado</span></label>
+              <label class="chip"><input type="radio" id="plano_anterior-2" name="plano_anterior" value="Nunca teve"><span>Nunca teve</span></label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="plano_anterior_obs">Se já teve, o que não funcionou?</label>
+            <textarea id="plano_anterior_obs" name="plano_anterior_obs"></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Motivação -->
+    <section class="step" id="etapa-motivacao" data-title="Motivação" data-se="pccs">
+      <fieldset>
+        <legend><span class="num">07</span><span class="titulo">Motivação</span></legend>
+        <div class="grid">
+          <div class="field full" data-group="motivos">
+            <span class="qlabel">O que levou a empresa a buscar um plano de cargos, carreira e salários agora?</span>
+            <span class="hint">Marque quantas opções quiser.</span>
+            <div class="chips stack">
+              <label class="chip"><input type="checkbox" id="motivos-0" name="motivos" value="Rotatividade alta"><span>Rotatividade alta</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-1" name="motivos" value="Reter talentos e lideranças"><span>Reter talentos e lideranças</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-2" name="motivos" value="Crescimento da empresa"><span>Crescimento da empresa</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-3" name="motivos" value="Pedidos de equiparação ou ações trabalhistas"><span>Pedidos de equiparação salarial ou ações trabalhistas</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-4" name="motivos" value="Insatisfação com salários ou promoções"><span>Insatisfação da equipe com salários ou promoções</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-5" name="motivos" value="Preparar sucessão"><span>Preparar sucessão e novas lideranças</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-6" name="motivos" value="Adequação à Lei de Igualdade Salarial"><span>Adequação à Lei de Igualdade Salarial (Lei 14.611/2023)</span></label>
+              <label class="chip"><input type="checkbox" id="motivos-7" name="motivos" value="Outro"><span>Outro</span></label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="areas_criticas">Quais áreas ou cargos são mais críticos hoje?</label>
+            <textarea id="areas_criticas" name="areas_criticas"></textarea>
+          </div>
+          <div class="field full">
+            <label for="expectativa">O que vocês esperam ver de diferente 12 meses depois do plano implantado?</label>
+            <textarea id="expectativa" name="expectativa"></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Escopo do plano -->
+    <section class="step" id="etapa-escopo" data-title="Escopo do plano" data-se="pccs">
+      <fieldset>
+        <legend><span class="num">08</span><span class="titulo">Escopo do plano</span></legend>
+        <div class="grid">
+          <div class="field full" data-group="escopo">
+            <span class="qlabel">Quais etapas interessam?</span>
+            <span class="hint">Se não tiver certeza, marque a última opção e recomendamos o escopo ideal.</span>
+            <div class="chips stack">
+              <label class="chip"><input type="checkbox" id="escopo-0" name="escopo" value="Descrição e análise de cargos"><span><b>Descrição e análise de cargos<small>Atribuições, requisitos e responsabilidades de cada cargo</small></b></span></label>
+              <label class="chip"><input type="checkbox" id="escopo-1" name="escopo" value="Avaliação e classificação de cargos"><span><b>Avaliação e classificação de cargos<small>Peso e nível de cada cargo na estrutura</small></b></span></label>
+              <label class="chip"><input type="checkbox" id="escopo-2" name="escopo" value="Pesquisa salarial de mercado"><span>Pesquisa salarial de mercado</span></label>
+              <label class="chip"><input type="checkbox" id="escopo-3" name="escopo" value="Tabela salarial com faixas e steps"><span>Tabela salarial com faixas e steps</span></label>
+              <label class="chip"><input type="checkbox" id="escopo-4" name="escopo" value="Trilhas de carreira"><span><b>Trilhas de carreira<small>Caminhos de crescimento vertical, horizontal ou em Y</small></b></span></label>
+              <label class="chip"><input type="checkbox" id="escopo-5" name="escopo" value="Política de promoção e progressão"><span><b>Política de promoção e progressão<small>Critérios de mérito e tempo de casa</small></b></span></label>
+              <label class="chip"><input type="checkbox" id="escopo-6" name="escopo" value="Avaliação de desempenho integrada"><span>Avaliação de desempenho integrada ao plano</span></label>
+              <label class="chip"><input type="checkbox" id="escopo-7" name="escopo" value="Comunicação e treinamento de gestores"><span>Comunicação do plano à equipe e treinamento dos gestores</span></label>
+              <label class="chip"><input type="checkbox" id="escopo-8" name="escopo" value="Acompanhamento pós-implantação"><span>Acompanhamento após a implantação</span></label>
+              <label class="chip"><input type="checkbox" id="escopo-9" name="escopo" value="Não sei, quero uma recomendação"><span>Não sei, quero uma recomendação da La Vie</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="entrevistas">
+            <span class="qlabel">Será possível entrevistar gestores e colaboradores?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="entrevistas-0" name="entrevistas" value="Sim"><span>Sim</span></label>
+              <label class="chip"><input type="radio" id="entrevistas-1" name="entrevistas" value="Só gestores"><span>Só gestores</span></label>
+              <label class="chip"><input type="radio" id="entrevistas-2" name="entrevistas" value="A combinar"><span>A combinar</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="dados_folha">
+            <span class="qlabel">A empresa pode compartilhar cargos e salários (sem nomes) depois de fechado o projeto?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="dados_folha-0" name="dados_folha" value="Sim"><span>Sim</span></label>
+              <label class="chip"><input type="radio" id="dados_folha-1" name="dados_folha" value="Parcialmente"><span>Parcialmente</span></label>
+              <label class="chip"><input type="radio" id="dados_folha-2" name="dados_folha" value="A combinar"><span>A combinar</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="callout">Nenhum dado salarial é pedido neste formulário. Essas informações só são solicitadas depois da contratação, com acordo de confidencialidade.</div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Gestão hoje -->
+    <section class="step" id="etapa-gestao" data-title="Gestão hoje" data-se="diag">
+      <fieldset>
+        <legend><span class="num">09</span><span class="titulo">Gestão hoje</span></legend>
+        <p class="intro">Um retrato rápido de como a empresa funciona hoje. Marque o que mais se aproxima da realidade.</p>
+        <div class="grid">
+          <div class="field full" data-group="modelo_gestao">
+            <span class="qlabel">Como é o modelo de gestão da empresa hoje?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="modelo_gestao-0" name="modelo_gestao" value="Centralizado na figura do proprietário"><span>Centralizado na figura do proprietário</span></label>
+              <label class="chip"><input type="radio" id="modelo_gestao-1" name="modelo_gestao" value="Delegado, mas sem processos nem indicadores definidos"><span>Delegado, mas sem processos nem indicadores definidos</span></label>
+              <label class="chip"><input type="radio" id="modelo_gestao-2" name="modelo_gestao" value="Delegado, com responsáveis por área"><span>Delegado, com responsáveis por área</span></label>
+              <label class="chip"><input type="radio" id="modelo_gestao-3" name="modelo_gestao" value="Estruturado, com metas, indicadores e acompanhamento periódico"><span>Estruturado, com metas, indicadores e acompanhamento periódico</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="controles_fin">
+            <span class="qlabel">Quais controles financeiros a empresa usa hoje?</span>
+            <span class="hint">Marque quantas opções quiser.</span>
+            <div class="chips stack">
+              <label class="chip"><input type="checkbox" id="controles_fin-0" name="controles_fin" value="Fluxo de caixa projetado"><span>Fluxo de caixa projetado</span></label>
+              <label class="chip"><input type="checkbox" id="controles_fin-1" name="controles_fin" value="DRE mensal"><span>DRE mensal</span></label>
+              <label class="chip"><input type="checkbox" id="controles_fin-2" name="controles_fin" value="Orçamento anual"><span>Orçamento anual</span></label>
+              <label class="chip"><input type="checkbox" id="controles_fin-3" name="controles_fin" value="Custos por centro de resultado"><span>Custos por centro de resultado</span></label>
+              <label class="chip"><input type="checkbox" id="controles_fin-4" name="controles_fin" value="Conciliação bancária periódica"><span>Conciliação bancária periódica</span></label>
+              <label class="chip"><input type="checkbox" id="controles_fin-5" name="controles_fin" value="Nenhum controle formalizado"><span>Nenhum controle formalizado</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="gestao_pessoas">
+            <span class="qlabel">Como a gestão de pessoas está organizada hoje?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="gestao_pessoas-0" name="gestao_pessoas" value="Equipe interna de RH"><span>Equipe interna de RH</span></label>
+              <label class="chip"><input type="radio" id="gestao_pessoas-1" name="gestao_pessoas" value="Só Departamento Pessoal (folha e rotinas)"><span>Só Departamento Pessoal (folha e rotinas)</span></label>
+              <label class="chip"><input type="radio" id="gestao_pessoas-2" name="gestao_pessoas" value="RH e Departamento Pessoal internos"><span>RH e Departamento Pessoal internos</span></label>
+              <label class="chip"><input type="radio" id="gestao_pessoas-3" name="gestao_pessoas" value="Terceirizada (contabilidade ou consultoria)"><span>Terceirizada (contabilidade ou consultoria)</span></label>
+              <label class="chip"><input type="radio" id="gestao_pessoas-4" name="gestao_pessoas" value="Não há estrutura formal"><span>Não há estrutura formal</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="treinamento">
+            <span class="qlabel">Como acontecem a integração e o treinamento das pessoas?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="treinamento-0" name="treinamento" value="Programa estruturado de integração"><span>Programa estruturado de integração</span></label>
+              <label class="chip"><input type="radio" id="treinamento-1" name="treinamento" value="Plano anual de desenvolvimento"><span>Plano anual de desenvolvimento</span></label>
+              <label class="chip"><input type="radio" id="treinamento-2" name="treinamento" value="Treinamentos pontuais"><span>Treinamentos pontuais</span></label>
+              <label class="chip"><input type="radio" id="treinamento-3" name="treinamento" value="Acontece de forma informal"><span>Acontece de forma informal</span></label>
+              <label class="chip"><input type="radio" id="treinamento-4" name="treinamento" value="Não há processo estruturado"><span>Não há processo estruturado</span></label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Processos e estratégia -->
+    <section class="step" id="etapa-processos" data-title="Processos e estratégia" data-se="diag">
+      <fieldset>
+        <legend><span class="num">10</span><span class="titulo">Processos e estratégia</span></legend>
+        <div class="grid">
+          <div class="field full" data-group="processos">
+            <span class="qlabel">Os processos da empresa estão documentados?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="processos-0" name="processos" value="Sim, formalizados e aplicados"><span>Sim, formalizados e aplicados</span></label>
+              <label class="chip"><input type="radio" id="processos-1" name="processos" value="Parcialmente formalizados"><span>Parcialmente formalizados</span></label>
+              <label class="chip"><input type="radio" id="processos-2" name="processos" value="Existem, mas não estão documentados"><span>Existem, mas não estão documentados</span></label>
+              <label class="chip"><input type="radio" id="processos-3" name="processos" value="Não há processos estruturados"><span>Não há processos estruturados</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="decisoes_base">
+            <span class="qlabel">As decisões estratégicas se baseiam principalmente em:</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="decisoes_base-0" name="decisoes_base" value="Experiência e percepção do gestor"><span>Experiência e percepção do gestor</span></label>
+              <label class="chip"><input type="radio" id="decisoes_base-1" name="decisoes_base" value="Relatórios operacionais"><span>Relatórios operacionais</span></label>
+              <label class="chip"><input type="radio" id="decisoes_base-2" name="decisoes_base" value="Indicadores de desempenho (KPIs)"><span>Indicadores de desempenho (KPIs)</span></label>
+              <label class="chip"><input type="radio" id="decisoes_base-3" name="decisoes_base" value="Planejamento estratégico formalizado"><span>Planejamento estratégico formalizado</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="planejamento">
+            <span class="qlabel">Existe planejamento estratégico formalizado?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="planejamento-0" name="planejamento" value="Sim, com metas e acompanhamento periódico"><span>Sim, com metas e acompanhamento periódico</span></label>
+              <label class="chip"><input type="radio" id="planejamento-1" name="planejamento" value="Existe, mas sem acompanhamento regular"><span>Existe, mas sem acompanhamento regular</span></label>
+              <label class="chip"><input type="radio" id="planejamento-2" name="planejamento" value="Em fase de estruturação"><span>Em fase de estruturação</span></label>
+              <label class="chip"><input type="radio" id="planejamento-3" name="planejamento" value="Não existe"><span>Não existe</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="kpis">
+            <span class="qlabel">A empresa acompanha indicadores (KPIs) periodicamente?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="kpis-0" name="kpis" value="Sim, com reuniões de análise"><span>Sim, com reuniões de análise</span></label>
+              <label class="chip"><input type="radio" id="kpis-1" name="kpis" value="Parcialmente"><span>Parcialmente</span></label>
+              <label class="chip"><input type="radio" id="kpis-2" name="kpis" value="Não"><span>Não</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="certificacoes">
+            <span class="qlabel">A empresa tem ou quer ter alguma certificação?</span>
+            <div class="chips">
+              <label class="chip"><input type="checkbox" id="certificacoes-0" name="certificacoes" value="ISO 9001"><span>ISO 9001</span></label>
+              <label class="chip"><input type="checkbox" id="certificacoes-1" name="certificacoes" value="SASSMAQ"><span>SASSMAQ</span></label>
+              <label class="chip"><input type="checkbox" id="certificacoes-2" name="certificacoes" value="EcoVadis"><span>EcoVadis</span></label>
+              <label class="chip"><input type="checkbox" id="certificacoes-3" name="certificacoes" value="Outra"><span>Outra</span></label>
+              <label class="chip"><input type="checkbox" id="certificacoes-4" name="certificacoes" value="Nenhuma por enquanto"><span>Nenhuma por enquanto</span></label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="certificacoes_obs">Se já possui alguma, qual?</label>
+            <input type="text" id="certificacoes_obs" name="certificacoes_obs">
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Prioridades -->
+    <section class="step" id="etapa-prioridades" data-title="Prioridades" data-se="diag">
+      <fieldset>
+        <legend><span class="num">11</span><span class="titulo">Prioridades</span></legend>
+        <div class="grid">
+          <div class="field full">
+            <label for="desafio">Qual é o principal desafio da empresa hoje? <span class="req">*</span></label>
+            <textarea id="desafio" name="desafio" required></textarea>
+          </div>
+          <div class="field full" data-group="urgencia_diag">
+            <span class="qlabel">Qual a urgência para reorganizar ou estruturar a empresa?</span>
+            <span class="hint">1 é baixa urgência, 5 é urgência elevada.</span>
+            <div class="chips escala">
+              <label class="chip"><input type="radio" id="urgencia_diag-1" name="urgencia_diag" value="1"><span>1</span></label>
+              <label class="chip"><input type="radio" id="urgencia_diag-2" name="urgencia_diag" value="2"><span>2</span></label>
+              <label class="chip"><input type="radio" id="urgencia_diag-3" name="urgencia_diag" value="3"><span>3</span></label>
+              <label class="chip"><input type="radio" id="urgencia_diag-4" name="urgencia_diag" value="4"><span>4</span></label>
+              <label class="chip"><input type="radio" id="urgencia_diag-5" name="urgencia_diag" value="5"><span>5</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="abertura">
+            <span class="qlabel">A empresa está aberta a mudanças estruturais e novos processos?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="abertura-0" name="abertura" value="Sim, totalmente"><span>Sim, totalmente</span></label>
+              <label class="chip"><input type="radio" id="abertura-1" name="abertura" value="Depende do plano apresentado"><span>Depende do plano apresentado</span></label>
+              <label class="chip"><input type="radio" id="abertura-2" name="abertura" value="Prefere ajustes pontuais"><span>Prefere ajustes pontuais</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="modelo_atuacao">
+            <span class="qlabel">Como imagina o trabalho com a La Vie?</span>
+            <div class="chips stack">
+              <label class="chip"><input type="radio" id="modelo_atuacao-0" name="modelo_atuacao" value="Projeto pontual em uma área"><span>Projeto pontual em uma área</span></label>
+              <label class="chip"><input type="radio" id="modelo_atuacao-1" name="modelo_atuacao" value="Estruturação completa de uma área"><span>Estruturação completa de uma área</span></label>
+              <label class="chip"><input type="radio" id="modelo_atuacao-2" name="modelo_atuacao" value="Gestão Empresarial Integrada"><span>Gestão Empresarial Integrada</span></label>
+              <label class="chip"><input type="radio" id="modelo_atuacao-3" name="modelo_atuacao" value="Quero uma recomendação da La Vie"><span>Quero uma recomendação da La Vie</span></label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- ETAPA: Condições do projeto -->
+    <section class="step" id="etapa-condicoes" data-title="Condições do projeto" data-se="pccs diag">
+      <fieldset>
+        <legend><span class="num">12</span><span class="titulo">Condições do projeto</span></legend>
+        <div class="grid">
+          <div class="field">
+            <label for="decisores">Quem participa da decisão?</label>
+            <input type="text" id="decisores" name="decisores" placeholder="Ex.: sócios, diretoria, RH">
+          </div>
+          <div class="field">
+            <label for="ponto_focal">Quem será o ponto focal do projeto?</label>
+            <input type="text" id="ponto_focal" name="ponto_focal" placeholder="Nome e cargo">
+          </div>
+          <div class="field full" data-group="prazo">
+            <span class="qlabel">Prazo desejado para implantar</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="prazo-0" name="prazo" value="Até 1 mês"><span>Até 1 mês</span></label>
+              <label class="chip"><input type="radio" id="prazo-1" name="prazo" value="1 a 3 meses"><span>1 a 3 meses</span></label>
+              <label class="chip"><input type="radio" id="prazo-2" name="prazo" value="3 a 6 meses"><span>3 a 6 meses</span></label>
+              <label class="chip"><input type="radio" id="prazo-3" name="prazo" value="Sem prazo definido"><span>Sem prazo definido</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="orcamento">
+            <span class="qlabel">Existe orçamento previsto para o projeto?</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="orcamento-0" name="orcamento" value="Sim"><span>Sim</span></label>
+              <label class="chip"><input type="radio" id="orcamento-1" name="orcamento" value="Ainda não"><span>Ainda não</span></label>
+              <label class="chip"><input type="radio" id="orcamento-2" name="orcamento" value="Prefiro conversar"><span>Prefiro conversar</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="formato">
+            <span class="qlabel">Formato de trabalho preferido</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="formato-0" name="formato" value="Presencial"><span>Presencial</span></label>
+              <label class="chip"><input type="radio" id="formato-1" name="formato" value="Remoto"><span>Remoto</span></label>
+              <label class="chip"><input type="radio" id="formato-2" name="formato" value="Híbrido"><span>Híbrido</span></label>
+              <label class="chip"><input type="radio" id="formato-3" name="formato" value="Sem preferência"><span>Sem preferência</span></label>
+            </div>
+          </div>
+          <div class="field full" data-group="horario_contato">
+            <span class="qlabel">Melhor horário para contato</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" id="horario_contato-0" name="horario_contato" value="8h às 10h"><span>8h às 10h</span></label>
+              <label class="chip"><input type="radio" id="horario_contato-1" name="horario_contato" value="10h às 12h"><span>10h às 12h</span></label>
+              <label class="chip"><input type="radio" id="horario_contato-2" name="horario_contato" value="14h às 16h"><span>14h às 16h</span></label>
+              <label class="chip"><input type="radio" id="horario_contato-3" name="horario_contato" value="16h às 18h"><span>16h às 18h</span></label>
+              <label class="chip"><input type="radio" id="horario_contato-4" name="horario_contato" value="Depois das 18h"><span>Depois das 18h</span></label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="observacoes">Algo mais que devemos saber?</label>
+            <textarea id="observacoes" name="observacoes"></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </section>
+
+    <div class="msg-erro" id="msgValida"><strong>Falta pouco</strong><span id="msgValidaTxt">Preencha os campos marcados para continuar.</span></div>
+
+    <div class="msg-erro" id="msgEnvio">
+      <strong>Não foi possível enviar automaticamente</strong>
+      Sem problema. Toque em "Enviar por WhatsApp" para que suas respostas cheguem até nós.
+      <div class="actions" style="margin-top:1rem;justify-content:flex-start">
+        <a class="btn btn-whats" id="linkWhats" href="https://wa.me/5562992741488" target="_blank" rel="noopener noreferrer">Enviar por WhatsApp</a>
+      </div>
+    </div>
+
+    <div class="actions" id="nav">
+      <button type="button" class="btn-ghost" id="btnVoltar">Voltar</button>
+      <div class="right">
+        <button type="button" class="btn-primary" id="btnAvancar">Continuar</button>
+        <button type="submit" class="btn-primary hidden" id="btnEnviar">Enviar respostas</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="done" id="done">
+    <div class="check">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+    <h2 id="doneTitulo">Respostas <em>recebidas</em></h2>
+    <p><span id="doneNome"></span><span id="doneTexto">Suas respostas chegaram para a equipe La Vie. Agora vamos preparar uma proposta personalizada para a sua empresa e entraremos em contato em breve.</span></p>
+    <div class="actions" id="doneAcoes">
+      <button type="button" class="btn-ghost" id="btnBaixar">Baixar minhas respostas (PDF)</button>
+    </div>
+  </div>
+
+  <footer>La Vie Consultoria · Gestão Empresarial Integrada</footer>
+</div>
+
+<script>
+  const WHATSAPP_NUMERO = '5562992741488';
+  const ENDPOINT_EMAIL = 'https://formsubmit.co/ajax/chrys@lavieconsultoria.com';
+  // Fora do site no ar (prévia, arquivo aberto no computador) nada é enviado.
+  const NO_AR = /(^|\.)lavieconsultoria\.com$/.test(location.hostname);
+
+  // Supabase do site: guarda os materiais enviados e uma cópia de cada resposta
+  const SB_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8';
+  const BUCKET = 'materiais-clientes';
+  const TABELA_RESPOSTAS = 'solicitacoes_empresas'; // deixe '' para não gravar cópia no banco
+
+  const form = document.getElementById('form');
+  const todasEtapas = Array.from(document.querySelectorAll('.step'));
+  const btnVoltar = document.getElementById('btnVoltar');
+  const btnAvancar = document.getElementById('btnAvancar');
+  const btnEnviar = document.getElementById('btnEnviar');
+  const msgValida = document.getElementById('msgValida');
+  const msgValidaTxt = document.getElementById('msgValidaTxt');
+  const msgEnvio = document.getElementById('msgEnvio');
+  const linkWhats = document.getElementById('linkWhats');
+  let atual = 0;       // posição dentro das etapas ativas
+  let etapas = [];     // etapas ativas, na ordem
+
+  // Estrutura única usada para o e-mail, o PDF, o WhatsApp e a cópia no banco.
+  // Cada seção e cada campo trazem em quais blocos aparecem (vaga, pccs, diag).
+  const SECOES = [
+    {"titulo": "Solicitação", "campos": [{"k": "data", "r": "Data"}, {"k": "servicos", "r": "Necessidade"}, {"k": "cliente", "r": "Já é cliente"}, {"k": "origem", "r": "Como conheceu", "cli": "Ainda não"}]},
+    {"titulo": "Empresa", "campos": [{"k": "empresa", "r": "Razão social"}, {"k": "cnpj", "r": "CNPJ"}, {"k": "segmento", "r": "Segmento"}, {"k": "cidade_uf", "r": "Cidade / UF"}, {"k": "contato", "r": "Contato"}, {"k": "cargo_contato", "r": "Cargo do contato"}, {"k": "email", "r": "E-mail"}, {"k": "telefone", "r": "Telefone / WhatsApp"}, {"k": "colaboradores", "r": "Colaboradores", "se": "pccs diag"}, {"k": "unidades", "r": "Unidades ou filiais", "se": "pccs diag"}, {"k": "faturamento", "r": "Faturamento médio mensal", "se": "diag"}]},
+    {"titulo": "Presença digital", "campos": [{"k": "site", "r": "Site"}, {"k": "instagram", "r": "Instagram"}, {"k": "linkedin", "r": "LinkedIn"}, {"k": "outras_redes", "r": "Outras redes ou links"}, {"k": "arquivos_links", "r": "Materiais enviados"}], "se": "pccs diag"},
+    {"titulo": "Vaga", "campos": [{"k": "urgencia", "r": "Urgência"}, {"k": "cargo", "r": "Cargo"}, {"k": "senioridade", "r": "Senioridade"}, {"k": "quantidade", "r": "Número de vagas"}, {"k": "modelo", "r": "Modelo de trabalho"}, {"k": "contrato", "r": "Tipo de contrato"}, {"k": "jornada", "r": "Jornada"}, {"k": "salario", "r": "Faixa salarial"}, {"k": "beneficios", "r": "Benefícios"}], "se": "vaga"},
+    {"titulo": "Requisitos e atividades", "campos": [{"k": "atividades", "r": "Descrição das atividades"}, {"k": "requisitos", "r": "Requisitos obrigatórios"}, {"k": "competencias", "r": "Competências desejáveis"}, {"k": "formacao", "r": "Formação"}, {"k": "vaga_observacoes", "r": "Observações sobre a vaga"}], "se": "vaga"},
+    {"titulo": "Cargos e salários hoje", "campos": [{"k": "num_cargos", "r": "Cargos diferentes"}, {"k": "sistema_rh", "r": "Sistema de RH ou folha"}, {"k": "regimes", "r": "Regimes de contratação"}, {"k": "organograma", "r": "Organograma"}, {"k": "descricoes", "r": "Descrições de cargos"}, {"k": "salarios", "r": "Definição de salários"}, {"k": "sindicato", "r": "Convenção coletiva"}, {"k": "sindicato_qual", "r": "Sindicato"}, {"k": "plano_anterior", "r": "Plano de carreira anterior"}, {"k": "plano_anterior_obs", "r": "O que não funcionou"}], "se": "pccs"},
+    {"titulo": "Motivação", "campos": [{"k": "motivos", "r": "Motivos"}, {"k": "areas_criticas", "r": "Áreas ou cargos críticos"}, {"k": "expectativa", "r": "Expectativa em 12 meses"}], "se": "pccs"},
+    {"titulo": "Escopo do plano", "campos": [{"k": "escopo", "r": "Etapas de interesse"}, {"k": "entrevistas", "r": "Entrevistas"}, {"k": "dados_folha", "r": "Compartilhar cargos e salários"}], "se": "pccs"},
+    {"titulo": "Gestão hoje", "campos": [{"k": "modelo_gestao", "r": "Modelo de gestão"}, {"k": "controles_fin", "r": "Controles financeiros"}, {"k": "gestao_pessoas", "r": "Gestão de pessoas"}, {"k": "treinamento", "r": "Integração e treinamento"}], "se": "diag"},
+    {"titulo": "Processos e estratégia", "campos": [{"k": "processos", "r": "Processos documentados"}, {"k": "decisoes_base", "r": "Base das decisões"}, {"k": "planejamento", "r": "Planejamento estratégico"}, {"k": "kpis", "r": "Acompanhamento de indicadores"}, {"k": "certificacoes", "r": "Certificações"}, {"k": "certificacoes_obs", "r": "Certificações que já possui"}], "se": "diag"},
+    {"titulo": "Prioridades", "campos": [{"k": "desafio", "r": "Principal desafio"}, {"k": "urgencia_diag", "r": "Urgência"}, {"k": "abertura", "r": "Abertura a mudanças"}, {"k": "modelo_atuacao", "r": "Modelo de atuação desejado"}], "se": "diag"},
+    {"titulo": "Condições do projeto", "campos": [{"k": "decisores", "r": "Decisores"}, {"k": "ponto_focal", "r": "Ponto focal"}, {"k": "prazo", "r": "Prazo desejado"}, {"k": "orcamento", "r": "Orçamento previsto"}, {"k": "formato", "r": "Formato"}, {"k": "horario_contato", "r": "Melhor horário para contato"}, {"k": "observacoes", "r": "Observações"}], "se": "pccs diag"}
+  ];
+
+  /* ---------- O que aparece, conforme a necessidade marcada ---------- */
+  function blocos(){
+    const s = new Set();
+    form.querySelectorAll('input[name=servicos]:checked').forEach(i => s.add(i.dataset.bloco));
+    return s;
+  }
+  function clienteAtual(){
+    const c = form.querySelector('input[name=cliente]:checked');
+    return c ? c.value : '';
+  }
+  function ativo(se, cli){
+    if (cli && clienteAtual() !== cli) return false;
+    if (!se) return true;
+    const b = blocos();
+    return se.split(' ').some(x => b.has(x));
+  }
+  function aplicarCondicoes(){
+    document.querySelectorAll('[data-se],[data-cli]').forEach(el => {
+      if (el.classList.contains('step')) return;
+      el.classList.toggle('off', !ativo(el.dataset.se, el.dataset.cli));
+    });
+    document.querySelectorAll('[data-req-se]').forEach(el => {
+      const marca = el.querySelector('.req');
+      if (marca) marca.classList.toggle('off', !ativo(el.dataset.reqSe));
+    });
+    etapas = todasEtapas.filter(s => ativo(s.dataset.se));
+  }
+
+  /* ---------- Valores ---------- */
+  function valores(){
+    const d = new FormData(form);
+    const v = {};
+    SECOES.forEach(sec => sec.campos.forEach(c => {
+      v[c.k] = d.getAll(c.k).map(s => String(s).trim()).filter(Boolean).join(', ');
+    }));
+    const cid = (d.get('cidade')||'').trim(), uf = (d.get('uf')||'').trim().toUpperCase();
+    v.cidade_uf = [cid, uf].filter(Boolean).join(' / ');
+    v.data = new Date().toLocaleDateString('pt-BR');
+    v.arquivos_links = arquivosLinks.length ? arquivosLinks.join('\n') : (arquivos.length ? arquivos.map(f => f.name).join(', ') : '');
+    if (v.urgencia_diag) v.urgencia_diag += ' de 5';
+    return v;
+  }
+  // Seções e campos que valem para esta resposta
+  function secoesAtivas(){
+    return SECOES.filter(sec => ativo(sec.se)).map(sec => ({
+      titulo: sec.titulo,
+      campos: sec.campos.filter(c => ativo(c.se, c.cli))
+    })).filter(sec => sec.campos.length);
+  }
+
+  /* ---------- Textos que mudam conforme a necessidade ---------- */
+  function perfil(){
+    const b = blocos();
+    if (b.size === 1 && b.has('vaga')) return {
+      chave:'vaga', assunto:'Nova solicitação de vaga', arquivo:'solicitacao-vaga',
+      pdfEyebrow:'RECRUTAMENTO E SELEÇÃO', pdfTitulo:'Solicitação de Vaga',
+      enviar:'Enviar solicitação', doneTitulo:'Solicitação <em>recebida</em>',
+      doneTexto:'Sua solicitação chegou para a equipe La Vie. Entraremos em contato em breve para alinhar o perfil da vaga e os próximos passos.'
+    };
+    if (b.size === 1 && b.has('pccs')) return {
+      chave:'pccs', assunto:'PCCS', arquivo:'pccs',
+      pdfEyebrow:'GESTÃO DE PESSOAS · DIAGNÓSTICO', pdfTitulo:'Plano de Cargos, Carreira e Salários',
+      enviar:'Enviar respostas', doneTitulo:'Respostas <em>recebidas</em>',
+      doneTexto:'Suas respostas chegaram para a equipe La Vie. Agora vamos preparar uma proposta personalizada para a sua empresa e entraremos em contato em breve.'
+    };
+    if (b.size === 1 && b.has('diag')) return {
+      chave:'diag', assunto:'Diagnóstico', arquivo:'diagnostico',
+      pdfEyebrow:'GESTÃO EMPRESARIAL · DIAGNÓSTICO', pdfTitulo:'Diagnóstico Empresarial',
+      enviar:'Enviar respostas', doneTitulo:'Respostas <em>recebidas</em>',
+      doneTexto:'Suas respostas chegaram para a equipe La Vie. Vamos analisar o momento da sua empresa e entraremos em contato em breve com os próximos passos.'
+    };
+    const partes = [];
+    if (b.has('vaga')) partes.push('Solicitação de vaga');
+    if (b.has('pccs')) partes.push('PCCS');
+    if (b.has('diag')) partes.push('Diagnóstico');
+    return {
+      chave:'varios', assunto: partes.join(' + '), arquivo:'la-vie',
+      pdfEyebrow:'ATENDIMENTO A EMPRESAS', pdfTitulo:'Diagnóstico e Solicitações',
+      enviar:'Enviar respostas', doneTitulo:'Respostas <em>recebidas</em>',
+      doneTexto:'Suas respostas chegaram para a equipe La Vie. Vamos analisar cada pedido e entraremos em contato em breve com os próximos passos.'
+    };
+  }
+
+  /* ---------- Navegação ---------- */
+  function mostrar(i, rolar = true){
+    aplicarCondicoes();
+    atual = Math.max(0, Math.min(i, etapas.length - 1));
+    todasEtapas.forEach(s => s.classList.remove('active'));
+    const etapa = etapas[atual];
+    etapa.classList.add('active');
+    etapa.querySelector('legend .num').textContent = String(atual + 1).padStart(2, '0');
+    document.getElementById('progressLabel').textContent = etapa.dataset.title;
+    // Antes de marcar a necessidade ainda não se sabe quantas etapas serão
+    const sabeTotal = blocos().size > 0;
+    document.getElementById('progressCount').textContent = sabeTotal ? `Etapa ${atual+1} de ${etapas.length}` : `Etapa ${atual+1}`;
+    document.getElementById('barFill').style.width = sabeTotal ? `${((atual+1)/etapas.length)*100}%` : '8%';
+    btnVoltar.style.visibility = atual === 0 ? 'hidden' : 'visible';
+    const ultima = sabeTotal && atual === etapas.length - 1;
+    btnAvancar.classList.toggle('hidden', ultima);
+    btnEnviar.classList.toggle('hidden', !ultima);
+    btnEnviar.textContent = perfil().enviar;
+    msgValida.classList.remove('show');
+    if (rolar) document.getElementById('progress').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function validar(){
+    const etapa = etapas[atual];
+    let ok = true, msg = 'Preencha os campos marcados para continuar.';
+    etapa.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+    etapa.querySelectorAll('.group-invalid').forEach(el => el.classList.remove('group-invalid'));
+    const visivel = el => !el.closest('.off');
+
+    etapa.querySelectorAll('input[required], textarea[required], [data-req-se] input').forEach(el => {
+      if (!visivel(el)) return;
+      const cond = el.closest('[data-req-se]');
+      if (!el.required && !(cond && ativo(cond.dataset.reqSe))) return;
+      const vazio = !el.value.trim();
+      const emailRuim = el.type === 'email' && !vazio && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+      if (vazio || emailRuim){ el.classList.add('invalid'); ok = false; if (emailRuim) msg = 'Confira o e-mail informado.'; }
+    });
+    etapa.querySelectorAll('[data-group][data-required]').forEach(g => {
+      if (!visivel(g)) return;
+      if (!g.querySelector('input:checked')){ g.classList.add('group-invalid'); ok = false; }
+    });
+    // Presença digital: para o plano de cargos é preciso pelo menos um link ou material
+    const redes = etapa.querySelector('#grupoRedes');
+    if (redes && blocos().has('pccs')){
+      const campos = Array.from(redes.querySelectorAll('input:not([type=file])'));
+      if (!campos.some(c => c.value.trim()) && !arquivos.length){
+        campos.forEach(c => c.classList.add('invalid'));
+        ok = false; msg = 'Informe pelo menos o site, uma rede social ou envie um material da empresa.';
+      }
+    }
+    if (!ok){
+      msgValidaTxt.textContent = msg;
+      msgValida.classList.add('show');
+      const primeiro = etapa.querySelector('.invalid, .group-invalid input');
+      if (primeiro) primeiro.focus({preventScroll:true});
+      msgValida.scrollIntoView({behavior:'smooth', block:'nearest'});
+    } else {
+      msgValida.classList.remove('show');
+    }
+    return ok;
+  }
+
+  form.addEventListener('input', e => {
+    e.target.classList && e.target.classList.remove('invalid');
+    const g = e.target.closest && e.target.closest('.group-invalid');
+    if (g) g.classList.remove('group-invalid');
+    if (e.target.closest && e.target.closest('#grupoRedes')){
+      document.querySelectorAll('#grupoRedes .invalid').forEach(c => c.classList.remove('invalid'));
+    }
+  });
+  form.addEventListener('change', e => {
+    const g = e.target.closest && e.target.closest('.group-invalid');
+    if (g) g.classList.remove('group-invalid');
+    // Mudou a necessidade ou a resposta "já é cliente": refaz o que aparece
+    if (e.target.name === 'servicos' || e.target.name === 'cliente') mostrar(atual, false);
+  });
+  // Some o aviso quando tudo que estava marcado foi corrigido
+  ['input','change'].forEach(ev => form.addEventListener(ev, () => {
+    if (etapas[atual] && !etapas[atual].querySelector('.invalid, .group-invalid')) msgValida.classList.remove('show');
+  }));
+  // Enter num campo de texto avança em vez de enviar
+  form.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT'){
+      e.preventDefault();
+      if (!btnAvancar.classList.contains('hidden')) btnAvancar.click();
+    }
+  });
+
+  btnAvancar.addEventListener('click', () => { if (validar()) mostrar(atual + 1); });
+  btnVoltar.addEventListener('click', () => { if (atual > 0) mostrar(atual - 1); });
+
+  /* ---------- Arquivos: vão para o Supabase do site e o link segue no e-mail ---------- */
+  const MAX_ARQ = 5, MAX_MB = 15;
+  const EXT_OK = ['pdf','png','jpg','jpeg','webp','svg','ppt','pptx','doc','docx'];
+  let arquivos = [];
+  let arquivosLinks = [];
+  const inputArq = document.getElementById('arquivos');
+  const lista = document.getElementById('listaArquivos');
+  const arqErro = document.getElementById('arquivoErro');
+  const drop = document.getElementById('drop');
+
+  const tamanho = b => b > 1048576 ? (b/1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b/1024)) + ' KB';
+  function desenharLista(){
+    arquivosLinks = [];
+    lista.innerHTML = '';
+    arquivos.forEach((f, i) => {
+      const li = document.createElement('li');
+      const nome = document.createElement('span'); nome.className = 'nome'; nome.textContent = f.name;
+      const tam = document.createElement('span'); tam.className = 'tam'; tam.textContent = tamanho(f.size);
+      nome.appendChild(tam);
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover';
+      rm.addEventListener('click', () => { arquivos.splice(i, 1); desenharLista(); });
+      li.append(nome, rm); lista.appendChild(li);
+    });
+  }
+  function adicionar(novos){
+    arqErro.textContent = '';
+    const recusados = [];
+    Array.from(novos).forEach(f => {
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (!EXT_OK.includes(ext)) { recusados.push(`${f.name} (formato não aceito)`); return; }
+      if (f.size > MAX_MB * 1048576) { recusados.push(`${f.name} (maior que ${MAX_MB} MB)`); return; }
+      if (arquivos.length >= MAX_ARQ) { recusados.push(`${f.name} (limite de ${MAX_ARQ} arquivos)`); return; }
+      if (!arquivos.some(a => a.name === f.name && a.size === f.size)) arquivos.push(f);
+    });
+    if (recusados.length) arqErro.textContent = 'Não adicionado: ' + recusados.join('; ');
+    desenharLista();
+    if (arquivos.length){
+      document.querySelectorAll('#grupoRedes .invalid').forEach(c => c.classList.remove('invalid'));
+      if (etapas[atual] && !etapas[atual].querySelector('.invalid, .group-invalid')) msgValida.classList.remove('show');
+    }
+  }
+  inputArq.addEventListener('change', () => { adicionar(inputArq.files); inputArq.value = ''; });
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => { e.preventDefault(); adicionar(e.dataTransfer.files); });
+
+  function slug(t){
+    return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w.]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
+  }
+  async function enviarArquivos(empresa){
+    const pasta = `${new Date().toISOString().slice(0,10)}-${slug(empresa).slice(0,40) || 'empresa'}-${Math.random().toString(36).slice(2,10)}`;
+    const links = [];
+    for (const f of arquivos){
+      const caminho = `${pasta}/${slug(f.name) || 'arquivo'}`;
+      try{
+        const r = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${caminho}`, {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': f.type || 'application/octet-stream' },
+          body: f
+        });
+        if (!r.ok) throw new Error(r.status);
+        links.push(`${f.name}: ${SB_URL}/storage/v1/object/public/${BUCKET}/${caminho}`);
+      }catch(e){
+        links.push(`${f.name}: não foi possível enviar, pedir ao cliente`);
+      }
+    }
+    return links;
+  }
+
+  // Cópia da resposta no banco do site, para o controle comercial da La Vie.
+  // Se falhar, o e-mail continua sendo o caminho principal.
+  async function salvarNoBanco(v){
+    if (!TABELA_RESPOSTAS) return false;
+    try{
+      const respostas = {};
+      secoesAtivas().forEach(sec => { respostas[sec.titulo] = {}; sec.campos.forEach(c => { if (v[c.k]) respostas[sec.titulo][c.r] = v[c.k]; }); });
+      const r = await fetch(`${SB_URL}/rest/v1/${TABELA_RESPOSTAS}`, {
+        method: 'POST',
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          servicos: v.servicos ? v.servicos.split(', ') : [],
+          blocos: Array.from(blocos()),
+          empresa: v.empresa, cnpj: v.cnpj || null, contato: v.contato, email: v.email, telefone: v.telefone,
+          cliente_atual: clienteAtual() === 'Sim',
+          origem: v.origem || null,
+          respostas
+        })
+      });
+      return r.ok;
+    }catch(e){ return false; }
+  }
+
+  /* ---------- WhatsApp ---------- */
+  function textoResumo(){
+    const v = valores();
+    let t = `${perfil().pdfTitulo.toUpperCase()} · LA VIE CONSULTORIA\n`;
+    secoesAtivas().forEach(sec => {
+      t += `\n*${sec.titulo.toUpperCase()}*\n`;
+      sec.campos.forEach(c => { t += `${c.r}: ${v[c.k] || '-'}\n`; });
+    });
+    return t;
+  }
+  function atualizarWhats(){
+    linkWhats.href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(textoResumo())}`;
+  }
+  ['pointerdown','focus','mouseenter','touchstart'].forEach(ev => linkWhats.addEventListener(ev, atualizarWhats, {passive:true}));
+
+  /* ---------- PDF no padrão visual da Solicitação de Vaga ---------- */
+  function gerarPDF(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 50, larguraUtil = 495;
+    const ESCURO=[26,25,23], GRAFITE=[58,58,58], AREIA_ESCURA=[113,102,90], AREIA=[216,207,196], NEUTRO=[98,98,98];
+    const p = perfil();
+    let y = 50;
+    const novaPagina = () => { doc.addPage(); y = 55; };
+
+    const logoEl = document.querySelector('.logo');
+    let logoAltura = 0;
+    if (logoEl && logoEl.src && logoEl.src.startsWith('data:image')){
+      try{
+        const w = 92;
+        const prop = (logoEl.naturalHeight && logoEl.naturalWidth) ? logoEl.naturalHeight / logoEl.naturalWidth : 0.78;
+        logoAltura = w * prop;
+        doc.addImage(logoEl.src, 'PNG', marginX, y, w, logoAltura, 'logo', 'FAST');
+      }catch(e){}
+    }
+    y += logoAltura + 24;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor(...AREIA_ESCURA);
+    doc.text(p.pdfEyebrow, marginX, y, { charSpace: 2 });
+    y += 24;
+    doc.setFont('times','normal'); doc.setFontSize(26); doc.setTextColor(...ESCURO);
+    doc.text(p.pdfTitulo, marginX, y);
+    y += 16;
+    doc.setDrawColor(...AREIA); doc.setLineWidth(1);
+    doc.line(marginX, y, marginX + larguraUtil, y);
+    y += 28;
+
+    function chipUrgencia(urgencia){
+      const tons = {
+        'Alta':  { fundo:[251,234,231], texto:[192,57,43] },
+        'Média': { fundo:[251,243,217], texto:[138,106,0] },
+        'Baixa': { fundo:[231,244,234], texto:[63,125,85] }
+      };
+      const tom = tons[urgencia];
+      if (!tom) return false;
+      const rotulo = ('URGÊNCIA ' + urgencia).toUpperCase();
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      const largura = doc.getTextWidth(rotulo) + rotulo.length * 1.1;
+      doc.setFillColor(...tom.fundo);
+      doc.roundedRect(marginX, y - 12, largura + 24, 22, 11, 11, 'F');
+      doc.setTextColor(...tom.texto);
+      doc.text(rotulo, marginX + 12, y + 3, { charSpace: 1.1 });
+      y += 32;
+      return true;
+    }
+
+    const v = valores();
+    secoesAtivas().forEach(sec => {
+      if (y > 740) novaPagina();
+      doc.setFont('times','bolditalic'); doc.setFontSize(14); doc.setTextColor(...ESCURO);
+      doc.text(sec.titulo, marginX, y);
+      y += 7;
+      doc.setDrawColor(...AREIA); doc.setLineWidth(0.75);
+      doc.line(marginX, y, marginX + larguraUtil, y);
+      y += 19;
+      sec.campos.forEach(c => {
+        if (y > 765) novaPagina();
+        if (c.k === 'urgencia' && chipUrgencia(v[c.k])) return;
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...AREIA_ESCURA);
+        doc.text(c.r.toUpperCase(), marginX, y, { charSpace: 0.9 });
+        y += 13;
+        doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...GRAFITE);
+        const valor = v[c.k] || '-';
+        if (c.k === 'arquivos_links' && arquivosLinks.length){
+          arquivosLinks.forEach(l => {
+            if (y > 785) novaPagina();
+            const i = l.indexOf(': ');
+            const nome = l.slice(0, i), url = l.slice(i + 2);
+            if (url.startsWith('http')){
+              doc.setTextColor(...AREIA_ESCURA);
+              doc.textWithLink(nome + '  (clique para abrir)', marginX, y, { url });
+              doc.setTextColor(...GRAFITE);
+            } else {
+              doc.text(`${nome}: ${url}`, marginX, y);
+            }
+            y += 14;
+          });
+          y += 11;
+          return;
+        }
+        const recuo = 14;
+        String(valor).replace(/\t/g,' ').split('\n').forEach(par => {
+          if (!par.trim()) return;
+          // Linha de lista: marcador fixo na margem e texto com recuo pendurado
+          const marcador = par.match(/^\s*[•◦▪\-–]\s*/);
+          const conteudo = marcador ? par.slice(marcador[0].length) : '';
+          if (marcador && conteudo.trim()){
+            doc.splitTextToSize(conteudo, larguraUtil - recuo).forEach((linha, i) => {
+              if (y > 785) novaPagina();
+              if (i === 0) doc.text('•', marginX, y);
+              doc.text(linha, marginX + recuo, y); y += 14;
+            });
+          } else {
+            doc.splitTextToSize(par, larguraUtil).forEach(linha => {
+              if (y > 785) novaPagina();
+              doc.text(linha, marginX, y); y += 14;
+            });
+          }
+        });
+        y += 11;
+      });
+      y += 6;
+    });
+
+    const total = doc.internal.getNumberOfPages();
+    for (let n = 1; n <= total; n++){
+      doc.setPage(n);
+      doc.setDrawColor(...AREIA); doc.setLineWidth(0.75);
+      doc.line(marginX, 800, marginX + larguraUtil, 800);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...NEUTRO);
+      doc.text(`La Vie Consultoria · ${p.pdfTitulo}`, marginX, 815);
+      doc.text(`${String(n).padStart(2,'0')} / ${String(total).padStart(2,'0')}`, marginX + larguraUtil, 815, { align: 'right' });
+    }
+    return doc;
+  }
+  function nomeArquivo(){
+    return `${perfil().arquivo}-${slug(form.empresa.value).replace(/\./g,'-') || 'empresa'}.pdf`;
+  }
+  document.getElementById('btnBaixar').addEventListener('click', () => gerarPDF().save(nomeArquivo()));
+
+  /* ---------- Envio ---------- */
+  function concluir(v){
+    const p = perfil();
+    const primeiroNome = (v.contato || '').split(' ')[0];
+    document.getElementById('doneNome').textContent = primeiroNome ? `Obrigada, ${primeiroNome}. ` : '';
+    document.getElementById('doneTitulo').innerHTML = p.doneTitulo;
+    document.getElementById('doneTexto').textContent = NO_AR ? p.doneTexto
+      : 'Esta é a tela que a empresa vê depois de enviar. Na prévia nada foi enviado: no site, as respostas chegam por e-mail com o PDF em anexo.';
+    document.getElementById('doneAcoes').classList.toggle('hidden', !NO_AR);
+    form.classList.add('hidden');
+    document.getElementById('progress').classList.add('hidden');
+    document.getElementById('done').classList.add('show');
+    document.getElementById('topo').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (btnEnviar.classList.contains('hidden')) return;
+    if (!validar()) return;
+    msgEnvio.classList.remove('show');
+    const rotulo = btnEnviar.textContent;
+    btnEnviar.disabled = true;
+    btnEnviar.textContent = 'Enviando…';
+
+    try{
+      if (!NO_AR){ concluir(valores()); return; }
+
+      if (arquivos.length && !arquivosLinks.length && ativo('pccs diag')){
+        btnEnviar.textContent = 'Enviando arquivos…';
+        arquivosLinks = await enviarArquivos(form.empresa.value);
+        btnEnviar.textContent = 'Enviando…';
+      }
+      const v = valores();
+      const dados = new FormData();
+      dados.append('_subject', `${perfil().assunto} · ${v.empresa}`);
+      dados.append('_captcha', 'false');
+      dados.append('_template', 'table');
+      dados.append('_replyto', v.email);
+      dados.append('_honey', document.getElementById('honey').value);
+      secoesAtivas().forEach(sec => sec.campos.forEach(c => dados.append(c.r, v[c.k] || '-')));
+      try{
+        const blob = gerarPDF().output('blob');
+        dados.append('attachment', new File([blob], nomeArquivo(), { type: 'application/pdf' }));
+      }catch(err){ /* envia sem PDF se o gerador falhar */ }
+
+      const copia = salvarNoBanco(v);
+      const r = await fetch(ENDPOINT_EMAIL, { method:'POST', body:dados, headers:{ 'Accept':'application/json' } });
+      await copia;
+      if (!r.ok) throw new Error('Falha no envio');
+      concluir(v);
+    }catch(err){
+      atualizarWhats();
+      msgEnvio.classList.add('show');
+      msgEnvio.scrollIntoView({behavior:'smooth', block:'center'});
+    }finally{
+      btnEnviar.disabled = false;
+      btnEnviar.textContent = rotulo;
+    }
+  });
+
+  /* ---------- Início: links do site já chegam com a necessidade marcada ---------- */
+  (function iniciar(){
+    const ATALHOS = {
+      vaga: 'Recrutamento e Seleção',
+      pccs: 'Plano de Cargos, Carreira e Salários',
+      liderancas: 'Lideranças e desempenho',
+      gestao: 'Gestão integrada do negócio',
+      processos: 'Processos e certificações',
+      diagnostico: 'Não sei por onde começar'
+    };
+    const CABECALHOS = {
+      vaga: ['Recrutamento e Seleção', 'Solicitação de <em>nova vaga</em>',
+             'Informe os dados da empresa e os detalhes da posição. Sua solicitação chega direto para a equipe La Vie.'],
+      pccs: ['Gestão de Pessoas · Diagnóstico', 'Plano de Cargos,<br><em>Carreira e Salários</em>',
+             'Algumas perguntas rápidas sobre a sua empresa para prepararmos uma proposta sob medida. Você pode pular o que não souber.'],
+      diag: ['Gestão Empresarial · Diagnóstico', 'Diagnóstico <em>da sua empresa</em>',
+             'Algumas perguntas rápidas para entendermos o momento da sua empresa e indicarmos por onde começar. Você pode pular o que não souber.']
+    };
+    let params;
+    try{ params = new URLSearchParams(location.search); }catch(e){ params = new URLSearchParams(''); }
+    const pedido = (params.get('servico') || location.hash.replace('#','') || '').toLowerCase();
+    pedido.split(/[,+ ]/).forEach(a => {
+      const alvo = ATALHOS[a];
+      if (!alvo) return;
+      const caixa = Array.from(form.querySelectorAll('input[name=servicos]')).find(i => i.value === alvo);
+      if (caixa) caixa.checked = true;
+    });
+    if (params.get('cliente') === 'sim'){
+      const sim = form.querySelector('input[name=cliente][value="Sim"]');
+      if (sim) sim.checked = true;
+    }
+    const b = blocos();
+    const cab = b.size === 1 ? CABECALHOS[Array.from(b)[0]] : null;
+    if (cab){
+      document.getElementById('hEyebrow').textContent = cab[0];
+      document.getElementById('hTitulo').innerHTML = cab[1];
+      document.getElementById('hTexto').textContent = cab[2];
+    }
+    document.getElementById('previa').classList.toggle('hidden', NO_AR);
+    mostrar(0, false);
+  })();
+</script>
+</body>
+</html>
