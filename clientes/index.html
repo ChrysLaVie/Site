@@ -2715,9 +2715,15 @@ function _dadosDaAgendaDoCand(candId){
   try{
     const hoje=new Date().toISOString().slice(0,10);
     const lista=(_agenda||[]).filter(a=>a.candidatoId===candId && a.status!=='cancelada' && a.data);
+    const cand=getCands().find(x=>x.id===candId);
+    if(!lista.some(a=>a.data>=hoje) && cand && cand.etapa==='vivencia'){
+      const f=_faseFinalConfig(); const dia=(f.dia&&f.dia>=hoje)?f.dia:'';
+      return { valores:{'DATA':dia?_dataBR(dia):'','HORÁRIO':f.hora,'ENDEREÇO':f.local,'NOME DE REFERÊNCIA':f.ref||getUserName(),'LINK':''}, rotulo:`fase final${dia?' em '+_dataBR(dia):''} às ${f.hora} (padrão da Confirmação de presenças)` };
+    }
     if(!lista.length) return null;
     const futuras=lista.filter(a=>a.data>=hoje).sort((x,y)=>x.data.localeCompare(y.data));
-    const a=futuras[0]||lista.sort((x,y)=>y.data.localeCompare(x.data))[0];
+    const a=futuras[0];
+    if(!a) return null;
     const d=_dataBR(a.data);
     const valores={'DATA':d,'HORÁRIO':a.horaIni||''};
     if(a.tipo==='presencial'){ valores['ENDEREÇO']=a.local||''; valores['NOME DE REFERÊNCIA']=getUserName(); }
@@ -2739,11 +2745,21 @@ function _confTexto(it){
   }
   return `Olá, ${prim}! Tudo bem?\n\nAqui é a Chrys, da La Vie Consultoria.\n\nPassando para confirmar a sua entrevista online para a vaga de ${vaga}${q}:\n\nData: ${d}\nHorário: ${it.hora||'[HORÁRIO]'}\nLink: ${it.link||'[LINK]'}\n\nEntre com alguns minutos de antecedência, de preferência em um lugar tranquilo e com boa conexão.\n\nVocê confirma a sua presença? É só me responder por aqui.\n\nUm abraço!\n\n${ASSINATURA}`;
 }
+// Fase final presencial: padrão por cliente (o mesmo que vai no dossiê).
+const FASE_FINAL_PADRAO = {
+  autoclub:{ hora:'14:00', local:'R. Belo Horizonte, Qd. 109, Lt. 05, Jardim Guanabara, Goiânia/GO, CEP 74675-080 (perto do aeroporto)', ref:'proprietários da Auto Club' }
+};
+function _faseFinalConfig(){
+  const pad=FASE_FINAL_PADRAO[currentEmpresa]||{};
+  let f=null; try{ f=JSON.parse(localStorage.getItem('lv_conf_final_'+currentEmpresa)||'null'); }catch(e){}
+  return { dia:(f&&f.dia)||'', hora:(f&&f.hora)||pad.hora||'14:00', local:(f&&f.local)||pad.local||'', ref:(f&&f.ref)||pad.ref||'' };
+}
+function _temDossieCand(c){ return (c.documentos||[]).some(d=>d && /^dossi[eê] d[eo] candidato/i.test(d.nome||'')); }
 function _confJaEnviada(c, dia){ return (c.historico||[]).some(h=>h && h.confirmacaoDe===dia); }
-function _confSalvarFinal(){ try{ localStorage.setItem('lv_conf_final_'+currentEmpresa, JSON.stringify({hora:document.getElementById('conf-final-hora').value, local:document.getElementById('conf-final-local').value, ref:document.getElementById('conf-final-ref').value})); }catch(e){} }
+function _confSalvarFinal(){ try{ localStorage.setItem('lv_conf_final_'+currentEmpresa, JSON.stringify({dia:document.getElementById('conf-dia').value, hora:document.getElementById('conf-final-hora').value, local:document.getElementById('conf-final-local').value, ref:document.getElementById('conf-final-ref').value})); }catch(e){} }
 function abrirConfirmacoes(){
   const el=document.getElementById('conf-dia'); if(!el.value) el.value=new Date().toISOString().slice(0,10);
-  try{ const f=JSON.parse(localStorage.getItem('lv_conf_final_'+currentEmpresa)||'null'); if(f){ if(f.hora) document.getElementById('conf-final-hora').value=f.hora; document.getElementById('conf-final-local').value=f.local||''; document.getElementById('conf-final-ref').value=f.ref||''; } }catch(e){}
+  { const f=_faseFinalConfig(); document.getElementById('conf-final-hora').value=f.hora; document.getElementById('conf-final-local').value=f.local; document.getElementById('conf-final-ref').value=f.ref; }
   renderConfirmacoes(); openModal('modal-confirm');
 }
 function _confLinha(it,i){
@@ -2767,9 +2783,12 @@ function renderConfirmacoes(){
   document.getElementById('conf-lista').innerHTML = nAg ? _confItensCache.map((it,i)=>_confLinha(it,i)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhuma entrevista na agenda deste dia.</div>';
   const hora=document.getElementById('conf-final-hora').value, local=document.getElementById('conf-final-local').value.trim(), ref=document.getElementById('conf-final-ref').value.trim();
   const vagasAbertas=new Set(getVagas().filter(v=>v.status==='aberta').map(v=>v.id));
-  const finais=cands.filter(c=>c.etapa==='vivencia' && vagasAbertas.has(c.vagaId) && !comAgenda.has(c.id)).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  const naFase=cands.filter(c=>c.etapa==='vivencia' && vagasAbertas.has(c.vagaId) && !comAgenda.has(c.id)).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  const finais=naFase.filter(_temDossieCand);
+  const semDossie=naFase.filter(c=>!_temDossieCand(c));
   finais.forEach(c=>_confItensCache.push({c, data:dia, hora, tipo:'presencial', fase:true, local, ref}));
-  document.getElementById('conf-final-lista').innerHTML = finais.length ? (local?'':'<div style="font-size:12px;color:var(--amber);margin-bottom:6px">Preencha o endereço para a mensagem sair completa.</div>')+_confItensCache.slice(nAg).map((it,j)=>_confLinha(it,nAg+j)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhum candidato na fase final sem agenda.</div>';
+  document.getElementById('conf-final-lista').innerHTML = finais.length ? (local?'':'<div style="font-size:12px;color:var(--amber);margin-bottom:6px">Preencha o endereço para a mensagem sair completa.</div>')+_confItensCache.slice(nAg).map((it,j)=>_confLinha(it,nAg+j)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhum candidato com dossiê na fase final sem agenda.</div>';
+  if(semDossie.length) document.getElementById('conf-final-lista').innerHTML += `<div style="font-size:12px;color:var(--mid);margin-top:8px">Na fase final sem dossiê (fora da lista): ${semDossie.map(c=>escapeHtmlAg(c.nome||'')).join(', ')}</div>`;
 }
 async function _confRegistrar(it, canal){
   const idx=_cands.findIndex(x=>x.id===it.c.id); if(idx<0) return;
