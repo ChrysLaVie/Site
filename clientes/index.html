@@ -766,6 +766,7 @@ header {
     <div style="display:flex;gap:6px">
       <button class="btn btn-ghost btn-sm" id="agenda-view-mes" onclick="agendaSetView('mes')">Mês</button>
       <button class="btn btn-ghost btn-sm" id="agenda-view-lista" onclick="agendaSetView('lista')">Lista</button>
+      <button class="btn btn-primary btn-sm" onclick="abrirConfirmacoes()" title="Mensagens prontas para confirmar as entrevistas do dia">📲 Confirmar presenças</button>
     </div>
   </div>
 
@@ -990,6 +991,20 @@ header {
 </div></div>
 
 <!-- Modal: enviar mensagem (WhatsApp/E-mail) -->
+<div class="modal-bg" id="modal-confirm"><div class="modal" style="max-width:680px">
+  <div class="modal-header"><div class="modal-title">📲 Confirmar presenças</div><button class="modal-close" onclick="closeModal('modal-confirm')">✕</button></div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><label style="font-size:12px;color:var(--mid)">Entrevistas do dia</label><input type="date" id="conf-dia" onchange="renderConfirmacoes()" style="max-width:170px"><span style="font-size:12px;color:var(--mid)">Clique em WhatsApp para abrir a conversa com a mensagem pronta, ou em Copiar.</span></div>
+  <div id="conf-lista"></div>
+  <div style="border-top:1px solid var(--bege);margin-top:14px;padding-top:12px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:6px">Fase final presencial (candidatos sem entrevista na agenda)</div>
+    <div style="display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;margin-bottom:8px">
+      <input type="time" id="conf-final-hora" value="14:00" oninput="_confSalvarFinal();renderConfirmacoes()">
+      <input id="conf-final-local" placeholder="Endereço da empresa" oninput="_confSalvarFinal();renderConfirmacoes()">
+      <input id="conf-final-ref" placeholder="Com quem falar (opcional)" oninput="_confSalvarFinal();renderConfirmacoes()">
+    </div>
+    <div id="conf-final-lista"></div>
+  </div>
+</div></div>
 <div class="modal-bg" id="modal-msg"><div class="modal" style="max-width:460px">
   <div class="modal-header"><div class="modal-title">💬 Enviar mensagem</div><button class="modal-close" onclick="closeModal('modal-msg')">✕</button></div>
   <div id="msg-modal-body"></div>
@@ -2706,6 +2721,61 @@ function _dadosDaAgendaDoCand(candId){
     return {valores, rotulo:`${d}${a.horaIni?' às '+a.horaIni:''} · ${a.titulo||'Entrevista'}`};
   }catch(e){ return null; }
 }
+// ── Confirmação de presença (Agenda) ────────────────────────────────────────
+// Lista as entrevistas do dia (online e presencial) e os candidatos da fase
+// final sem agenda, cada um com a mensagem pronta para WhatsApp ou copiar.
+let _confItensCache=[];
+function _confQuando(dia){ const hoje=new Date().toISOString().slice(0,10); const am=_addDias(hoje,1); return dia===hoje?' hoje':(dia===am?' amanhã':''); }
+function _confTexto(it){
+  const c=it.c; const prim=(c.nome||'').split(' ')[0];
+  const v=getVagas().find(x=>x.id===c.vagaId); const vaga=(v&&v.titulo)||it.vaga||'';
+  const d=_dataBR(it.data); const q=_confQuando(it.data);
+  if(it.tipo==='presencial'){
+    return `Olá, ${prim}! Tudo bem?\n\nAqui é a Chrys, da La Vie Consultoria.\n\nPassando para confirmar a sua entrevista presencial${it.fase?' da fase final':''} para a vaga de ${vaga}${q}:\n\nData: ${d}\nHorário: ${it.hora||'[HORÁRIO]'}\nLocal: ${it.local||'[ENDEREÇO]'}${it.ref?'\nCom quem falar: '+it.ref:''}\n\nChegue com alguns minutos de antecedência.\n\nVocê confirma a sua presença? É só me responder por aqui.\n\nUm abraço!\n\n${ASSINATURA}`;
+  }
+  return `Olá, ${prim}! Tudo bem?\n\nAqui é a Chrys, da La Vie Consultoria.\n\nPassando para confirmar a sua entrevista online para a vaga de ${vaga}${q}:\n\nData: ${d}\nHorário: ${it.hora||'[HORÁRIO]'}\nLink: ${it.link||'[LINK]'}\n\nEntre com alguns minutos de antecedência, de preferência em um lugar tranquilo e com boa conexão.\n\nVocê confirma a sua presença? É só me responder por aqui.\n\nUm abraço!\n\n${ASSINATURA}`;
+}
+function _confJaEnviada(c, dia){ return (c.historico||[]).some(h=>h && h.confirmacaoDe===dia); }
+function _confSalvarFinal(){ try{ localStorage.setItem('lv_conf_final_'+currentEmpresa, JSON.stringify({hora:document.getElementById('conf-final-hora').value, local:document.getElementById('conf-final-local').value, ref:document.getElementById('conf-final-ref').value})); }catch(e){} }
+function abrirConfirmacoes(){
+  const el=document.getElementById('conf-dia'); if(!el.value) el.value=new Date().toISOString().slice(0,10);
+  try{ const f=JSON.parse(localStorage.getItem('lv_conf_final_'+currentEmpresa)||'null'); if(f){ if(f.hora) document.getElementById('conf-final-hora').value=f.hora; document.getElementById('conf-final-local').value=f.local||''; document.getElementById('conf-final-ref').value=f.ref||''; } }catch(e){}
+  renderConfirmacoes(); openModal('modal-confirm');
+}
+function _confLinha(it,i){
+  const c=it.c; const env=_confJaEnviada(c,it.data);
+  const tag=it.tipo==='presencial'?'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">presencial</span>':'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">online</span>';
+  return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bege);flex-wrap:wrap">
+    <div style="min-width:52px;font-weight:600">${it.hora||''}</div>
+    <div style="flex:1;min-width:180px">${escapeHtmlAg(c.nome||'')} ${tag}${env?' <span style="color:var(--green,#1F6B3D);font-size:12px">✓ enviada</span>':''}${c.tel?'':' <span style="color:var(--red);font-size:12px">sem telefone</span>'}</div>
+    <button class="btn btn-ghost btn-sm" onclick="confCopiar(${i})">📋 Copiar</button>
+    <button class="btn btn-primary btn-sm" style="background:#25D366;border-color:#25D366" onclick="confWhats(${i})" ${c.tel?'':'disabled'}>💬 WhatsApp</button>
+  </div>`;
+}
+function renderConfirmacoes(){
+  const dia=document.getElementById('conf-dia').value||new Date().toISOString().slice(0,10);
+  const cands=getCands();
+  const evs=getAgendaVisivel().filter(a=>a.data===dia && a.status!=='cancelada' && a.candidatoId).sort((a,b)=>(a.horaIni||'').localeCompare(b.horaIni||''));
+  _confItensCache=[];
+  const comAgenda=new Set();
+  evs.forEach(a=>{ const c=cands.find(x=>x.id===a.candidatoId); if(!c) return; comAgenda.add(c.id); _confItensCache.push({c, data:dia, hora:a.horaIni||'', tipo:a.tipo==='presencial'?'presencial':'online', link:a.link||'', local:a.local||'', ref:'', vaga:a.vaga||''}); });
+  const nAg=_confItensCache.length;
+  document.getElementById('conf-lista').innerHTML = nAg ? _confItensCache.map((it,i)=>_confLinha(it,i)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhuma entrevista na agenda deste dia.</div>';
+  const hora=document.getElementById('conf-final-hora').value, local=document.getElementById('conf-final-local').value.trim(), ref=document.getElementById('conf-final-ref').value.trim();
+  const vagasAbertas=new Set(getVagas().filter(v=>v.status==='aberta').map(v=>v.id));
+  const finais=cands.filter(c=>c.etapa==='vivencia' && vagasAbertas.has(c.vagaId) && !comAgenda.has(c.id)).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  finais.forEach(c=>_confItensCache.push({c, data:dia, hora, tipo:'presencial', fase:true, local, ref}));
+  document.getElementById('conf-final-lista').innerHTML = finais.length ? (local?'':'<div style="font-size:12px;color:var(--amber);margin-bottom:6px">Preencha o endereço para a mensagem sair completa.</div>')+_confItensCache.slice(nAg).map((it,j)=>_confLinha(it,nAg+j)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhum candidato na fase final sem agenda.</div>';
+}
+async function _confRegistrar(it, canal){
+  const idx=_cands.findIndex(x=>x.id===it.c.id); if(idx<0) return;
+  const c=_cands[idx]; if(_confJaEnviada(c,it.data)) return;
+  c.historico=[...(c.historico||[]), { tipo:'observacao', confirmacaoDe:it.data, data:new Date().toISOString(), obs:`Confirmação da entrevista ${it.tipo}${it.fase?' (fase final)':''} de ${_dataBR(it.data)}${it.hora?' às '+it.hora:''} ${canal==='copia'?'copiada para envio':'enviada via '+canal}.`, usuario:getUserName() }];
+  try{ await upsertCand(c); }catch(e){ c.historico=c.historico.slice(0,-1); showToast('⚠ Mensagem aberta, mas não ficou registrada no histórico'); }
+  renderConfirmacoes();
+}
+function confWhats(i){ const it=_confItensCache[i]; if(!it||!it.c.tel) return; window.open('https://wa.me/'+_fmtTel(it.c.tel)+'?text='+encodeURIComponent(_confTexto(it)),'_blank'); _confRegistrar(it,'WhatsApp'); }
+function confCopiar(i){ const it=_confItensCache[i]; if(!it) return; navigator.clipboard.writeText(_confTexto(it)).then(()=>{ showToast('📋 Mensagem copiada'); _confRegistrar(it,'copia'); }).catch(()=>alert('Não foi possível copiar.')); }
 function _fmtTel(t){return (t||'').replace(/\D/g,'').replace(/^0+/,'').replace(/^(?!55)/,'55');}
 function _aplicaVars(txt,c){
   const v=getVagas().find(x=>x.id===c.vagaId);
