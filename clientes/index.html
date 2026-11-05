@@ -1452,6 +1452,8 @@ document.addEventListener('click', ()=>{ const m=document.getElementById('empres
 async function switchEmpresa(id){
   if(id===currentEmpresa) return;
   currentEmpresa = id;
+  _pagamentos = []; // não deixa os pagamentos do cliente anterior em memória durante a troca
+  _pagEmpresaCarregada = null;
   try{sessionStorage.setItem('lavie_empresa_ativa', id);}catch(e){}
   document.title = `La Vie · ${EMPRESAS[id].nome}`;
   _aplicarTerminologiaEmpresa();
@@ -6132,6 +6134,7 @@ function renderDashboard(){
 
 // ══ FINANCEIRO — Honorários (modelo de parcelas varia por cliente) ═══════════
 let _pagamentos = [];
+let _pagEmpresaCarregada = null; // de qual cliente são os pagamentos em memória (só sincroniza se bater)
 // Modelo de cobrança por cliente. "gatilho" define quando a parcela passa a
 // ter data: 'abertura' conta a partir da abertura da vaga; 'fechamento' só
 // ganha data quando a vaga é efetivamente encerrada (candidato aprovado) —
@@ -6269,17 +6272,21 @@ function _vencParcela(v,def){
 }
 
 // Persistência (segue o padrão demo/online do resto do sistema)
-function demoLoadPag(){ try{ _pagamentos=JSON.parse(localStorage.getItem('cambury_pag_'+(currentEmpresa||'geral'))||'[]'); }catch(e){ _pagamentos=[]; } }
+function demoLoadPag(){ _pagEmpresaCarregada=currentEmpresa; try{ _pagamentos=JSON.parse(localStorage.getItem('cambury_pag_'+(currentEmpresa||'geral'))||'[]'); }catch(e){ _pagamentos=[]; } }
 function demoSavePag(){ try{ localStorage.setItem('cambury_pag_'+(currentEmpresa||'geral'), JSON.stringify(_pagamentos)); }catch(e){} }
 async function loadPagamentos(){
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ demoLoadPag(); return; }
-  try{ const {data}=await sb.from('pagamentos').select('*').eq('empresa_id',currentEmpresa); if(data) _pagamentos=data.map(r=>({id:r.id,empresaId:r.empresa_id,vagaId:r.vaga_id,parcela:r.parcela,pct:r.pct,valor:r.valor,vencimento:r.vencimento,status:r.status,pagoEm:r.pago_em,obs:r.obs,origem:r.origem||'rs',contratoId:r.contrato_id||null,documentos:Array.isArray(r.documentos)?r.documentos:[]})); }catch(e){ console.error(e); }
+  _pagEmpresaCarregada=null;
+  const _empLoad=currentEmpresa;
+  try{ const {data,error}=await sb.from('pagamentos').select('*').eq('empresa_id',_empLoad); if(error) throw error; if(data && _empLoad===currentEmpresa){ _pagEmpresaCarregada=_empLoad; } if(data && _empLoad===currentEmpresa) _pagamentos=data.map(r=>({id:r.id,empresaId:r.empresa_id,vagaId:r.vaga_id,parcela:r.parcela,pct:r.pct,valor:r.valor,vencimento:r.vencimento,status:r.status,pagoEm:r.pago_em,obs:r.obs,origem:r.origem||'rs',contratoId:r.contrato_id||null,documentos:Array.isArray(r.documentos)?r.documentos:[]})); }catch(e){ console.error(e); }
 }
-async function upsertPagamento(p){
+async function upsertPagamento(p, opt){
   if(!p.empresaId) p.empresaId=currentEmpresa;
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE){ const i=_pagamentos.findIndex(x=>x.id===p.id); if(i>=0)_pagamentos[i]=p; else _pagamentos.push(p); demoSavePag(); return; }
   const row={id:p.id,empresa_id:p.empresaId,vaga_id:p.vagaId,parcela:p.parcela,pct:p.pct,valor:p.valor,vencimento:p.vencimento,status:p.status,pago_em:p.pagoEm||null,obs:p.obs||null,origem:p.origem||'rs',contrato_id:p.contratoId||null,documentos:p.documentos||[]};
-  const {error}=await sb.from('pagamentos').upsert(row); if(error)throw error;
+  // Parcela criada pela sincronização: se já existir no banco, não sobrescreve
+  // (protege baixa e data de pagamento).
+  const {error}=(opt&&opt.soSeNova) ? await sb.from('pagamentos').upsert(row,{onConflict:'id',ignoreDuplicates:true}) : await sb.from('pagamentos').upsert(row); if(error)throw error;
 }
 // Garante que cada vaga tenha suas 3 parcelas geradas
 const OBS_FECH_CANCELADO = 'Fechamento não devido — vaga cancelada pelo cliente';
@@ -6295,13 +6302,24 @@ async function sincronizarParcelas(){
   // de pagamento) todas as parcelas reais. Mesmo bug que resetou as vagas da
   // Cambury, só que aqui em cima da tabela de pagamentos.
   if(vagas.length===0 && (!_vagasCarregouOk || _pagamentos.length>0)) return;
+  // Trava de segurança (04/11/2026): na troca de cliente, as vagas do cliente
+  // novo chegavam antes dos pagamentos, e as parcelas do cliente anterior
+  // (todas, inclusive as pagas) eram apagadas como órfãs e depois recriadas
+  // como pendentes. Só sincroniza quando vagas e pagamentos em memória são
+  // do mesmo cliente que está aberto.
+  const _emp=currentEmpresa;
+  if(!_emp || _pagEmpresaCarregada!==_emp) return;
+  if(vagas.some(v=>v.empresaId && v.empresaId!==_emp)) return;
+  if(_pagamentos.some(p=>p.empresaId && p.empresaId!==_emp)) return;
   // Migração: remove parcelas antigas que não batem com o modelo atual (ex.: 25/25/50 -> 50/50)
   const idsValidos=new Set();
   vagas.forEach(v=>_parcelasDef().forEach(d=>idsValidos.add(v.id+'-p'+d.n)));
-  const remover=_pagamentos.filter(p=>!idsValidos.has(p.id) && !/-saldo\d/.test(p.id) && (p.origem||'rs')==='rs');
+  // Nunca apaga parcela paga, nem de outro cliente.
+  const remover=_pagamentos.filter(p=>!idsValidos.has(p.id) && !/-saldo\d/.test(p.id) && (p.origem||'rs')==='rs' && p.status!=='pago' && (!p.empresaId || p.empresaId===_emp));
   if(remover.length){
     for(const p of remover){ if(!(typeof DEMO_MODE!=='undefined'&&DEMO_MODE)){try{await sb.from('pagamentos').delete().eq('id',p.id);}catch(e){}} }
-    _pagamentos=_pagamentos.filter(p=>idsValidos.has(p.id) || /-saldo\d/.test(p.id) || (p.origem||'rs')!=='rs');
+    const _removidos=new Set(remover.map(p=>p.id));
+    _pagamentos=_pagamentos.filter(p=>!_removidos.has(p.id));
   }
   // Corrige pct/valor/vencimento de parcelas existentes se o honorário, o % ou a data de
   // encerramento da vaga mudou (mantém status/baixa; nunca mexe em parcela já paga)
@@ -6355,7 +6373,7 @@ async function sincronizarParcelas(){
       const cancelFechamento = v.status==='cancelada' && def.n===2;
       const p={id, vagaId:v.id, parcela:def.n, pct:def.pct, valor:+(base*def.pct/100).toFixed(2), vencimento:_vencParcela(v,def), status:cancelFechamento?'cancelada':'pendente', pagoEm:null, obs:cancelFechamento?OBS_FECH_CANCELADO:def.quando};
       _pagamentos.push(p);
-      try{ await upsertPagamento(p); }catch(e){}
+      try{ await upsertPagamento(p, {soSeNova:true}); }catch(e){}
     }
   }
   if(typeof DEMO_MODE!=='undefined' && DEMO_MODE) demoSavePag();
