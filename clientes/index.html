@@ -2756,6 +2756,21 @@ function _faseFinalConfig(){
 }
 function _temDossieCand(c){ return (c.documentos||[]).some(d=>d && /^dossi[eê] d[eo] candidato/i.test(d.nome||'')); }
 function _confJaEnviada(c, dia){ return (c.historico||[]).some(h=>h && h.confirmacaoDe===dia); }
+function _confPresencaOk(c, dia){ return (c.historico||[]).some(h=>h && h.presencaConfirmadaDe===dia); }
+async function confMarcarPresenca(i){
+  const it=_confItensCache[i]; if(!it) return;
+  const idx=_cands.findIndex(x=>x.id===it.c.id); if(idx<0) return;
+  const c=_cands[idx]; const antes=c.historico||[];
+  if(_confPresencaOk(c,it.data)){
+    if(!confirm('Desmarcar a confirmação de presença de '+(c.nome||'')+'?')) return;
+    c.historico=antes.filter(h=>!(h && h.presencaConfirmadaDe===it.data));
+  } else {
+    c.historico=[...antes, { tipo:'observacao', presencaConfirmadaDe:it.data, data:new Date().toISOString(), obs:`Presença confirmada pelo candidato para a entrevista ${it.tipo}${it.fase?' (fase final)':''} de ${_dataBR(it.data)}${it.hora?' às '+it.hora:''}.`, usuario:getUserName() }];
+  }
+  try{ await upsertCand(c); showToast(_confPresencaOk(c,it.data)?'✅ Presença confirmada':'Confirmação desmarcada'); }
+  catch(e){ c.historico=antes; showToast('⚠ Não foi possível salvar'); }
+  renderConfirmacoes();
+}
 function _confSalvarFinal(){ try{ localStorage.setItem('lv_conf_final_'+currentEmpresa, JSON.stringify({dia:document.getElementById('conf-dia').value, hora:document.getElementById('conf-final-hora').value, local:document.getElementById('conf-final-local').value, ref:document.getElementById('conf-final-ref').value})); }catch(e){} }
 function abrirConfirmacoes(){
   const el=document.getElementById('conf-dia'); if(!el.value) el.value=new Date().toISOString().slice(0,10);
@@ -2763,11 +2778,12 @@ function abrirConfirmacoes(){
   renderConfirmacoes(); openModal('modal-confirm');
 }
 function _confLinha(it,i){
-  const c=it.c; const env=_confJaEnviada(c,it.data);
+  const c=it.c; const env=_confJaEnviada(c,it.data); const ok=_confPresencaOk(c,it.data);
   const tag=it.tipo==='presencial'?'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">presencial</span>':'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">online</span>';
   return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bege);flex-wrap:wrap">
     <div style="min-width:52px;font-weight:600">${it.hora||''}</div>
-    <div style="flex:1;min-width:180px">${escapeHtmlAg(c.nome||'')} ${tag}${env?' <span style="color:var(--green,#1F6B3D);font-size:12px">✓ enviada</span>':''}${c.tel?'':' <span style="color:var(--red);font-size:12px">sem telefone</span>'}</div>
+    <div style="flex:1;min-width:180px">${escapeHtmlAg(c.nome||'')} ${tag}${env?' <span style="color:var(--mid);font-size:12px">✓ enviada</span>':''}${ok?' <span style="color:#1F6B3D;font-size:12px;font-weight:600">✅ confirmou</span>':''}${c.tel?'':' <span style="color:var(--red);font-size:12px">sem telefone</span>'}</div>
+    <button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="confMarcarPresenca(${i})" title="Marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'}</button>
     <button class="btn btn-ghost btn-sm" onclick="confCopiar(${i})">📋 Copiar</button>
     <button class="btn btn-primary btn-sm" style="background:#25D366;border-color:#25D366" onclick="confWhats(${i})" ${c.tel?'':'disabled'}>💬 WhatsApp</button>
   </div>`;
@@ -2788,6 +2804,8 @@ function renderConfirmacoes(){
   const semDossie=naFase.filter(c=>!_temDossieCand(c));
   finais.forEach(c=>_confItensCache.push({c, data:dia, hora, tipo:'presencial', fase:true, local, ref}));
   document.getElementById('conf-final-lista').innerHTML = finais.length ? (local?'':'<div style="font-size:12px;color:var(--amber);margin-bottom:6px">Preencha o endereço para a mensagem sair completa.</div>')+_confItensCache.slice(nAg).map((it,j)=>_confLinha(it,nAg+j)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhum candidato com dossiê na fase final sem agenda.</div>';
+  if(finais.length){ const nOk=finais.filter(c=>_confPresencaOk(c,dia)).length; document.getElementById('conf-final-lista').innerHTML = `<div style="font-size:12px;color:var(--mid);margin-bottom:6px"><b>${nOk} de ${finais.length}</b> confirmaram presença</div>` + document.getElementById('conf-final-lista').innerHTML; }
+  if(nAg){ const nOk=_confItensCache.slice(0,nAg).filter(it=>_confPresencaOk(it.c,dia)).length; document.getElementById('conf-lista').innerHTML = `<div style="font-size:12px;color:var(--mid);margin-bottom:6px"><b>${nOk} de ${nAg}</b> confirmaram presença</div>` + document.getElementById('conf-lista').innerHTML; }
   if(semDossie.length) document.getElementById('conf-final-lista').innerHTML += `<div style="font-size:12px;color:var(--mid);margin-top:8px">Na fase final sem dossiê (fora da lista): ${semDossie.map(c=>escapeHtmlAg(c.nome||'')).join(', ')}</div>`;
 }
 async function _confRegistrar(it, canal){
