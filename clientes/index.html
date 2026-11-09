@@ -1817,6 +1817,32 @@ async function gcalSincronizarEvento(a){
   } catch(e){ console.warn('Falha ao sincronizar com o Google Calendar:', e); return null; }
 }
 
+// Apaga o evento espelho no Google Calendar (sem mandar aviso aos convidados).
+async function gcalExcluirEvento(a){
+  if(!a || !a.googleEventId || !gcalConectado()) return false;
+  try{
+    const url=`https://www.googleapis.com/calendar/v3/calendars/primary/events/${a.googleEventId}?sendUpdates=none`;
+    let token=await gcalToken(); if(!token) return false;
+    let resp=await fetch(url,{method:'DELETE',headers:{'Authorization':`Bearer ${token}`}});
+    if(resp.status===401){ _gcalToken=null; _gcalTokenAte=0; token=await gcalToken(); if(token) resp=await fetch(url,{method:'DELETE',headers:{'Authorization':`Bearer ${token}`}}); }
+    return resp.ok || resp.status===404 || resp.status===410;
+  }catch(e){ console.warn('Falha ao apagar evento no Google Calendar:', e); return false; }
+}
+// Candidato que desistiu sai da Agenda: remove as entrevistas de hoje em diante
+// (no sistema e no Google Calendar). O banco também faz isso sozinho
+// (gatilho trg_lv_desistiu_tira_agenda), para valer em qualquer caminho.
+async function _agendaTirarDoCandidato(candId){
+  const hoje=new Date().toISOString().slice(0,10);
+  const evs=(_agenda||[]).filter(a=>a.candidatoId===candId && a.data && a.data>=hoje);
+  let n=0;
+  for(const a of evs){
+    await gcalExcluirEvento(a);
+    try{ await deleteAgenda(a.id); n++; }catch(e){ console.warn('Agenda não removida:', e); }
+  }
+  if(evs.length){ const ids=new Set(evs.map(a=>a.id)); _agenda=_agenda.filter(a=>!ids.has(a.id)); try{ renderAgenda&&renderAgenda(); }catch(e){} }
+  return n;
+}
+
 function copiarGcalCandidato(){
   const id=document.getElementById('ag-id').value; const a=_agenda.find(x=>x.id===id); if(!a)return;
   const link=gcalLink(a,'candidato');
@@ -2073,7 +2099,7 @@ async function sincronizarEtapaComAgenda(cand, etapaTitulo){
 async function excluirAgenda(){
   const id=document.getElementById('ag-id').value; if(!id)return;
   if(!confirm('Excluir esta entrevista da agenda?'))return;
-  try{ await deleteAgenda(id); _agenda=_agenda.filter(x=>x.id!==id); closeModal('modal-agenda'); renderAgenda(); showToast('Entrevista removida'); }
+  try{ await gcalExcluirEvento(_agenda.find(x=>x.id===id)); await deleteAgenda(id); _agenda=_agenda.filter(x=>x.id!==id); closeModal('modal-agenda'); renderAgenda(); showToast('Entrevista removida'); }
   catch(e){ alert('Erro: '+e.message); }
 }
 function getRoteirosVisiveis()   { const base = VAGAS_ROTEIRO.filter(r=>r.empresaId===currentEmpresa); if(isAdmin())return base; return base.filter(r=>currentUser.setores.includes(r.setor)); }
@@ -2900,7 +2926,9 @@ async function _setEtapaCand(id,novaEtapa,obsTxt){
   const hist=[...(_cands[idx].historico||[])];
   hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs:obsTxt||'',usuario:getUserName()});
   _cands[idx]={..._cands[idx],etapa:novaEtapa,historico:hist};
+  const _tirarAgenda = novaEtapa==='desistiu' ? _agendaTirarDoCandidato(id) : null;
   try{await upsertCand(_cands[idx]);renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();}catch(e){alert('Erro ao salvar: '+e.message);return null;}
+  if(_tirarAgenda){ const n=await _tirarAgenda; if(n) showToast('📅 '+n+' entrevista(s) tirada(s) da agenda'); }
   return _cands[idx];
 }
 function aprovarCard(id){
@@ -3448,7 +3476,8 @@ async function atualizarCandidato(){
     hist.push({etapa:novaEtapa,data:new Date().toISOString(),obs,usuario:getUserName()});
   }
   _cands[idx]={..._cands[idx],nome,cpf,tel,email,vagaId:novaVaga||vagaAntiga,etapa:novaEtapa,obs:obs,linkedin:linkedin,historico:hist};
-  try{await upsertCand(_cands[idx]);closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
+  const _tirarAgenda = (novaEtapa==='desistiu' && etapaAntiga!=='desistiu') ? _agendaTirarDoCandidato(id) : null;
+  try{await upsertCand(_cands[idx]);if(_tirarAgenda){ _tirarAgenda.then(n=>{ if(n) showToast('📅 '+n+' entrevista(s) tirada(s) da agenda'); }); }closeModal('modal-mover-cand');renderFunil();renderCandidatos();renderVagasStats&&renderVagasStats();showToast('✅ Candidato atualizado!');}catch(e){alert('Erro: '+e.message);}
 }
 async function excluirCandidato(){const id=document.getElementById('mc-id').value;if(!confirm('Excluir?'))return;try{ await deleteCand(id); }catch(e){ alert('O candidato não foi excluído: '+(e.message||e)); return; }_cands=_cands.filter(c=>c.id!==id);closeModal('modal-mover-cand');renderFunil();renderCandidatos();}
 
