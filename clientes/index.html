@@ -2785,7 +2785,18 @@ function _confJaEnviada(c, dia){ return (c.historico||[]).some(h=>h && h.confirm
 // Confirmação de presença separada por fase: 'lavie' (entrevistas da Chrys) e 'final' (Entrevista Final com o cliente).
 function _agEhFinal(a){ const lbl=(ETAPAS.find(e=>e.id==='vivencia')||{}).label||'Entrevista Final'; return !!a && (a.titulo===lbl || /final/i.test(a.titulo||'')); }
 function _faseDoItem(it){ return it.fase?'final':'lavie'; }
-function _confPresencaOk(c, dia, fase){ return (c.historico||[]).some(h=>h && h.presencaConfirmadaDe===dia && (h.presencaFase||'final')===fase); }
+// Não comparecimento registrado para a entrevista daquele dia (botão "Não compareceu"
+// na ficha ou no roteiro). Prevalece sobre a confirmação: quem faltou não aparece como confirmado.
+function _faltouEm(c, dia, fase){
+  const br=_dataBR(dia);
+  return (c.historico||[]).some(h=>{ if(!h || h.tipo!=='noshow') return false;
+    const hf=(h.etapaCobrada==='vivencia' || /final/i.test(h.obs||'')) ? 'final' : 'lavie';
+    if(fase && hf!==fase) return false;
+    if((h.obs||'').includes(br)) return true;
+    try{ return new Date(h.data).toLocaleDateString('sv-SE',{timeZone:'America/Sao_Paulo'})===dia; }catch(e){ return false; } });
+}
+function _confPresencaOkSo(c, dia, fase){ return (c.historico||[]).some(h=>h && h.presencaConfirmadaDe===dia && (h.presencaFase||'final')===fase); }
+function _confPresencaOk(c, dia, fase){ return _confPresencaOkSo(c,dia,fase) && !_faltouEm(c,dia,fase); }
 // Próxima entrevista do candidato (agenda de hoje em diante; na Entrevista Final
 // sem agenda, o padrão da fase final). Usado pelo botão "Confirmou" da lista de candidatos.
 function _proxEntrevistaCand(c){
@@ -2802,13 +2813,14 @@ async function _togglePresenca(it){
   const idx=_cands.findIndex(x=>x.id===it.c.id); if(idx<0) return;
   const c=_cands[idx]; const antes=c.historico||[];
   const fz=_faseDoItem(it);
-  if(_confPresencaOk(c,it.data,fz)){
+  if(_faltouEm(c,it.data,fz)){ showToast('Candidato marcado como "Não compareceu" nesta entrevista'); return; }
+  if(_confPresencaOkSo(c,it.data,fz)){
     if(!confirm('Desmarcar a confirmação de presença de '+(c.nome||'')+'?')) return;
     c.historico=antes.filter(h=>!(h && h.presencaConfirmadaDe===it.data && (h.presencaFase||'final')===fz));
   } else {
     c.historico=[...antes, { tipo:'observacao', presencaConfirmadaDe:it.data, presencaFase:fz, data:new Date().toISOString(), obs:`Presença confirmada pelo candidato para a entrevista ${it.tipo}${it.fase?' (fase final)':''} de ${_dataBR(it.data)}${it.hora?' às '+it.hora:''}.`, usuario:getUserName() }];
   }
-  try{ await upsertCand(c); showToast(_confPresencaOk(c,it.data,fz)?'✅ Presença confirmada':'Confirmação desmarcada'); }
+  try{ await upsertCand(c); showToast(_confPresencaOkSo(c,it.data,fz)?'✅ Presença confirmada':'Confirmação desmarcada'); }
   catch(e){ c.historico=antes; showToast('⚠ Não foi possível salvar'); }
   if(document.getElementById('modal-confirm')?.classList.contains('open')) renderConfirmacoes();
   if(typeof renderCandidatos==='function') renderCandidatos();
@@ -2820,12 +2832,12 @@ function abrirConfirmacoes(){
   renderConfirmacoes(); openModal('modal-confirm');
 }
 function _confLinha(it,i){
-  const c=it.c; const env=_confJaEnviada(c,it.data); const ok=_confPresencaOk(c,it.data,_faseDoItem(it));
+  const c=it.c; const env=_confJaEnviada(c,it.data); const ok=_confPresencaOk(c,it.data,_faseDoItem(it)); const falt=_faltouEm(c,it.data,_faseDoItem(it));
   const tag=it.tipo==='presencial'?'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">presencial</span>':'<span class="tag" style="background:var(--bege-lt);color:var(--mid)">online</span>';
   return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bege);flex-wrap:wrap">
     <div style="min-width:52px;font-weight:600">${it.hora||''}</div>
-    <div style="flex:1;min-width:180px">${escapeHtmlAg(c.nome||'')} ${tag}${env?' <span style="color:var(--mid);font-size:12px">✓ enviada</span>':''}${ok?' <span style="color:#1F6B3D;font-size:12px;font-weight:600">✅ confirmou</span>':''}${c.tel?'':' <span style="color:var(--red);font-size:12px">sem telefone</span>'}</div>
-    <button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="confMarcarPresenca(${i})" title="Marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'}</button>
+    <div style="flex:1;min-width:180px">${escapeHtmlAg(c.nome||'')} ${tag}${env?' <span style="color:var(--mid);font-size:12px">✓ enviada</span>':''}${ok?' <span style="color:#1F6B3D;font-size:12px;font-weight:600">✅ confirmou</span>':''}${falt?' <span style="color:var(--red);font-size:12px;font-weight:600">✗ não compareceu</span>':''}${c.tel?'':' <span style="color:var(--red);font-size:12px">sem telefone</span>'}</div>
+    ${falt?'<button class="btn btn-sm btn-ghost" style="color:var(--red);border-color:var(--red)" disabled title="Marcado como Não compareceu">✗ Faltou</button>':`<button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="confMarcarPresenca(${i})" title="Marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'}</button>`}
     <button class="btn btn-ghost btn-sm" onclick="confCopiar(${i})">📋 Copiar</button>
     <button class="btn btn-primary btn-sm" style="background:#25D366;border-color:#25D366" onclick="confWhats(${i})" ${c.tel?'':'disabled'}>💬 WhatsApp</button>
   </div>`;
@@ -3308,7 +3320,7 @@ function renderCandidatos() {
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--green-lt,#e6f4ea);color:var(--green,#1a7f37);border:1px solid var(--green,#1a7f37)" onclick="aprovarCard('${c.id}')" title="Aprovar e avançar">✓ Aprovar</button>`)
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--red-lt);color:var(--red);border:1px solid var(--red)" onclick="reprovarCard('${c.id}')" title="Reprovar e enviar feedback">✗ Reprovar</button>`)
       +(podeDesistir?`<button class="btn btn-sm" style="background:#FAEEDA;color:#8A5A12;border:1px solid #D9A441" onclick="desistiuCard('${c.id}')" title="O candidato desistiu (não envia e-mail)">Desistiu</button>`:'')
-      +(()=>{ const it=_proxEntrevistaCand(c); if(!it) return ''; const ok=_confPresencaOk(c,it.data,_faseDoItem(it)); return `<button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="candMarcarPresenca('${c.id}')" title="Entrevista ${it.tipo}${it.fase?' da fase final':''} em ${_dataBR(it.data)}${it.hora?' às '+it.hora:''}: marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'} ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button>`; })()
+      +(()=>{ const it=_proxEntrevistaCand(c); if(!it) return ''; const ok=_confPresencaOk(c,it.data,_faseDoItem(it)); if(_faltouEm(c,it.data,_faseDoItem(it))) return `<button class="btn btn-sm btn-ghost" style="color:var(--red);border-color:var(--red)" disabled title="Não compareceu à entrevista de ${_dataBR(it.data)}">✗ Faltou ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button>`; return `<button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="candMarcarPresenca('${c.id}')" title="Entrevista ${it.tipo}${it.fase?' da fase final':''} em ${_dataBR(it.data)}${it.hora?' às '+it.hora:''}: marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'} ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button>`; })()
       +`<button class="btn btn-ghost btn-sm" onclick="menuMensagens('${c.id}')" title="Enviar mensagem">💬</button>`
       +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
       +`</div>`;
