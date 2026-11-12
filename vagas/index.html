@@ -430,7 +430,14 @@ async function saveCandidatura(data) {
         // Guarda só o caminho do arquivo, não uma URL pública — o bucket é
         // privado, então o link pra abrir é sempre gerado na hora (ver
         // abrirCurriculo), nunca fica fixo/permanente.
-        if (!upErr) { paths.push(path); }
+        if (!upErr) {
+          paths.push(path);
+          // Word também vai, em cópia, para o R&S (bucket documentos, pasta site-word/):
+          // lá a função cv-para-pdf converte sozinha em PDF e põe no cadastro do candidato.
+          if (/^(docx?|odt|rtf)$/i.test(ext) && rsDb) {
+            try { await rsDb.storage.from('documentos').upload('site-word/' + path, f); } catch(e) { console.warn('Cópia do Word para conversão falhou:', e); }
+          }
+        }
         else { console.warn('Falha ao enviar currículo:', f.name, upErr.message); }
       }
       if (paths.length) cv_url = paths.join('\n');
