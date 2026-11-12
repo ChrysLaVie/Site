@@ -3282,6 +3282,16 @@ function toggleCandEncerradas(){
   }
   renderFunil();renderCandidatos();
 }
+// Fechamentos (vagas fechadas pela La Vie), igual ao dashboard: fechadas no ciclo
+// atual + as fechadas antes de cada reposição. Usado no passo "Aprovação" do funil,
+// que antes contava só quem está hoje em Aprovação/Admissão nas vagas visíveis.
+function _fechamentosDasVagas(vs){
+  return (vs||[]).reduce((s,v)=>{
+    if(v.status==='cancelada') return s;
+    const ant=(v.historicoReaberturas||[]).filter(h=>h&&h.cicloAnteriorEncerramento).length || (v.dataReabertura?1:0);
+    return s+(v.qtdFechadas||0)+ant;
+  },0);
+}
 function renderFunil() {
   const todos=getCandsVisiveis(),vagas=getVagasCandidatos();
   const selV=document.getElementById('cand-filter-vaga'),curV=selV.value;
@@ -3295,10 +3305,13 @@ function renderFunil() {
   const cands=todos.filter(c=>vagaIds.has(c.vagaId)&&(!fV||c.vagaId===fV)&&(!search||c.nome.toLowerCase().includes(search)));
   const total=cands.length||1;
   _renderMenuEtapas(cands);
+  const _vsFech=getVagasVisiveis().filter(v=>!fV||v.id===fV);
+  const nFech=_fechamentosDasVagas(_vsFech);
+  const _nEtapa=(cs,id)=> id==='aprovacao' ? nFech : (id==='admissao' ? 0 : cs.filter(c=>c.etapa===id).length);
   const totalCardVisual=`<div class="funnel-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-n">${cands.length}</div><div class="fs-l">Total</div><div class="fs-pct">100%</div></div>`;
-  document.getElementById('funnel-visual').innerHTML=totalCardVisual+ETAPAS.map(e=>{const n=cands.filter(c=>c.etapa===e.id).length;return `<div class="funnel-step"><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
+  document.getElementById('funnel-visual').innerHTML=totalCardVisual+ETAPAS.map(e=>{const n=_nEtapa(cands,e.id);return `<div class="funnel-step"${e.id==='aprovacao'?' title="Vagas fechadas (inclui as encerradas e as repostas)"':''}><div class="fs-n">${n}</div><div class="fs-l">${e.short}</div><div class="fs-pct">${Math.round(n/total*100)}%</div></div>`;}).join('');
   const totalCardSteps=`<div class="funil-step total" onclick="setEtapa('')" title="Ver todos"><div class="fs-count">${cands.length}</div><div class="fs-name">Total</div></div>`;
-  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'},{id:'desistiu',label:'Desistentes'}]).map(e=>{const n=_contaEtapa(cands,e.id);return `<div class="funil-step ${activeEtapas.has(e.id)?'active':''}" onclick="setEtapa('${e.id}')"><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
+  document.getElementById('funil-steps').innerHTML=totalCardSteps+ETAPAS.concat(getBancos()).concat([{id:'reprovado',label:'Reprovados'},{id:'desistiu',label:'Desistentes'}]).map(e=>{const n=e.id==='aprovacao'?nFech:_contaEtapa(cands,e.id);return `<div class="funil-step ${activeEtapas.has(e.id)?'active':''}" onclick="setEtapa('${e.id}')"${e.id==='aprovacao'?' title="Vagas fechadas (inclui as encerradas e as repostas)"':''}><div class="fs-count">${n}</div><div class="fs-name">${e.label}</div></div>`;}).join('');
 }
 // Clicar nas caixinhas do funil liga e desliga a etapa no filtro (dá para marcar várias); "Total" limpa.
 function setEtapa(id){ if(!id) activeEtapas=new Set(); else if(activeEtapas.has(id)) activeEtapas.delete(id); else activeEtapas.add(id); _aposMudarEtapasFiltro(); }
