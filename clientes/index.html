@@ -274,6 +274,18 @@ header {
 .cand-table td { padding:11px 14px; font-size:13px; border-bottom:1px solid var(--bege-lt); vertical-align:middle; }
 .cand-table tr:last-child td { border-bottom:none; }
 .cand-table tr:hover td { background:var(--cream); }
+/* Material, fases e match à vista na lista de Candidatos (15/11/2026) */
+.fases-linha { display:flex; flex-wrap:wrap; gap:3px; max-width:250px; }
+.fase-chip { font-size:10.5px; line-height:1; padding:3px 6px; border-radius:10px; border:1px solid var(--bege); color:var(--light); white-space:nowrap; }
+.fase-chip.ok { background:#E6F4EA; color:#1A7F37; border-color:#B7DFC2; }
+.fase-chip.falta { background:var(--red-lt); color:var(--red); border-color:var(--red); }
+.fases-ok { font-size:11px; font-weight:600; color:#1A7F37; margin-top:4px; }
+.fases-falta { font-size:11px; color:var(--red); margin-top:4px; max-width:250px; }
+.match-linha { font-size:11px; color:var(--mid); margin-top:4px; max-width:250px; }
+.match-tag { font-weight:600; padding:1px 6px; border-radius:8px; white-space:nowrap; }
+.match-tag.alto { background:#E6F4EA; color:#1A7F37; }
+.match-tag.medio { background:#FAEEDA; color:#8A5A12; }
+.match-tag.baixo { background:var(--red-lt); color:var(--red); }
 
 /* ── FINANCEIRO: larguras de coluna e Valor sem quebra de linha ── */
 .fin-table th:nth-child(1), .fin-table td:nth-child(1) { width:28%; }                 /* Vaga */
@@ -681,10 +693,12 @@ header {
       <button type="button" class="filter-input etapa-ms-btn" id="cand-etapa-btn" onclick="toggleEtapaMenu(event)"><span id="cand-etapa-rotulo">Todas as etapas</span><span class="seta">▼</span></button>
       <div class="etapa-ms-menu" id="cand-etapa-menu" onclick="event.stopPropagation()"></div>
     </div>
+    <select class="filter-input" id="cand-filter-material" onchange="renderCandidatos()" title="Mostrar só quem está com o material completo para a etapa atual, ou só quem está com algo faltando"><option value="">Material: todos</option><option value="completo">Completos</option><option value="falta">Faltando algo</option></select>
+    <select class="filter-input" id="cand-filter-match" onchange="renderCandidatos()" title="Filtrar pelo match automático (DISC + questionário técnico)"><option value="">Match: todos</option><option value="Alto">Match Alto</option><option value="Médio">Match Médio</option><option value="Baixo">Match Baixo</option><option value="sem">Sem match</option></select>
     <button class="filter-toggle" id="cand-toggle-encerradas" onclick="toggleCandEncerradas()" title="Incluir candidatos de vagas encerradas e canceladas">Vagas encerradas</button>
   </div>
   <div class="cand-table-wrap" style="margin-top:16px">
-    <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Entrou em</th><th>Entrevistas</th><th>Ações</th></tr></thead>
+    <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Material e match</th><th>Entrou em</th><th>Entrevistas</th><th>Ações</th></tr></thead>
     <tbody id="cand-tbody"></tbody></table>
   </div>
 </div>
@@ -3319,10 +3333,18 @@ function renderCandidatos() {
   const cands=getCandsVisiveis(),vagas=getVagasVisiveis(),entrevistas=getEntrevistasVisiveis();
   const search=document.getElementById('cand-search').value.toLowerCase(),fV=document.getElementById('cand-filter-vaga').value;
   const vagaIds=new Set(getVagasCandidatos().map(v=>v.id));
+  const elMat=document.getElementById('cand-filter-material'),elMatch=document.getElementById('cand-filter-match');
+  if(elMatch) elMatch.style.display=isClienteExterno()?'none':'';
+  const fMat=elMat?elMat.value:'',fMatch=(elMatch&&!isClienteExterno())?elMatch.value:'';
   const fi=cands.filter(c=>vagaIds.has(c.vagaId)&&(!search||c.nome.toLowerCase().includes(search))&&(!fV||c.vagaId===fV)&&_candNaEtapaFiltro(c))
+    .filter(c=>{
+      if(fMat){ const f=_candFases(c,vagas.find(v=>v.id===c.vagaId),entrevistas); if(!f.avalia) return false; if(fMat==='completo'&&(f.faltas.length||f.faltou)) return false; if(fMat==='falta'&&!f.faltas.length) return false; }
+      if(fMatch){ const m=_candMatch(c); const nivel=m&&m.nivel?m.nivel:'sem'; if(nivel!==fMatch) return false; }
+      return true;
+    })
     .sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR',{sensitivity:'base'}));
   const tbody=document.getElementById('cand-tbody');
-  if(!fi.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
+  if(!fi.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
   tbody.innerHTML=fi.map(c=>{
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
     const nE=entrevistas.filter(e=>e.candidatoId ? e.candidatoId===c.id : (normNome(e.nome)===normNome(c.nome)&&(e.vagaId===c.vagaId||!getVagas().some(v=>v.id===e.vagaId)))).length;
@@ -3338,8 +3360,83 @@ function renderCandidatos() {
       +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
       +`</div>`;
     const ult=_ultimaAtualizacao(c);
-    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}${ult?`<br><span style="font-size:11px;color:var(--mid)" title="${_dataHoraBR(ult.data)}">🕒 ${_dataBR(String(ult.data).slice(0,10))} · ${String(ult.texto).replace(/</g,'&lt;').slice(0,90)}${String(ult.texto).length>90?'…':''}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
+    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}${ult?`<br><span style="font-size:11px;color:var(--mid)" title="${_dataHoraBR(ult.data)}">🕒 ${_dataBR(String(ult.data).slice(0,10))} · ${String(ult.texto).replace(/</g,'&lt;').slice(0,90)}${String(ult.texto).length>90?'…':''}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td>${_candFasesHtml(c,vaga,entrevistas)}</td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
   }).join('');
+}
+// ── Material, fases e match à vista na lista de Candidatos (15/11/2026) ──────
+// Pedido da Chrys: saber, sem abrir cada cadastro, se o material está completo,
+// qual o match com a vaga e quais fases a pessoa já fez.
+// "Exigido" depende da etapa: currículo, DISC e formulário (quando a vaga tem
+// formulário próprio) valem desde a triagem; entrevista La Vie, transcrição e
+// dossiê passam a ser exigidos na Entrevista Final (fase final) em diante.
+// Banco de talentos, vaga encerrada, reprovado e desistiu: nada é cobrado, a
+// linha só mostra o que existe.
+const _FASE_ORDEM = { triagem:0, entrevista_rh:1, entrevista_gestor:2, vivencia:3, aprovacao:4, admissao:5 };
+function _candFases(c, vaga, entrevistas){
+  const docs = Array.isArray(c.documentos) ? c.documentos : [];
+  const tipos = new Set(docs.map(_docTipo));
+  const ents = (entrevistas||[]).filter(e => e.candidatoId ? e.candidatoId===c.id : (normNome(e.nome)===normNome(c.nome) && (e.vagaId===c.vagaId || !getVagas().some(v=>v.id===e.vagaId))));
+  const idx = Object.prototype.hasOwnProperty.call(_FASE_ORDEM, c.etapa) ? _FASE_ORDEM[c.etapa] : -1;
+  const banco = c.empresaId==='bancolavie' || /^banco de talentos/i.test((vaga&&vaga.titulo)||'');
+  const avalia = !!vaga && vaga.status==='aberta' && !banco && idx>=0;
+  const exigeForm = _vagaExigeForm(vaga), temForm = _candTemForm(c);
+  const entFeita = tipos.has('roteiro') || ents.some(e => e.resultado!=='nao_compareceu');
+  const entFaltou = !entFeita && ents.some(e => e.resultado==='nao_compareceu');
+  const chips = [
+    { k:'CV',     nome:'Currículo',                 ok:tipos.has('curriculo'), exigido:avalia },
+    { k:'DISC',   nome:'DISC',                      ok:_candTemDisc(c),        exigido:avalia }
+  ];
+  if(exigeForm || temForm) chips.push({ k:'Form', nome:'Formulário da vaga', ok:temForm, exigido:avalia&&exigeForm });
+  chips.push(
+    { k:'Entrev', nome:'Entrevista La Vie',         ok:entFeita, faltou:entFaltou, exigido:avalia&&idx>=3 },
+    { k:'Transc', nome:'Transcrição da entrevista', ok:tipos.has('transcricao'), exigido:avalia&&idx>=3 },
+    { k:'Dossiê', nome:'Dossiê do candidato',       ok:tipos.has('dossie'),      exigido:avalia&&idx>=3 }
+  );
+  const faltas = chips.filter(x => x.exigido && !x.ok).map(x => x.nome);
+  return { chips, faltas, avalia, faltou:entFaltou };
+}
+// Match automático: o site grava no campo de observação do candidato o texto
+// "DOSSIÊ DE MATCH (automático) — Nível geral: X" com a nota técnica e o perfil
+// DISC. Aqui só lemos esse texto; se ele não existir, mostramos a nota técnica
+// e o perfil DISC guardados nos documentos, sem nível.
+function _candMatch(c){
+  const temNivel = t => /N[íi]vel geral/i.test(t);
+  let txt = String(c.obs||'');
+  if(!temNivel(txt)){ const h=(c.historico||[]).map(x=>String((x&&x.obs)||'')).filter(temNivel).pop(); if(h) txt=h; }
+  const nv = v => { v=String(v||'').toLowerCase(); return v.startsWith('a')?'Alto':(v.startsWith('m')?'Médio':'Baixo'); };
+  const m = { nivel:null, tecnico:null, perfil:null, nivelDisc:null };
+  let r;
+  if((r=txt.match(/N[íi]vel geral:\s*(Alto|M[ée]dio|Baixo)/i))) m.nivel=nv(r[1]);
+  if((r=txt.match(/T[ée]cnico:\s*(\d)\s*\/\s*5/i))) m.tecnico=Number(r[1]);
+  if((r=txt.match(/Perfil comportamental:\s*([^\n(—–]+)/i))) m.perfil=r[1].trim();
+  else if((r=txt.match(/Perfil DISC:\s*([^.\n]+)/i))) m.perfil=r[1].trim();
+  if((r=txt.match(/perfil buscado[^\n]*\((Alto|M[ée]dio|Baixo)\)/i))) m.nivelDisc=nv(r[1]);
+  const docs = Array.isArray(c.documentos) ? c.documentos : [];
+  if(m.tecnico===null){ const f=docs.find(d=>d&&d.dadosOrigem&&d.dadosOrigem.technical_score!=null&&d.dadosOrigem.technical_score!==''); if(f&&!isNaN(Number(f.dadosOrigem.technical_score))) m.tecnico=Number(f.dadosOrigem.technical_score); }
+  if(!m.perfil){ const d=docs.find(x=>x&&x.dadosOrigem&&x.dadosOrigem.primary); if(d){ const N={D:'Dominância',I:'Influência',S:'Estabilidade',C:'Conformidade'}, a=d.dadosOrigem.primary, b=d.dadosOrigem.secondary; m.perfil=(N[a]||String(a))+(b?' / '+(N[b]||String(b)):''); } }
+  return (m.nivel || m.tecnico!==null || m.perfil) ? m : null;
+}
+function _candFasesHtml(c, vaga, entrevistas){
+  const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const f = _candFases(c, vaga, entrevistas);
+  const chip = x => {
+    const ruim = !x.ok && (x.faltou || x.exigido);
+    const estado = x.ok ? 'feito' : (x.faltou ? 'não compareceu' : (x.exigido ? 'falta' : 'ainda não tem'));
+    return `<span class="fase-chip ${x.ok?'ok':(ruim?'falta':'')}" title="${esc(x.nome)}: ${estado}">${x.k} ${x.ok?'✓':(ruim?'✗':'·')}</span>`;
+  };
+  let h = `<div class="fases-linha">${f.chips.map(chip).join('')}</div>`;
+  if(f.avalia) h += f.faltas.length ? `<div class="fases-falta">Falta: ${esc(f.faltas.join(', '))}</div>` : (f.faltou ? `<div class="fases-falta">Não compareceu à entrevista</div>` : `<div class="fases-ok" title="Nada faltando para a etapa em que o candidato está">✓ Completo</div>`);
+  if(!isClienteExterno()){
+    const m = _candMatch(c);
+    if(m){
+      const det = [];
+      if(m.tecnico!==null) det.push('Téc. '+m.tecnico+'/5');
+      if(m.perfil) det.push('DISC '+esc(m.perfil)+(m.nivelDisc?' ('+m.nivelDisc+')':''));
+      const cls = m.nivel==='Alto'?'alto':(m.nivel==='Médio'?'medio':'baixo');
+      h += `<div class="match-linha" title="Match automático: questionário técnico do formulário + perfil DISC comparado ao perfil buscado para a vaga. É pré-filtro, não substitui a leitura do currículo.">${m.nivel?`<span class="match-tag ${cls}">Match ${m.nivel}</span> `:''}${det.join(' · ')}</div>`;
+    }
+  }
+  return h;
 }
 function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.innerHTML='<option value="">Selecione...</option>'+getVagasVisiveis().filter(v=>v.status==='aberta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('');}
 async function salvarCandidato(){
