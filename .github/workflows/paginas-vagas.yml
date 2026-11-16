@@ -1,0 +1,43 @@
+# Mantém as vagas da La Vie no Google Vagas sem ninguém precisar rodar nada.
+# A cada 3 horas busca as vagas ativas no banco do site e:
+#  - cria ou atualiza a página própria de cada vaga (vagas/<nome>/index.html),
+#    com a marcação JobPosting que o Google lê;
+#  - tira a marcação das vagas que saíram do ar;
+#  - atualiza o sitemap.xml.
+# Só grava no repositório quando alguma coisa mudou.
+name: Vagas no Google (páginas e sitemap)
+
+on:
+  schedule:
+    - cron: '23 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paginas-vagas
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gerar as páginas das vagas ativas
+        run: node ferramentas/gerar-paginas-vagas.cjs
+      - name: Publicar se algo mudou
+        run: |
+          git add -A vagas sitemap.xml robots.txt
+          if git diff --cached --quiet; then
+            echo "Nada mudou nas vagas."
+            exit 0
+          fi
+          git config user.name "La Vie (rotina automática)"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Vagas: páginas e sitemap atualizados pela rotina automática"
+          git pull --rebase
+          git push

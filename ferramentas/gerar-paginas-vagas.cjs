@@ -150,14 +150,18 @@ async function main() {
   if (!vagas.length) throw new Error('Nenhuma vaga ativa veio do banco; nada foi alterado.');
   const nomes = slugs(vagas);
   const ativas = new Set();
+  const mudou = new Set();
 
   vagas.forEach(v => {
     const nome = nomes.get(v.id);
     ativas.add(nome);
     const dir = path.join(RAIZ, 'vagas', nome);
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'index.html'), pagina(v, nome));
-    console.log('vaga ativa:', nome);
+    const arq = path.join(dir, 'index.html');
+    const nova = pagina(v, nome);
+    const antes = fs.existsSync(arq) ? fs.readFileSync(arq, 'utf8') : null;
+    if (antes !== nova) { fs.writeFileSync(arq, nova); mudou.add(`${SITE}/vagas/${nome}`); }
+    console.log(antes === nova ? 'vaga ativa (sem mudança):' : 'vaga ativa (página atualizada):', nome);
   });
 
   // Vagas que saíram do ar: tira a marcação do Google, mantém a página abrindo.
@@ -171,11 +175,20 @@ async function main() {
       if (sem !== html) { fs.writeFileSync(f, sem); console.log('marcação removida (vaga fora do ar):', d.name); }
     });
 
+  // A data (lastmod) de cada endereço só muda quando a página muda, para o
+  // sitemap não ser regravado todo dia sem motivo (a rotina roda sozinha no GitHub).
   const hoje = new Date().toISOString().slice(0, 10);
-  const urls = [`${SITE}/`, `${SITE}/vagas/`, `${SITE}/portfolio.html`, ...[...ativas].map(n => `${SITE}/vagas/${n}`)];
-  fs.writeFileSync(path.join(RAIZ, 'sitemap.xml'),
-    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
-    + urls.map(u => `  <url><loc>${u}</loc><lastmod>${hoje}</lastmod></url>`).join('\n') + '\n</urlset>\n');
+  const arqSitemap = path.join(RAIZ, 'sitemap.xml');
+  const datas = new Map();
+  if (fs.existsSync(arqSitemap)) {
+    const re = /<loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod>/g;
+    const txt = fs.readFileSync(arqSitemap, 'utf8');
+    let m; while ((m = re.exec(txt))) datas.set(m[1], m[2]);
+  }
+  const urls = [`${SITE}/`, `${SITE}/empresas/`, `${SITE}/vagas/`, `${SITE}/portfolio.html`, ...[...ativas].sort().map(n => `${SITE}/vagas/${n}`)];
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+    + urls.map(u => `  <url><loc>${u}</loc><lastmod>${mudou.has(u) || !datas.has(u) ? hoje : datas.get(u)}</lastmod></url>`).join('\n') + '\n</urlset>\n';
+  fs.writeFileSync(arqSitemap, sitemap);
   fs.writeFileSync(path.join(RAIZ, 'robots.txt'),
     `User-agent: *\nDisallow: /clientes/\nDisallow: /database/\nDisallow: /tests/\n\nSitemap: ${SITE}/sitemap.xml\n`);
   console.log('sitemap.xml e robots.txt atualizados');
