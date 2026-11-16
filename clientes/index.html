@@ -2078,9 +2078,16 @@ async function salvarAgenda(){
     googleEventId: idExistente ? (_agenda.find(x=>x.id===idExistente)||{}).googleEventId : null
   };
   const statusAnterior = idExistente ? (_agenda.find(x=>x.id===idExistente)||{}).status : null;
+  // Trava de clique duplo (16/11/2026): enquanto grava e sincroniza com o Google
+  // (pode levar alguns segundos), um segundo clique em Salvar é ignorado. Antes,
+  // cada clique criava outro agendamento e outro convite ao candidato.
+  if(salvarAgenda._salvando) return;
+  salvarAgenda._salvando=true;
   try{
     await upsertAgenda(a);
     _localUpsert(_agenda,a);
+    // Se algo falhar daqui em diante, uma nova tentativa atualiza este mesmo agendamento.
+    document.getElementById('ag-id').value=id;
     // Agendar "Entrevista La Vie" ou "Entrevista Final" aqui também move o
     // candidato pra essa etapa no funil — antes esses dois lados nunca se
     // falavam, e a etapa do candidato só mudava se alguém lembrasse de ir
@@ -2099,7 +2106,12 @@ async function salvarAgenda(){
     if(eventId && eventId !== a.googleEventId){ a.googleEventId = eventId; await upsertAgenda(a); _localUpsert(_agenda,a); }
     closeModal('modal-agenda'); renderAgenda(); showToast(eventId ? '✅ Entrevista agendada e sincronizada com o Google Calendar!' : '✅ Entrevista agendada!');
   }
-  catch(e){ alert('Erro ao salvar: '+e.message); }
+  catch(e){
+    // O banco recusa o mesmo candidato duas vezes no mesmo dia e hora (gatilho trg_lv_agenda_sem_duplicata).
+    if(/LV_AGENDA_DUPLICADA/.test((e&&e.message)||'')) alert('Esse candidato já tem um agendamento nesse dia e horário. Nada foi criado em dobro: confira na Agenda.');
+    else alert('Erro ao salvar: '+e.message);
+  }
+  finally{ salvarAgenda._salvando=false; }
 }
 
 async function sincronizarEtapaComAgenda(cand, etapaTitulo){
