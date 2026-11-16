@@ -807,7 +807,7 @@ header {
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Candidato</label><select id="ag-cand" onchange="agPreencheVaga()"></select></div>
     <div class="form-field"><label>Data</label><input type="date" id="ag-data" onchange="agAvisoOcupado()"></div>
-    <div class="form-field"><label>Etapa / Tipo</label><select id="ag-etapa">
+    <div class="form-field"><label>Etapa / Tipo</label><select id="ag-etapa" onchange="agAvisoInfoVaga()">
       <option value="Formulários e Testes">Formulários e Testes</option>
       <option value="Entrevista La Vie">Entrevista La Vie</option>
       <option value="Entrevista Final">Entrevista Final</option>
@@ -836,6 +836,7 @@ header {
       <button type="button" class="btn btn-sm" style="background:#25D366;border-color:#25D366;color:#fff" onclick="avisarDaAgenda('whats')">💬 WhatsApp</button>
     </div>
     <div style="font-size:11px;color:var(--mid);margin-top:6px">Usa a data, o horário e o link preenchidos acima. Não precisa digitar de novo.</div>
+    <div id="ag-msg-extra" style="display:none;font-size:11px;color:#2e6b4f;margin-top:4px">A mensagem leva junto o resumo da vaga (empresa, local, condições, comissão e bônus).</div>
   </div>
   <div id="ag-gcal-wrap" style="display:none;border-top:1px solid var(--bege);margin-top:14px;padding-top:14px">
     <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:8px">📅 Adicionar ao Google Agenda</label>
@@ -2083,6 +2084,7 @@ function abrirAgendaModal(id,dataPre){
   }
   agToggleTipo();
   agAvisoOcupado();
+  agAvisoInfoVaga();
   openModal('modal-agenda');
 }
 
@@ -2093,11 +2095,54 @@ function agToggleTipo(){
   const rw=document.getElementById('ag-ref-wrap'); if(rw) rw.style.display=tipo==='presencial'?'block':'none';
 }
 
-function agPreencheVaga(){ /* vaga é derivada do candidato no salvar */ }
+function agPreencheVaga(){ /* vaga é derivada do candidato no salvar */ agAvisoInfoVaga(); }
 
 // ── Avisar o candidato usando os dados já digitados na Agenda ────────────────
 // Evita retrabalho: o que está no formulário da entrevista alimenta a mensagem.
 function _dataBR(iso){ if(!iso) return ''; const [a,m,d]=iso.split('-'); return `${d}/${m}/${a}`; }
+
+// Resumo da vaga que vai junto com a confirmação da Entrevista La Vie (pedido
+// da Chrys em 16/11/2026, começando pela Auto Club). Entra antes da assinatura,
+// só para a empresa e a vaga indicadas. No e-mail os asteriscos de negrito do
+// WhatsApp são retirados.
+const INFO_VAGA_NA_CONFIRMACAO = [
+  { empresa:'autoclub', vaga:/consultor.*especialista/i, texto:
+`Antes da nossa conversa, separei o principal da vaga de *Consultor(a) Especialista* para você já chegar por dentro:
+
+🚗 *Auto Club*
+Associação de proteção veicular de Goiânia, desde 2010, com mais de 3.000 associados. Você vai vender planos de proteção para carros e motos.
+Site: https://autoclub.org.br
+Instagram: https://www.instagram.com/autoclubbr/
+
+📍 *Onde fica*
+Jardim Guanabara, perto do aeroporto. O trabalho é presencial, então vale conferir a distância da sua casa: https://share.google/KY21rwuMcebqbnA1j
+
+💼 *Condições*
+CLT, de segunda a sexta, das 8h às 17h30 (sábado só quando programado).
+Fixo de R$ 2.728,00: salário de R$ 1.900,00, cartão de R$ 728,00 e R$ 100,00 de assiduidade.
+Rotina mista: atendimento pelo CRM e prospecção em campo.
+
+💰 *Comissão*
+50% de cada adesão, paga toda sexta, sem depender de meta. Conta depois da vistoria e do pagamento.
+
+🏆 *Bônus por meta no mês*
+20 placas: R$ 600,00 · 25: R$ 1.000,00 · 30: R$ 1.500,00 · 40: R$ 4.000,00
+
+Se ficar alguma dúvida, me chama aqui. Na entrevista a gente conversa sobre tudo 😉` }
+];
+function _infoVagaNaConfirmacao(c, etapa){
+  if(!c || etapa!=='Entrevista La Vie') return '';
+  const v=getVagas().find(x=>x.id===c.vagaId); if(!v) return '';
+  const r=INFO_VAGA_NA_CONFIRMACAO.find(i=>i.empresa===currentEmpresa && i.vaga.test(v.titulo||''));
+  return r ? r.texto : '';
+}
+// Linha de aviso no formulário: diz quando a mensagem vai levar o resumo da vaga.
+function agAvisoInfoVaga(){
+  const el=document.getElementById('ag-msg-extra'); if(!el) return;
+  const c=getCands().find(x=>x.id===document.getElementById('ag-cand').value);
+  const tem=!!_infoVagaNaConfirmacao(c, document.getElementById('ag-etapa').value);
+  el.style.display=tem?'block':'none';
+}
 
 function _montaTextoAgenda(){
   const candId=document.getElementById('ag-cand').value;
@@ -2125,12 +2170,15 @@ function _montaTextoAgenda(){
 
   let txt=_aplicaVars(tpl.texto,c);
   tpl.campos.forEach(cp=>{ txt=txt.replace('['+cp+']', valores[cp]||('['+cp+']')); });
-  return {c,txt,tpl};
+  const extra=_infoVagaNaConfirmacao(c, document.getElementById('ag-etapa').value);
+  if(extra){ const i=txt.lastIndexOf(ASSINATURA); txt = i>0 ? txt.slice(0,i)+extra+'\n\n'+txt.slice(i) : txt+'\n\n'+extra; }
+  return {c,txt,tpl,extra};
 }
 
 function avisarDaAgenda(canal){
   const r=_montaTextoAgenda(); if(!r) return;
-  const {c,txt}=r;
+  const {c}=r;
+  const txt = (canal==='email' && r.extra) ? r.txt.replace(r.extra, r.extra.replace(/\*/g,'')) : r.txt;
   if(canal==='copiar'){
     navigator.clipboard.writeText(txt).then(()=>showToast('📋 Mensagem copiada')).catch(()=>alert('Não foi possível copiar.'));
     return;
