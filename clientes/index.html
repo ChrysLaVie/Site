@@ -159,6 +159,12 @@ header {
 .ag-ev.cancelada{ opacity:.5; text-decoration:line-through; }
 .ag-ev.realizada{ opacity:.7; }
 .ag-ev.nao_compareceu{ opacity:.75; border-left:3px solid var(--amber); }
+.ag-ev.outra{ background:#EAE6F3; border-left-color:#6A5ACD; color:#4A3F86; cursor:help; }
+.ag-ev.choque{ box-shadow:inset 0 0 0 1.5px #B4412F; }
+.ag-legenda{ display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--mid); margin-top:8px; }
+.ag-legenda i{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.ag-ocupado{ grid-column:1/-1; font-size:12px; line-height:1.5; border-radius:8px; padding:8px 10px; background:#EAE6F3; color:#4A3F86; }
+.ag-ocupado.choque{ background:#FBE9E6; color:#8E2F22; }
 .ag-lista-item{ background:#fff; border:1.5px solid var(--bege-lt); border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:14px; cursor:pointer; }
 .ag-lista-item:hover{ border-color:var(--bege); }
 .ag-lista-date{ text-align:center; min-width:54px; }
@@ -789,6 +795,7 @@ header {
       <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
     </div>
     <div id="agenda-grid" class="agenda-grid"></div>
+    <div id="agenda-legenda" class="ag-legenda" style="display:none"></div>
   </div>
   <div id="agenda-lista-wrap" style="display:none"></div>
 </div>
@@ -799,7 +806,7 @@ header {
   <input type="hidden" id="ag-id">
   <div class="form-grid">
     <div class="form-field" style="grid-column:1/-1"><label>Candidato</label><select id="ag-cand" onchange="agPreencheVaga()"></select></div>
-    <div class="form-field"><label>Data</label><input type="date" id="ag-data"></div>
+    <div class="form-field"><label>Data</label><input type="date" id="ag-data" onchange="agAvisoOcupado()"></div>
     <div class="form-field"><label>Etapa / Tipo</label><select id="ag-etapa">
       <option value="Formulários e Testes">Formulários e Testes</option>
       <option value="Entrevista La Vie">Entrevista La Vie</option>
@@ -807,8 +814,9 @@ header {
       <option value="Devolutiva">Devolutiva</option>
       <option value="Outro">Outro</option>
     </select></div>
-    <div class="form-field"><label>Início</label><input type="time" id="ag-ini"></div>
-    <div class="form-field"><label>Fim</label><input type="time" id="ag-fim"></div>
+    <div class="form-field"><label>Início</label><input type="time" id="ag-ini" onchange="agAvisoOcupado()"></div>
+    <div class="form-field"><label>Fim</label><input type="time" id="ag-fim" onchange="agAvisoOcupado()"></div>
+    <div id="ag-ocupado" class="ag-ocupado" style="display:none"></div>
     <div class="form-field" style="grid-column:1/-1"><label>Modalidade</label><select id="ag-tipo" onchange="agToggleTipo()">
       <option value="online">Online</option><option value="presencial">Presencial</option>
     </select></div>
@@ -1558,6 +1566,69 @@ function agendaNavMes(d){ _agendaRef.setMonth(_agendaRef.getMonth()+d); renderAg
 function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); renderAgenda(); }
 function agendaSetView(v){ _agendaView=v; renderAgenda(); }
 
+// ── Agenda das outras empresas (16/11/2026) ─────────────────────────────────
+// A Chrys entrevista para vários clientes e cada painel só mostrava a agenda
+// daquele cliente, então dava para marcar dois candidatos no mesmo horário em
+// empresas diferentes (aconteceu em 20/10). Para a La Vie (acesso master), os
+// compromissos das outras empresas aparecem em outra cor, como "Ocupado", e o
+// Salvar confere o choque. Cliente com login não recebe nada disso: o banco
+// só entrega a agenda da própria empresa.
+let _agendaOutras = [], _agendaOutrasSeq = 0;
+function _agNomeEmpresa(id){ return (EMPRESAS[id]||{}).nome || id || 'outra empresa'; }
+function _agNomeCurto(id){ return _agNomeEmpresa(id).split(' ').slice(0,2).join(' '); }
+function _agAtivo(a){ return !!a && a.status!=='cancelada' && a.status!=='config' && a.tipo!=='config' && !String(a.id).startsWith('_config_sala'); }
+function _agHorario(a){ return a.horaIni ? a.horaIni+(a.horaFim?' às '+a.horaFim:'') : 'sem horário'; }
+function _agMin(h){
+  if(!h) return null;
+  const m=String(h).match(/^(\d{1,2}):(\d{2})/);
+  return m ? (+m[1])*60+(+m[2]) : null;
+}
+// Intervalo em minutos. Sem hora de fim, conta 40 minutos (mesma regra do link do Google Agenda).
+function _agIntervalo(a){
+  const i=_agMin(a&&a.horaIni);
+  if(i===null) return null;
+  let f=_agMin(a.horaFim);
+  if(f===null || f<=i) f=i+40;
+  return [i,f];
+}
+function _agSobrepoe(a,b){
+  if(!a || !b || !a.data || a.data!==b.data) return false;
+  const x=_agIntervalo(a), y=_agIntervalo(b);
+  if(!x || !y) return false;
+  return x[0]<y[1] && y[0]<x[1];
+}
+async function carregarAgendaOutras(){
+  if(DEMO_MODE || isClienteExterno() || !currentEmpresa){ _agendaOutras=[]; return _agendaOutras; }
+  const empresa=currentEmpresa, seq=++_agendaOutrasSeq;
+  const desde=new Date(); desde.setDate(desde.getDate()-45);
+  try{
+    const r=await sb.from('agenda').select('id,empresa_id,titulo,candidato,vaga,data,hora_inicio,hora_fim,tipo,status').neq('empresa_id',empresa).gte('data',desde.toISOString().slice(0,10)).order('data',{ascending:true});
+    if(seq!==_agendaOutrasSeq || empresa!==currentEmpresa) return _agendaOutras;
+    if(r.error) throw r.error;
+    _agendaOutras=(r.data||[]).map(dbToAgenda).filter(_agAtivo).map(a=>({...a, outra:true}));
+  }catch(e){ console.warn('Agenda das outras empresas:',e); }
+  return _agendaOutras;
+}
+function _agOutrasVisiveis(){ return isClienteExterno() ? [] : _agendaOutras.filter(_agAtivo); }
+function _agChoques(a){ return _agOutrasVisiveis().filter(o=>_agSobrepoe(a,o)); }
+function agOcupadoInfo(id){
+  const o=_agendaOutras.find(x=>x.id===id); if(!o) return;
+  showToast('Ocupado: '+_agHorario(o)+' · '+_agNomeEmpresa(o.empresaId)+' · '+(o.candidato||o.titulo||'compromisso')+'. Para mexer, abra o painel dessa empresa.');
+}
+// Aviso dentro do formulário: o que já existe nesse dia nas outras empresas.
+function agAvisoOcupado(){
+  const box=document.getElementById('ag-ocupado'); if(!box) return;
+  const data=document.getElementById('ag-data').value;
+  const doDia=data ? _agOutrasVisiveis().filter(o=>o.data===data).sort((a,b)=>(a.horaIni||'').localeCompare(b.horaIni||'')) : [];
+  if(!doDia.length){ box.style.display='none'; box.innerHTML=''; return; }
+  const atual={ data, horaIni:document.getElementById('ag-ini').value, horaFim:document.getElementById('ag-fim').value };
+  const choques=doDia.filter(o=>_agSobrepoe(atual,o));
+  box.className='ag-ocupado'+(choques.length?' choque':'');
+  box.style.display='block';
+  box.innerHTML=(choques.length?'<strong>Choque de horário com outra empresa.</strong><br>':'<strong>Neste dia você já tem em outras empresas:</strong><br>')
+    + doDia.map(o=>(choques.includes(o)?'⚠️ ':'')+escapeHtmlAg(_agHorario(o))+' · '+escapeHtmlAg(_agNomeEmpresa(o.empresaId))+' · '+escapeHtmlAg(o.candidato||o.titulo||'')).join('<br>');
+}
+
 function renderAgenda(){
   carregarSalaPadrao();
   renderGcalStatus();
@@ -1572,6 +1643,7 @@ function renderAgenda(){
   calWrap.style.display='block'; listaWrap.style.display='none';
 
   const eventos=getAgendaVisivel();
+  const outras=_agOutrasVisiveis();
   const primeiroDia=new Date(ano,mes,1).getDay();
   const diasNoMes=new Date(ano,mes+1,0).getDate();
   const hojeStr=new Date().toISOString().slice(0,10);
@@ -1579,21 +1651,32 @@ function renderAgenda(){
   for(let i=0;i<primeiroDia;i++) cells+='<div class="ag-cell empty"></div>';
   for(let dia=1;dia<=diasNoMes;dia++){
     const dStr=`${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-    const evs=eventos.filter(e=>e.data===dStr).sort((a,b)=>(a.horaIni||'').localeCompare(b.horaIni||''));
+    const evs=eventos.filter(e=>e.data===dStr).concat(outras.filter(e=>e.data===dStr)).sort((a,b)=>(a.horaIni||'').localeCompare(b.horaIni||''));
     const isToday=dStr===hojeStr;
     let evHtml=evs.slice(0,3).map(e=>{
       const hora=e.horaIni?e.horaIni+' ':'';
+      // Compromisso de outra empresa: outra cor, só informa (não abre para editar).
+      if(e.outra){
+        const emp=_agNomeEmpresa(e.empresaId);
+        return `<div class="ag-ev outra" onclick="event.stopPropagation();agOcupadoInfo('${e.id}')" title="${escapeHtmlAg('Ocupado: '+emp+' · '+(e.candidato||e.titulo||'')).replace(/"/g,'')}">${hora}🔒 ${escapeHtmlAg(_agNomeCurto(e.empresaId))}</div>`;
+      }
       const cls=e.status==='cancelada'?'cancelada':(e.status==='realizada'?'realizada':(e.status==='nao_compareceu'?'nao_compareceu':''));
-      return `<div class="ag-ev ${e.tipo||'online'} ${cls}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${(e.titulo||'').replace(/"/g,'')}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
+      const choque=_agAtivo(e) && outras.some(o=>_agSobrepoe(e,o));
+      return `<div class="ag-ev ${e.tipo||'online'} ${cls}${choque?' choque':''}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${(e.titulo||'').replace(/"/g,'')}${choque?' (choque de horário com outra empresa)':''}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
     }).join('');
     if(evs.length>3) evHtml+=`<div style="font-size:10px;color:var(--mid)">+${evs.length-3} mais</div>`;
     cells+=`<div class="ag-cell ${isToday?'today':''}" onclick="abrirAgendaModal(null,'${dStr}')"><div class="ag-day">${dia}</div>${evHtml}</div>`;
   }
   document.getElementById('agenda-grid').innerHTML=cells;
+  const leg=document.getElementById('agenda-legenda');
+  if(leg){
+    leg.style.display=isClienteExterno()?'none':'flex';
+    leg.innerHTML='<span><i style="background:#2e6b4f"></i>Online</span><span><i style="background:#7A5C2E"></i>Presencial</span><span><i style="background:#6A5ACD"></i>Ocupado em outra empresa</span><span><i style="background:#fff;box-shadow:inset 0 0 0 1.5px #B4412F"></i>Choque de horário</span>';
+  }
 }
 
 function renderAgendaLista(){
-  const eventos=getAgendaVisivel().slice().sort((a,b)=>(a.data+(a.horaIni||'')).localeCompare(b.data+(b.horaIni||'')));
+  const eventos=getAgendaVisivel().concat(_agOutrasVisiveis()).sort((a,b)=>(a.data+(a.horaIni||'')).localeCompare(b.data+(b.horaIni||'')));
   const hojeStr=new Date().toISOString().slice(0,10);
   const futuros=eventos.filter(e=>e.data>=hojeStr);
   const lista=(futuros.length?futuros:eventos);
@@ -1601,6 +1684,13 @@ function renderAgendaLista(){
   document.getElementById('agenda-lista-wrap').innerHTML=lista.map(e=>{
     const [y,m,d]=e.data.split('-');
     const horario=e.horaIni?`${e.horaIni}${e.horaFim?'–'+e.horaFim:''}`:'';
+    if(e.outra) return `<div class="ag-lista-item" style="background:#EAE6F3;cursor:help" onclick="agOcupadoInfo('${e.id}')">
+      <div class="ag-lista-date"><div class="d">${parseInt(d)}</div><div class="m">${AG_MES_ABREV[parseInt(m)-1]}</div></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:#4A3F86">Ocupado · ${escapeHtmlAg(_agNomeEmpresa(e.empresaId))}</div>
+        <div style="font-size:12px;color:var(--mid)">${horario}${e.candidato?' · '+escapeHtmlAg(e.candidato):''}${e.titulo?' · '+escapeHtmlAg(e.titulo):''}</div>
+      </div>
+    </div>`;
     const linkBtn=e.link?`<a href="${e.link}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">🔗 Entrar</a>`:'';
     const gcalBtn=`<a href="${gcalLink(e,'interna')}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">📅</a>`;
     const statusTag=e.status&&e.status!=='agendada'?` · ${e.status}`:'';
@@ -1992,6 +2082,7 @@ function abrirAgendaModal(id,dataPre){
     document.getElementById('ag-gcal-wrap').style.display='none';
   }
   agToggleTipo();
+  agAvisoOcupado();
   openModal('modal-agenda');
 }
 
@@ -2084,6 +2175,28 @@ async function salvarAgenda(){
   if(salvarAgenda._salvando) return;
   salvarAgenda._salvando=true;
   try{
+    // Choque com outra empresa (16/11/2026). Só para a La Vie, e só quando o
+    // compromisso está ativo e é novo ou mudou de dia ou de hora (marcar como
+    // realizada ou cancelada uma entrevista antiga continua livre).
+    if(!DEMO_MODE && !isClienteExterno() && a.horaIni && a.status!=='cancelada'){
+      const antes = idExistente ? _agenda.find(x=>x.id===idExistente) : null;
+      const mudou = !antes || antes.data!==a.data || (antes.horaIni||'')!==(a.horaIni||'') || (antes.horaFim||'')!==(a.horaFim||'') || antes.status==='cancelada';
+      if(mudou){
+        await carregarAgendaOutras();
+        const choques=_agChoques(a);
+        if(choques.length){
+          agAvisoOcupado();
+          const lista=choques.map(o=>'• '+_agHorario(o)+' · '+_agNomeEmpresa(o.empresaId)+' · '+(o.candidato||'compromisso')+(o.titulo?' ('+o.titulo+')':'')).join('\n');
+          // Duas Entrevistas La Vie no mesmo horário são sempre com a Chrys: não deixa salvar.
+          // Entrevista Final é conduzida pelo cliente, então só pede confirmação.
+          if(a.titulo==='Entrevista La Vie' && choques.some(o=>o.titulo==='Entrevista La Vie')){
+            alert('Choque de agenda: nesse horário você já tem entrevista em outra empresa.\n\n'+lista+'\n\nEscolha outro horário.');
+            return;
+          }
+          if(!confirm('Atenção: esse horário bate com compromisso de outra empresa.\n\n'+lista+'\n\nSalvar mesmo assim?')) return;
+        }
+      }
+    }
     await upsertAgenda(a);
     _localUpsert(_agenda,a);
     // Se algo falhar daqui em diante, uma nova tentativa atualiza este mesmo agendamento.
@@ -2249,6 +2362,8 @@ async function loadAll() {
     _vagas=_canceladasNoFim(v.data.map(dbToVaga)); _cands=c.data.map(dbToCand);
     _entrevistas=e.data.map(dbToEntrev); _agenda=a.data.map(dbToAgenda);
     _vagasCarregouOk=true; _dadosCarregouOk=true;
+    _agendaOutras=[];
+    carregarAgendaOutras().then(()=>{ try{ if(_page==='agenda') renderAgenda(); }catch(e){} });
     setTimeout(()=>lvPdfsAutomaticos(empresa), 1500);
     return true;
   } catch(err) {
@@ -2318,7 +2433,7 @@ function setupRealtime() {
     .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=_canceladasNoFim(r.data.map(dbToVaga)); refreshPage(); showToast('🔄 Vagas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); if(!window._lvPdfEmLote){ showToast('🔄 Candidatos atualizados'); lvPdfsAutomaticos(currentEmpresa); }} })
     .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
+    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ await carregarAgendaOutras(); const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
     .subscribe(s => setSyncOk(s==='SUBSCRIBED'));
 }
 
