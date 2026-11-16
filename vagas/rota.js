@@ -7,7 +7,9 @@
 (function () {
   function plano() {
     var m = location.pathname.match(/^\/vagas\/([^\/]+)\/?$/);
-    location.replace('/vagas/' + (m ? '?vaga=' + m[1] : ''));
+    // Mantém a marca do link de divulgação (?c=... ou utm_...) no caminho alternativo.
+    var resto = location.search ? location.search.replace(/^\?/, '') : '';
+    location.replace('/vagas/' + (m ? '?vaga=' + m[1] + (resto ? '&' + resto : '') : (resto ? '?' + resto : '')));
   }
   function rodar(orig) {
     return new Promise(function (ok) {

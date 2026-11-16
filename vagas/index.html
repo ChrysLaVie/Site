@@ -347,6 +347,72 @@ const RS_SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
 let rsDb = null;
 try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } }); } catch(e) {}
 
+// ── ORIGEM DA CANDIDATURA (16/11/2026) ───────────────────────────────────────
+// Pedido da Chrys: saber de qual rede cada candidato veio. Três sinais, que se
+// completam: (1) a resposta à pergunta "Onde você viu esta vaga?" no formulário;
+// (2) de qual site o visitante chegou (o navegador informa para Instagram,
+// LinkedIn, Facebook e Google; WhatsApp e Telegram não informam); (3) a marca do
+// link de divulgação (?c=whatsapp ou utm_source=...). Tudo aqui é "melhor
+// esforço": nenhuma falha deste bloco pode atrapalhar a candidatura.
+const LV_ORIGENS = [['whatsapp','WhatsApp'],['instagram','Instagram'],['linkedin','LinkedIn'],['facebook','Facebook'],['telegram','Telegram'],['google','Google'],['email','E-mail da La Vie'],['portal','Site de vagas (Indeed, Jobbol e outros)'],['indicacao','Indicação de alguém'],['outro','Outro']];
+function lvRedeDe(texto) {
+  const t = String(texto || '').toLowerCase();
+  if (!t) return '';
+  if (/gmail|mail\.|outlook|brevo|sendinblue|newsletter|e-?mail/.test(t)) return 'email';
+  if (/whatsapp|wa\.me|(^|[^a-z])wa([^a-z]|$)|zap/.test(t)) return 'whatsapp';
+  if (/instagram|(^|[^a-z])ig([^a-z]|$)/.test(t)) return 'instagram';
+  if (/linkedin|lnkd\.in/.test(t)) return 'linkedin';
+  if (/facebook|fb\.com|(^|[^a-z])fb([^a-z]|$)|meta/.test(t)) return 'facebook';
+  if (/telegram|t\.me|(^|[^a-z])tg([^a-z]|$)/.test(t)) return 'telegram';
+  if (/google|bing|duckduckgo|yahoo/.test(t)) return 'google';
+  if (/indeed|jobbol|publike|infojobs|catho|gupy|vagas\.com/.test(t)) return 'portal';
+  return '';
+}
+(function lvGuardarOrigemDaVisita() {
+  try {
+    const limpa = (v, n) => String(v || '').toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, n);
+    const q = new URLSearchParams(location.search);
+    const link = limpa(q.get('utm_source') || q.get('c') || q.get('origem'), 40);
+    const meio = limpa(q.get('utm_medium'), 30), campanha = limpa(q.get('utm_campaign'), 60);
+    let ref = '';
+    try { ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '').slice(0, 100) : ''; } catch (e) {}
+    if (/(^|\.)lavieconsultoria\.com$/.test(ref)) ref = '';
+    let atual = null;
+    try { atual = JSON.parse(localStorage.getItem('lv_origem') || 'null'); } catch (e) {}
+    const velha = !atual || !atual.t || (Date.now() - atual.t) > 7 * 24 * 3600 * 1000;
+    // Visita com sinal novo (link marcado ou vindo de outro site) substitui a anterior;
+    // visita direta só entra se não houver nada guardado nos últimos 7 dias.
+    if (link || ref || velha) {
+      localStorage.setItem('lv_origem', JSON.stringify({ link, meio, campanha, ref, pagina: (location.pathname + location.search).slice(0, 180), t: Date.now() }));
+    }
+  } catch (e) {}
+})();
+function lvOrigemDaVisita() {
+  try { const o = JSON.parse(localStorage.getItem('lv_origem') || 'null'); return (o && o.t && (Date.now() - o.t) < 7 * 24 * 3600 * 1000) ? o : {}; } catch (e) { return {}; }
+}
+// Rede sugerida para já vir marcada na pergunta (o candidato pode trocar).
+function lvOrigemSugerida() { const o = lvOrigemDaVisita(); return lvRedeDe(o.link) || lvRedeDe(o.ref) || ''; }
+async function registrarOrigemCandidatura(data, chegouAoRS) {
+  const o = lvOrigemDaVisita();
+  const resposta = (LV_ORIGENS.find(x => x[0] === data.origem) || [''])[0];
+  const email = (data.email || '').trim().toLowerCase();
+  const tarefas = [];
+  if (db) tarefas.push((async () => {
+    try {
+      const { error } = await db.from('lv_origem_candidaturas').insert({ email, vaga_id: String(data.vaga_id || '').slice(0, 80), vaga_titulo: String(data.vaga_titulo || '').slice(0, 200), resposta: resposta || null, link: o.link || null, meio: o.meio || null, campanha: o.campanha || null, referrer: o.ref || null, pagina: o.pagina || null });
+      if (error) console.warn('Origem da candidatura não gravada no site:', error.message);
+    } catch (e) { console.warn('Origem da candidatura não gravada no site:', e); }
+  })());
+  if (rsDb && chegouAoRS && resposta) tarefas.push((async () => {
+    try {
+      const det = [o.link ? 'Link: ' + o.link + (o.meio ? ' (' + o.meio + ')' : '') + (o.campanha ? ', campanha ' + o.campanha : '') + '.' : '', o.ref ? 'Chegou de: ' + o.ref + '.' : ''].filter(Boolean).join(' ');
+      const { error } = await rsDb.rpc('lv_registrar_origem_do_site', { p_email: email, p_telefone: data.whatsapp || null, p_vaga_titulo: data.vaga_titulo, p_origem: resposta, p_detalhe: det || null });
+      if (error) console.warn('Origem da candidatura não gravada no R&S:', error.message);
+    } catch (e) { console.warn('Origem da candidatura não gravada no R&S:', e); }
+  })());
+  await Promise.allSettled(tarefas);
+}
+
 let state = { view: 'vagas', adminTab: 'vagas' };
 let VAGAS = [];
 let ADMIN_VAGAS = [];
@@ -457,6 +523,8 @@ async function saveCandidatura(data) {
     // e o candidato simplesmente não existia do lado do R&S sem ninguém saber.
     const envio = await enviarAoRSComRetentativa(data, cv_url);
     if (!envio.ok) await registrarPendenciaRS(data, cv_url, envio.err);
+    // Origem da candidatura: espera no máximo 4 segundos e nunca derruba o envio.
+    try { await Promise.race([registrarOrigemCandidatura(data, envio.ok), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
     return { ok:true, cv_url };
   } catch(e) { return { ok:false, err:e.message }; }
 }
@@ -931,6 +999,7 @@ function openApplyModal(vaga) {
             <div class="form-group"><label class="fl">WhatsApp *</label><input type="tel" id="m-whatsapp" placeholder="(62) 9 0000-0000"></div>
           </div>
           ${ehBanco ? `<div class="form-group"><label class="fl">Área de interesse *</label><select id="m-area" style="width:100%;padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:0.9rem;background:var(--white);"><option value="">Selecione</option>${BANCO_AREAS.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')}</select></div>` : ''}
+          <div class="form-group"><label class="fl">${ehBanco ? 'Como você chegou até aqui? *' : 'Onde você viu esta vaga? *'}</label><select id="m-origem" style="width:100%;padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:0.9rem;background:var(--white);"><option value="">Selecione</option>${LV_ORIGENS.map(o => `<option value="${o[0]}"${o[0] === lvOrigemSugerida() ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></div>
           <div class="form-group">
             <label class="fl">${ehMotorista ? 'Currículo e documentos *' : 'Currículo e anexos (PDF ou Word) *'}</label>
             <div class="file-drop" id="fileArea">
@@ -955,8 +1024,10 @@ function openApplyModal(vaga) {
   const lgpd = document.getElementById('m-lgpd');
   const submitBtn = document.getElementById('submitBtn');
   const areaSel = document.getElementById('m-area');
+  const origemSel = document.getElementById('m-origem');
 
-  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length || !lgpd.checked || (ehBanco && !areaSel.value); }
+  function check() { submitBtn.disabled = !nome.value.trim() || !email.value.includes('@') || !whatsapp.value.trim() || !selectedFiles.length || !lgpd.checked || (ehBanco && !areaSel.value) || (origemSel && !origemSel.value); }
+  if (origemSel) origemSel.addEventListener('change', check);
   nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check); lgpd.addEventListener('change', check);
   if (areaSel) areaSel.addEventListener('change', check);
 
@@ -986,7 +1057,7 @@ function openApplyModal(vaga) {
     submitBtn.disabled = true; submitBtn.innerHTML = '<span class="loading-spin"></span>Enviando...';
     document.getElementById('formError').style.display = 'none';
     const tituloEnvio = ehBanco ? `Banco de Talentos · ${areaSel.value}` : vaga.title;
-    const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:tituloEnvio, files:selectedFiles });
+    const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:tituloEnvio, files:selectedFiles, origem: origemSel ? origemSel.value : '' });
     if (result.ok && ehBanco) {
       const discParams = new URLSearchParams({ nome: nome.value.trim(), email: email.value.trim(), telefone: whatsapp.value.trim(), vaga: tituloEnvio });
       document.getElementById('modalContent').innerHTML = `
