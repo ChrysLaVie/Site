@@ -287,11 +287,22 @@ header {
 .fase-chip.falta { background:var(--red-lt); color:var(--red); border-color:var(--red); }
 .fases-ok { font-size:11px; font-weight:600; color:#1A7F37; margin-top:4px; }
 .fases-falta { font-size:11px; color:var(--red); margin-top:4px; max-width:250px; }
-.match-linha { font-size:11px; color:var(--mid); margin-top:4px; max-width:250px; }
+.match-linha { font-size:11px; color:var(--mid); margin-top:4px; white-space:nowrap; }
 .match-tag { font-weight:600; padding:1px 6px; border-radius:8px; white-space:nowrap; }
 .match-tag.alto { background:#E6F4EA; color:#1A7F37; }
 .match-tag.medio { background:#FAEEDA; color:#8A5A12; }
 .match-tag.baixo { background:var(--red-lt); color:var(--red); }
+/* Lista de candidatos mais limpa (16/11/2026): um selo só de material, última atualização em uma linha e menu "mais" nas ações. */
+.mat-pill { display:inline-block; font-size:11.5px; font-weight:600; line-height:1.3; padding:3px 9px; border-radius:10px; max-width:230px; cursor:help; }
+.mat-pill.ok { background:#E6F4EA; color:#1A7F37; }
+.mat-pill.falta { background:var(--red-lt); color:var(--red); }
+.mat-pill.neutro { background:var(--bege-lt); color:var(--mid); font-weight:500; }
+.cand-nome { cursor:pointer; }
+.cand-nome:hover { text-decoration:underline; }
+.cand-ult { display:block; font-size:11px; color:var(--mid); max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
+.cand-acoes { display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; align-items:center; min-width:236px; }
+.cand-acoes .cand-presenca { flex-basis:100%; display:flex; justify-content:flex-end; }
+.cand-mais { font-family:inherit; font-size:12px; height:30px; width:46px; padding:0 2px; border:1px solid var(--bege); border-radius:8px; background:#fff; color:var(--mid); cursor:pointer; }
 
 /* ── FINANCEIRO: larguras de coluna e Valor sem quebra de linha ── */
 .fin-table th:nth-child(1), .fin-table td:nth-child(1) { width:28%; }                 /* Vaga */
@@ -704,7 +715,7 @@ header {
     <button class="filter-toggle" id="cand-toggle-encerradas" onclick="toggleCandEncerradas()" title="Incluir candidatos de vagas encerradas e canceladas">Vagas encerradas</button>
   </div>
   <div class="cand-table-wrap" style="margin-top:16px">
-    <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Material e match</th><th>Entrou em</th><th>Entrevistas</th><th>Ações</th></tr></thead>
+    <table class="cand-table"><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Material e match</th><th>Entrou em</th><th>Ações</th></tr></thead>
     <tbody id="cand-tbody"></tbody></table>
   </div>
 </div>
@@ -3522,23 +3533,23 @@ function renderCandidatos() {
     })
     .sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR',{sensitivity:'base'}));
   const tbody=document.getElementById('cand-tbody');
-  if(!fi.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
+  if(!fi.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>${cands.length?'Nenhum candidato encontrado.':'Adicione o primeiro candidato!'}</p></div></td></tr>`;return;}
   tbody.innerHTML=fi.map(c=>{
     const vaga=vagas.find(v=>v.id===c.vagaId),tag=ETAPA_TAG[c.etapa]||'',label=ETAPA_LABEL[c.etapa]||c.etapa;
     const nE=entrevistas.filter(e=>e.candidatoId ? e.candidatoId===c.id : (normNome(e.nome)===normNome(c.nome)&&(e.vagaId===c.vagaId||!getVagas().some(v=>v.id===e.vagaId)))).length;
     const dt=c.dataEntrada?new Date(c.dataEntrada+'T12:00:00').toLocaleDateString('pt-BR'):'—';
     const finalizado=(c.etapa==='reprovado'||c.etapa==='desistiu'||c.etapa==='admissao'||c.etapa==='aprovacao'||String(c.etapa||'').startsWith('banco_talentos'));
     const podeDesistir=!(c.etapa==='reprovado'||c.etapa==='desistiu'||c.etapa==='admissao'||String(c.etapa||'').startsWith('banco_talentos'));
-    const acoes=`<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">`
+    const acoes=`<div class="cand-acoes">`
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--green-lt,#e6f4ea);color:var(--green,#1a7f37);border:1px solid var(--green,#1a7f37)" onclick="aprovarCard('${c.id}')" title="Aprovar e avançar">✓ Aprovar</button>`)
       +(finalizado?'':`<button class="btn btn-sm" style="background:var(--red-lt);color:var(--red);border:1px solid var(--red)" onclick="reprovarCard('${c.id}')" title="Reprovar e enviar feedback">✗ Reprovar</button>`)
-      +(podeDesistir?`<button class="btn btn-sm" style="background:#FAEEDA;color:#8A5A12;border:1px solid #D9A441" onclick="desistiuCard('${c.id}')" title="O candidato desistiu (não envia e-mail)">Desistiu</button>`:'')
-      +(()=>{ const it=_proxEntrevistaCand(c); if(!it) return ''; const ok=_confPresencaOk(c,it.data,_faseDoItem(it)); if(_faltouEm(c,it.data,_faseDoItem(it))) return `<button class="btn btn-sm btn-ghost" style="color:var(--red);border-color:var(--red)" disabled title="Não compareceu à entrevista de ${_dataBR(it.data)}">✗ Faltou ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button>`; return `<button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="candMarcarPresenca('${c.id}')" title="Entrevista ${it.tipo}${it.fase?' da fase final':''} em ${_dataBR(it.data)}${it.hora?' às '+it.hora:''}: marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'} ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button>`; })()
-      +`<button class="btn btn-ghost btn-sm" onclick="menuMensagens('${c.id}')" title="Enviar mensagem">💬</button>`
-      +`<button class="btn btn-ghost btn-sm" onclick="moverCandidato('${c.id}')" title="Editar / mover">✏</button>`
+      +(()=>{ const it=_proxEntrevistaCand(c); if(!it) return ''; const ok=_confPresencaOk(c,it.data,_faseDoItem(it)); if(_faltouEm(c,it.data,_faseDoItem(it))) return `<span class="cand-presenca"><button class="btn btn-sm btn-ghost" style="color:var(--red);border-color:var(--red)" disabled title="Não compareceu à entrevista de ${_dataBR(it.data)}">✗ Faltou ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button></span>`; return `<span class="cand-presenca"><button class="btn btn-sm ${ok?'btn-primary':'btn-ghost'}" style="${ok?'background:#1F6B3D;border-color:#1F6B3D':''}" onclick="candMarcarPresenca('${c.id}')" title="Entrevista ${it.tipo}${it.fase?' da fase final':''} em ${_dataBR(it.data)}${it.hora?' às '+it.hora:''}: marcar que o candidato confirmou a presença">${ok?'✅ Confirmou':'☐ Confirmou'} ${it.fase?'final':'La Vie'} ${_dataBR(it.data).slice(0,5)}</button></span>`; })()
+      +`<select class="cand-mais" onchange="candMaisAcao('${c.id}',this)" title="Mais ações"><option value="">⋯</option><option value="msg">💬 Enviar mensagem</option><option value="editar">✏ Abrir cadastro</option>${podeDesistir?'<option value="desistiu">Desistiu (não envia e-mail)</option>':''}</select>`
       +`</div>`;
     const ult=_ultimaAtualizacao(c);
-    return `<tr><td><strong>${c.nome}</strong>${c.cpf?`<br><span style="font-size:11px;color:var(--light)">${c.cpf}</span>`:''}${ult?`<br><span style="font-size:11px;color:var(--mid)" title="${_dataHoraBR(ult.data)}">🕒 ${_dataBR(String(ult.data).slice(0,10))} · ${String(ult.texto).replace(/</g,'&lt;').slice(0,90)}${String(ult.texto).length>90?'…':''}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}">${label}</span></td><td>${_candFasesHtml(c,vaga,entrevistas)}</td><td style="font-size:12px;color:var(--mid)">${dt}</td><td style="text-align:center">${nE}</td><td>${acoes}</td></tr>`;
+    const ultTxt=ult?String(ult.texto).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'):'';
+    const entrevTit=nE?` title="${nE} entrevista${nE>1?'s':''} registrada${nE>1?'s':''}"`:'';
+    return `<tr><td><strong class="cand-nome" onclick="moverCandidato('${c.id}')" title="Abrir cadastro">${c.nome}</strong>${ult?`<span class="cand-ult" title="${_dataHoraBR(ult.data)} · ${ultTxt}">${_dataBR(String(ult.data).slice(0,10)).slice(0,5)} · ${ultTxt}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}"${entrevTit}>${label}</span></td><td>${_candFasesHtml(c,vaga,entrevistas)}</td><td style="font-size:12px;color:var(--mid);white-space:nowrap">${dt}</td><td>${acoes}</td></tr>`;
   }).join('');
 }
 // ── Material, fases e match à vista na lista de Candidatos (15/11/2026) ──────
@@ -3597,24 +3608,33 @@ function _candMatch(c){
 function _candFasesHtml(c, vaga, entrevistas){
   const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const f = _candFases(c, vaga, entrevistas);
-  const chip = x => {
-    const ruim = !x.ok && (x.faltou || x.exigido);
-    const estado = x.ok ? 'feito' : (x.faltou ? 'não compareceu' : (x.exigido ? 'falta' : 'ainda não tem'));
-    return `<span class="fase-chip ${x.ok?'ok':(ruim?'falta':'')}" title="${esc(x.nome)}: ${estado}">${x.k} ${x.ok?'✓':(ruim?'✗':'·')}</span>`;
-  };
-  let h = `<div class="fases-linha">${f.chips.map(chip).join('')}</div>`;
-  if(f.avalia) h += f.faltas.length ? `<div class="fases-falta">Falta: ${esc(f.faltas.join(', '))}</div>` : (f.faltou ? `<div class="fases-falta">Não compareceu à entrevista</div>` : `<div class="fases-ok" title="Nada faltando para a etapa em que o candidato está">✓ Completo</div>`);
+  // A lista completa (o que tem, o que falta, o que ainda não é exigido) fica na dica ao passar o mouse.
+  const dica = f.chips.map(x => x.nome+': '+(x.ok ? 'feito' : (x.faltou ? 'não compareceu' : (x.exigido ? 'FALTA' : 'ainda não tem')))).join('&#10;');
+  let h;
+  if(f.avalia){
+    if(f.faltas.length) h = `<span class="mat-pill falta" title="${esc(dica).replace(/&amp;#10;/g,'&#10;')}">Falta: ${esc(f.faltas.join(', '))}</span>`;
+    else if(f.faltou) h = `<span class="mat-pill falta" title="${esc(dica).replace(/&amp;#10;/g,'&#10;')}">Não compareceu à entrevista</span>`;
+    else h = `<span class="mat-pill ok" title="${esc(dica).replace(/&amp;#10;/g,'&#10;')}">✓ Completo</span>`;
+  } else {
+    const tem = f.chips.filter(x=>x.ok).map(x=>x.k);
+    h = `<span class="mat-pill neutro" title="${esc(dica).replace(/&amp;#10;/g,'&#10;')}">${tem.length ? 'Tem: '+esc(tem.join(', ')) : 'Sem material'}</span>`;
+  }
   if(!isClienteExterno()){
     const m = _candMatch(c);
-    if(m){
-      const det = [];
-      if(m.tecnico!==null) det.push('Téc. '+m.tecnico+'/5');
-      if(m.perfil) det.push('DISC '+esc(m.perfil)+(m.nivelDisc?' ('+m.nivelDisc+')':''));
+    if(m && (m.nivel || m.perfil)){
       const cls = m.nivel==='Alto'?'alto':(m.nivel==='Médio'?'medio':'baixo');
-      h += `<div class="match-linha" title="Match automático: questionário técnico do formulário + perfil DISC comparado ao perfil buscado para a vaga. É pré-filtro, não substitui a leitura do currículo.">${m.nivel?`<span class="match-tag ${cls}">Match ${m.nivel}</span> `:''}${det.join(' · ')}</div>`;
+      const det = 'Match automático: questionário técnico'+(m.tecnico!==null?' ('+m.tecnico+'/5)':'')+' e perfil DISC comparado ao perfil buscado para a vaga'+(m.nivelDisc?' ('+m.nivelDisc+')':'')+'. É pré-filtro, não substitui a leitura do currículo.';
+      h += `<div class="match-linha" title="${esc(det)}">${m.nivel?`<span class="match-tag ${cls}">Match ${m.nivel}</span>`:''}${m.nivel&&m.perfil?' · ':''}${m.perfil?esc(String(m.perfil).replace(/\s*\/\s*/g,'/')):''}</div>`;
     }
   }
   return h;
+}
+// Menu "mais" da lista de candidatos: mensagem, abrir cadastro e desistiu.
+function candMaisAcao(id, sel){
+  const v=sel.value; sel.value='';
+  if(v==='msg') menuMensagens(id);
+  else if(v==='editar') moverCandidato(id);
+  else if(v==='desistiu') desistiuCard(id);
 }
 function populateVagaSelect(){const sel=document.getElementById('nc-vaga');sel.innerHTML='<option value="">Selecione...</option>'+getVagasVisiveis().filter(v=>v.status==='aberta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('');}
 async function salvarCandidato(){
