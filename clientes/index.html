@@ -986,8 +986,11 @@ header {
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
     <label style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--mid)">🕒 Atualizações</label>
-    <div style="display:flex;gap:6px;margin:8px 0 10px"><input id="mc-nota" placeholder="Ex.: cobrei formulário e teste pelo WhatsApp" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();registrarNota();}"><button type="button" class="btn btn-primary btn-sm" onclick="registrarNota()">Registrar</button><button type="button" class="btn btn-ghost btn-sm" id="mc-btn-noshow" onclick="marcarNaoCompareceu()" title="Candidato faltou à Entrevista La Vie ou à Entrevista Final" style="color:var(--amber);white-space:nowrap">Não compareceu</button></div>
-    <div id="mc-notas-rapidas" style="display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px">
+      <select id="mc-nota-pronta" class="filter-input" style="flex:1 1 230px;min-width:0" onchange="aoEscolherNotaPronta()" title="Atualizações prontas: escolha uma e clique em Registrar"><option value="">Escolher atualização…</option></select>
+      <input id="mc-nota" class="filter-input" placeholder="ou escreva aqui" style="flex:1 1 190px;min-width:0" oninput="aoDigitarNota()" onkeydown="if(event.key==='Enter'){event.preventDefault();registrarAtualizacao();}">
+      <button type="button" class="btn btn-primary btn-sm" id="mc-btn-registrar" onclick="registrarAtualizacao()">Registrar</button>
+    </div>
     <div id="mc-notas-list" style="display:flex;flex-direction:column;gap:4px;font-size:12px"></div>
   </div>
   <div style="border-top:1px solid var(--bege);margin:6px 0 14px;padding-top:14px">
@@ -3500,23 +3503,58 @@ async function marcarNaoCompareceu(){
 // Atualizações prontas: um clique registra no histórico. As de cobrança e
 // convite usam o mesmo formato das mensagens do painel (tipo 'cobranca' /
 // 'convite'), para contar em "Cobrado em" e na reprovação em lote.
+// Desde 16/11/2026 aparecem numa lista de escolha agrupada (antes eram 11
+// botões soltos, que a Chrys achou confuso). A ordem do array não muda: o valor
+// da opção é o índice. "Não compareceu" entrou na lista (antes era um botão).
+const NOTAS_GRUPOS = ['Pedir ao candidato','Entrevista','Resposta do candidato','Mensagem pronta'];
 const NOTAS_RAPIDAS = [
-  { rotulo:'DISC solicitado via WhatsApp', tipo:'cobranca', obs:'DISC solicitado via WhatsApp.' },
-  { rotulo:'Formulário solicitado via WhatsApp', tipo:'cobranca', obs:'Formulário da vaga solicitado via WhatsApp.' },
-  { rotulo:'DISC e formulário solicitados via WhatsApp', tipo:'cobranca', obs:'DISC e formulário da vaga solicitados via WhatsApp.' },
-  { rotulo:'Currículo solicitado via WhatsApp', tipo:'cobranca', obs:'Currículo solicitado via WhatsApp.' },
-  { rotulo:'Convite para Entrevista La Vie via WhatsApp', tipo:'convite', oque:'Entrevista La Vie', obs:'Convite para Entrevista La Vie enviado via WhatsApp.' },
-  { rotulo:'Orientações da fase final enviadas', tipo:'observacao', obs:'Orientações e localização da fase final enviadas via WhatsApp.' },
-  { rotulo:'Confirmou presença', tipo:'observacao', obs:'Candidato confirmou presença pelo WhatsApp.' },
-  { rotulo:'Pediu para remarcar', tipo:'observacao', obs:'Candidato pediu para remarcar.' },
-  { rotulo:'Sem resposta no WhatsApp', tipo:'observacao', obs:'Sem resposta no WhatsApp.' },
-  { rotulo:'Enviou documentos', tipo:'observacao', obs:'Candidato enviou os documentos pelo WhatsApp.' },
-  { rotulo:'💬 Último aviso (24 horas)', mensagem:'avisoFinal24h', obs:'Abre a mensagem educada de último aviso; registra ao enviar.' }
+  { grupo:'Pedir ao candidato', rotulo:'DISC solicitado via WhatsApp', tipo:'cobranca', obs:'DISC solicitado via WhatsApp.' },
+  { grupo:'Pedir ao candidato', rotulo:'Formulário solicitado via WhatsApp', tipo:'cobranca', obs:'Formulário da vaga solicitado via WhatsApp.' },
+  { grupo:'Pedir ao candidato', rotulo:'DISC e formulário solicitados via WhatsApp', tipo:'cobranca', obs:'DISC e formulário da vaga solicitados via WhatsApp.' },
+  { grupo:'Pedir ao candidato', rotulo:'Currículo solicitado via WhatsApp', tipo:'cobranca', obs:'Currículo solicitado via WhatsApp.' },
+  { grupo:'Entrevista', rotulo:'Convite para Entrevista La Vie via WhatsApp', tipo:'convite', oque:'Entrevista La Vie', obs:'Convite para Entrevista La Vie enviado via WhatsApp.' },
+  { grupo:'Entrevista', rotulo:'Orientações da fase final enviadas', tipo:'observacao', obs:'Orientações e localização da fase final enviadas via WhatsApp.' },
+  { grupo:'Entrevista', rotulo:'Confirmou presença', tipo:'observacao', obs:'Candidato confirmou presença pelo WhatsApp.' },
+  { grupo:'Entrevista', rotulo:'Pediu para remarcar', tipo:'observacao', obs:'Candidato pediu para remarcar.' },
+  { grupo:'Resposta do candidato', rotulo:'Sem resposta no WhatsApp', tipo:'observacao', obs:'Sem resposta no WhatsApp.' },
+  { grupo:'Resposta do candidato', rotulo:'Enviou documentos', tipo:'observacao', obs:'Candidato enviou os documentos pelo WhatsApp.' },
+  { grupo:'Mensagem pronta', rotulo:'Último aviso (24 horas)', mensagem:'avisoFinal24h', obs:'Abre a mensagem educada de último aviso; registra ao enviar.' },
+  { grupo:'Entrevista', rotulo:'Não compareceu', acao:'noshow', obs:'Candidato faltou à Entrevista La Vie ou à Entrevista Final.' }
 ];
 function renderNotasRapidas(){
-  const el=document.getElementById('mc-notas-rapidas'); if(!el) return;
-  if(typeof isClienteExterno==='function' && isClienteExterno()){ el.innerHTML=''; return; }
-  el.innerHTML = NOTAS_RAPIDAS.map((n,i)=>`<button type="button" class="btn btn-ghost btn-sm" style="padding:3px 9px;font-size:11px;border-radius:14px;white-space:nowrap" title="Registrar agora: ${n.obs.replace(/"/g,'&quot;')}" onclick="registrarNotaRapida(${i})">${n.rotulo}</button>`).join('');
+  const sel=document.getElementById('mc-nota-pronta'); if(!sel) return;
+  const cliente = typeof isClienteExterno==='function' && isClienteExterno();
+  sel.style.display = cliente ? 'none' : '';
+  const idEl=document.getElementById('mc-id'); const c=_cands.find(x=>x.id===(idEl?idEl.value:''));
+  // "Não compareceu" só vale para quem está em etapa com entrevista (mesma regra do botão antigo).
+  const podeNoShow = !!c && _ETAPAS_COM_ENTREVISTA.includes(c.etapa) && !cliente;
+  let h='<option value="">Escolher atualização…</option>';
+  if(!cliente) NOTAS_GRUPOS.forEach(g=>{
+    const itens=NOTAS_RAPIDAS.map((n,i)=>({n,i})).filter(x=>x.n.grupo===g && (x.n.acao!=='noshow' || podeNoShow));
+    if(itens.length) h+=`<optgroup label="${g}">`+itens.map(x=>`<option value="${x.i}">${x.n.rotulo}</option>`).join('')+'</optgroup>';
+  });
+  sel.innerHTML=h; sel.value=''; aoEscolherNotaPronta();
+}
+// Escolher da lista limpa o texto livre, e escrever limpa a lista: vale um ou outro.
+function aoEscolherNotaPronta(){
+  const sel=document.getElementById('mc-nota-pronta'), inp=document.getElementById('mc-nota'), btn=document.getElementById('mc-btn-registrar');
+  const n = sel && sel.value!=='' ? NOTAS_RAPIDAS[Number(sel.value)] : null;
+  if(n && inp) inp.value='';
+  if(btn) btn.textContent = (n && n.mensagem) ? 'Abrir mensagem' : 'Registrar';
+}
+function aoDigitarNota(){
+  const sel=document.getElementById('mc-nota-pronta'), inp=document.getElementById('mc-nota');
+  if(sel && sel.value!=='' && inp && inp.value.trim()){ sel.value=''; aoEscolherNotaPronta(); }
+}
+async function registrarAtualizacao(){
+  const sel=document.getElementById('mc-nota-pronta');
+  if(sel && sel.value!==''){
+    const i=Number(sel.value), n=NOTAS_RAPIDAS[i];
+    sel.value=''; aoEscolherNotaPronta();
+    if(n && n.acao==='noshow') return marcarNaoCompareceu();
+    return registrarNotaRapida(i);
+  }
+  return registrarNota();
 }
 async function registrarNotaRapida(i){
   const n=NOTAS_RAPIDAS[i]; if(!n) return;
