@@ -460,6 +460,87 @@ async function setVagaArquivada(id, arquivada) {
 async function deleteVaga(id) { if (!db) return; try { await db.from('vagas').delete().eq('id', id); } catch(e) {} }
 
 // ── SUPABASE: CANDIDATURAS ──
+// ── MEDIÇÃO DE ANÚNCIOS DO CLIENTE (16/11/2026) ─────────────────────────────
+// Pedido da Chrys: a Auto Club anuncia a vaga de Consultor Especialista e o
+// gestor de tráfego dela precisa medir as candidaturas que vêm dos anúncios.
+// O pixel da Meta e a tag do Google do cliente só carregam (1) na página da
+// vaga listada aqui e (2) depois que o visitante aceita o aviso. Nenhum dado do
+// candidato é passado por este código: só a visita e o envio da candidatura.
+// Para ligar outra vaga, acrescente uma linha com o nome dela no endereço.
+const LV_MEDICAO = {
+  'consultor-especialista': { cliente: 'Auto Club', meta: '589851299517773', google: ['GT-WRDF58MS', 'AW-16857659387'] }
+};
+let _lvMedicaoLigada = '';
+function lvMedicaoDaPagina() {
+  try {
+    const q = new URLSearchParams(location.search).get('vaga');
+    const m = location.pathname.match(/^\/vagas\/([^\/]+)\/?$/);
+    const p = String(q || (m && !/\.html?$/i.test(m[1]) ? m[1] : '') || '').toLowerCase();
+    return Object.prototype.hasOwnProperty.call(LV_MEDICAO, p) ? p : '';
+  } catch (e) { return ''; }
+}
+function lvLigarMedicao(slug) {
+  const cfg = LV_MEDICAO[slug];
+  if (!cfg || _lvMedicaoLigada) return;
+  _lvMedicaoLigada = slug;
+  try {
+    if (cfg.meta) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      // Sem a leitura automática de botões e campos da página: só os eventos enviados aqui.
+      window.fbq('set', 'autoConfig', false, cfg.meta);
+      window.fbq('init', cfg.meta);
+      window.fbq('track', 'PageView');
+    }
+  } catch (e) {}
+  try {
+    if (cfg.google && cfg.google.length) {
+      const g = document.createElement('script');
+      g.async = true; g.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(cfg.google[0]);
+      document.head.appendChild(g);
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      cfg.google.forEach(id => window.gtag('config', id));
+    }
+  } catch (e) {}
+}
+// Chamado quando a candidatura é gravada: avisa a Meta e o Google, só se a
+// medição está ligada e a candidatura é para a vaga anunciada.
+function lvMedirCandidatura(vagaId) {
+  try {
+    if (!_lvMedicaoLigada) return;
+    const v = (VAGAS || []).find(x => x.id === vagaId);
+    if (!v || _slugVaga(v) !== _lvMedicaoLigada) return;
+    if (window.fbq) { window.fbq('track', 'Lead', { content_name: v.title }); window.fbq('track', 'SubmitApplication', { content_name: v.title }); }
+    if (window.gtag) window.gtag('event', 'generate_lead', { vaga: v.title });
+  } catch (e) {}
+}
+(function lvAvisoMedicao() {
+  const slug = lvMedicaoDaPagina();
+  if (!slug) return;
+  let r = '';
+  try { r = localStorage.getItem('lv_medicao') || ''; } catch (e) {}
+  if (r === 'sim') return lvLigarMedicao(slug);
+  if (r === 'nao') return;
+  const mostrar = () => {
+    if (document.getElementById('lv-medicao-aviso')) return;
+    const d = document.createElement('div');
+    d.id = 'lv-medicao-aviso';
+    d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Aviso de cookies');
+    d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:150;max-width:560px;margin:0 auto;background:#302F2C;color:#F2F1ED;border-radius:12px;padding:14px 16px;font-family:inherit;font-size:13px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center;flex-wrap:wrap';
+    d.innerHTML = '<span style="flex:1 1 260px">Esta vaga é divulgada em anúncios da ' + LV_MEDICAO[slug].cliente + '. Podemos usar cookies da Meta e do Google para medir o resultado desses anúncios? <a href="/politica-de-privacidade.html" target="_blank" rel="noopener" style="color:#F2F1ED;text-decoration:underline">Saiba mais</a></span>'
+      + '<span style="display:flex;gap:8px"><button type="button" data-r="nao" style="font:inherit;font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid #8F8C84;background:transparent;color:#F2F1ED;cursor:pointer">Recusar</button>'
+      + '<button type="button" data-r="sim" style="font:inherit;font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;border:1px solid #F2F1ED;background:#F2F1ED;color:#302F2C;cursor:pointer">Aceitar</button></span>';
+    d.addEventListener('click', ev => {
+      const b = ev.target.closest('button[data-r]'); if (!b) return;
+      try { localStorage.setItem('lv_medicao', b.dataset.r); } catch (e) {}
+      d.remove();
+      if (b.dataset.r === 'sim') lvLigarMedicao(slug);
+    });
+    document.body.appendChild(d);
+  };
+  if (document.body) mostrar(); else document.addEventListener('DOMContentLoaded', mostrar);
+})();
 async function saveCandidatura(data) {
   if (!db) return { ok:false, err:'Banco não configurado' };
   try {
@@ -525,6 +606,7 @@ async function saveCandidatura(data) {
     if (!envio.ok) await registrarPendenciaRS(data, cv_url, envio.err);
     // Origem da candidatura: espera no máximo 4 segundos e nunca derruba o envio.
     try { await Promise.race([registrarOrigemCandidatura(data, envio.ok), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
+    lvMedirCandidatura(data.vaga_id);
     return { ok:true, cv_url };
   } catch(e) { return { ok:false, err:e.message }; }
 }
