@@ -15,10 +15,11 @@
 <meta property="og:url" content="https://lavieconsultoria.com/vocacional/">
 <meta property="og:title" content="Teste Vocacional La Vie · Qual área tem a sua cara?">
 <meta property="og:description" content="48 afirmações, 7 minutos, resultado na hora. Descubra sua área e entre no banco de talentos da La Vie.">
-<meta property="og:image" content="https://lavieconsultoria.com/og-image.jpg">
+<meta property="og:image" content="https://lavieconsultoria.com/vocacional/og-vocacional.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://lavieconsultoria.com/vocacional/og-vocacional.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -152,6 +153,13 @@
   .compartilhar .acoes{display:flex;gap:0.7rem;justify-content:center;flex-wrap:wrap}
   .compartilhar .btn{padding:0.75rem 1.3rem;font-size:0.68rem}
   .orientativo{margin-top:1.4rem;font-size:0.76rem;color:var(--muted);font-weight:400;text-align:center;line-height:1.55}
+  .saiba{max-width:62ch;margin:3rem auto 0;font-size:0.9rem;font-weight:400;color:var(--charcoal)}
+  .saiba h2{font-family:var(--serif);font-weight:400;font-size:1.45rem;color:var(--dark);margin:1.6rem 0 0.5rem;line-height:1.2}
+  .saiba p{margin-bottom:0.8rem}
+  .saiba dt{font-weight:500;color:var(--dark);margin-top:0.9rem}
+  .saiba dd{margin:0.2rem 0 0;color:var(--charcoal)}
+  .saiba a{color:var(--charcoal)}
+  body.andamento .saiba,body.resultado .saiba{display:none}
   footer{margin-top:2.6rem;text-align:center;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
 
   /* Resultado: cabeçalho vira barra fina */
@@ -256,6 +264,22 @@
 
   <!-- Resultado -->
   <section class="card tela" id="telaResultado"></section>
+
+  <section class="saiba" id="saiba">
+    <h2>O que é o Teste Vocacional da La Vie</h2>
+    <p>É um teste vocacional gratuito e online, feito pela La Vie Consultoria, de Goiânia, para quem quer descobrir em qual área de trabalho tem mais chance de se dar bem: administrativo, comercial e vendas, recursos humanos, financeiro, marketing, educação, atendimento ou logística. Serve para quem está procurando o primeiro emprego, pensando em mudar de área ou em dúvida sobre que vaga buscar.</p>
+    <h2>Como funciona</h2>
+    <p>Você responde 48 afirmações curtas sobre o que gosta de fazer e como trabalha, dando uma nota de 1 (nada a ver comigo) a 5 (tudo a ver comigo). Leva uns 7 minutos. O resultado sai na hora: a área com mais afinidade, as funções que combinam com você, uma dica de currículo para essa área e o seu perfil de interesses pelo modelo de John Holland (RIASEC), o mesmo usado por instrumentos de orientação de carreira reconhecidos no mundo todo. No fim, você pode entrar no banco de talentos da La Vie na área indicada e ser avisado quando surgir uma vaga.</p>
+    <h2>Perguntas frequentes</h2>
+    <dl>
+      <dt>O teste é gratuito?</dt><dd>Sim, sem custo e sem conteúdo escondido atrás de pagamento.</dd>
+      <dt>Preciso me cadastrar?</dt><dd>Pedimos nome, e-mail e WhatsApp antes de começar, para guardar o seu resultado e poder avisar quando surgir uma vaga na sua área. Os dados seguem a nossa <a href="/politica-de-privacidade">Política de Privacidade</a>.</dd>
+      <dt>O resultado substitui uma orientação profissional?</dt><dd>Não. Ele mostra seus interesses neste momento e serve como ponto de partida. Para uma orientação completa, procure um psicólogo ou orientador de carreira.</dd>
+      <dt>Qual a diferença para o Teste DISC?</dt><dd>O Teste Vocacional indica a área com mais a ver com os seus interesses. O <a href="/disc/">Teste DISC</a> mostra como você se comporta no trabalho. Os dois juntos formam o seu perfil no banco de talentos da La Vie.</dd>
+      <dt>Posso refazer o teste?</dt><dd>Pode. Interesses mudam com o tempo e com a experiência; vale refazer depois de alguns meses.</dd>
+      <dt>Sou empresa e quero usar o teste na minha equipe</dt><dd>A La Vie aplica avaliações de perfil em processos seletivos e em projetos de gestão de pessoas. <a href="/empresas/?servico=liderancas">Fale com a gente</a>.</dd>
+    </dl>
+  </section>
 
   <footer>La Vie Consultoria · Gestão Empresarial Integrada</footer>
 </div>
@@ -409,6 +433,7 @@
     document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
     atual = t;
     const progress = document.getElementById('progress');
+    document.body.classList.toggle('andamento', t >= 0);
     if (t < 0){ telaDe(-1).classList.add('ativa'); progress.classList.add('hidden'); }
     else {
       telaDe(t).classList.add('ativa'); progress.classList.remove('hidden');
@@ -622,7 +647,7 @@
       <div class="compartilhar">
         <p>Conhece alguém que está em dúvida sobre a própria área? Compartilhe o seu resultado.</p>
         <div class="acoes">
-          <button type="button" class="btn btn-img" id="btnImagem">Baixar minha imagem para os stories</button>
+          <button type="button" class="btn btn-img" id="btnImagem">Compartilhar meu resultado nos stories</button>
           <a class="btn btn-whats" href="https://wa.me/?text=${encodeURIComponent(textoShare)}" target="_blank" rel="noopener noreferrer">Compartilhar no WhatsApp</a>
           <button type="button" class="btn btn-ghost" id="btnCopiar">Copiar link do teste</button>
         </div>
@@ -650,7 +675,7 @@
   }
 
   // Imagem 1080x1920 para stories, na paleta da marca (creme, bege, taupe, grafite)
-  async function baixarImagem(res){
+  async function gerarImagem(res){
     const W = 1080, H = 1920;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
     try{ await document.fonts.load('400 60px "Cormorant Garamond"'); await document.fonts.load('500 30px "DM Sans"'); await document.fonts.load('300 30px "DM Sans"'); }catch(e){}
@@ -685,8 +710,17 @@
     centro('Descubra a sua área em 7 minutos', H - 92, `300 32px ${SANS}`, '#F2F1ED');
     centro('lavieconsultoria.com/vocacional', H - 46, `500 30px ${SANS}`, '#F2F1ED', 2);
     const blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `teste-vocacional-la-vie-${res.codigo.toLowerCase()}.png`; document.body.appendChild(a); a.click(); a.remove();
+    return new File([blob], `teste-vocacional-la-vie-${res.codigo.toLowerCase()}.png`, { type:'image/png' });
+  }
+  async function baixarImagem(res){
+    const arquivo = await gerarImagem(res);
+    // No celular, abre a folha de compartilhamento (Instagram, WhatsApp, salvar); no computador, baixa o arquivo
+    if (navigator.canShare && navigator.canShare({ files:[arquivo] })){
+      try{ await navigator.share({ files:[arquivo], title:'Teste Vocacional La Vie', text:`Descubra a sua área em 7 minutos: ${SITE}/vocacional/` }); return; }
+      catch(e){ if (e && e.name === 'AbortError') return; }
+    }
+    const url = URL.createObjectURL(arquivo);
+    const a = document.createElement('a'); a.href = url; a.download = arquivo.name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
