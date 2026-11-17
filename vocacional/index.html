@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste Vocacional · La Vie Consultoria</title>
+<meta name="description" content="Descubra em 7 minutos a área de trabalho com mais a sua cara, com base na teoria de interesses de Holland, e entre no banco de talentos da La Vie Consultoria.">
+<link rel="icon" type="image/png" href="/logo.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="/logo-branco.png" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="canonical" href="https://lavieconsultoria.com/vocacional/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="La Vie Consultoria">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://lavieconsultoria.com/vocacional/">
+<meta property="og:title" content="Teste Vocacional La Vie · Qual área tem a sua cara?">
+<meta property="og:description" content="48 afirmações, 7 minutos, resultado na hora. Descubra sua área e entre no banco de talentos da La Vie.">
+<meta property="og:image" content="https://lavieconsultoria.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* Teste Vocacional: uma coluna, uma tela por vez, no padrão das páginas de candidato da La Vie */
+  :root{
+    --bg:#F2F1ED; --bg-alt:#E8E4DE; --dark:#1a1917; --charcoal:#3A3A3A; --muted:#6F6B64;
+    --sand:#D8CFC4; --sand-dark:#B8AFA4; --accent:#8C8377; --white:#FFFFFF;
+    --border:rgba(58,58,58,0.12); --radius:4px;
+    --high:#c0392b; --high-soft:#fbeae7; --high-text:#8a2d20;
+    --whats:#25d366; --whats-dark:#1ebc59;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+    --sans:'DM Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:112.5%}
+  body{
+    font-family:var(--sans);background:var(--bg);color:var(--charcoal);line-height:1.7;font-weight:300;
+    -webkit-font-smoothing:antialiased;padding-block:48px;
+    padding-left:max(20px, env(safe-area-inset-left, 0px));padding-right:max(20px, env(safe-area-inset-right, 0px));
+  }
+  .wrap{max-width:720px;margin:0 auto}
+  em{font-style:italic;color:var(--dark)}
+  .brandbar{display:flex;justify-content:center;margin-bottom:18px}
+  .logo{height:150px;width:auto;object-fit:contain;max-width:100%}
+  header{text-align:center;margin-bottom:34px}
+  .eyebrow{display:block;font-size:0.68rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:1rem}
+  h1{font-family:var(--serif);font-weight:300;font-size:clamp(2.1rem,5vw,3rem);line-height:1.08;letter-spacing:-0.005em;color:var(--charcoal);text-wrap:balance}
+  header p{color:var(--muted);margin:1rem auto 0;max-width:52ch;font-weight:400;font-size:0.95rem}
+  .fatos{display:flex;justify-content:center;gap:2.2rem;flex-wrap:wrap;margin-top:1.4rem}
+  .fato{text-align:center}
+  .fato b{display:block;font-family:var(--serif);font-size:1.7rem;font-weight:400;color:var(--dark);line-height:1.1}
+  .fato span{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
+  header .base{font-size:0.78rem;color:var(--accent);max-width:54ch;margin-top:1.2rem}
+
+  .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2.2rem}
+  .tela{display:none}
+  .tela.ativa{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.tela.ativa{animation:none}html{scroll-behavior:auto}}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:1.3rem}
+  .field{display:flex;flex-direction:column;gap:0.4rem;min-width:0}
+  .field.full{grid-column:1/-1}
+  label{font-size:0.78rem;font-weight:500;color:var(--charcoal)}
+  .req{color:var(--high)}
+  input[type=text],input[type=email],input[type=tel]{
+    font-family:inherit;font-size:0.92rem;color:var(--charcoal);font-weight:400;background:var(--bg);
+    border:1px solid var(--border);border-radius:var(--radius);padding:0.8rem 0.9rem;width:100%;transition:border-color .15s;
+  }
+  input:focus{outline:none;border-color:var(--charcoal)}
+  .invalid{border-color:var(--high) !important;background:var(--high-soft) !important}
+  .lgpd{display:flex;gap:0.7rem;align-items:flex-start;margin-top:1.3rem;font-size:0.8rem;color:var(--muted);font-weight:400;line-height:1.55}
+  .lgpd input{margin-top:5px;flex:none;accent-color:var(--charcoal)}
+  .lgpd a{color:var(--charcoal)}
+  .lgpd.invalid-box{outline:1px solid var(--high);outline-offset:6px;border-radius:2px}
+
+  .progress{margin-bottom:1.4rem}
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.55rem;gap:1rem}
+  .progress-label{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;color:var(--charcoal)}
+  .progress-count{font-family:var(--serif);font-style:italic;color:var(--accent);font-size:1rem;white-space:nowrap}
+  .bar{height:3px;background:var(--sand);border-radius:2px;overflow:hidden}
+  .bar span{display:block;height:100%;width:0;background:var(--charcoal);transition:width .35s ease}
+
+  .legenda{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);font-weight:400;margin:0.2rem 0 1.2rem;letter-spacing:0.02em}
+  .item{padding:1.25rem 0;border-top:1px solid var(--border)}
+  .item:first-of-type{border-top:0;padding-top:0.4rem}
+  .item p{font-size:0.98rem;font-weight:400;color:var(--dark);line-height:1.5;margin-bottom:0.8rem}
+  .item.falta p::after{content:" · responda para continuar";color:var(--high-text);font-size:0.78rem;font-weight:500}
+  .escala{display:grid;grid-template-columns:repeat(5,1fr);gap:0.45rem}
+  .opc{position:relative;cursor:pointer}
+  .opc input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
+  .opc span{
+    display:flex;align-items:center;justify-content:center;height:46px;border:1px solid var(--border);border-radius:var(--radius);
+    background:var(--bg);font-size:0.9rem;font-weight:500;color:var(--charcoal);transition:.15s;user-select:none;
+  }
+  .opc:hover span{border-color:var(--sand-dark)}
+  .opc input:checked + span{background:var(--charcoal);border-color:var(--charcoal);color:var(--white)}
+  .opc input:focus-visible + span{outline:2px solid var(--sand-dark);outline-offset:2px}
+  .escala-rotulos{display:grid;grid-template-columns:repeat(5,1fr);gap:0.45rem;margin-top:0.35rem}
+  .escala-rotulos small{font-size:0.62rem;line-height:1.25;text-align:center;color:var(--muted);font-weight:400;display:block}
+
+  .actions{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-top:1.6rem}
+  .actions .right{display:flex;gap:1rem;margin-left:auto}
+  button,.btn{
+    font-family:inherit;font-size:0.75rem;font-weight:500;cursor:pointer;letter-spacing:0.13em;text-transform:uppercase;
+    padding:0.95rem 1.9rem;border-radius:var(--radius);border:1px solid transparent;transition:background .2s,border-color .2s,transform .15s;
+    text-decoration:none;display:inline-block;text-align:center;line-height:1.7;
+  }
+  button:focus-visible,.btn:focus-visible{outline:2px solid var(--sand-dark);outline-offset:2px}
+  .btn-primary{background:var(--charcoal);color:var(--white)}
+  .btn-primary:hover{background:var(--dark);transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:.6;cursor:wait;transform:none}
+  .btn-whats{background:var(--whats);color:var(--white)}
+  .btn-whats:hover{background:var(--whats-dark)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--charcoal)}
+  .btn-ghost:hover{border-color:var(--charcoal);background:var(--bg-alt)}
+  .hidden{display:none !important}
+  .msg-erro{display:none;border-radius:var(--radius);padding:0.9rem 1.1rem;font-size:0.85rem;font-weight:400;background:var(--high-soft);border:1px solid var(--high);color:var(--high-text);margin-top:1.2rem}
+  .msg-erro.show{display:block}
+  .previa{margin:0 auto 1.4rem;padding:0.8rem 1.1rem;background:var(--bg-alt);border:1px dashed var(--sand-dark);border-radius:var(--radius);font-size:0.8rem;font-weight:400;text-align:center}
+
+  /* Resultado */
+  .res-topo{text-align:center;padding-bottom:1.6rem;border-bottom:1px solid var(--border)}
+  .res-topo .eyebrow{margin-bottom:0.6rem}
+  .res-topo h2{font-family:var(--serif);font-weight:300;font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.1;color:var(--dark)}
+  .res-topo .pct{font-family:var(--serif);font-style:italic;font-size:1.1rem;color:var(--accent);margin-top:0.3rem}
+  .res-topo p.resumo{margin:1rem auto 0;max-width:54ch;font-weight:400;font-size:0.95rem;color:var(--charcoal)}
+  .res-bloco{margin-top:1.5rem}
+  .res-bloco h3{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:0.6rem}
+  .tags{display:flex;flex-wrap:wrap;gap:0.45rem}
+  .tags span{font-size:0.8rem;font-weight:400;padding:0.35rem 0.75rem;background:var(--bg);border:1px solid var(--border);border-radius:999px}
+  .res-bloco p{font-size:0.9rem;font-weight:400;color:var(--charcoal)}
+  .barras{display:grid;gap:0.55rem;margin-top:0.3rem}
+  .barra{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) 3.2rem;align-items:center;gap:0.8rem;font-size:0.82rem;font-weight:400}
+  .barra .nome{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra .trilho{height:7px;background:var(--bg-alt);border-radius:4px;overflow:hidden}
+  .barra .trilho i{display:block;height:100%;background:var(--sand-dark);border-radius:4px}
+  .barra.top .trilho i{background:var(--charcoal)}
+  .barra .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .secund{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem}
+  .secund div{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:0.9rem 1rem}
+  .secund b{display:block;font-family:var(--serif);font-weight:500;font-size:1.1rem;color:var(--dark);line-height:1.2}
+  .secund small{display:block;font-size:0.78rem;color:var(--muted);margin-top:0.25rem;line-height:1.45}
+  .cta{margin-top:1.8rem;padding:1.5rem;background:var(--bg-alt);border-radius:var(--radius);text-align:center}
+  .cta h3{font-family:var(--serif);font-weight:400;font-size:1.45rem;color:var(--dark);line-height:1.2;text-transform:none;letter-spacing:0;margin-bottom:0.4rem}
+  .cta p{font-size:0.88rem;color:var(--charcoal);font-weight:400;max-width:48ch;margin:0 auto 1.1rem}
+  .cta .btn{display:inline-block}
+  .compartilhar{margin-top:1.4rem;text-align:center}
+  .compartilhar p{font-size:0.78rem;color:var(--muted);font-weight:400;margin-bottom:0.7rem}
+  .compartilhar .acoes{display:flex;gap:0.7rem;justify-content:center;flex-wrap:wrap}
+  .compartilhar .btn{padding:0.75rem 1.3rem;font-size:0.68rem}
+  .orientativo{margin-top:1.4rem;font-size:0.76rem;color:var(--muted);font-weight:400;text-align:center;line-height:1.55}
+  footer{margin-top:2.6rem;text-align:center;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
+
+  /* Resultado: cabeçalho vira barra fina */
+  body.resultado .brandbar{margin-bottom:0}
+  body.resultado .logo{height:84px}
+  body.resultado header{margin-bottom:22px}
+  body.resultado header h1,body.resultado header p,body.resultado header .fatos{display:none}
+  body.resultado header .eyebrow{margin-bottom:0}
+  .selo-wrap{display:flex;flex-direction:column;align-items:center;gap:0.9rem;text-align:center}
+  .selo{
+    width:138px;height:138px;border-radius:50%;border:1.5px solid var(--sand-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--bg);position:relative;
+  }
+  .selo::before{content:"";position:absolute;inset:6px;border-radius:50%;border:1px solid var(--sand)}
+  .selo b{font-family:var(--serif);font-weight:500;font-size:2.4rem;letter-spacing:0.08em;color:var(--dark);line-height:1}
+  .selo small{font-size:0.56rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-top:0.35rem}
+  .radar-wrap{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:1.2rem 1.6rem;align-items:center;margin-top:0.4rem}
+  .radar-wrap svg{width:100%;height:auto;max-width:360px;display:block;margin:0 auto}
+  .radar-legenda{display:grid;gap:0.4rem;font-size:0.82rem;font-weight:400}
+  .radar-legenda > div{display:flex;justify-content:space-between;gap:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.3rem}
+  .radar-legenda b{font-weight:500;color:var(--dark)}
+  .radar-legenda span{color:var(--muted);font-variant-numeric:tabular-nums}
+  .radar-legenda small{display:block;font-size:0.72rem;color:var(--muted);font-weight:400;line-height:1.4}
+  .btn-img{background:var(--sand-dark);color:var(--white)}
+  .btn-img:hover{background:var(--accent)}
+  @media(max-width:600px){
+    html{font-size:106.25%}
+    .radar-wrap{grid-template-columns:1fr}
+    .selo{width:118px;height:118px}
+    .fatos{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
+    .fato span{font-size:0.58rem;letter-spacing:0.1em}
+    .fato b{font-size:1.4rem}
+    .selo b{font-size:2rem}
+    body{padding-block:28px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+    .logo{height:88px}
+    body.resultado .logo{height:56px}
+    .card{padding:1.5rem 1.15rem}
+    .grid,.secund{grid-template-columns:1fr}
+    .escala{gap:0.35rem}
+    .opc span{height:44px;font-size:0.85rem}
+    .escala-rotulos small{font-size:0.54rem}
+    .barra{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 2.8rem;font-size:0.78rem}
+    .actions button,.actions .btn{flex:1}
+    .actions .right{width:100%;margin-left:0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandbar"><img class="logo" src="/logo.png" alt="La Vie Consultoria"></div>
+
+  <header id="topo">
+    <span class="eyebrow">Teste Vocacional</span>
+    <h1>Qual área de trabalho tem <em>a sua cara?</em></h1>
+    <p>48 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você vê seu perfil de interesses e a área, entre as oito em que a La Vie recruta, com mais a ver com você. Já dá para entrar no banco de talentos nessa área.</p>
+    <div class="fatos">
+      <div class="fato"><b>7 min</b><span>para responder</span></div>
+      <div class="fato"><b>8</b><span>áreas da La Vie</span></div>
+      <div class="fato"><b>na hora</b><span>resultado</span></div>
+    </div>
+    <p class="base">Baseado na teoria de interesses profissionais de John Holland (RIASEC), a mesma usada pelo O*NET Interest Profiler. O resultado é um ponto de partida, não um veredito.</p>
+  </header>
+
+  <div class="previa hidden" id="previa">Prévia para aprovação. Nesta versão o resultado não é gravado.</div>
+
+  <div class="progress hidden" id="progress">
+    <div class="progress-top">
+      <span class="progress-label" id="progressLabel">Afirmações</span>
+      <span class="progress-count" id="progressCount">1 a 4 de 48</span>
+    </div>
+    <div class="bar"><span id="barFill"></span></div>
+  </div>
+
+  <!-- Tela 0: dados -->
+  <section class="card tela ativa" id="telaDados">
+    <p style="font-size:0.9rem;font-weight:400;color:var(--muted);">Antes de começar, como podemos te chamar e te avisar quando surgir uma vaga na sua área?</p>
+    <div class="grid">
+      <div class="field full"><label for="f-nome">Nome completo <span class="req">*</span></label><input type="text" id="f-nome" autocomplete="name" placeholder="Seu nome"></div>
+      <div class="field"><label for="f-email">E-mail <span class="req">*</span></label><input type="email" id="f-email" autocomplete="email" placeholder="seu@email.com"></div>
+      <div class="field"><label for="f-whats">WhatsApp <span class="req">*</span></label><input type="tel" id="f-whats" autocomplete="tel" placeholder="(62) 9 0000-0000"></div>
+    </div>
+    <input type="text" id="f-site" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+    <label class="lgpd" id="lgpdBox"><input type="checkbox" id="f-lgpd"><span>Autorizo a La Vie Consultoria a guardar meu resultado e entrar em contato sobre oportunidades. Li a <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>.</span></label>
+    <div class="msg-erro" id="msgDados">Preencha nome, e-mail e WhatsApp e marque a autorização para começar.</div>
+    <div class="actions"><div class="right"><button type="button" class="btn-primary" id="btnComecar">Começar o teste</button></div></div>
+  </section>
+
+  <!-- Telas das afirmações: geradas pelo script -->
+  <div id="telas"></div>
+
+  <!-- Resultado -->
+  <section class="card tela" id="telaResultado"></section>
+
+  <footer>La Vie Consultoria · Gestão Empresarial Integrada</footer>
+</div>
+
+<script>
+  const NO_AR = /(^|\.)lavieconsultoria\.com$/.test(location.hostname);
+  const SITE = 'https://lavieconsultoria.com';
+  const SB_URL = 'https://doinfhruwdwctnuoujxl.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8';
+  const TABELA = 'vocacional_resultados';
+  const WHATSAPP_LAVIE = '5562992741488';
+
+  // As 8 áreas são as mesmas do banco de talentos da La Vie (o nome em "banco" tem que ser
+  // idêntico ao da lista BANCO_AREAS da página /vagas/, porque é ele que pré-seleciona a área).
+  const AREAS = {
+    adm: { nome:'Administrativo', banco:'Administrativo',
+      resumo:'Você é a pessoa que faz a engrenagem girar: organiza, acompanha prazos e garante que nada fique para trás. Equipes funcionam melhor quando têm alguém assim nos bastidores.',
+      funcoes:['Assistente administrativo','Auxiliar administrativo','Secretária executiva','Analista administrativo','Assistente de compras'],
+      dica:'No currículo, mostre resultados de organização: processos que você criou, controles que montou, prazos que passou a cumprir.' },
+    com: { nome:'Comercial e Vendas', banco:'Comercial e Vendas',
+      resumo:'Você gosta de gente, de meta e de negociação. Um não não te derruba, e convencer alguém de uma boa ideia te dá energia. Empresas vivem de quem vende bem.',
+      funcoes:['Consultor de vendas','Vendedor interno ou externo','Executivo de contas','Captação e televendas','Representante comercial'],
+      dica:'Coloque números no currículo: quanto vendeu, quanto cresceu a carteira, qual meta bateu. Em vendas, resultado fala mais que descrição de tarefa.' },
+    rh:  { nome:'Recursos Humanos e DP', banco:'Recursos Humanos e DP',
+      resumo:'Você se interessa pelas pessoas e pelo que faz um time funcionar: contratar bem, desenvolver, cuidar das regras e do clima. É o perfil que a área de gente precisa.',
+      funcoes:['Analista de RH','Analista ou auxiliar de DP','Recrutador','Analista de treinamento','Business partner de RH'],
+      dica:'Destaque experiências com recrutamento, treinamento, rotinas de pessoal e sistemas de folha. Cursos de legislação trabalhista contam pontos.' },
+    fin: { nome:'Financeiro e Contábil', banco:'Financeiro e Contábil',
+      resumo:'Números fazem sentido para você. Conferir, calcular, encontrar a diferença e tomar decisão com base em dados é o seu jeito natural de trabalhar.',
+      funcoes:['Assistente financeiro','Analista de contas a pagar e receber','Auxiliar contábil','Analista fiscal','Analista de controladoria'],
+      dica:'Cite os sistemas que domina (ERP, planilhas avançadas, conciliação) e exemplos de controle que você melhorou ou erro que evitou.' },
+    mkt: { nome:'Marketing e Comunicação', banco:'Marketing e Comunicação',
+      resumo:'Você tem olho para o que chama a atenção e ideias para comunicar. Criar conteúdo, campanhas e formas novas de apresentar algo é onde você rende mais.',
+      funcoes:['Analista de marketing','Social media','Designer','Produtor de conteúdo','Analista de comunicação'],
+      dica:'Monte um portfólio, mesmo pequeno: posts, artes, textos ou campanhas que você fez. Em marketing, mostrar vale mais do que listar.' },
+    edu: { nome:'Educação e Acadêmico', banco:'Educação e Acadêmico',
+      resumo:'Você gosta de explicar até a outra pessoa entender e sente realização em ver alguém aprender. Instituições de ensino e áreas de treinamento precisam desse perfil.',
+      funcoes:['Professor ou instrutor','Coordenador acadêmico','Analista de treinamento e desenvolvimento','Tutor','Secretaria acadêmica'],
+      dica:'Inclua formação, certificações e qualquer experiência em sala, treinamento ou tutoria, mesmo informal. Didática se comprova com exemplos.' },
+    ate: { nome:'Atendimento e Recepção', banco:'Atendimento e Recepção',
+      resumo:'Você recebe bem, mantém a calma com quem está nervoso e gosta de resolver o problema da pessoa na hora. É a cara da empresa para quem chega.',
+      funcoes:['Recepcionista','Atendente','Assistente de relacionamento com o cliente','Suporte ao cliente','Hostess e recepção de eventos'],
+      dica:'Destaque experiências com público, metas de satisfação e situações difíceis que você resolveu. Boa comunicação escrita também conta.' },
+    log: { nome:'Logística e Operações', banco:'Logística e Motoristas',
+      resumo:'Você prefere trabalho prático, com movimento e responsabilidade real sobre entregas, estoque ou rotas. Pontualidade e compromisso são sua marca.',
+      funcoes:['Motorista','Auxiliar de logística','Conferente e estoquista','Analista de logística','Operador de expedição'],
+      dica:'Informe CNH e categoria, cursos como MOPP e experiência com rotas, cargas ou controle de estoque. Para motorista, histórico limpo é diferencial.' }
+  };
+  // Tipos de interesse de Holland (RIASEC), base do O*NET Interest Profiler
+  const RIASEC = {
+    R: { nome:'Realista',      resumo:'prefere o concreto: fazer, operar, consertar, mover' },
+    I: { nome:'Investigativo', resumo:'gosta de analisar, entender a causa e decidir com dados' },
+    A: { nome:'Artístico',     resumo:'cria, comunica e busca formas novas de apresentar as coisas' },
+    S: { nome:'Social',        resumo:'ensina, ajuda, cuida e se realiza no contato com pessoas' },
+    E: { nome:'Empreendedor',  resumo:'convence, lidera, negocia e gosta de meta' },
+    C: { nome:'Convencional',  resumo:'organiza, confere, segue método e mantém tudo em ordem' }
+  };
+  // 48 afirmações: 6 por área, cada uma com o tipo de Holland que ela mede.
+  // Frases de atividade, sem nomear a área, em rodízio para cada tela misturar áreas.
+  const AFIRMACOES = [
+    ['adm','C','Monto planilhas e controles para acompanhar pedidos, prazos e documentos.'],
+    ['com','E','Gosto de apresentar uma ideia ou produto e ver a pessoa se convencer.'],
+    ['rh','S','Colegas me procuram para desabafar ou pedir um conselho.'],
+    ['fin','I','Quando um valor não bate, vou atrás até achar onde está a diferença.'],
+    ['mkt','A','Tenho ideias de posts, campanhas ou jeitos criativos de apresentar algo.'],
+    ['edu','S','Explico uma coisa de várias formas até a outra pessoa entender de verdade.'],
+    ['ate','S','Recebo quem chega com atenção e me preocupo em deixar a pessoa à vontade.'],
+    ['log','R','Prefiro um trabalho com movimento a passar o dia inteiro sentado no mesmo lugar.'],
+    ['adm','C','Fico tranquilo seguindo um passo a passo definido, sem precisar inventar o caminho.'],
+    ['com','E','Metas me animam mais do que me assustam.'],
+    ['rh','S','Me interesso em entender o que motiva cada pessoa de uma equipe.'],
+    ['fin','C','Controlar gastos e acompanhar o que entra e o que sai é algo que faço com naturalidade.'],
+    ['mkt','A','Escrever um texto, criar uma arte ou gravar um vídeo me dá prazer.'],
+    ['edu','S','Tenho paciência para repetir e acompanhar o ritmo de quem está aprendendo.'],
+    ['ate','S','Consigo manter a calma e a gentileza com alguém que chega irritado.'],
+    ['log','R','Tenho facilidade para organizar rotas, entregas ou o espaço de um estoque.'],
+    ['adm','C','Dou conta de vários prazos ao mesmo tempo sem perder o controle de nenhum.'],
+    ['com','E','Puxo conversa com desconhecidos com facilidade.'],
+    ['rh','C','Lido bem com regras, documentos e prazos que envolvem pessoas.'],
+    ['fin','I','Prefiro decidir olhando os números a decidir por impressão.'],
+    ['mkt','A','Percebo rápido o que chama a atenção das pessoas e o que passa despercebido.'],
+    ['edu','S','Me sinto realizado quando alguém aprende algo por minha causa.'],
+    ['ate','E','Gosto de resolver o problema de alguém na hora, sem empurrar para frente.'],
+    ['log','C','Cumpro horários e prazos combinados sem precisar de cobrança.'],
+    ['adm','S','Gosto de dar suporte para a equipe funcionar bem, mesmo sem aparecer.'],
+    ['com','E','Um não não me derruba: tento de novo por outro caminho.'],
+    ['rh','S','Gosto de acompanhar o crescimento de alguém do começo ao fim.'],
+    ['fin','C','Um erro pequeno numa planilha ou relatório me incomoda até eu corrigir.'],
+    ['mkt','I','Acompanho tendências de redes sociais e de marcas.'],
+    ['edu','A','Gosto de preparar aulas, treinamentos ou materiais de estudo.'],
+    ['ate','S','Reparo em detalhes de cordialidade: chamar pelo nome, cumprimentar, tom de voz.'],
+    ['log','R','Me sinto bem sendo responsável por um veículo, uma carga ou um material.'],
+    ['adm','C','Gosto de organizar arquivos, agendas e informações de um jeito que qualquer um ache.'],
+    ['com','E','Negociar preço, prazo ou condição até fechar um acordo é algo que me dá energia.'],
+    ['rh','I','Gosto de entrevistar pessoas e perceber o que está por trás do que elas dizem.'],
+    ['fin','I','Gosto de comparar cenários e calcular o que compensa mais.'],
+    ['mkt','E','Gosto de divulgar algo e acompanhar quantas pessoas reagiram.'],
+    ['edu','I','Gosto de estudar um assunto a fundo para depois passar adiante.'],
+    ['ate','C','Gosto de registrar cada atendimento para que nada fique sem resposta.'],
+    ['log','R','Gosto de atividades práticas, com máquinas, ferramentas ou veículos.'],
+    ['adm','I','Gosto de conferir se um processo está sendo seguido e apontar o que pode melhorar.'],
+    ['com','S','Gosto de entender a necessidade do cliente antes de oferecer qualquer coisa.'],
+    ['rh','E','Gosto de organizar treinamentos, integrações ou eventos para a equipe.'],
+    ['fin','C','Gosto de fechar o mês com tudo conciliado e sem pendência.'],
+    ['mkt','A','Reparo em cores, fontes e no visual das coisas antes da maioria das pessoas.'],
+    ['edu','E','Me sinto à vontade falando para um grupo.'],
+    ['ate','A','Gosto de encontrar um jeito agradável de dar uma notícia difícil.'],
+    ['log','I','Gosto de planejar a melhor sequência de uma operação para ganhar tempo.']
+  ];
+  const ROTULOS = ['Nada a ver','Pouco a ver','Mais ou menos','Bastante','Tudo a ver'];
+  const POR_TELA = 4;
+
+  const telasEl = document.getElementById('telas');
+  const nTelas = Math.ceil(AFIRMACOES.length / POR_TELA);
+  for (let t = 0; t < nTelas; t++){
+    const itens = AFIRMACOES.slice(t * POR_TELA, (t + 1) * POR_TELA).map((a, j) => {
+      const i = t * POR_TELA + j;
+      const opcs = [1,2,3,4,5].map(v => `<label class="opc"><input type="radio" id="q${i}-${v}" name="q${i}" value="${v}" data-area="${a[0]}"><span>${v}</span></label>`).join('');
+      return `<div class="item" data-q="${i}"><p>${i + 1}. ${a[2]}</p><div class="escala">${opcs}</div>
+        <div class="escala-rotulos">${ROTULOS.map(r => `<small>${r}</small>`).join('')}</div></div>`;
+    }).join('');
+    const sec = document.createElement('section');
+    sec.className = 'card tela'; sec.id = 'tela' + t;
+    sec.innerHTML = `<div class="legenda"><span>1 = nada a ver comigo</span><span>5 = tudo a ver comigo</span></div>${itens}
+      <div class="msg-erro" id="erro${t}">Responda todas as afirmações desta tela para continuar.</div>
+      <div class="actions"><button type="button" class="btn-ghost" data-voltar="${t}">Voltar</button>
+      <div class="right"><button type="button" class="btn-primary" data-avancar="${t}">${t === nTelas - 1 ? 'Ver meu resultado' : 'Continuar'}</button></div></div>`;
+    telasEl.appendChild(sec);
+  }
+
+  const dados = { nome:'', email:'', whats:'' };
+  const CHAVE_PROG = 'lv_voc_progresso';
+  function salvarProgresso(){
+    try{ sessionStorage.setItem(CHAVE_PROG, JSON.stringify({ dados, atual, resp: respostas(), t: Date.now() })); }catch(e){}
+  }
+  function retomarProgresso(){
+    try{
+      const p = JSON.parse(sessionStorage.getItem(CHAVE_PROG) || 'null');
+      if (!p || !p.dados || !p.dados.email || Date.now() - p.t > 2 * 3600 * 1000) return false;
+      Object.assign(dados, p.dados);
+      document.getElementById('f-nome').value = dados.nome; document.getElementById('f-email').value = dados.email; document.getElementById('f-whats').value = dados.whats; document.getElementById('f-lgpd').checked = true;
+      (p.resp || []).forEach((v, i) => { if (v) { const el = document.getElementById(`q${i}-${v}`); if (el) el.checked = true; } });
+      mostrar(Math.max(0, Math.min(p.atual, nTelas - 1)), false);
+      return true;
+    }catch(e){ return false; }
+  }
+  let atual = -1;
+  const telaDe = t => t < 0 ? document.getElementById('telaDados') : document.getElementById('tela' + t);
+
+  function mostrar(t, rolar = true){
+    document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
+    atual = t;
+    const progress = document.getElementById('progress');
+    if (t < 0){ telaDe(-1).classList.add('ativa'); progress.classList.add('hidden'); }
+    else {
+      telaDe(t).classList.add('ativa'); progress.classList.remove('hidden');
+      const ini = t * POR_TELA + 1, fim = Math.min((t + 1) * POR_TELA, AFIRMACOES.length);
+      document.getElementById('progressCount').textContent = `${ini} a ${fim} de ${AFIRMACOES.length}`;
+      document.getElementById('barFill').style.width = `${(fim / AFIRMACOES.length) * 100}%`;
+    }
+    if (rolar) document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
+    if (t >= 0) salvarProgresso();
+  }
+
+  document.getElementById('btnComecar').addEventListener('click', () => {
+    const nome = document.getElementById('f-nome'), email = document.getElementById('f-email'), whats = document.getElementById('f-whats'), lgpd = document.getElementById('f-lgpd');
+    let ok = true;
+    [nome, email, whats].forEach(el => { const ruim = !el.value.trim() || (el.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())); el.classList.toggle('invalid', ruim); if (ruim) ok = false; });
+    document.getElementById('lgpdBox').classList.toggle('invalid-box', !lgpd.checked);
+    if (!lgpd.checked) ok = false;
+    document.getElementById('msgDados').classList.toggle('show', !ok);
+    if (!ok) return;
+    dados.nome = nome.value.trim(); dados.email = email.value.trim().toLowerCase(); dados.whats = whats.value.trim();
+    mostrar(0);
+  });
+  document.querySelectorAll('#telaDados input').forEach(el => el.addEventListener('input', () => { el.classList.remove('invalid'); document.getElementById('lgpdBox').classList.remove('invalid-box'); }));
+
+  telasEl.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.voltar !== undefined) mostrar(Number(b.dataset.voltar) - 1);
+    if (b.dataset.avancar !== undefined){
+      const t = Number(b.dataset.avancar);
+      const tela = telaDe(t); let ok = true;
+      tela.querySelectorAll('.item').forEach(it => { const resp = it.querySelector('input:checked'); it.classList.toggle('falta', !resp); if (!resp) ok = false; });
+      document.getElementById('erro' + t).classList.toggle('show', !ok);
+      if (!ok){ const f = tela.querySelector('.item.falta'); if (f) f.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+      if (t === nTelas - 1) finalizar(); else mostrar(t + 1);
+    }
+  });
+  telasEl.addEventListener('change', e => { const it = e.target.closest('.item'); if (!it) return; salvarProgresso(); it.classList.remove('falta'); const tela = it.closest('.tela'); if (tela && !tela.querySelector('.item.falta')) tela.querySelector('.msg-erro').classList.remove('show'); });
+
+  AREAS.out = { nome:'Outras áreas', banco:'Outras áreas', oculta:true };
+  const ORDEM_AREAS = Object.keys(AREAS).filter(k => !AREAS[k].oculta);
+  const N_POR_AREA = AFIRMACOES.filter(a => a[0] === 'adm').length; // 6
+  function pontuar(){
+    const soma = {}, somaR = {}, nR = {};
+    ORDEM_AREAS.forEach(k => soma[k] = 0); Object.keys(RIASEC).forEach(k => { somaR[k] = 0; nR[k] = 0; });
+    const resp = respostas();
+    resp.forEach((v, i) => { const [area, tipo] = AFIRMACOES[i]; soma[area] += v; somaR[tipo] += v; nR[tipo]++; });
+    const minA = N_POR_AREA, maxA = N_POR_AREA * 5;
+    const areas = ORDEM_AREAS.map(k => ({ k, pontos: soma[k], pct: Math.round((soma[k] - minA) / (maxA - minA) * 100) }));
+    // Desempate: quem tem mais notas 5 na área fica na frente; depois a ordem fixa
+    const cincos = k => resp.filter((v, i) => AFIRMACOES[i][0] === k && v === 5).length;
+    areas.sort((a, b) => b.pontos - a.pontos || cincos(b.k) - cincos(a.k) || ORDEM_AREAS.indexOf(a.k) - ORDEM_AREAS.indexOf(b.k));
+    const holland = Object.keys(RIASEC).map(k => ({ k, media: nR[k] ? somaR[k] / nR[k] : 0, pct: nR[k] ? Math.round((somaR[k] / nR[k] - 1) / 4 * 100) : 0 }));
+    holland.sort((a, b) => b.media - a.media || 'RIASEC'.indexOf(a.k) - 'RIASEC'.indexOf(b.k));
+    return { areas, holland, codigo: holland.slice(0, 3).map(x => x.k).join(''), fraco: areas[0].pct < 50 };
+  }
+  function respostas(){
+    return AFIRMACOES.map((_, i) => { const el = document.querySelector(`input[name="q${i}"]:checked`); return el ? Number(el.value) : 0; });
+  }
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+  // Nome, e-mail e WhatsApp não vão na URL: ficam no navegador por 30 minutos
+  // e a página de Vagas (mesmo domínio) lê e apaga. Na URL vai só a área.
+  function guardarEntrega(res){
+    try{
+      localStorage.setItem('lv_vocacional', JSON.stringify({ nome: dados.nome, email: dados.email, telefone: dados.whats, holland: res ? res.codigo : '', area: res ? AREAS[res.areas[0].k].banco : '', t: Date.now() }));
+    }catch(e){}
+  }
+  function linkBanco(area){
+    const p = new URLSearchParams({ banco: area.banco, utm_source: 'vocacional' });
+    return `${SITE}/vagas/?${p.toString()}`;
+  }
+
+  async function gravar(res){
+    if (!NO_AR) return false;
+    if (document.getElementById('f-site').value) return true; // robô preencheu o campo isca: finge que gravou
+    const lista = res.areas;
+    const corpo = JSON.stringify({
+      nome: dados.nome, email: dados.email, whatsapp: dados.whats,
+      area_principal: AREAS[lista[0].k].banco,
+      areas_top: lista.slice(0, 3).map(x => AREAS[x.k].banco),
+      pontuacoes: Object.assign(Object.fromEntries(lista.map(x => [AREAS[x.k].banco, x.pontos])), { holland: res.codigo, riasec: Object.fromEntries(res.holland.map(x => [x.k, x.pct])), fraco: res.fraco }),
+      respostas: respostas(),
+      lgpd: true, origem: (new URLSearchParams(location.search).get('utm_source') || new URLSearchParams(location.search).get('origem') || document.referrer || '').slice(0, 120) || null
+    });
+    for (let tent = 1; tent <= 3; tent++){
+      try{
+        const r = await fetch(`${SB_URL}/rest/v1/${TABELA}`, { method:'POST', headers:{ apikey:SB_KEY, Authorization:`Bearer ${SB_KEY}`, 'Content-Type':'application/json', Prefer:'return=minimal' }, body: corpo });
+        if (r.ok) return true;
+      }catch(e){}
+      await new Promise(ok => setTimeout(ok, 1000 * tent));
+    }
+    return false;
+  }
+
+  // Radar dos 6 tipos de Holland (SVG), na ordem R I A S E C
+  function radarSVG(holland, tam = 260, cores = { linha:'#3A3A3A', area:'rgba(140,131,119,0.35)', grade:'#D8CFC4', texto:'#6F6B64' }){
+    const ordem = 'RIASEC'.split(''); const W = tam * 1.75, H = tam * 1.08, cx = W / 2, cy = H / 2, r = tam * 0.36;
+    const pt = (i, f) => { const a = -Math.PI / 2 + i * Math.PI / 3; return [cx + Math.cos(a) * r * f, cy + Math.sin(a) * r * f]; };
+    const poli = f => ordem.map((_, i) => pt(i, f).join(',')).join(' ');
+    const valor = k => Math.max(0.04, (holland.find(x => x.k === k) || { pct:0 }).pct / 100);
+    const dados = ordem.map((k, i) => pt(i, valor(k)).join(',')).join(' ');
+    const fs = (tam * 0.042).toFixed(1);
+    const rot = ordem.map((k, i) => { const [x, y] = pt(i, 1.16); const anc = i === 0 || i === 3 ? 'middle' : (i < 3 ? 'start' : 'end'); const dy = i === 0 ? -4 : (i === 3 ? 14 : 5);
+      return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anc}" font-size="${fs}" fill="${cores.texto}" font-family="DM Sans, Arial, sans-serif" letter-spacing="0.08em">${RIASEC[k].nome.toUpperCase()}</text>`; }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar do perfil de interesses">
+      ${[0.25, 0.5, 0.75, 1].map(f => `<polygon points="${poli(f)}" fill="none" stroke="${cores.grade}" stroke-width="1"/>`).join('')}
+      ${ordem.map((_, i) => `<line x1="${cx}" y1="${cy}" x2="${pt(i, 1)[0].toFixed(1)}" y2="${pt(i, 1)[1].toFixed(1)}" stroke="${cores.grade}" stroke-width="1"/>`).join('')}
+      <polygon points="${dados}" fill="${cores.area}" stroke="${cores.linha}" stroke-width="1.6" stroke-linejoin="round"/>
+      ${ordem.map((k, i) => { const [x, y] = pt(i, valor(k)); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${cores.linha}"/>`; }).join('')}
+      ${rot}</svg>`;
+  }
+
+  let ultimoResultado = null;
+  async function finalizar(){
+    const res = pontuar(); const lista = res.areas; ultimoResultado = res; guardarEntrega(res);
+    try{ sessionStorage.removeItem('lv_voc_progresso'); }catch(e){}
+    const top = AREAS[lista[0].k], seg = AREAS[lista[1].k], ter = AREAS[lista[2].k];
+    const primeiro = dados.nome.split(' ')[0];
+    const h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k], h3 = RIASEC[res.holland[2].k];
+    const textoShare = `Fiz o Teste Vocacional da La Vie: meu perfil é ${h1.nome} e ${h2.nome}, e a área com mais a minha cara é ${top.nome}. Descubra a sua em 7 minutos: ${SITE}/vocacional/`;
+    const el = document.getElementById('telaResultado');
+    const selo = `<div class="selo"><b>${res.codigo}</b><small>Código Holland</small></div>`;
+    const topo = res.fraco
+      ? `<div class="res-topo"><div class="selo-wrap">${selo}
+          <div><span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
+          <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2></div></div>
+          <p class="resumo">Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso, e o Teste DISC completa o quadro.</p>
+        </div>`
+      : `<div class="res-topo"><div class="selo-wrap">${selo}
+          <div><span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
+          <h2>${esc(top.nome)}</h2>
+          <div class="pct">${lista[0].pct}% de afinidade · perfil ${esc(h1.nome)} e ${esc(h2.nome)}</div></div></div>
+          <p class="resumo">${esc(top.resumo)}</p>
+        </div>`;
+    const cta = res.fraco ? `
+      <div class="cta">
+        <h3>Entre no banco de talentos mesmo assim</h3>
+        <p>Cadastre seu currículo em "Outras áreas". A La Vie olha cada currículo, e logo depois do cadastro você faz o Teste DISC, que mostra como você se comporta no trabalho e ajuda a te indicar para a vaga certa, em qualquer área.</p>
+        <a class="btn btn-primary" href="${linkBanco(AREAS.out)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em Outras áreas →</a>
+        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se preferir a área mais próxima: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a>.</p>
+      </div>` : `
+      <div class="cta">
+        <h3>Entre no banco de talentos da La Vie</h3>
+        <p>Cadastre seu currículo na área de ${esc(top.banco)}. Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato. Seus dados já vão preenchidos e, depois do cadastro, você faz o Teste DISC para completar o seu perfil.</p>
+        <a class="btn btn-primary" href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em ${esc(top.banco)} →</a>
+        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Prefere outra área? <a href="${linkBanco(seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(seg.banco)}</a> ou <a href="${linkBanco(ter)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(ter.banco)}</a>.</p>
+      </div>`;
+    el.innerHTML = topo + `
+      ${res.fraco ? '' : `<div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>`}
+      ${cta}
+      <div class="res-bloco"><h3>Seu perfil de interesses (Holland, estimado)</h3>
+        <div class="radar-wrap">${radarSVG(res.holland)}
+          <div class="radar-legenda">${res.holland.map((x, i) => `<div><div><b>${esc(RIASEC[x.k].nome)}</b>${i < 3 ? `<small>${esc(RIASEC[x.k].resumo)}</small>` : ''}</div><span>${x.pct}%</span></div>`).join('')}</div>
+        </div></div>
+      ${res.fraco ? '' : `
+      <div class="res-bloco"><h3>Para se destacar nessa área</h3><p>${esc(top.dica)}</p></div>
+      <div class="res-bloco"><h3>Também têm a sua cara</h3>
+        <div class="secund">
+          <div><b>${esc(seg.nome)}</b><small>${lista[1].pct}% de afinidade. ${esc(seg.resumo.split('.')[0])}.</small></div>
+          <div><b>${esc(ter.nome)}</b><small>${lista[2].pct}% de afinidade. ${esc(ter.resumo.split('.')[0])}.</small></div>
+        </div></div>`}
+      <div class="res-bloco"><h3>Afinidade com as áreas em que a La Vie recruta</h3>
+        <div class="barras">${lista.map((x, i) => `<div class="barra ${i === 0 && !res.fraco ? 'top' : ''}"><span class="nome">${esc(AREAS[x.k].nome)}</span><span class="trilho"><i style="width:${Math.max(x.pct, 3)}%"></i></span><span class="num">${x.pct}%</span></div>`).join('')}</div></div>
+      <div class="compartilhar">
+        <p>Conhece alguém que está em dúvida sobre a própria área? Compartilhe o seu resultado.</p>
+        <div class="acoes">
+          <button type="button" class="btn btn-img" id="btnImagem">Baixar minha imagem para os stories</button>
+          <a class="btn btn-whats" href="https://wa.me/?text=${encodeURIComponent(textoShare)}" target="_blank" rel="noopener noreferrer">Compartilhar no WhatsApp</a>
+          <button type="button" class="btn btn-ghost" id="btnCopiar">Copiar link do teste</button>
+        </div>
+      </div>
+      <p class="orientativo">Este resultado mostra seus interesses neste momento e serve como ponto de partida, não como veredito. Para uma orientação completa, converse com um psicólogo ou orientador de carreira.</p>
+      <p id="avisoGravar" class="msg-erro" style="margin-top:1.2rem;">Seu resultado apareceu, mas não conseguimos guardá-lo. Se quiser, mande uma captura de tela para a La Vie pelo WhatsApp (62) 99274-1488.</p>`;
+    document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
+    document.getElementById('progress').classList.add('hidden');
+    document.body.classList.add('resultado');
+    el.classList.add('ativa');
+    document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
+    document.getElementById('btnCopiar').addEventListener('click', async function(){
+      const b = this;
+      try{ await navigator.clipboard.writeText(`${SITE}/vocacional/`); b.textContent = 'Link copiado'; }
+      catch(e){ b.textContent = `${SITE}/vocacional/`; }
+      setTimeout(() => { b.textContent = 'Copiar link do teste'; }, 2500);
+    });
+    document.getElementById('btnImagem').addEventListener('click', async function(){
+      const b = this; b.disabled = true; const r = b.textContent; b.textContent = 'Gerando imagem…';
+      try{ await baixarImagem(res); }catch(e){ b.textContent = 'Não deu para gerar a imagem'; setTimeout(() => { b.textContent = r; }, 2500); b.disabled = false; return; }
+      b.textContent = r; b.disabled = false;
+    });
+    const ok = await gravar(res);
+    if (NO_AR && !ok) document.getElementById('avisoGravar').classList.add('show');
+  }
+
+  // Imagem 1080x1920 para stories, na paleta da marca (creme, bege, taupe, grafite)
+  async function baixarImagem(res){
+    const W = 1080, H = 1920;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+    try{ await document.fonts.load('400 60px "Cormorant Garamond"'); await document.fonts.load('500 30px "DM Sans"'); await document.fonts.load('300 30px "DM Sans"'); }catch(e){}
+    const SERIF = '"Cormorant Garamond", Georgia, serif', SANS = '"DM Sans", Arial, sans-serif';
+    g.fillStyle = '#F2F1ED'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#E8E4DE'; g.fillRect(0, 0, W, 560);
+    const top = AREAS[res.areas[0].k], h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k];
+    const centro = (txt, y, font, cor, esp = 0) => { g.font = font; g.fillStyle = cor; g.textAlign = 'center'; if (esp){ g.letterSpacing = esp + 'px'; } g.fillText(txt, W / 2, y); g.letterSpacing = '0px'; };
+    // logo
+    const logo = document.querySelector('.logo');
+    if (logo && logo.complete && logo.naturalWidth){ const lh = 190, lw = lh * logo.naturalWidth / logo.naturalHeight; g.drawImage(logo, (W - lw) / 2, 110, lw, lh); }
+    centro('TESTE VOCACIONAL', 380, `500 26px ${SANS}`, '#8C8377', 7);
+    centro('A área com mais a minha cara é', 470, `300 40px ${SERIF}`, '#3A3A3A');
+    // selo
+    const cx = W / 2, cy = 760;
+    g.beginPath(); g.arc(cx, cy, 150, 0, Math.PI * 2); g.fillStyle = '#F2F1ED'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#B8AFA4'; g.stroke();
+    g.beginPath(); g.arc(cx, cy, 136, 0, Math.PI * 2); g.lineWidth = 1.5; g.strokeStyle = '#D8CFC4'; g.stroke();
+    centro(res.codigo, cy + 26, `500 112px ${SERIF}`, '#1a1917', 8);
+    centro('CÓDIGO HOLLAND', cy + 74, `500 18px ${SANS}`, '#8C8377', 5);
+    // área
+    const areaTxt = res.fraco ? `${h1.nome} e ${h2.nome}` : top.nome;
+    let fs = 92; g.font = `300 ${fs}px ${SERIF}`; while (g.measureText(areaTxt).width > W - 140 && fs > 50){ fs -= 4; g.font = `300 ${fs}px ${SERIF}`; }
+    centro(areaTxt, 1050, `300 ${fs}px ${SERIF}`, '#1a1917');
+    centro(res.fraco ? 'meu perfil de interesses' : `${res.areas[0].pct}% de afinidade · perfil ${h1.nome} e ${h2.nome}`, 1115, `italic 400 34px ${SERIF}`, '#8C8377');
+    // radar
+    const svg = radarSVG(res.holland, 620, { linha:'#3A3A3A', area:'rgba(140,131,119,0.35)', grade:'#D8CFC4', texto:'#6F6B64' });
+    const img = new Image();
+    await new Promise((ok, erro) => { img.onload = ok; img.onerror = erro; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="617" ')); });
+    g.drawImage(img, (W - 1000) / 2, 1160, 1000, 617);
+    // rodapé
+    g.fillStyle = '#3A3A3A'; g.fillRect(0, H - 150, W, 150);
+    centro('Descubra a sua área em 7 minutos', H - 92, `300 32px ${SANS}`, '#F2F1ED');
+    centro('lavieconsultoria.com/vocacional', H - 46, `500 30px ${SANS}`, '#F2F1ED', 2);
+    const blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `teste-vocacional-la-vie-${res.codigo.toLowerCase()}.png`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  // Prévia fora do domínio: nada é gravado
+  document.getElementById('previa').classList.toggle('hidden', NO_AR);
+  retomarProgresso();
+    window.__voc = { AREAS, AFIRMACOES, RIASEC, pontuar, dados };
+</script>
+</body>
+</html>
