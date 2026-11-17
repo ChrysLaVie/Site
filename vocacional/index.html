@@ -397,7 +397,7 @@
       funcoes:['Assistente administrativo','Auxiliar administrativo','Secretária executiva','Analista administrativo','Assistente de compras'],
       dica:'No currículo, mostre resultados de organização: processos que você criou, controles que montou, prazos que passou a cumprir.' },
     com: { nome:'Comercial e Vendas', banco:'Comercial e Vendas',
-      resumo:'Você gosta de gente, de meta e de negociação. Um não não te derruba, e convencer alguém de uma boa ideia te dá energia. Empresas vivem de quem vende bem.',
+      resumo:'Você gosta de gente, de meta e de negociação. Um "não" não te derruba, e convencer alguém de uma boa ideia te dá energia. Empresas vivem de quem vende bem.',
       funcoes:['Consultor de vendas','Vendedor interno ou externo','Executivo de contas','Captação e televendas','Representante comercial'],
       dica:'Coloque números no currículo: quanto vendeu, quanto cresceu a carteira, qual meta bateu. Em vendas, resultado fala mais que descrição de tarefa.' },
     rh:  { nome:'Recursos Humanos e DP', banco:'Recursos Humanos e DP',
@@ -427,12 +427,12 @@
   };
   // Tipos de interesse de Holland (RIASEC), base teórica do teste
   const RIASEC = {
-    R: { nome:'Realista',      resumo:'prefere o concreto: fazer, operar, consertar, mover' },
-    I: { nome:'Investigativo', resumo:'gosta de analisar, entender a causa e decidir com dados' },
-    A: { nome:'Artístico',     resumo:'cria, comunica e busca formas novas de apresentar as coisas' },
-    S: { nome:'Social',        resumo:'ensina, ajuda, cuida e se realiza no contato com pessoas' },
-    E: { nome:'Empreendedor',  resumo:'convence, lidera, negocia e gosta de meta' },
-    C: { nome:'Convencional',  resumo:'organiza, confere, segue método e mantém tudo em ordem' }
+    R: { nome:'Realista',      resumo:'prefere o concreto: fazer, operar, consertar, mover.' },
+    I: { nome:'Investigativo', resumo:'gosta de analisar, entender a causa e decidir com dados.' },
+    A: { nome:'Artístico',     resumo:'cria, comunica e busca formas novas de apresentar as coisas.' },
+    S: { nome:'Social',        resumo:'ensina, ajuda, cuida e se realiza no contato com pessoas.' },
+    E: { nome:'Empreendedor',  resumo:'convence, lidera, negocia e gosta de meta.' },
+    C: { nome:'Convencional',  resumo:'organiza, confere, segue método e mantém tudo em ordem.' }
   };
   // 54 afirmações: 6 por área, cada uma com o tipo de Holland que ela mede.
   // Frases de atividade, sem nomear a área, em rodízio para cada tela misturar áreas.
@@ -444,10 +444,10 @@
     ['mkt','A','Tenho ideias de posts, campanhas ou jeitos criativos de apresentar algo.'],
     ['edu','S','Explico uma coisa de várias formas até a outra pessoa entender de verdade.'],
     ['ate','S','Recebo quem chega com atenção e me preocupo em deixar a pessoa à vontade.'],
-    ['log','R','Prefiro um trabalho com movimento a passar o dia inteiro sentado no mesmo lugar.'],
-    ['adm','C','Fico tranquilo seguindo um passo a passo definido, sem precisar inventar o caminho.'],
+    ['log','R','Prefiro um trabalho com movimento a passar o dia inteiro no mesmo lugar.'],
+    ['adm','C','Fico em paz seguindo um passo a passo definido, sem precisar inventar o caminho.'],
     ['com','E','Metas me animam mais do que me assustam.'],
-    ['rh','S','Me interesso em entender o que motiva cada pessoa de uma equipe.'],
+    ['rh','S','Tenho interesse em entender o que motiva cada pessoa de uma equipe.'],
     ['fin','C','Controlar gastos e acompanhar o que entra e o que sai é algo que faço com naturalidade.'],
     ['mkt','A','Escrever um texto, criar uma arte ou gravar um vídeo me dá prazer.'],
     ['edu','S','Tenho paciência para repetir e acompanhar o ritmo de quem está aprendendo.'],
@@ -458,17 +458,17 @@
     ['rh','C','Lido bem com regras, documentos e prazos que envolvem pessoas.'],
     ['fin','I','Prefiro decidir olhando os números a decidir por impressão.'],
     ['mkt','A','Percebo rápido o que chama a atenção das pessoas e o que passa despercebido.'],
-    ['edu','S','Me sinto realizado quando alguém aprende algo por minha causa.'],
+    ['edu','S','Sinto realização quando alguém aprende algo por minha causa.'],
     ['ate','E','Gosto de resolver o problema de alguém na hora, sem empurrar para frente.'],
     ['log','C','Cumpro horários e prazos combinados sem precisar de cobrança.'],
     ['adm','S','Gosto de dar suporte para a equipe funcionar bem, mesmo sem aparecer.'],
-    ['com','E','Um não não me derruba: tento de novo por outro caminho.'],
+    ['com','E','Um "não" não me derruba: tento de novo por outro caminho.'],
     ['rh','S','Gosto de acompanhar o crescimento de alguém do começo ao fim.'],
     ['fin','C','Um erro pequeno numa planilha ou relatório me incomoda até eu corrigir.'],
     ['mkt','I','Acompanho tendências de redes sociais e de marcas.'],
     ['edu','A','Gosto de preparar aulas, treinamentos ou materiais de estudo.'],
     ['ate','S','Reparo em detalhes de cordialidade: chamar pelo nome, cumprimentar, tom de voz.'],
-    ['log','R','Me sinto bem sendo responsável por um veículo, uma carga ou um material.'],
+    ['log','R','Gosto de ser a pessoa responsável por um veículo, uma carga ou um material.'],
     ['adm','C','Gosto de organizar arquivos, agendas e informações de um jeito que qualquer um ache.'],
     ['com','E','Negociar preço, prazo ou condição até fechar um acordo é algo que me dá energia.'],
     ['rh','I','Gosto de entrevistar pessoas e perceber o que está por trás do que elas dizem.'],
@@ -482,7 +482,7 @@
     ['rh','E','Gosto de organizar treinamentos, integrações ou eventos para a equipe.'],
     ['fin','C','Gosto de fechar o mês com tudo conciliado e sem pendência.'],
     ['mkt','A','Reparo em cores, fontes e no visual das coisas antes da maioria das pessoas.'],
-    ['edu','E','Me sinto à vontade falando para um grupo.'],
+    ['edu','E','Fico à vontade falando para um grupo.'],
     ['ate','A','Gosto de encontrar um jeito agradável de dar uma notícia difícil.'],
     ['log','I','Gosto de planejar a melhor sequência de uma operação para ganhar tempo.'],
     [null,'R','Gosto de consertar, montar ou mexer em coisas com as próprias mãos.'],
@@ -490,7 +490,7 @@
     [null,'R','Prefiro resolver um problema na prática a discutir sobre ele.'],
     [null,'I','Gosto de pesquisar a fundo antes de formar opinião.'],
     [null,'A','Música, imagem, texto ou design fazem parte do meu dia de algum jeito.'],
-    [null,'R','Me sinto bem ao ar livre ou em ambientes de produção, longe de escritório.']
+    [null,'R','Fico bem ao ar livre ou em ambientes de produção, longe do escritório.']
   ];
   const ROTULOS = ['Nada a ver','Pouco a ver','Mais ou menos','Bastante','Tudo a ver'];
   const POR_TELA = 9; // 6 telas de 9 afirmações (antes eram 9 telas de 6; pedido de um testador em 16/11)
@@ -787,14 +787,14 @@
     const selo = `<div class="selo"><b>${res.codigo}</b><small>Código Holland</small></div>`;
     const topo = res.fraco
       ? `<div class="res-topo"><div class="selo-wrap">${selo}
-          <div><span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
+          <div><span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é:</span>
           <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2></div></div>
           <p class="resumo">${res.plano
             ? `Suas respostas ficaram parecidas em todas as oito áreas, então nenhuma se destacou. Isso acontece quando a pessoa se vê em quase tudo, e aí o teste não consegue apontar uma direção. Se quiser, refaça com mais calma, marcando 5 só no que é mesmo a sua cara. O perfil de interesses abaixo já ajuda a pensar nisso.`
             : `Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso.`}</p>
         </div>`
       : `<div class="res-topo"><div class="selo-wrap">${selo}
-          <div><span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
+          <div><span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é:</span>
           <h2>${esc(top.nome)}</h2>
           <div class="pct">${lista[0].pct}% de afinidade · perfil ${esc(h1.nome)} e ${esc(h2.nome)}</div></div></div>
           <p class="resumo">${esc(top.resumo)}</p>
