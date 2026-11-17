@@ -75,6 +75,7 @@
   body.andamento .hero .eyebrow{margin-bottom:0}
 
   .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2.2rem}
+  .aviso-retomar{background:var(--bg-alt);border-left:2px solid var(--accent);padding:0.9rem 1.1rem;font-size:0.88rem;font-weight:400;color:var(--charcoal);margin-bottom:1.2rem;border-radius:0 var(--radius) var(--radius) 0}
   .card-head{display:flex;align-items:baseline;gap:1rem;margin:-2.2rem -2.2rem 1.5rem;padding:1rem 2.2rem;background:var(--bg-alt);border-bottom:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0}
   .card-head b{font-family:var(--serif);font-weight:300;font-size:1.6rem;color:var(--accent);line-height:1}
   .card-head span{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;color:var(--charcoal)}
@@ -297,12 +298,13 @@
       <div class="fato"><b>8</b><span>áreas da La Vie</span></div>
       <div class="fato"><b>na hora</b><span>resultado</span></div>
     </div>
-    <p class="base">Baseado na teoria de interesses profissionais de John Holland (RIASEC), a mesma usada pelo O*NET Interest Profiler. O resultado é um ponto de partida, não um veredito.</p>
+    <p class="base">Teste próprio da La Vie, baseado na teoria de interesses profissionais de John Holland (RIASEC), a mesma usada em instrumentos de orientação de carreira reconhecidos no mundo todo. O resultado é um ponto de partida, não um veredito.</p>
   </div>
   <div class="selo-hero" aria-hidden="true"><b>RIASEC</b><small>Modelo de Holland</small></div>
 </div></header>
 
 <main class="wrap">
+  <div class="aviso-retomar hidden" id="avisoRetomar" role="status"></div>
   <div class="previa hidden" id="previa">Prévia para aprovação. Nesta versão o resultado não é gravado.</div>
 
   <div class="progress hidden" id="progress">
@@ -366,7 +368,7 @@
       <details><summary>O teste é gratuito?</summary><p>Sim, sem custo e sem conteúdo escondido atrás de pagamento.</p></details>
       <details><summary>Preciso me cadastrar?</summary><p>Pedimos nome, e-mail e WhatsApp antes de começar, para guardar o seu resultado e poder avisar quando surgir uma vaga na sua área. Os dados seguem a nossa <a href="/politica-de-privacidade">Política de Privacidade</a>.</p></details>
       <details><summary>O resultado substitui uma orientação profissional?</summary><p>Não. Ele mostra seus interesses neste momento e serve como ponto de partida. Para uma orientação completa, procure um psicólogo ou orientador de carreira.</p></details>
-      <details><summary>Qual a diferença para o Teste DISC?</summary><p>O Teste Vocacional indica a área com mais a ver com os seus interesses. O <a href="/disc/">Teste DISC</a> mostra como você se comporta no trabalho. Os dois juntos formam o seu perfil no banco de talentos da La Vie.</p></details>
+      <details><summary>Qual a diferença para o Teste DISC?</summary><p>O Teste Vocacional indica a área com mais a ver com os seus interesses e é aberto a qualquer pessoa. O Teste DISC mostra como você se comporta no trabalho e é aplicado pela La Vie durante os processos seletivos, quando você se candidata a uma vaga.</p></details>
       <details><summary>Posso refazer o teste?</summary><p>Pode. Interesses mudam com o tempo e com a experiência; vale refazer depois de alguns meses.</p></details>
       <details><summary>Sou empresa e quero usar o teste na minha equipe</summary><p>A La Vie aplica avaliações de perfil em processos seletivos e em projetos de gestão de pessoas. <a href="/empresas/?servico=liderancas">Fale com a gente</a>.</p></details>
     </div>
@@ -375,7 +377,7 @@
 
 <footer class="rodape"><div class="wrap">
   <img class="logo" src="/logo.png" alt="La Vie Consultoria">
-  <nav><a href="/">Site</a><a href="/vagas/">Vagas</a><a href="/disc/">Teste DISC</a><a href="/empresas/">Para empresas</a><a href="/politica-de-privacidade">Privacidade</a></nav>
+  <nav><a href="/">Site</a><a href="/vagas/">Vagas</a><a href="/empresas/">Para empresas</a><a href="/politica-de-privacidade">Privacidade</a></nav>
   <small>La Vie Consultoria · Gestão Empresarial Integrada · Goiânia</small>
 </div></footer>
 
@@ -423,7 +425,7 @@
       funcoes:['Motorista','Auxiliar de logística','Conferente e estoquista','Analista de logística','Operador de expedição'],
       dica:'Informe CNH e categoria, cursos como MOPP e experiência com rotas, cargas ou controle de estoque. Para motorista, histórico limpo é diferencial.' }
   };
-  // Tipos de interesse de Holland (RIASEC), base do O*NET Interest Profiler
+  // Tipos de interesse de Holland (RIASEC), base teórica do teste
   const RIASEC = {
     R: { nome:'Realista',      resumo:'prefere o concreto: fazer, operar, consertar, mover' },
     I: { nome:'Investigativo', resumo:'gosta de analisar, entender a causa e decidir com dados' },
@@ -528,13 +530,62 @@
     }catch(e){}
   }
   function salvarProgresso(){
-    try{ sessionStorage.setItem(CHAVE_PROG, JSON.stringify({ dados, atual, resp: respostas(), t: Date.now() })); }catch(e){}
+    try{ sessionStorage.setItem(CHAVE_PROG, JSON.stringify({ dados, atual, resp: respostas(), token: parcialToken, t: Date.now() })); }catch(e){}
   }
+  // Quem começa fica salvo no servidor como incompleto (recebe convite para terminar se parar 2 h).
+  // Cada tela concluída atualiza as respostas; o resultado gravado fecha a parcial sozinho (gatilho no banco).
+  let parcialToken = null;
+  const cabecalhoRpc = { apikey:SB_KEY, Authorization:`Bearer ${SB_KEY}`, 'Content-Type':'application/json' };
+  async function iniciarParcial(){
+    if (!NO_AR || parcialToken) return;
+    try{
+      const q = new URLSearchParams(location.search);
+      const r = await fetch(`${SB_URL}/rest/v1/rpc/lv_vocacional_parcial_iniciar`, { method:'POST', headers:cabecalhoRpc,
+        body: JSON.stringify({ p_nome: dados.nome, p_email: dados.email, p_whats: dados.whats || null, p_momento: dados.momento || null,
+          p_origem: (q.get('utm_source') || q.get('origem') || (document.referrer ? new URL(document.referrer).hostname : '') || 'direto').slice(0, 120),
+          p_dispositivo: /Mobi|Android/i.test(navigator.userAgent) ? 'celular' : 'computador' }) });
+      if (r.ok){ const tok = await r.json(); if (typeof tok === 'string' && /^[0-9a-f-]{36}$/i.test(tok)){ parcialToken = tok; salvarProgresso(); } }
+    }catch(e){}
+  }
+  function salvarParcial(telaConcluidas, keepalive){
+    if (!NO_AR || !parcialToken) return;
+    try{
+      fetch(`${SB_URL}/rest/v1/rpc/lv_vocacional_parcial_salvar`, { method:'POST', headers:cabecalhoRpc, keepalive: !!keepalive,
+        body: JSON.stringify({ p_token: parcialToken, p_respostas: respostas(), p_tela: telaConcluidas }) }).catch(() => {});
+    }catch(e){}
+  }
+  // Link do e-mail de convite: ?retomar=<token> abre o teste de onde a pessoa parou (o token sai da URL em seguida)
+  async function retomarPeloLink(){
+    const q = new URLSearchParams(location.search); const tok = q.get('retomar');
+    if (!tok) return false;
+    try{ history.replaceState(null, '', location.pathname + (q.get('utm_source') ? '?utm_source=' + encodeURIComponent(q.get('utm_source')) : '')); }catch(e){}
+    if (!NO_AR || !/^[0-9a-f-]{36}$/i.test(tok)) return false;
+    try{
+      const r = await fetch(`${SB_URL}/rest/v1/rpc/lv_vocacional_parcial_ler`, { method:'POST', headers:cabecalhoRpc, body: JSON.stringify({ p_token: tok }) });
+      if (!r.ok) return false;
+      const p = await r.json();
+      if (!p || !p.email){ avisoRetomar('Este link já foi usado ou o teste foi concluído. Você pode começar de novo abaixo.'); return false; }
+      parcialToken = tok;
+      Object.assign(dados, { nome: p.nome || '', email: p.email, whats: p.whatsapp || '', momento: p.momento || '' });
+      document.getElementById('f-nome').value = dados.nome; document.getElementById('f-email').value = dados.email; document.getElementById('f-whats').value = dados.whats; document.getElementById('f-lgpd').checked = true;
+      const m = Array.from(document.querySelectorAll('input[name=momento]')).find(i => i.value === dados.momento); if (m) m.checked = true;
+      (p.respostas || []).forEach((v, i) => { if (v) { const el = document.getElementById(`q${i}-${v}`); if (el) el.checked = true; } });
+      const resp = respostas(); let primeira = resp.findIndex(v => !v); if (primeira < 0) primeira = AFIRMACOES.length - 1;
+      mostrar(Math.min(Math.floor(primeira / POR_TELA), nTelas - 1), false);
+      avisoRetomar(`Bem-vindo de volta, ${esc(dados.nome.split(' ')[0] || '')}. Suas respostas foram recuperadas: continue de onde parou.`);
+      return true;
+    }catch(e){ return false; }
+  }
+  function avisoRetomar(txt){
+    const el = document.getElementById('avisoRetomar'); if (!el) return;
+    el.innerHTML = txt; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 12000);
+  }
+  window.addEventListener('pagehide', () => { if (atual >= 0) salvarParcial(atual, true); });
   function retomarProgresso(){
     try{
       const p = JSON.parse(sessionStorage.getItem(CHAVE_PROG) || 'null');
       if (!p || !p.dados || !p.dados.email || Date.now() - p.t > 2 * 3600 * 1000) return false;
-      Object.assign(dados, p.dados);
+      Object.assign(dados, p.dados); if (p.token) parcialToken = p.token;
       document.getElementById('f-nome').value = dados.nome; document.getElementById('f-email').value = dados.email; document.getElementById('f-whats').value = dados.whats; document.getElementById('f-lgpd').checked = true;
       const m = Array.from(document.querySelectorAll('input[name=momento]')).find(i => i.value === dados.momento); if (m) m.checked = true;
       (p.resp || []).forEach((v, i) => { if (v) { const el = document.getElementById(`q${i}-${v}`); if (el) el.checked = true; } });
@@ -559,7 +610,7 @@
       document.getElementById('barFill').style.width = `${(fim / AFIRMACOES.length) * 100}%`;
     }
     if (rolar) document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
-    if (t >= 0){ salvarProgresso(); marcarSessao(t + 1, false); }
+    if (t >= 0){ salvarProgresso(); marcarSessao(t + 1, false); if (t > 0) salvarParcial(t); }
   }
 
   document.getElementById('btnComecar').addEventListener('click', () => {
@@ -574,6 +625,7 @@
     document.getElementById('msgDados').classList.toggle('show', !ok);
     if (!ok) return;
     dados.nome = nome.value.trim(); dados.email = email.value.trim().toLowerCase(); dados.whats = whats.value.trim(); dados.momento = mom.value;
+    iniciarParcial();
     mostrar(0);
   });
   document.querySelectorAll('#telaDados input').forEach(el => el.addEventListener(el.type === 'radio' ? 'change' : 'input', () => { const g = el.closest('.group-invalid'); if (g) g.classList.remove('group-invalid'); el.classList.remove('invalid'); document.getElementById('lgpdBox').classList.remove('invalid-box'); }));
@@ -738,8 +790,8 @@
           <div><span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
           <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2></div></div>
           <p class="resumo">${res.plano
-            ? `Suas respostas ficaram parecidas em todas as oito áreas, então nenhuma se destacou. Isso acontece quando a pessoa se vê em quase tudo, e aí o teste não consegue apontar uma direção. Se quiser, refaça com mais calma, marcando 5 só no que é mesmo a sua cara. O perfil de interesses abaixo já ajuda, e o Teste DISC completa o quadro.`
-            : `Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso, e o Teste DISC completa o quadro.`}</p>
+            ? `Suas respostas ficaram parecidas em todas as oito áreas, então nenhuma se destacou. Isso acontece quando a pessoa se vê em quase tudo, e aí o teste não consegue apontar uma direção. Se quiser, refaça com mais calma, marcando 5 só no que é mesmo a sua cara. O perfil de interesses abaixo já ajuda a pensar nisso.`
+            : `Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso.`}</p>
         </div>`
       : `<div class="res-topo"><div class="selo-wrap">${selo}
           <div><span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
@@ -750,13 +802,13 @@
     const cta = res.fraco ? `
       <div class="cta">
         <h3>Entre no banco de talentos mesmo assim</h3>
-        <p>Cadastre seu currículo em "Outras áreas". A La Vie olha cada currículo, e logo depois do cadastro você faz o Teste DISC, que mostra como você se comporta no trabalho e ajuda a te indicar para a vaga certa, em qualquer área.</p>
+        <p>Cadastre seu currículo em "Outras áreas". A La Vie olha cada currículo e, quando surgir uma vaga com o seu perfil, entramos em contato. Seus dados já vão preenchidos; leva um minuto.</p>
         <a class="btn btn-primary" href="${linkBanco(AREAS.out)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em Outras áreas →</a>
         <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se preferir a área mais próxima: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a>.</p>
       </div>` : `
       <div class="cta">
         <h3>Entre no banco de talentos da La Vie</h3>
-        <p>Cadastre seu currículo na área de ${esc(top.banco)}. Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato. Seus dados já vão preenchidos e, depois do cadastro, você faz o Teste DISC para completar o seu perfil.</p>
+        <p>Cadastre seu currículo na área de ${esc(top.banco)}. Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato. Seus dados já vão preenchidos; leva um minuto.</p>
         <a class="btn btn-primary" href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em ${esc(top.banco)} →</a>
         <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Prefere outra área? <a href="${linkBanco(seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(seg.banco)}</a> ou <a href="${linkBanco(ter)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(ter.banco)}</a>.</p>
       </div>`;
@@ -866,7 +918,7 @@
 
   // Prévia fora do domínio: nada é gravado
   document.getElementById('previa').classList.toggle('hidden', NO_AR);
-  retomarProgresso();
+  retomarPeloLink().then(ok => { if (!ok) retomarProgresso(); });
     window.__voc = { AREAS, AFIRMACOES, RIASEC, pontuar, dados };
 </script>
 </body>

@@ -1157,7 +1157,13 @@ function openApplyModal(vaga) {
     document.getElementById('formError').style.display = 'none';
     const tituloEnvio = ehBanco ? `Banco de Talentos · ${areaSel.value}` : vaga.title;
     const result = await saveCandidatura({ nome:nome.value.trim(), email:email.value.trim(), whatsapp:whatsapp.value.trim(), vaga_id:vaga.id, vaga_titulo:tituloEnvio, files:selectedFiles, origem: origemSel ? origemSel.value : '' });
-    if (result.ok && ehBanco) {
+    if (result.ok && ehBanco && origemSel && origemSel.value === 'vocacional') {
+      // Quem veio do Teste Vocacional ainda não é candidato: recebe o currículo e para por aqui, sem DISC (Chrys, 17/11/2026)
+      document.getElementById('modalContent').innerHTML = `
+        <div class="success-box"><h3>Currículo recebido</h3><p>Seu currículo entrou no banco de talentos da La Vie, na área de <strong>${esc(areaSel.value)}</strong>.<br>Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato por e-mail ou WhatsApp.</p></div>
+        <button type="button" class="btn-primary" id="fecharOk" style="width:100%;margin-top:1rem;">Ver as vagas abertas</button>`;
+      document.getElementById('fecharOk').addEventListener('click', closeModal);
+    } else if (result.ok && ehBanco) {
       const discParams = new URLSearchParams({ nome: nome.value.trim(), email: email.value.trim(), telefone: whatsapp.value.trim(), vaga: tituloEnvio });
       document.getElementById('modalContent').innerHTML = `
         <div class="success-box"><h3>Currículo recebido</h3><p>Seu currículo entrou no banco de talentos da La Vie, na área de <strong>${esc(areaSel.value)}</strong>.<br>Para aumentar suas chances, faça também o Teste DISC: ele ajuda a encontrar a vaga certa para o seu perfil.</p></div>
