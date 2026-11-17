@@ -159,6 +159,13 @@ header {
 .ag-ev.cancelada{ opacity:.5; text-decoration:line-through; }
 .ag-ev.realizada{ opacity:.7; }
 .ag-ev.nao_compareceu{ opacity:.75; border-left:3px solid var(--amber); }
+/* Resultado do compromisso (17/11/2026): faltou em amarelo, aprovado em verde, reprovado em vermelho, em tons claros da paleta La Vie. */
+.ag-ev.res-faltou{ background:#FAF0CC; border-left-color:#D8B24A; color:#6F5410; opacity:1; }
+.ag-ev.res-aprovado{ background:#E3F0E4; border-left-color:#4E8F68; color:#245A3D; opacity:1; }
+.ag-ev.res-reprovado{ background:#F6E1DC; border-left-color:#C4614E; color:#8C3323; opacity:1; }
+.ag-lista-item.res-faltou{ background:#FAF0CC; box-shadow:inset 4px 0 0 #D8B24A; }
+.ag-lista-item.res-aprovado{ background:#E3F0E4; box-shadow:inset 4px 0 0 #4E8F68; }
+.ag-lista-item.res-reprovado{ background:#F6E1DC; box-shadow:inset 4px 0 0 #C4614E; }
 .ag-ev.outra{ background:#EAE6F3; border-left-color:#6A5ACD; color:#4A3F86; cursor:help; }
 .ag-ev.choque{ box-shadow:inset 0 0 0 1.5px #B4412F; }
 .ag-legenda{ display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--mid); margin-top:8px; }
@@ -1682,7 +1689,8 @@ function renderAgenda(){
       }
       const cls=e.status==='cancelada'?'cancelada':(e.status==='realizada'?'realizada':(e.status==='nao_compareceu'?'nao_compareceu':''));
       const choque=_agAtivo(e) && outras.some(o=>_agSobrepoe(e,o));
-      return `<div class="ag-ev ${e.tipo||'online'} ${cls}${choque?' choque':''}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${(e.titulo||'').replace(/"/g,'')}${choque?' (choque de horário com outra empresa)':''}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
+      const res=_agResultado(e);
+      return `<div class="ag-ev ${e.tipo||'online'} ${cls}${res?' res-'+res:''}${choque?' choque':''}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${(e.titulo||'').replace(/"/g,'')}${res?' · '+AG_RES_LABEL[res]:''}${choque?' (choque de horário com outra empresa)':''}">${hora}${escapeHtmlAg(e.candidato||e.titulo||'')}</div>`;
     }).join('');
     if(evs.length>3) evHtml+=`<div style="font-size:10px;color:var(--mid)">+${evs.length-3} mais</div>`;
     cells+=`<div class="ag-cell ${isToday?'today':''}" onclick="abrirAgendaModal(null,'${dStr}')"><div class="ag-day">${dia}</div>${evHtml}</div>`;
@@ -1691,8 +1699,39 @@ function renderAgenda(){
   const leg=document.getElementById('agenda-legenda');
   if(leg){
     leg.style.display=isClienteExterno()?'none':'flex';
-    leg.innerHTML='<span><i style="background:#2e6b4f"></i>Online</span><span><i style="background:#7A5C2E"></i>Presencial</span><span><i style="background:#6A5ACD"></i>Ocupado em outra empresa</span><span><i style="background:#fff;box-shadow:inset 0 0 0 1.5px #B4412F"></i>Choque de horário</span>';
+    leg.innerHTML='<span><i style="background:#2e6b4f"></i>Online</span><span><i style="background:#7A5C2E"></i>Presencial</span><span><i style="background:#E3F0E4;box-shadow:inset 0 0 0 1px #4E8F68"></i>Aprovado</span><span><i style="background:#F6E1DC;box-shadow:inset 0 0 0 1px #C4614E"></i>Reprovado</span><span><i style="background:#FAF0CC;box-shadow:inset 0 0 0 1px #D8B24A"></i>Não compareceu</span><span><i style="background:#6A5ACD"></i>Ocupado em outra empresa</span><span><i style="background:#fff;box-shadow:inset 0 0 0 1.5px #B4412F"></i>Choque de horário</span>';
   }
+}
+
+// Resultado de um compromisso, para pintar a agenda: 'faltou', 'aprovado', 'reprovado' ou ''.
+// Vale para a entrevista daquele compromisso: quem passou da Entrevista La Vie e
+// foi reprovado só na Final aparece verde na primeira e vermelho na segunda.
+const AG_RES_LABEL={ faltou:'Não compareceu', aprovado:'Aprovado', reprovado:'Reprovado' };
+function _agEtapaAntesDeReprovar(c){
+  const h=(c&&c.historico)||[];
+  for(let i=h.length-1;i>=0;i--){
+    if(h[i] && h[i].etapa==='reprovado' && !h[i].tipo){
+      for(let j=i-1;j>=0;j--){ if(h[j] && h[j].etapa && h[j].etapa!=='reprovado' && !h[j].tipo) return h[j].etapa; }
+      return '';
+    }
+  }
+  return '';
+}
+function _agResultado(e){
+  try{
+    if(!e || e.outra || e.status==='cancelada' || !_agAtivo(e)) return '';
+    const c=e.candidatoId ? getCands().find(x=>x.id===e.candidatoId) : null;
+    const final=_agEhFinal(e);
+    if(e.status==='nao_compareceu' || (c && _faltouEm(c, e.data, final?'final':'lavie'))) return 'faltou';
+    if(!c) return '';
+    const ordem=['triagem','entrevista_rh','entrevista_gestor','vivencia','aprovacao','admissao'];
+    const pos=x=>ordem.indexOf(x);
+    const fase=final?'vivencia':'entrevista_gestor';
+    if(c.etapa==='reprovado'){ const antes=_agEtapaAntesDeReprovar(c); return (antes && pos(antes)>pos(fase)) ? 'aprovado' : 'reprovado'; }
+    const hoje=new Date().toISOString().slice(0,10);
+    if(pos(c.etapa)>pos(fase) && e.data<=hoje) return 'aprovado';
+  }catch(err){}
+  return '';
 }
 
 function renderAgendaLista(){
@@ -1713,13 +1752,14 @@ function renderAgendaLista(){
     </div>`;
     const linkBtn=e.link?`<a href="${e.link}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">🔗 Entrar</a>`:'';
     const gcalBtn=`<a href="${gcalLink(e,'interna')}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm">📅</a>`;
-    const statusTag=e.status&&e.status!=='agendada'?` · ${e.status}`:'';
+    const res=_agResultado(e);
+    const statusTag=res?` · <strong>${AG_RES_LABEL[res]}</strong>`:(e.status&&e.status!=='agendada'?` · ${e.status}`:'');
     const cand=getCands().find(x=>x.id===e.candidatoId)||{};
     const contato=[
       cand.tel?`<span onclick="event.stopPropagation();copiarContato('${cand.tel.replace(/'/g,"")}','Telefone')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">📞 ${escapeHtmlAg(cand.tel)}</span>`:'',
       cand.email?`<span onclick="event.stopPropagation();copiarContato('${cand.email.replace(/'/g,"")}','E-mail')" style="cursor:pointer;border-bottom:1px dotted var(--mid)" title="Clique para copiar">✉ ${escapeHtmlAg(cand.email)}</span>`:''
     ].filter(Boolean).join(' &nbsp;·&nbsp; ');
-    return `<div class="ag-lista-item" onclick="abrirAgendaModal('${e.id}')">
+    return `<div class="ag-lista-item${res?' res-'+res:''}" onclick="abrirAgendaModal('${e.id}')">
       <div class="ag-lista-date"><div class="d">${parseInt(d)}</div><div class="m">${AG_MES_ABREV[parseInt(m)-1]}</div></div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:600">${escapeHtmlAg(e.candidato||e.titulo||'Entrevista')}</div>
