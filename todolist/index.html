@@ -269,7 +269,7 @@ let CODIGO='',QUEM='';
 let ESP=[],HOME=null,OUTROS=[];           /* espaços: o principal e os demais */
 let AREAS=[],AMAP={},BASE_NAMES={};       /* frentes da lateral: [chave,nome,corVar,corBadge] */
 let tasks=[],habits=[],armed=null,view='all',pollT=null,loaded=false;
-let areaOrder=null,areaNames={},dragging=false,pendingRender=false,showAll={};
+let areaOrder=null,areaNames={},taskOrder={},dragging=false,pendingRender=false,showAll={};
 try{CODIGO=localStorage.getItem(CODLS)||''}catch(e){}
 try{view=localStorage.getItem('todoView')||'all'}catch(e){}
 
@@ -289,6 +289,7 @@ function aplicar(d){
   const cfg=HOME.config||{};
   areaOrder=Array.isArray(cfg.areas)?cfg.areas:null;
   areaNames=(cfg.names&&typeof cfg.names==='object')?cfg.names:{};
+  taskOrder=(cfg.ordem&&typeof cfg.ordem==='object')?cfg.ordem:{};
   AREAS=(HOME.frentes||[]).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
     .concat(OUTROS.map(e=>['@'+e.id,e.rotulo||e.nome,'--green','bg']));
   BASE_NAMES=Object.fromEntries(AREAS.map(a=>[a[0],a[1]]));
@@ -328,6 +329,9 @@ function dueInfo(s){const d=parse(s);if(!d)return null;const diff=Math.round((d-
   if(diff<=7)return{cls:'ba',txt:lbl+' · em '+diff+' dias',diff};
   return{cls:'bgr',txt:lbl,diff}}
 const byDue=(a,b)=>((a.due||'9999')<(b.due||'9999')?-1:(a.due||'9999')>(b.due||'9999')?1:0)||((a.createdAt||0)-(b.createdAt||0));
+/* ordem manual das tarefas dentro de cada frente (por usuário); o que nunca foi movido segue por prazo */
+function ordTasks(k,items){const o=taskOrder[k]||[];return items.sort((a,b)=>{const ia=o.indexOf(a.id),ib=o.indexOf(b.id);
+  if(ia>=0&&ib>=0)return ia-ib;if(ia>=0)return -1;if(ib>=0)return 1;return byDue(a,b)})}
 const eMeu=t=>!t.resp||t.resp.split(' e ').includes(QUEM);
 
 /* visões */
@@ -345,7 +349,7 @@ function chip(key,label,color){const b=el('button','chip'+(view===key?' on':''))
 function met(label,val,sub,cls,pct){const m=el('div','met');m.append(el('div','ml',label),el('div','mv '+(cls||''),val));
   if(sub)m.append(el('div','ms',sub));if(pct!=null){const p=el('div','prog');const f=el('div','pf');p.appendChild(f);m.appendChild(p);requestAnimationFrame(()=>f.style.width=pct+'%')}return m}
 
-function row(t,showArea,sufixo){
+function row(t,showArea,sufixo,drag){
   const a=AMAP[t.area]||AREAS[0]||['','','--gray','bgr'];const e=espDe(t.esp);const fora=HOME&&t.esp!==HOME.id;
   const r=el('div','row'+(t.done?' done':''));const key=t.id+(sufixo||'');
   const cb=el('input','chk');cb.type='checkbox';cb.checked=!!t.done;cb.id='cb-'+key;cb.setAttribute('aria-label','Concluir: '+t.title);
@@ -360,19 +364,23 @@ function row(t,showArea,sufixo){
   if(meta.childNodes.length)tx.appendChild(meta);
   const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
   del.onclick=()=>{if(armed===key){armed=null;remove(t)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
+  r.dataset.id=t.id;if(drag){const g=grip();g.title='Arraste para mudar a ordem';g.style.marginTop='3px';r.append(g)}
   r.append(cb,tx,del);return r}
-function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo){
+function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
   const c=el('section','card');const h=el('div','ct');
   if(color){const d=el('span','dot');d.style.setProperty('--c',`var(${color})`);h.appendChild(d)}
   h.append(title);if(badgeTxt)h.appendChild(el('span','badge '+(badgeCls||'bgr'),badgeTxt));c.appendChild(h);
   if(!items.length)c.appendChild(el('div','empty','Nada por aqui.'));
-  items.forEach(t=>c.appendChild(row(t,showArea,sufixo)));return c}
+  items.forEach(t=>c.appendChild(row(t,showArea,sufixo,!!sortKey)));
+  if(sortKey&&items.length>1)makeSortable(c,'.row',()=>saveTaskOrder(sortKey,[...c.querySelectorAll('.row')].map(x=>x.dataset.id)));return c}
 
 /* ordem e nomes das frentes (por usuário) */
 function orderedAreas(){if(!areaOrder)return AREAS;const pos=k=>{const i=areaOrder.indexOf(k);return i<0?1000+AREAS.findIndex(a=>a[0]===k):i};return AREAS.slice().sort((a,b)=>pos(a[0])-pos(b[0]))}
-async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);HOME.config={areas,names:areaNames};
-  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames}})}catch(e){$('status').textContent='Não consegui salvar.'}}
+async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);HOME.config={areas,names:areaNames,ordem:taskOrder};
+  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
+async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
+  taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
 let renKey=null;
 function renBtn(k){const b=el('button','ren','✎');b.type='button';b.title='Renomear';b.setAttribute('aria-label','Renomear '+(AMAP[k]?AMAP[k][1]:''));b.onclick=e=>{e.stopPropagation();openRename(k)};return b}
 function openRename(k){renKey=k;$('renIn').value=AMAP[k][1];$('ovr').classList.add('open');setTimeout(()=>{$('renIn').focus();$('renIn').select()},50)}
@@ -382,16 +390,16 @@ $('renCancel').onclick=closeRename;$('ovr').addEventListener('click',e=>{if(e.ta
 $('renReset').onclick=async()=>{if(!renKey)return;setName(renKey,'');closeRename();render();await saveSettings()};
 $('renForm').addEventListener('submit',async e=>{e.preventDefault();if(!renKey)return;const v=$('renIn').value.trim();if(!v)return;setName(renKey,v);closeRename();render();await saveSettings()});
 function grip(){const g=el('span','grip','⠿');g.setAttribute('aria-hidden','true');g.title='Arraste para mudar a posição';return g}
-function makeSortable(container,sel){
-  container.querySelectorAll(sel).forEach(item=>{const g=item.querySelector('.grip');if(!g)return;
+function makeSortable(container,sel,onDone){
+  container.querySelectorAll(':scope > '+sel).forEach(item=>{const g=item.querySelector(':scope > .grip, :scope > .ct > .grip, :scope > .grip');if(!g)return;
     g.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
     g.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();dragging=true;document.body.classList.add('is-dragging');item.classList.add('dragging');
-      const move=ev=>{const others=[...container.querySelectorAll(sel)].filter(x=>x!==item);let before=null;
+      const move=ev=>{const others=[...container.querySelectorAll(':scope > '+sel)].filter(x=>x!==item);let before=null;
         for(const it of others){const r=it.getBoundingClientRect();if(ev.clientY<r.top+r.height/2){before=it;break}}
         if(before){if(item.nextElementSibling!==before)container.insertBefore(item,before)}else if(others.length){const last=others[others.length-1];if(last.nextElementSibling!==item)last.after(item)}};
       const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
         item.classList.remove('dragging');document.body.classList.remove('is-dragging');dragging=false;
-        const keys=[...container.querySelectorAll(sel)].map(x=>x.dataset.area);saveOrder(keys);render()};
+        if(onDone)onDone();else saveOrder([...container.querySelectorAll(':scope > '+sel)].map(x=>x.dataset.area));render()};
       window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up)})})}
 
 /* hábitos e rotinas: nunca somem quando marcados */
@@ -447,8 +455,8 @@ function render(){
   if(view==='all'){
     if(habits.length)list.appendChild(habitCard(habits));
     if(week.length)list.appendChild(card('Prazos dos próximos 7 dias',null,week,true,week.length+'','ba','-w'));
-    orderedAreas().forEach(([k,l,c])=>{let it=open.filter(t=>t.area===k).sort(byDue);if(k[0]==='@')it=it.filter(eMeu);if(!it.length)return;
-      const cd=card(l,c,it,false,it.length+' em aberto');cd.classList.add('acard');cd.dataset.area=k;cd.querySelector('.ct').prepend(grip());cd.querySelector('.ct').appendChild(renBtn(k));list.appendChild(cd)});
+    orderedAreas().forEach(([k,l,c])=>{let it=ordTasks(k,open.filter(t=>t.area===k));if(k[0]==='@')it=it.filter(eMeu);if(!it.length)return;
+      const cd=card(l,c,it,false,it.length+' em aberto',null,null,k);cd.classList.add('acard');cd.dataset.area=k;cd.querySelector('.ct').prepend(grip());cd.querySelector('.ct').appendChild(renBtn(k));list.appendChild(cd)});
     makeSortable(list,'.acard');
     if(!tasks.length&&!habits.length)list.appendChild(card('Sua lista',null,[],false));
   }else if(view==='week'){list.appendChild(card('Prazos dos próximos 7 dias',null,week,true))}
@@ -457,16 +465,16 @@ function render(){
   else if(view.startsWith('r:')){const w=view.slice(2);list.appendChild(card((w===QUEM?'Minhas tarefas':'Tarefas de '+w)+' (inclui as divididas)',null,ofWho(w).sort(byDue),true))}
   else{const a=AMAP[view];const it=tasks.filter(t=>t.area===view);
     if(view[0]==='@'){
-      const all=!!showAll[view];const ab=it.filter(t=>!t.done&&(all||eMeu(t))).sort(byDue);
+      const all=!!showAll[view];const ab=ordTasks(view,it.filter(t=>!t.done&&(all||eMeu(t))));
       const bar=el('div');bar.style.cssText='display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap';
       const b1=el('button','chip'+(all?'':' on'),'Só as minhas');b1.type='button';b1.onclick=()=>{showAll[view]=false;render()};
       const b2=el('button','chip'+(all?' on':''),'Todas');b2.type='button';b2.onclick=()=>{showAll[view]=true;render()};
       bar.append(b1,b2);list.appendChild(bar);
-      list.appendChild(card(a[1]+' · em aberto',a[2],ab,false,ab.length+''));
+      list.appendChild(card(a[1]+' · em aberto',a[2],ab,false,ab.length+'',null,null,view));
       const d=it.filter(t=>t.done&&(all||eMeu(t)));if(d.length)list.appendChild(card('Concluídas',null,d,false));
     }else{
       const hs=habits.filter(h=>h.area===view);if(hs.length)list.appendChild(habitCard(hs));
-      list.appendChild(card(a[1]+' · em aberto',a[2],it.filter(t=>!t.done).sort(byDue),false));
+      list.appendChild(card(a[1]+' · em aberto',a[2],ordTasks(view,it.filter(t=>!t.done)),false,null,null,null,view));
       const d=it.filter(t=>t.done);if(d.length)list.appendChild(card('Concluídas',null,d,false))}}
 }
 
