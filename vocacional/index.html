@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teste Vocacional · La Vie Consultoria</title>
-<meta name="description" content="Descubra em 5 minutos a área de trabalho com mais a sua cara e entre no banco de talentos da La Vie Consultoria.">
+<meta name="description" content="Descubra em 7 minutos a área de trabalho com mais a sua cara, com base na teoria de interesses de Holland, e entre no banco de talentos da La Vie Consultoria.">
 <link rel="icon" type="image/png" href="/logo.png" media="(prefers-color-scheme: light)">
 <link rel="icon" type="image/png" href="/logo-branco.png" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/png" href="/logo.png">
@@ -14,7 +14,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://lavieconsultoria.com/vocacional/">
 <meta property="og:title" content="Teste Vocacional La Vie · Qual área tem a sua cara?">
-<meta property="og:description" content="32 afirmações, 5 minutos, resultado na hora. Descubra sua área e entre no banco de talentos da La Vie.">
+<meta property="og:description" content="48 afirmações, 7 minutos, resultado na hora. Descubra sua área e entre no banco de talentos da La Vie.">
 <meta property="og:image" content="https://lavieconsultoria.com/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -52,6 +52,7 @@
   .fato{text-align:center}
   .fato b{display:block;font-family:var(--serif);font-size:1.7rem;font-weight:400;color:var(--dark);line-height:1.1}
   .fato span{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
+  header .base{font-size:0.78rem;color:var(--accent);max-width:54ch;margin-top:1.2rem}
 
   .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2.2rem}
   .tela{display:none}
@@ -150,6 +151,7 @@
   .compartilhar p{font-size:0.78rem;color:var(--muted);font-weight:400;margin-bottom:0.7rem}
   .compartilhar .acoes{display:flex;gap:0.7rem;justify-content:center;flex-wrap:wrap}
   .compartilhar .btn{padding:0.75rem 1.3rem;font-size:0.68rem}
+  .orientativo{margin-top:1.4rem;font-size:0.76rem;color:var(--muted);font-weight:400;text-align:center;line-height:1.55}
   footer{margin-top:2.6rem;text-align:center;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
 
   @media(max-width:600px){
@@ -174,12 +176,13 @@
   <header id="topo">
     <span class="eyebrow">Teste Vocacional</span>
     <h1>Qual área de trabalho tem <em>a sua cara?</em></h1>
-    <p>32 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você descobre a área com mais a ver com você e já pode entrar no banco de talentos da La Vie nessa área.</p>
+    <p>48 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você vê seu perfil de interesses e a área, entre as oito em que a La Vie recruta, com mais a ver com você. Já dá para entrar no banco de talentos nessa área.</p>
     <div class="fatos">
-      <div class="fato"><b>5 min</b><span>para responder</span></div>
-      <div class="fato"><b>8</b><span>áreas avaliadas</span></div>
+      <div class="fato"><b>7 min</b><span>para responder</span></div>
+      <div class="fato"><b>8</b><span>áreas da La Vie</span></div>
       <div class="fato"><b>na hora</b><span>resultado</span></div>
     </div>
+    <p class="base">Baseado na teoria de interesses profissionais de John Holland (RIASEC), a mesma usada pelo O*NET Interest Profiler. O resultado é um ponto de partida, não um veredito.</p>
   </header>
 
   <div class="previa hidden" id="previa">Prévia para aprovação. Nesta versão o resultado não é gravado.</div>
@@ -187,7 +190,7 @@
   <div class="progress hidden" id="progress">
     <div class="progress-top">
       <span class="progress-label" id="progressLabel">Afirmações</span>
-      <span class="progress-count" id="progressCount">1 a 4 de 32</span>
+      <span class="progress-count" id="progressCount">1 a 4 de 48</span>
     </div>
     <div class="bar"><span id="barFill"></span></div>
   </div>
@@ -258,40 +261,66 @@
       funcoes:['Motorista','Auxiliar de logística','Conferente e estoquista','Analista de logística','Operador de expedição'],
       dica:'Informe CNH e categoria, cursos como MOPP e experiência com rotas, cargas ou controle de estoque. Para motorista, histórico limpo é diferencial.' }
   };
-  // 32 afirmações, 4 por área, em rodízio para cada tela misturar áreas diferentes
+  // Tipos de interesse de Holland (RIASEC), base do O*NET Interest Profiler
+  const RIASEC = {
+    R: { nome:'Realista',      resumo:'prefere o concreto: fazer, operar, consertar, mover' },
+    I: { nome:'Investigativo', resumo:'gosta de analisar, entender a causa e decidir com dados' },
+    A: { nome:'Artístico',     resumo:'cria, comunica e busca formas novas de apresentar as coisas' },
+    S: { nome:'Social',        resumo:'ensina, ajuda, cuida e se realiza no contato com pessoas' },
+    E: { nome:'Empreendedor',  resumo:'convence, lidera, negocia e gosta de meta' },
+    C: { nome:'Convencional',  resumo:'organiza, confere, segue método e mantém tudo em ordem' }
+  };
+  // 48 afirmações: 6 por área, cada uma com o tipo de Holland que ela mede.
+  // Frases de atividade, sem nomear a área, em rodízio para cada tela misturar áreas.
   const AFIRMACOES = [
-    ['adm','Gosto de deixar tudo organizado: pastas, planilhas, agenda e documentos no lugar.'],
-    ['com','Gosto de convencer pessoas e negociar até chegar a um acordo bom para os dois lados.'],
-    ['rh','As pessoas costumam me procurar para desabafar ou pedir conselho.'],
-    ['fin','Gosto de números: conferir, calcular e descobrir onde está a diferença.'],
-    ['mkt','Tenho ideias para posts, campanhas ou formas criativas de apresentar algo.'],
-    ['edu','Gosto de explicar uma coisa até a outra pessoa entender de verdade.'],
-    ['ate','Recebo bem as pessoas e me preocupo em deixá-las à vontade.'],
-    ['log','Prefiro trabalho prático, com movimento, a ficar o dia todo parado no mesmo lugar.'],
-    ['adm','Me sinto bem seguindo um processo definido e garantindo que nada fique para trás.'],
-    ['com','Metas me motivam mais do que me assustam.'],
-    ['rh','Gosto de entender o que motiva cada pessoa e de ajudar times a trabalharem melhor juntos.'],
-    ['fin','Controlar gastos, fluxo de caixa ou orçamento é algo que faço com naturalidade.'],
-    ['mkt','Escrever textos, criar artes ou gravar vídeos é algo que me dá prazer.'],
-    ['edu','Tenho paciência para repetir, mudar a explicação e acompanhar o ritmo de cada um.'],
-    ['ate','Mantenho a calma e a gentileza mesmo com um cliente irritado.'],
-    ['log','Tenho facilidade para organizar rotas, entregas, estoque ou as etapas de uma operação.'],
-    ['adm','Consigo cuidar de vários prazos e pedidos ao mesmo tempo sem perder o controle.'],
-    ['com','Puxo conversa com desconhecidos com facilidade e gosto de apresentar um produto ou ideia.'],
-    ['rh','Tenho paciência para lidar com regras trabalhistas, documentos e prazos de pessoal.'],
-    ['fin','Prefiro decidir com base em dados do que em impressões.'],
-    ['mkt','Percebo rápido o que chama a atenção das pessoas e o que passa despercebido.'],
-    ['edu','Me sinto realizado quando vejo alguém aprender algo por minha causa.'],
-    ['ate','Gosto de resolver o problema de alguém na hora, sem empurrar para frente.'],
-    ['log','Sou pontual e cumpro horários e prazos combinados sem precisar de cobrança.'],
-    ['adm','Prefiro trabalhar nos bastidores, dando suporte para a equipe funcionar bem.'],
-    ['com','Um não não me derruba: tento de novo por outro caminho.'],
-    ['rh','Me interessa acompanhar o desenvolvimento de alguém do começo ao fim.'],
-    ['fin','Erros pequenos em planilhas e relatórios me incomodam, e eu vou atrás de corrigir.'],
-    ['mkt','Acompanho tendências de redes sociais, marcas e comunicação.'],
-    ['edu','Gosto de preparar conteúdo, aulas, treinamentos ou materiais de estudo.'],
-    ['ate','Reparo em detalhes de cordialidade: chamar pelo nome, cumprimentar, tom de voz.'],
-    ['log','Me sinto bem em funções com responsabilidade sobre veículos, cargas ou materiais.']
+    ['adm','C','Monto planilhas e controles para acompanhar pedidos, prazos e documentos.'],
+    ['com','E','Gosto de apresentar uma ideia ou produto e ver a pessoa se convencer.'],
+    ['rh','S','Colegas me procuram para desabafar ou pedir um conselho.'],
+    ['fin','I','Quando um valor não bate, vou atrás até achar onde está a diferença.'],
+    ['mkt','A','Tenho ideias de posts, campanhas ou jeitos criativos de apresentar algo.'],
+    ['edu','S','Explico uma coisa de várias formas até a outra pessoa entender de verdade.'],
+    ['ate','S','Recebo quem chega com atenção e me preocupo em deixar a pessoa à vontade.'],
+    ['log','R','Prefiro um trabalho com movimento a passar o dia inteiro sentado no mesmo lugar.'],
+    ['adm','C','Fico tranquilo seguindo um passo a passo definido, sem precisar inventar o caminho.'],
+    ['com','E','Metas me animam mais do que me assustam.'],
+    ['rh','S','Me interesso em entender o que motiva cada pessoa de uma equipe.'],
+    ['fin','C','Controlar gastos e acompanhar o que entra e o que sai é algo que faço com naturalidade.'],
+    ['mkt','A','Escrever um texto, criar uma arte ou gravar um vídeo me dá prazer.'],
+    ['edu','S','Tenho paciência para repetir e acompanhar o ritmo de quem está aprendendo.'],
+    ['ate','S','Consigo manter a calma e a gentileza com alguém que chega irritado.'],
+    ['log','R','Tenho facilidade para organizar rotas, entregas ou o espaço de um estoque.'],
+    ['adm','C','Dou conta de vários prazos ao mesmo tempo sem perder o controle de nenhum.'],
+    ['com','E','Puxo conversa com desconhecidos com facilidade.'],
+    ['rh','C','Lido bem com regras, documentos e prazos que envolvem pessoas.'],
+    ['fin','I','Prefiro decidir olhando os números a decidir por impressão.'],
+    ['mkt','A','Percebo rápido o que chama a atenção das pessoas e o que passa despercebido.'],
+    ['edu','S','Me sinto realizado quando alguém aprende algo por minha causa.'],
+    ['ate','E','Gosto de resolver o problema de alguém na hora, sem empurrar para frente.'],
+    ['log','C','Cumpro horários e prazos combinados sem precisar de cobrança.'],
+    ['adm','S','Gosto de dar suporte para a equipe funcionar bem, mesmo sem aparecer.'],
+    ['com','E','Um não não me derruba: tento de novo por outro caminho.'],
+    ['rh','S','Gosto de acompanhar o crescimento de alguém do começo ao fim.'],
+    ['fin','C','Um erro pequeno numa planilha ou relatório me incomoda até eu corrigir.'],
+    ['mkt','I','Acompanho tendências de redes sociais e de marcas.'],
+    ['edu','A','Gosto de preparar aulas, treinamentos ou materiais de estudo.'],
+    ['ate','S','Reparo em detalhes de cordialidade: chamar pelo nome, cumprimentar, tom de voz.'],
+    ['log','R','Me sinto bem sendo responsável por um veículo, uma carga ou um material.'],
+    ['adm','C','Gosto de organizar arquivos, agendas e informações de um jeito que qualquer um ache.'],
+    ['com','E','Negociar preço, prazo ou condição até fechar um acordo é algo que me dá energia.'],
+    ['rh','I','Gosto de entrevistar pessoas e perceber o que está por trás do que elas dizem.'],
+    ['fin','I','Gosto de comparar cenários e calcular o que compensa mais.'],
+    ['mkt','E','Gosto de divulgar algo e acompanhar quantas pessoas reagiram.'],
+    ['edu','I','Gosto de estudar um assunto a fundo para depois passar adiante.'],
+    ['ate','C','Gosto de registrar cada atendimento para que nada fique sem resposta.'],
+    ['log','R','Gosto de atividades práticas, com máquinas, ferramentas ou veículos.'],
+    ['adm','I','Gosto de conferir se um processo está sendo seguido e apontar o que pode melhorar.'],
+    ['com','S','Gosto de entender a necessidade do cliente antes de oferecer qualquer coisa.'],
+    ['rh','E','Gosto de organizar treinamentos, integrações ou eventos para a equipe.'],
+    ['fin','C','Gosto de fechar o mês com tudo conciliado e sem pendência.'],
+    ['mkt','A','Reparo em cores, fontes e no visual das coisas antes da maioria das pessoas.'],
+    ['edu','E','Me sinto à vontade falando para um grupo.'],
+    ['ate','A','Gosto de encontrar um jeito agradável de dar uma notícia difícil.'],
+    ['log','I','Gosto de planejar a melhor sequência de uma operação para ganhar tempo.']
   ];
   const ROTULOS = ['Nada a ver comigo','Pouco a ver','Mais ou menos','Bastante a ver','Tudo a ver comigo'];
   const POR_TELA = 4;
@@ -359,13 +388,25 @@
   });
   telasEl.addEventListener('change', e => { const it = e.target.closest('.item'); if (!it) return; it.classList.remove('falta'); const tela = it.closest('.tela'); if (tela && !tela.querySelector('.item.falta')) tela.querySelector('.msg-erro').classList.remove('show'); });
 
+  AREAS.out = { nome:'Outras áreas', banco:'Outras áreas', oculta:true };
+  const ORDEM_AREAS = Object.keys(AREAS).filter(k => !AREAS[k].oculta);
+  const N_POR_AREA = AFIRMACOES.filter(a => a[0] === 'adm').length; // 6
   function pontuar(){
-    const soma = {}; Object.keys(AREAS).forEach(k => soma[k] = 0);
-    document.querySelectorAll('#telas input:checked').forEach(i => { soma[i.dataset.area] += Number(i.value); });
-    // 4 afirmações por área, de 4 a 20 pontos: vira uma porcentagem de afinidade
-    const lista = Object.keys(AREAS).map(k => ({ k, pontos: soma[k], pct: Math.round((soma[k] - 4) / 16 * 100) }));
-    lista.sort((a, b) => b.pontos - a.pontos || Object.keys(AREAS).indexOf(a.k) - Object.keys(AREAS).indexOf(b.k));
-    return lista;
+    const soma = {}, somaR = {}, nR = {};
+    ORDEM_AREAS.forEach(k => soma[k] = 0); Object.keys(RIASEC).forEach(k => { somaR[k] = 0; nR[k] = 0; });
+    const resp = respostas();
+    resp.forEach((v, i) => { const [area, tipo] = AFIRMACOES[i]; soma[area] += v; somaR[tipo] += v; nR[tipo]++; });
+    const minA = N_POR_AREA, maxA = N_POR_AREA * 5;
+    const areas = ORDEM_AREAS.map(k => ({ k, pontos: soma[k], pct: Math.round((soma[k] - minA) / (maxA - minA) * 100) }));
+    // Desempate: quem tem mais notas 5 na área fica na frente; depois a ordem fixa
+    const cincos = k => resp.filter((v, i) => AFIRMACOES[i][0] === k && v === 5).length;
+    areas.sort((a, b) => b.pontos - a.pontos || cincos(b.k) - cincos(a.k) || ORDEM_AREAS.indexOf(a.k) - ORDEM_AREAS.indexOf(b.k));
+    const holland = Object.keys(RIASEC).map(k => ({ k, media: nR[k] ? somaR[k] / nR[k] : 0, pct: nR[k] ? Math.round((somaR[k] / nR[k] - 1) / 4 * 100) : 0 }));
+    holland.sort((a, b) => b.media - a.media || 'RIASEC'.indexOf(a.k) - 'RIASEC'.indexOf(b.k));
+    return { areas, holland, codigo: holland.slice(0, 3).map(x => x.k).join(''), fraco: areas[0].pct < 50 };
+  }
+  function respostas(){
+    return AFIRMACOES.map((_, i) => { const el = document.querySelector(`input[name="q${i}"]:checked`); return el ? Number(el.value) : 0; });
   }
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
@@ -375,14 +416,15 @@
     return `${SITE}/vagas/?${p.toString()}`;
   }
 
-  async function gravar(lista){
+  async function gravar(res){
     if (!NO_AR) return false;
+    const lista = res.areas;
     const corpo = JSON.stringify({
       nome: dados.nome, email: dados.email, whatsapp: dados.whats,
       area_principal: AREAS[lista[0].k].banco,
       areas_top: lista.slice(0, 3).map(x => AREAS[x.k].banco),
-      pontuacoes: Object.fromEntries(lista.map(x => [AREAS[x.k].banco, x.pontos])),
-      respostas: Array.from(document.querySelectorAll('#telas input:checked')).map(i => Number(i.value)),
+      pontuacoes: Object.assign(Object.fromEntries(lista.map(x => [AREAS[x.k].banco, x.pontos])), { holland: res.codigo, riasec: Object.fromEntries(res.holland.map(x => [x.k, x.pct])), fraco: res.fraco }),
+      respostas: respostas(),
       lgpd: true, origem: (new URLSearchParams(location.search).get('utm_source') || new URLSearchParams(location.search).get('origem') || document.referrer || '').slice(0, 120) || null
     });
     for (let tent = 1; tent <= 3; tent++){
@@ -396,33 +438,52 @@
   }
 
   async function finalizar(){
-    const lista = pontuar();
+    const res = pontuar(); const lista = res.areas;
     const top = AREAS[lista[0].k], seg = AREAS[lista[1].k], ter = AREAS[lista[2].k];
     const primeiro = dados.nome.split(' ')[0];
-    const textoShare = `Fiz o Teste Vocacional da La Vie e a área com mais a minha cara é ${top.nome}. Descubra a sua em 5 minutos: ${SITE}/vocacional/`;
+    const h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k], h3 = RIASEC[res.holland[2].k];
+    const textoShare = `Fiz o Teste Vocacional da La Vie: meu perfil é ${h1.nome} e ${h2.nome}, e a área com mais a minha cara é ${top.nome}. Descubra a sua em 7 minutos: ${SITE}/vocacional/`;
     const el = document.getElementById('telaResultado');
-    el.innerHTML = `
-      <div class="res-topo">
-        <span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
-        <h2>${esc(top.nome)}</h2>
-        <div class="pct">${lista[0].pct}% de afinidade</div>
-        <p class="resumo">${esc(top.resumo)}</p>
-      </div>
+    const topo = res.fraco
+      ? `<div class="res-topo">
+          <span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
+          <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2>
+          <div class="pct">Código Holland ${res.codigo}</div>
+          <p class="resumo">Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso, e o Teste DISC completa o quadro.</p>
+        </div>`
+      : `<div class="res-topo">
+          <span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
+          <h2>${esc(top.nome)}</h2>
+          <div class="pct">${lista[0].pct}% de afinidade · perfil ${esc(h1.nome)} e ${esc(h2.nome)}</div>
+          <p class="resumo">${esc(top.resumo)}</p>
+        </div>`;
+    el.innerHTML = topo + `
+      <div class="res-bloco"><h3>Seu perfil de interesses (Holland)</h3>
+        <p style="margin-bottom:0.6rem;">Código <b>${res.codigo}</b>: você é principalmente <b>${esc(h1.nome)}</b> (${esc(h1.resumo)}), com traços <b>${esc(h2.nome)}</b> (${esc(h2.resumo)}) e <b>${esc(h3.nome)}</b> (${esc(h3.resumo)}).</p>
+        <div class="barras">${res.holland.map((x, i) => `<div class="barra ${i === 0 ? 'top' : ''}"><span class="nome">${esc(RIASEC[x.k].nome)}</span><span class="trilho"><i style="width:${Math.max(x.pct, 3)}%"></i></span><span class="num">${x.pct}%</span></div>`).join('')}</div></div>
+      ${res.fraco ? '' : `
       <div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>
       <div class="res-bloco"><h3>Para se destacar nessa área</h3><p>${esc(top.dica)}</p></div>
       <div class="res-bloco"><h3>Também têm a sua cara</h3>
         <div class="secund">
           <div><b>${esc(seg.nome)}</b><small>${lista[1].pct}% de afinidade. ${esc(seg.resumo.split('.')[0])}.</small></div>
           <div><b>${esc(ter.nome)}</b><small>${lista[2].pct}% de afinidade. ${esc(ter.resumo.split('.')[0])}.</small></div>
-        </div></div>
-      <div class="res-bloco"><h3>Seu mapa completo</h3>
-        <div class="barras">${lista.map((x, i) => `<div class="barra ${i === 0 ? 'top' : ''}"><span class="nome">${esc(AREAS[x.k].nome)}</span><span class="trilho"><i style="width:${Math.max(x.pct, 3)}%"></i></span><span class="num">${x.pct}%</span></div>`).join('')}</div></div>
+        </div></div>`}
+      <div class="res-bloco"><h3>Afinidade com as áreas em que a La Vie recruta</h3>
+        <div class="barras">${lista.map((x, i) => `<div class="barra ${i === 0 && !res.fraco ? 'top' : ''}"><span class="nome">${esc(AREAS[x.k].nome)}</span><span class="trilho"><i style="width:${Math.max(x.pct, 3)}%"></i></span><span class="num">${x.pct}%</span></div>`).join('')}</div></div>
+      ${res.fraco ? `
+      <div class="cta">
+        <h3>Complete o seu perfil com o Teste DISC</h3>
+        <p>O DISC mostra como você se comporta no trabalho e ajuda a La Vie a te indicar para a vaga certa, em qualquer área. Leva uns 10 minutos.</p>
+        <a class="btn btn-primary" href="${linkDisc()}" target="_blank" rel="noopener noreferrer">Fazer o Teste DISC →</a>
+        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se quiser entrar no banco de talentos mesmo assim: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a> ou <a href="${linkBanco(AREAS.out || seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc((AREAS.out || seg).banco)}</a>.</p>
+      </div>` : `
       <div class="cta">
         <h3>Entre no banco de talentos da La Vie</h3>
         <p>Cadastre seu currículo na área de ${esc(top.banco)}. Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato. Seus dados já vão preenchidos e, depois do cadastro, você faz o Teste DISC para completar o seu perfil.</p>
         <a class="btn btn-primary" href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em ${esc(top.banco)} →</a>
         <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Prefere outra área? <a href="${linkBanco(seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(seg.banco)}</a> ou <a href="${linkBanco(ter)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(ter.banco)}</a>.</p>
-      </div>
+      </div>`}
       <div class="compartilhar">
         <p>Conhece alguém que está em dúvida sobre a própria área?</p>
         <div class="acoes">
@@ -431,6 +492,7 @@
           <a class="btn btn-ghost" href="${SITE}/vagas/" target="_blank" rel="noopener noreferrer">Ver vagas abertas</a>
         </div>
       </div>
+      <p class="orientativo">Este resultado mostra seus interesses neste momento e serve como ponto de partida, não como veredito. Para uma orientação completa, converse com um psicólogo ou orientador de carreira.</p>
       <p id="avisoGravar" class="msg-erro" style="margin-top:1.2rem;">Seu resultado apareceu, mas não conseguimos guardá-lo. Se quiser, mande uma captura de tela para a La Vie pelo WhatsApp (62) 99274-1488.</p>`;
     document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
     document.getElementById('progress').classList.add('hidden');
@@ -442,14 +504,17 @@
       catch(e){ b.textContent = `${SITE}/vocacional/`; }
       setTimeout(() => { b.textContent = 'Copiar link do teste'; }, 2500);
     });
-    const ok = await gravar(lista);
+    const ok = await gravar(res);
     if (NO_AR && !ok) document.getElementById('avisoGravar').classList.add('show');
+  }
+  function linkDisc(){
+    const p = new URLSearchParams({ nome: dados.nome, email: dados.email, telefone: dados.whats, vaga: 'Banco de Talentos · Outras áreas' });
+    return `${SITE}/disc/?${p.toString()}`;
   }
 
   // Prévia fora do domínio: nada é gravado
   document.getElementById('previa').classList.toggle('hidden', NO_AR);
-  // Testes automáticos e links de divulgação podem pular a tela de dados com ?demo=1 (só fora do ar)
-  window.__voc = { AREAS, AFIRMACOES, pontuar, dados };
+    window.__voc = { AREAS, AFIRMACOES, RIASEC, pontuar, dados };
 </script>
 </body>
 </html>
