@@ -1006,6 +1006,7 @@ header {
     <div class="form-field"><label>CPF</label><input id="mc-cpf" placeholder="000.000.000-00"></div>
     <div class="form-field"><label>Telefone</label><input id="mc-tel"></div>
     <div class="form-field" style="grid-column:1/-1"><label>E-mail</label><input id="mc-email"></div>
+    <div class="form-field" style="grid-column:1/-1;display:none" id="mc-voc-wrap"><label>Teste Vocacional (site)</label><div id="mc-voc" style="font-size:13px;line-height:1.5;padding:8px 10px;background:var(--bg,#F2F1ED);border:1px solid var(--border,rgba(58,58,58,.12));border-radius:4px"></div></div>
     <div class="form-field" style="grid-column:1/-1"><label>🔗 LinkedIn</label><div style="display:flex;gap:6px"><input id="mc-linkedin" placeholder="linkedin.com/in/..." style="flex:1"><button type="button" class="btn btn-ghost btn-sm" onclick="abrirLinkedin()" title="Abrir perfil">Abrir</button></div></div>
     <div class="form-field" style="grid-column:1/-1"><label>Vaga</label><select id="mc-vaga"></select></div>
     <div class="form-field" style="grid-column:1/-1"><label>Etapa</label><select id="mc-etapa"><option value="triagem">Triagem</option><option value="entrevista_rh">Formulários e Testes</option><option value="entrevista_gestor">Entrevista La Vie</option><option value="vivencia">Entrevista Final</option><option value="aprovacao">Aprovação</option><option value="reprovado">Reprovado</option><option value="desistiu">Desistiu</option><option value="banco_talentos_administrativo">Banco de Talentos Administrativo</option><option value="banco_talentos_academico">Banco de Talentos Acadêmico</option><option value="banco_talentos_geral">Banco de Talentos Geral</option></select></div>
@@ -3815,7 +3816,7 @@ function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;d
   // atual do candidato não estiver na lista, adiciona ela igual pra não perder.
   if(c.etapa && !opcoesEtapa.some(e=>e.id===c.etapa)) opcoesEtapa.push({id:c.etapa, label:ETAPA_LABEL[c.etapa]||c.etapa});
   selE.innerHTML=opcoesEtapa.map(e=>`<option value="${e.id}">${e.label}</option>`).join('');
-  document.getElementById('mc-etapa').value=c.etapa;{const bn=document.getElementById('mc-btn-noshow'); if(bn) bn.style.display=(_ETAPAS_COM_ENTREVISTA.includes(c.etapa)&&!isClienteExterno())?'':'none';}document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';_docsMostrarAnteriores=false;openModal('modal-mover-cand');renderDocsList();renderNotasCand();renderNotasRapidas();document.getElementById('mc-nota').value='';if((c.documentos||[]).some(d=>d&&d.resultadoSite))_converterResultadosDoCandidato(c.id);}
+  document.getElementById('mc-etapa').value=c.etapa;{const bn=document.getElementById('mc-btn-noshow'); if(bn) bn.style.display=(_ETAPAS_COM_ENTREVISTA.includes(c.etapa)&&!isClienteExterno())?'':'none';}document.getElementById('mc-obs').value=c.obs||'';document.getElementById('mc-linkedin').value=c.linkedin||'';_docsMostrarAnteriores=false;openModal('modal-mover-cand');_mostrarVocacional(c);renderDocsList();renderNotasCand();renderNotasRapidas();document.getElementById('mc-nota').value='';if((c.documentos||[]).some(d=>d&&d.resultadoSite))_converterResultadosDoCandidato(c.id);}
 async function atualizarCandidato(){
   const id=document.getElementById('mc-id').value,idx=_cands.findIndex(c=>c.id===id);if(idx<0)return;
   const nome=document.getElementById('mc-nome').value.trim();
@@ -3942,6 +3943,20 @@ const SITE_DOCS_BUCKET    = 'curriculos'; // bucket do projeto do site
 const SITE_BUCKET_PUBLICO = false;        // bucket do site é privado: usa link assinado de 60s
 const SITE_SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW5maHJ1d2R3Y3RudW91anhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODk5NDIsImV4cCI6MjA5NzA2NTk0Mn0.U0Pm9e_HGY9GNhOzRPa6xa5D-7ZEe8aSI9hhVYRj2x8'; // anon key do projeto do site
 let _sbSite=null;
+// Teste Vocacional feito no site (/vocacional/): o resultado chega no histórico do candidato
+// junto com a origem da candidatura (sem consulta extra ao banco do site).
+function _mostrarVocacional(c){
+  const wrap=document.getElementById('mc-voc-wrap'), box=document.getElementById('mc-voc');
+  if(!wrap||!box) return;
+  wrap.style.display='none'; box.textContent='';
+  const hist=Array.isArray(c&&c.historico)?c.historico:[];
+  const h=hist.slice().reverse().find(x=>x&&/Teste Vocacional:/.test(String(x.obs||'')));
+  if(!h) return;
+  const m=String(h.obs).match(/Teste Vocacional:\s*([^(.]+?)\s*\(c[oó]digo\s+([A-Z]{3})\)/i);
+  const d=h.data?new Date(h.data).toLocaleDateString('pt-BR'):'';
+  box.innerHTML=m?('<b>'+escapeHtmlAg(m[1])+'</b> · código Holland <b>'+escapeHtmlAg(m[2])+'</b>'+(d?' · '+d:'')):escapeHtmlAg(String(h.obs));
+  wrap.style.display='';
+}
 function sbSite(){
   if(!SITE_SUPABASE_KEY) return null;
   if(!_sbSite) _sbSite = createClient(SITE_SUPABASE_URL, SITE_SUPABASE_KEY);

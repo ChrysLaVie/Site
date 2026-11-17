@@ -405,7 +405,9 @@ async function registrarOrigemCandidatura(data, chegouAoRS) {
   })());
   if (rsDb && chegouAoRS && resposta) tarefas.push((async () => {
     try {
-      const det = [o.link ? 'Link: ' + o.link + (o.meio ? ' (' + o.meio + ')' : '') + (o.campanha ? ', campanha ' + o.campanha : '') + '.' : '', o.ref ? 'Chegou de: ' + o.ref + '.' : ''].filter(Boolean).join(' ');
+      let voc = '';
+      try { const v = JSON.parse(localStorage.getItem('lv_vocacional') || 'null'); if (v && v.t && Date.now() - v.t < 24 * 3600 * 1000 && v.area && /^[A-Z]{3}$/.test(v.holland || '')) voc = 'Teste Vocacional: ' + String(v.area).slice(0, 40) + ' (código ' + v.holland + ').'; } catch (e) {}
+      const det = [o.link ? 'Link: ' + o.link + (o.meio ? ' (' + o.meio + ')' : '') + (o.campanha ? ', campanha ' + o.campanha : '') + '.' : '', o.ref ? 'Chegou de: ' + o.ref + '.' : '', voc].filter(Boolean).join(' ');
       const { error } = await rsDb.rpc('lv_registrar_origem_do_site', { p_email: email, p_telefone: data.whatsapp || null, p_vaga_titulo: data.vaga_titulo, p_origem: resposta, p_detalhe: det || null });
       if (error) console.warn('Origem da candidatura não gravada no R&S:', error.message);
     } catch (e) { console.warn('Origem da candidatura não gravada no R&S:', e); }
