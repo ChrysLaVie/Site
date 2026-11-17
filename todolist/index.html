@@ -165,10 +165,11 @@ body.chatting .mets,body.chatting #list,body.chatting .fab{display:none}
 .day.today:not(.on) i{border-color:var(--accent);border-width:2px}
 .chkline{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text);cursor:pointer}
 .chkline input{width:17px;height:17px;accent-color:var(--accent)}
-.ren{border:0;background:none;color:var(--hint);cursor:pointer;padding:3px 6px;border-radius:6px;font-size:13px;opacity:0;flex:none;transition:opacity .15s}
+[hidden]{display:none!important}
+.ren{border:0;background:none;color:var(--hint);cursor:pointer;padding:3px 6px;border-radius:6px;font-size:13px;opacity:.7;flex:none;transition:opacity .15s}
 .ren:hover{color:var(--accent);background:var(--surface2)}
-.navrow:hover .ren,.ct:hover .ren,.ren:focus-visible{opacity:1}
-@media(hover:none){.ren{opacity:.6}}
+.navrow:hover .ren,.ct:hover .ren,.ren:hover,.ren:focus-visible{opacity:1}
+.ren.txt{opacity:1;font-size:12.5px;font-family:'DM Sans',sans-serif;margin-left:10px;vertical-align:middle;border:1px solid var(--border)}
 .navrow .ni{padding-left:.4rem}
 .dragging{opacity:.75;box-shadow:0 8px 24px rgba(0,0,0,.15);position:relative;z-index:5}
 body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
@@ -508,6 +509,7 @@ function render(){
   ms.append(met('Concluídas',done.length,pct+'% do total','green',pct));
 
   $('pt').textContent=(VS.find(v=>v[0]===view)||AMAP[view]||['','Tudo'])[1];
+  if(AMAP[view]){const rb=renBtn(view);rb.textContent='✎ Renomear';rb.classList.add('txt');$('pt').appendChild(rb)}
   if(view==='all'){
     if(habits.length)list.appendChild(habitCard(habits));
     if(week.length)list.appendChild(card('Prazos dos próximos 7 dias',null,week,true,week.length+'','ba','-w'));
