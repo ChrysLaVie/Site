@@ -293,7 +293,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
    membros vêm do banco: nada pessoal fica escrito neste arquivo. */
 const SB_URL='https://doinfhruwdwctnuoujxl.supabase.co/rest/v1/rpc/';
 const SB_KEY='sb_publishable_6nicL2Ly8B3kIPH_v1a3Rg_BpBeBj2I';
-const CODLS='lvTodoCodigo',KEYLS='lvTodoApiKey',MODEL='claude-sonnet-4-6';
+const CODLS='lvTodoCodigo',KEYLS='lvTodoApiKey',MODEL='claude-sonnet-5-5';
 const COR={purple:['--purple','bp'],pink:['--pink','bk'],amber:['--amber','ba'],blue:['--blue','bb'],green:['--green','bg'],gray:['--gray','bgr'],red:['--red','br']};
 const $=id=>document.getElementById(id);
 const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
@@ -580,8 +580,8 @@ async function apiSample(input,opts){opts=opts||{};const key=getKey();if(!key){t
   const msgs=[];for(const t of input){const last=msgs[msgs.length-1];if(last&&last.role===t.role&&typeof last.content==='string')last.content+='\n\n'+t.content;else msgs.push({role:t.role,content:t.content})}
   const tools=(opts.tools||[]).map(t=>({name:t.name,description:t.description,input_schema:t.inputSchema||{type:'object',properties:{}}}));
   let all='';
-  for(let round=0;round<6;round++){
-    let r;try{r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:opts.signal,headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(Object.assign({model:MODEL,max_tokens:1500,messages:msgs},tools.length?{tools}:{}))})}
+  for(let round=0;round<12;round++){
+    let r;try{r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:opts.signal,headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(Object.assign({model:MODEL,max_tokens:2000,messages:msgs},tools.length?{tools}:{}))})}
     catch(e){throw{code:e&&e.name==='AbortError'?'cancelled':'upstream_error',message:String(e)}}
     const j=await r.json().catch(()=>({}));
     if(!r.ok){throw{code:r.status===401||r.status===403?'bad_key':r.status===429?'rate_limited':'upstream_error',message:(j.error&&j.error.message)||('erro '+r.status),text:all||undefined}}
@@ -594,28 +594,38 @@ async function apiSample(input,opts){opts=opts||{};const key=getKey();if(!key){t
       results.push({type:'tool_result',tool_use_id:u.id,content:out})}
     msgs.push({role:'user',content:results})}
   if(!all)throw{code:'empty_completion',message:'sem texto'};return{text:all}}
-const SUGS=["O que está atrasado?","O que tenho para os próximos 7 dias?","Resume o que está em aberto","Adiciona uma tarefa: ligar para o contador amanhã"];
-let turns=[],ctl=null,busy=false;const msgs=$('msgs');
+const SUGS=["O que está atrasado?","O que tenho para os próximos 7 dias?","Organiza meu dia de hoje","Adiciona uma tarefa: ligar para o contador amanhã","Muda o prazo de uma tarefa"];
+let turns=[],ctl=null,busy=false,histOk=false;const msgs=$('msgs');
+const histKey=()=>'lvTodoChat:'+(QUEM||'');
+function saveHist(){try{localStorage.setItem(histKey(),JSON.stringify(turns.slice(-60)))}catch(_){}}
+function loadHist(){if(histOk||!QUEM)return;histOk=true;try{const h=JSON.parse(localStorage.getItem(histKey())||'[]');
+  if(Array.isArray(h)&&h.length&&!turns.length){turns=h.filter(t=>t&&typeof t.content==='string'&&(t.role==='user'||t.role==='assistant'));
+    turns.forEach(t=>bubble(t.role==='user'?'u':'a',t.content.replace(/[—–]/g,',')))}}catch(_){}}
 function bubble(cls,txt){const b=el('div','msg '+cls,txt);msgs.appendChild(b);msgs.scrollTop=msgs.scrollHeight;return b}
 function showSugs(){const s=$('sugs');s.textContent='';if(turns.length)return;SUGS.forEach(q=>{const b=el('button','sug',q);b.type='button';b.onclick=()=>ask(q);s.appendChild(b)})}
-function openChat(){document.body.classList.add('chatting');$('chat').classList.add('open');showSugs();setTimeout(()=>$('chatIn').focus(),50)}
+function openChat(){document.body.classList.add('chatting');$('chat').classList.add('open');loadHist();showSugs();setTimeout(()=>$('chatIn').focus(),50)}
 function closeChat(){document.body.classList.remove('chatting');$('chat').classList.remove('open')}
 $('askOpen').onclick=openChat;$('askClose').onclick=closeChat;
-$('chatNew').onclick=()=>{ctl&&ctl.abort();turns=[];msgs.textContent='';$('chatNote').hidden=true;showSugs()};
+$('chatNew').onclick=()=>{ctl&&ctl.abort();turns=[];saveHist();msgs.textContent='';$('chatNote').hidden=true;showSugs()};
 function snapshot(){
   const lines=tasks.slice().sort(byDue).map(t=>{const a=(AMAP[t.area]||['','?'])[1];const e=espDe(t.esp);
     return `- [${t.done?'x':' '}] id=${t.id} | ${t.title} | frente: ${a}${t.area[0]==='@'?' / '+frenteNome(e,t.frente):''}${compart(e)&&t.resp?' | responsável: '+t.resp:''}${t.due?' | prazo: '+t.due:''}${t.notes?' | obs: '+t.notes:''}`});
-  const hl=habits.map(h=>`- hábito: ${h.title} | meta: ${h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
+  const hl=habits.map(h=>`- hábito: id=${h.id} | ${h.title} | meta: ${h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
   return lines.concat(hl).join('\n')||'(lista vazia)'}
 function rules(){const d=new Date();const hoje=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   return `Você é a Duda, assistente do To Do List. Quem está perguntando agora: ${QUEM||"não identificado"}.
 Hoje é ${hoje} (${isoOf(d)}). Fuso de Goiânia.
 Regras:
 - Responda em português do Brasil, curto e direto. Nunca use travessão. Use vírgula, ponto ou dois pontos.
-- Use só o que está na lista abaixo. Se a informação não estiver lá, diga que não está na lista.
-- Datas no formato dd/mm. "[x]" é tarefa concluída, "[ ]" é aberta.
+- Sobre tarefas, prazos e hábitos, use a lista abaixo como a verdade. Se algo não estiver lá, diga que não está na lista. Para organizar o dia, priorizar ou planejar, pode sugerir à vontade.
+- Datas no formato dd/mm. "[x]" é tarefa concluída, "[ ]" é aberta. Entenda "amanhã", "sexta", "semana que vem" a partir da data de hoje.
 - Frentes possíveis (chave e nome): ${AREAS.map(a=>a[0]+' ('+a[1]+')').join(', ')}.
-- Se pedirem para adicionar, concluir ou reabrir tarefa, use as ferramentas. Antes de concluir, confira o id certo na lista. Nunca apague tarefas.
+- Quando pedirem uma mudança, faça na hora com as ferramentas, sem pedir confirmação, e depois diga em uma linha o que fez. Pode usar várias ferramentas no mesmo pedido.
+- Mudar prazo, nome, frente ou observação de algo que já existe é editar_tarefa com o id da lista. Nunca crie tarefa nova para isso, para não duplicar.
+- Vários itens no mesmo pedido: uma tarefa para cada item.
+- Se o pedido puder ser de mais de uma tarefa da lista, pergunte qual antes de mexer.
+- Só apague tarefa quando pedirem com a palavra apagar, excluir ou remover. Concluir não é apagar.
+- Leve em conta a conversa anterior: "essa", "a de antes" e "aquela" se referem ao que acabou de ser falado.
 - Sem markdown pesado: no máximo listas simples com "•".
 
 Lista atual:
@@ -633,15 +643,47 @@ function tools(){return[
   inputSchema:{type:'object',properties:{id:{type:'string'},feita:{type:'boolean'}},required:['id','feita']},
   async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');
     const v=i.feita!==false;await rpc('lv_todo_salvar',{p_tarefa:{id:t.id,feita:v}});
-    bubble('sys',(v?'✓ Concluída: ':'↺ Reaberta: ')+t.title);refresh();return{ok:true}}}]}
+    bubble('sys',(v?'✓ Concluída: ':'↺ Reaberta: ')+t.title);refresh();return{ok:true}}},
+ {name:'editar_tarefa',description:'Altera uma tarefa que já existe, pelo id da lista. Envie só os campos que mudam. prazo vazio remove o prazo. frente só vale para tarefas das frentes próprias da pessoa.',
+  inputSchema:{type:'object',properties:{id:{type:'string'},titulo:{type:'string'},frente:{type:'string',enum:AREAS.filter(a=>a[0][0]!=='@').map(a=>a[0])},prazo:{type:'string',description:'AAAA-MM-DD, ou vazio para tirar o prazo'},obs:{type:'string'},responsavel:{type:'string'}},required:['id']},
+  async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');const e=espDe(t.esp);
+    const p={id:t.id,titulo:i.titulo!=null&&String(i.titulo).trim()?String(i.titulo).trim().slice(0,200):t.title,frente:t.frente,prazo:t.due||'',obs:i.obs!=null?String(i.obs).slice(0,300):t.notes};
+    if(i.prazo!=null){const d=String(i.prazo);if(d===''||/^\d{4}-\d{2}-\d{2}$/.test(d))p.prazo=d;else throw new Error('prazo deve ser AAAA-MM-DD')}
+    if(i.frente!=null){const k=String(i.frente);if(t.area[0]==='@')throw new Error('tarefa de espaço compartilhado não muda de frente por aqui');if(!AMAP[k]||k[0]==='@')throw new Error('frente não existe');p.frente=k}
+    if(compart(e))p.responsavel=i.responsavel!=null&&respOpts(e).includes(String(i.responsavel))?String(i.responsavel):t.resp;
+    await rpc('lv_todo_salvar',{p_tarefa:p});bubble('sys','✓ Alterada: '+p.titulo);refresh();return{ok:true}}},
+ {name:'apagar_tarefa',description:'Apaga de vez uma tarefa pelo id. Só quando a pessoa pedir para apagar, excluir ou remover.',
+  inputSchema:{type:'object',properties:{id:{type:'string'}},required:['id']},
+  async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');
+    await rpc('lv_todo_apagar',{p_id:t.id});bubble('sys','✕ Apagada: '+t.title);refresh();return{ok:true}}},
+ {name:'adicionar_habito',description:'Cria um hábito novo no espaço pessoal. vezes_por_semana de 1 a 7; sem número, é todo dia.',
+  inputSchema:{type:'object',properties:{titulo:{type:'string'},vezes_por_semana:{type:'integer'},obs:{type:'string'}},required:['titulo']},
+  async execute(i){if(!podeFrentes())throw new Error('hábitos só no espaço pessoal');const n=parseInt(i.vezes_por_semana,10);
+    const fr=(AREAS.find(a=>a[0]==='habitos')||AREAS[0])[0];
+    await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:HOME.id,titulo:String(i.titulo).slice(0,200),frente:fr,meta_semana:n>=1&&n<=6?String(n):'',obs:String(i.obs||'').slice(0,300)}});
+    bubble('sys','✓ Hábito criado: '+i.titulo);refresh();return{ok:true}}},
+ {name:'marcar_habito',description:'Marca ou desmarca um hábito em um dia, pelo id do hábito. Sem data, vale hoje.',
+  inputSchema:{type:'object',properties:{id:{type:'string'},data:{type:'string',description:'AAAA-MM-DD'},feito:{type:'boolean'}},required:['id','feito']},
+  async execute(i){const h=habits.find(x=>String(x.id)===String(i.id));if(!h)throw new Error('hábito não encontrado');
+    const d=/^\d{4}-\d{2}-\d{2}$/.test(String(i.data||''))?String(i.data):isoOf(today());const v=i.feito!==false;
+    await rpc('lv_todo_habito_salvar',{p_habito:{id:h.id,dia:d,valor:v}});bubble('sys',(v?'✓ Hábito feito: ':'↺ Hábito desmarcado: ')+h.title);refresh();return{ok:true}}},
+ {name:'nova_frente',description:'Cria uma frente nova no espaço pessoal. Retorna a chave para usar em seguida.',
+  inputSchema:{type:'object',properties:{nome:{type:'string'}},required:['nome']},
+  async execute(i){if(!podeFrentes())throw new Error('sem permissão para criar frente');const v=String(i.nome||'').trim().slice(0,40);if(!v)throw new Error('nome vazio');
+    const cores=['purple','blue','green','amber','pink','red','gray'];const chave='f'+Date.now().toString(36);
+    extras=extras.concat([{chave,nome:v,cor:cores[extras.length%cores.length]}]);await refazer();bubble('sys','✓ Frente criada: '+v);return{ok:true,chave}}},
+ {name:'renomear_frente',description:'Troca o nome de uma frente, pela chave.',
+  inputSchema:{type:'object',properties:{chave:{type:'string',enum:AREAS.map(a=>a[0])},nome:{type:'string'}},required:['chave','nome']},
+  async execute(i){const k=String(i.chave),v=String(i.nome||'').trim();if(!AMAP[k]||!v)throw new Error('frente não existe ou nome vazio');
+    setName(k,v);render();await saveSettings();bubble('sys','✓ Frente renomeada: '+v);return{ok:true}}}]}
 async function ask(q){
   q=(q||'').trim();if(!q||busy)return;
   busy=true;$('chatSend').disabled=true;$('sugs').textContent='';$('chatNote').hidden=true;$('chatIn').value='';
   bubble('u',q);turns.push({role:'user',content:q});
   const out=bubble('a wait','Pensando…');ctl=new AbortController();
   try{
-    const {text}=await apiSample([{role:'user',content:rules()},...turns.slice(-12)],{signal:ctl.signal,tools:tools(),onText:({text})=>{out.classList.remove('wait');out.textContent=text.replace(/[—–]/g,',');msgs.scrollTop=msgs.scrollHeight}});
-    out.classList.remove('wait');out.textContent=text.replace(/[—–]/g,',');turns.push({role:'assistant',content:text});
+    const {text}=await apiSample([{role:'user',content:rules()},...turns.slice(-30)],{signal:ctl.signal,tools:tools(),onText:({text})=>{out.classList.remove('wait');out.textContent=text.replace(/[—–]/g,',');msgs.scrollTop=msgs.scrollHeight}});
+    out.classList.remove('wait');out.textContent=text.replace(/[—–]/g,',');turns.push({role:'assistant',content:text});saveHist();
   }catch(e){
     if(e&&e.text){out.classList.remove('wait');out.textContent=e.text}else out.remove();
     turns.pop();
@@ -709,7 +751,7 @@ async function gSync(avisar){
 window.addEventListener('load',()=>{gInit();gStatus()});gStatus();
 
 /* entrada e saída */
-function sair(){CODIGO='';QUEM='';ESP=[];HOME=null;OUTROS=[];tasks=[];habits=[];AREAS=[];AMAP={};loaded=false;turns=[];msgs.textContent='';
+function sair(){histOk=false;CODIGO='';QUEM='';ESP=[];HOME=null;OUTROS=[];tasks=[];habits=[];AREAS=[];AMAP={};loaded=false;turns=[];msgs.textContent='';
   try{localStorage.removeItem(CODLS)}catch(_){}clearInterval(pollT);closeChat();render();$('whoTxt').textContent='';$('login').hidden=false}
 $('sair').onclick=sair;
 async function entrar(c){CODIGO=c;
