@@ -2240,6 +2240,7 @@ async function desenharCartaoFaseFinal(d){
   const bx=cx+28, by=cy+28, bw=236, bh=chh-56; c.fillStyle=AREIA; caixa(bx,by,bw,bh,22); c.fill();
   const [ay,am,ad]=String(d.data||'').split('-').map(Number); const dt=(ay&&am&&ad)?new Date(ay,am-1,ad):null;
   const SEM=['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'], MES=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  if(!dt){ c.fillStyle=TAUPE; c.font=`600 19px ${SANS}`; espacado('DATA A', bx+bw/2, by+bh/2-8, 3, 'center'); espacado('CONFIRMAR', bx+bw/2, by+bh/2+22, 3, 'center'); }
   if(dt){
     c.fillStyle=TAUPE; c.font=`600 18px ${SANS}`; espacado(SEM[dt.getDay()], bx+bw/2, by+50, 3, 'center');
     // números em DM Sans: os algarismos da Playfair são de estilo antigo e o zero parece a letra o
@@ -2276,34 +2277,64 @@ async function desenharCartaoFaseFinal(d){
   return cv;
 }
 async function abrirCartaoFaseFinal(d){
-  let cv; try{ cv=await desenharCartaoFaseFinal(d); }catch(e){ showToast('Não consegui montar a imagem.'); return; }
-  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
-  if(!blob){ showToast('Não consegui montar a imagem.'); return; }
-  const url=URL.createObjectURL(blob);
+  d=Object.assign({}, d);
+  let blob=null, url='';
   let o=document.getElementById('cartao-final-ov'); if(o) o.remove();
   o=document.createElement('div'); o.id='cartao-final-ov';
   o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(58,58,58,.55);display:flex;align-items:center;justify-content:center;padding:18px';
   o.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:540px;width:100%;max-height:94vh;overflow:auto;box-shadow:var(--shadow-md)">
     <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:4px">Imagem da fase final</div>
-    <div style="font-size:12px;color:var(--mid);margin-bottom:12px">Copie e cole na conversa do WhatsApp do candidato, ou baixe a imagem.</div>
-    <img alt="Imagem da fase final" src="${url}" style="width:100%;display:block;border-radius:10px;border:1px solid var(--bege)">
+    <div style="font-size:12px;color:var(--mid);margin-bottom:10px">Confira a data e o horário. Se mudar aqui, a imagem se refaz. Depois copie e cole na conversa do WhatsApp, ou baixe.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <label style="font-size:11px;color:var(--mid)">Data<br><input type="date" data-c="data" class="filter-input" style="margin-top:3px"></label>
+      <label style="font-size:11px;color:var(--mid)">Horário<br><input type="time" data-c="hora" class="filter-input" style="margin-top:3px"></label>
+    </div>
+    <img alt="Imagem da fase final" style="width:100%;display:block;border-radius:10px;border:1px solid var(--bege);min-height:120px">
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button>
       <button class="btn btn-ghost btn-sm" data-a="baixar">Baixar</button>
       <button class="btn btn-primary btn-sm" data-a="copiar">Copiar imagem</button>
     </div></div>`;
-  const nomeArq='fase-final-'+(_cartaoPrimeiroNome(d.nome)||'candidato').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'')+'.png';
+  const inD=o.querySelector('input[data-c="data"]'), inH=o.querySelector('input[data-c="hora"]'), img=o.querySelector('img');
+  inD.value=d.data||''; inH.value=d.hora?String(d.hora).slice(0,5):'';
+  const refaz=async()=>{
+    try{ const cv=await desenharCartaoFaseFinal(d); const b=await new Promise(r=>cv.toBlob(r,'image/png')); if(!b) throw new Error('vazio');
+      if(url) URL.revokeObjectURL(url); blob=b; url=URL.createObjectURL(b); img.src=url; }
+    catch(e){ showToast('Não consegui montar a imagem.'); }
+  };
+  inD.addEventListener('change',()=>{ d.data=inD.value; refaz(); });
+  inH.addEventListener('change',()=>{ d.hora=inH.value; refaz(); });
+  const fechar=()=>{ o.remove(); if(url) URL.revokeObjectURL(url); };
   o.addEventListener('click', async ev=>{
     const b=ev.target.closest('button[data-a]');
-    if(!b){ if(ev.target===o){ o.remove(); URL.revokeObjectURL(url); } return; }
-    if(b.dataset.a==='fechar'){ o.remove(); URL.revokeObjectURL(url); }
-    if(b.dataset.a==='baixar'){ const a=document.createElement('a'); a.href=url; a.download=nomeArq; document.body.appendChild(a); a.click(); a.remove(); showToast('Imagem baixada'); }
+    if(!b){ if(ev.target===o) fechar(); return; }
+    if(b.dataset.a==='fechar') return fechar();
+    if(!blob){ showToast('A imagem ainda não ficou pronta.'); return; }
+    if(b.dataset.a==='baixar'){ const nomeArq='fase-final-'+(_cartaoPrimeiroNome(d.nome)||'candidato').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'')+'.png';
+      const a=document.createElement('a'); a.href=url; a.download=nomeArq; document.body.appendChild(a); a.click(); a.remove(); showToast('Imagem baixada'); }
     if(b.dataset.a==='copiar'){
       try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('Imagem copiada. É só colar na conversa.'); }
       catch(e){ showToast('Este navegador não deixou copiar. Use "Baixar".'); }
     }
   });
   document.body.appendChild(o);
+  await refaz();
+}
+// Na ficha do candidato: botão para refazer ou baixar a imagem depois, a partir da
+// última Entrevista Final dele na agenda (data e horário continuam editáveis).
+function _cartaoBotaoNaFicha(c){
+  try{
+    const t=document.getElementById('mc-titulo'); if(!t) return;
+    const velho=document.getElementById('mc-cartao-btn'); if(velho) velho.remove();
+    if(!c || isClienteExterno() || !_cartaoFinalCfg()) return;
+    const finais=(_agenda||[]).filter(a=>a.candidatoId===c.id && a.status!=='cancelada' && _agEhFinal(a)).sort((x,y)=>(y.data+(y.horaIni||'')).localeCompare(x.data+(x.horaIni||'')));
+    if(!finais.length && !['vivencia','aprovacao','admissao'].includes(c.etapa)) return;
+    const b=document.createElement('button'); b.id='mc-cartao-btn'; b.type='button'; b.className='btn btn-ghost btn-sm'; b.style.marginLeft='10px'; b.style.verticalAlign='middle';
+    b.textContent='🖼 Imagem da fase final'; b.title='Abre a imagem de parabéns da fase final para copiar ou baixar';
+    b.onclick=()=>{ const v=getVagas().find(x=>x.id===c.vagaId); const a=finais[0]||{candidatoId:c.id,candidato:c.nome,data:'',horaIni:''};
+      abrirCartaoFaseFinal(_cartaoDadosDoCompromisso(Object.assign({vaga:v?v.titulo:''}, a, {candidatoId:c.id, vaga:a.vaga||(v?v.titulo:'')}))); };
+    t.insertAdjacentElement('afterend', b);
+  }catch(e){}
 }
 // Dados da imagem a partir de um compromisso da agenda (ou do que está preenchido na janela).
 function _cartaoDadosDoCompromisso(a){
@@ -3979,7 +4010,7 @@ async function apagarNota(data){
   try{ await upsertCand(c); }catch(e){ c.historico=antes; alert('Não foi possível apagar: '+(e.message||e)); return; }
   renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){} showToast('✕ Anotação apagada');
 }
-function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;
+function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;_cartaoBotaoNaFicha(c);
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
   const selE=document.getElementById('mc-etapa');
