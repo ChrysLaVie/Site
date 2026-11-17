@@ -354,7 +354,7 @@ try { rsDb = window.supabase.createClient(RS_SUPABASE_URL, RS_SUPABASE_KEY, { au
 // LinkedIn, Facebook e Google; WhatsApp e Telegram não informam); (3) a marca do
 // link de divulgação (?c=whatsapp ou utm_source=...). Tudo aqui é "melhor
 // esforço": nenhuma falha deste bloco pode atrapalhar a candidatura.
-const LV_ORIGENS = [['whatsapp','WhatsApp'],['instagram','Instagram'],['linkedin','LinkedIn'],['facebook','Facebook'],['telegram','Telegram'],['google','Google'],['email','E-mail da La Vie'],['portal','Site de vagas (Indeed, Jobbol e outros)'],['indicacao','Indicação de alguém'],['outro','Outro']];
+const LV_ORIGENS = [['whatsapp','WhatsApp'],['instagram','Instagram'],['linkedin','LinkedIn'],['facebook','Facebook'],['telegram','Telegram'],['google','Google'],['email','E-mail da La Vie'],['portal','Site de vagas (Indeed, Jobbol e outros)'],['indicacao','Indicação de alguém'],['vocacional','Teste Vocacional da La Vie'],['outro','Outro']];
 function lvRedeDe(texto) {
   const t = String(texto || '').toLowerCase();
   if (!t) return '';
@@ -1113,14 +1113,18 @@ function openApplyModal(vaga) {
   if (origemSel) origemSel.addEventListener('change', check);
   nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check); lgpd.addEventListener('change', check);
   if (areaSel) areaSel.addEventListener('change', check);
-  // Quem chega do Teste Vocacional (/vocacional/) já vem com a área e os dados no link
+  // Quem chega do Teste Vocacional (/vocacional/): a área vem no link e os dados
+  // pessoais vêm do navegador (lv_vocacional, válido por 30 min), nunca pela URL.
   try {
     const q = new URLSearchParams(location.search);
     if (ehBanco && areaSel && BANCO_AREAS.includes(q.get('banco'))) areaSel.value = q.get('banco');
-    if (q.get('nome') && !nome.value) nome.value = q.get('nome').slice(0, 120);
-    if (q.get('email') && !email.value) email.value = q.get('email').slice(0, 120);
-    if (q.get('telefone') && !whatsapp.value) whatsapp.value = q.get('telefone').slice(0, 40);
-    if (origemSel && !origemSel.value && q.get('utm_source') === 'vocacional') origemSel.value = 'outro';
+    const v = JSON.parse(localStorage.getItem('lv_vocacional') || 'null');
+    if (v && v.t && Date.now() - v.t < 30 * 60 * 1000) {
+      if (v.nome && !nome.value) nome.value = String(v.nome).slice(0, 120);
+      if (v.email && !email.value) email.value = String(v.email).slice(0, 120);
+      if (v.telefone && !whatsapp.value) whatsapp.value = String(v.telefone).slice(0, 40);
+      if (origemSel && !origemSel.value) origemSel.value = 'vocacional';
+    } else if (origemSel && !origemSel.value && q.get('utm_source') === 'vocacional') origemSel.value = 'vocacional';
     check();
   } catch (e) {}
 

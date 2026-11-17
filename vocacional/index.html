@@ -233,6 +233,7 @@
       <div class="field"><label for="f-email">E-mail <span class="req">*</span></label><input type="email" id="f-email" autocomplete="email" placeholder="seu@email.com"></div>
       <div class="field"><label for="f-whats">WhatsApp <span class="req">*</span></label><input type="tel" id="f-whats" autocomplete="tel" placeholder="(62) 9 0000-0000"></div>
     </div>
+    <input type="text" id="f-site" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
     <label class="lgpd" id="lgpdBox"><input type="checkbox" id="f-lgpd"><span>Autorizo a La Vie Consultoria a guardar meu resultado e entrar em contato sobre oportunidades. Li a <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>.</span></label>
     <div class="msg-erro" id="msgDados">Preencha nome, e-mail e WhatsApp e marque a autorização para começar.</div>
     <div class="actions"><div class="right"><button type="button" class="btn-primary" id="btnComecar">Começar o teste</button></div></div>
@@ -374,10 +375,25 @@
   }
 
   const dados = { nome:'', email:'', whats:'' };
+  const CHAVE_PROG = 'lv_voc_progresso';
+  function salvarProgresso(){
+    try{ sessionStorage.setItem(CHAVE_PROG, JSON.stringify({ dados, atual, resp: respostas(), t: Date.now() })); }catch(e){}
+  }
+  function retomarProgresso(){
+    try{
+      const p = JSON.parse(sessionStorage.getItem(CHAVE_PROG) || 'null');
+      if (!p || !p.dados || !p.dados.email || Date.now() - p.t > 2 * 3600 * 1000) return false;
+      Object.assign(dados, p.dados);
+      document.getElementById('f-nome').value = dados.nome; document.getElementById('f-email').value = dados.email; document.getElementById('f-whats').value = dados.whats; document.getElementById('f-lgpd').checked = true;
+      (p.resp || []).forEach((v, i) => { if (v) { const el = document.getElementById(`q${i}-${v}`); if (el) el.checked = true; } });
+      mostrar(Math.max(0, Math.min(p.atual, nTelas - 1)), false);
+      return true;
+    }catch(e){ return false; }
+  }
   let atual = -1;
   const telaDe = t => t < 0 ? document.getElementById('telaDados') : document.getElementById('tela' + t);
 
-  function mostrar(t){
+  function mostrar(t, rolar = true){
     document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
     atual = t;
     const progress = document.getElementById('progress');
@@ -388,7 +404,8 @@
       document.getElementById('progressCount').textContent = `${ini} a ${fim} de ${AFIRMACOES.length}`;
       document.getElementById('barFill').style.width = `${(fim / AFIRMACOES.length) * 100}%`;
     }
-    document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
+    if (rolar) document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
+    if (t >= 0) salvarProgresso();
   }
 
   document.getElementById('btnComecar').addEventListener('click', () => {
@@ -416,7 +433,7 @@
       if (t === nTelas - 1) finalizar(); else mostrar(t + 1);
     }
   });
-  telasEl.addEventListener('change', e => { const it = e.target.closest('.item'); if (!it) return; it.classList.remove('falta'); const tela = it.closest('.tela'); if (tela && !tela.querySelector('.item.falta')) tela.querySelector('.msg-erro').classList.remove('show'); });
+  telasEl.addEventListener('change', e => { const it = e.target.closest('.item'); if (!it) return; salvarProgresso(); it.classList.remove('falta'); const tela = it.closest('.tela'); if (tela && !tela.querySelector('.item.falta')) tela.querySelector('.msg-erro').classList.remove('show'); });
 
   AREAS.out = { nome:'Outras áreas', banco:'Outras áreas', oculta:true };
   const ORDEM_AREAS = Object.keys(AREAS).filter(k => !AREAS[k].oculta);
@@ -441,13 +458,21 @@
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
+  // Nome, e-mail e WhatsApp não vão na URL: ficam no navegador por 30 minutos
+  // e a página de Vagas (mesmo domínio) lê e apaga. Na URL vai só a área.
+  function guardarEntrega(res){
+    try{
+      localStorage.setItem('lv_vocacional', JSON.stringify({ nome: dados.nome, email: dados.email, telefone: dados.whats, holland: res ? res.codigo : '', area: res ? AREAS[res.areas[0].k].banco : '', t: Date.now() }));
+    }catch(e){}
+  }
   function linkBanco(area){
-    const p = new URLSearchParams({ banco: area.banco, nome: dados.nome, email: dados.email, telefone: dados.whats, utm_source: 'vocacional' });
+    const p = new URLSearchParams({ banco: area.banco, utm_source: 'vocacional' });
     return `${SITE}/vagas/?${p.toString()}`;
   }
 
   async function gravar(res){
     if (!NO_AR) return false;
+    if (document.getElementById('f-site').value) return true; // robô preencheu o campo isca: finge que gravou
     const lista = res.areas;
     const corpo = JSON.stringify({
       nome: dados.nome, email: dados.email, whatsapp: dados.whats,
@@ -487,7 +512,8 @@
 
   let ultimoResultado = null;
   async function finalizar(){
-    const res = pontuar(); const lista = res.areas; ultimoResultado = res;
+    const res = pontuar(); const lista = res.areas; ultimoResultado = res; guardarEntrega(res);
+    try{ sessionStorage.removeItem('lv_voc_progresso'); }catch(e){}
     const top = AREAS[lista[0].k], seg = AREAS[lista[1].k], ter = AREAS[lista[2].k];
     const primeiro = dados.nome.split(' ')[0];
     const h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k], h3 = RIASEC[res.holland[2].k];
@@ -508,10 +534,10 @@
         </div>`;
     const cta = res.fraco ? `
       <div class="cta">
-        <h3>Complete o seu perfil com o Teste DISC</h3>
-        <p>O DISC mostra como você se comporta no trabalho e ajuda a La Vie a te indicar para a vaga certa, em qualquer área. Leva uns 10 minutos.</p>
-        <a class="btn btn-primary" href="${linkDisc()}" target="_blank" rel="noopener noreferrer">Fazer o Teste DISC →</a>
-        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se quiser entrar no banco de talentos mesmo assim: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a> ou <a href="${linkBanco(AREAS.out)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(AREAS.out.banco)}</a>.</p>
+        <h3>Entre no banco de talentos mesmo assim</h3>
+        <p>Cadastre seu currículo em "Outras áreas". A La Vie olha cada currículo, e logo depois do cadastro você faz o Teste DISC, que mostra como você se comporta no trabalho e ajuda a te indicar para a vaga certa, em qualquer área.</p>
+        <a class="btn btn-primary" href="${linkBanco(AREAS.out)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em Outras áreas →</a>
+        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se preferir a área mais próxima: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a>.</p>
       </div>` : `
       <div class="cta">
         <h3>Entre no banco de talentos da La Vie</h3>
@@ -522,7 +548,7 @@
     el.innerHTML = topo + `
       ${res.fraco ? '' : `<div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>`}
       ${cta}
-      <div class="res-bloco"><h3>Seu perfil de interesses (Holland)</h3>
+      <div class="res-bloco"><h3>Seu perfil de interesses (Holland, estimado)</h3>
         <div class="radar-wrap">${radarSVG(res.holland)}
           <div class="radar-legenda">${res.holland.map((x, i) => `<div><div><b>${esc(RIASEC[x.k].nome)}</b>${i < 3 ? `<small>${esc(RIASEC[x.k].resumo)}</small>` : ''}</div><span>${x.pct}%</span></div>`).join('')}</div>
         </div></div>
@@ -605,13 +631,10 @@
     const a = document.createElement('a'); a.href = url; a.download = `teste-vocacional-la-vie-${res.codigo.toLowerCase()}.png`; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
-  function linkDisc(){
-    const p = new URLSearchParams({ nome: dados.nome, email: dados.email, telefone: dados.whats, vaga: 'Banco de Talentos · Outras áreas' });
-    return `${SITE}/disc/?${p.toString()}`;
-  }
 
   // Prévia fora do domínio: nada é gravado
   document.getElementById('previa').classList.toggle('hidden', NO_AR);
+  retomarProgresso();
     window.__voc = { AREAS, AFIRMACOES, RIASEC, pontuar, dados };
 </script>
 </body>
