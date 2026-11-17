@@ -1637,7 +1637,7 @@ async function carregarAgendaOutras(){
   }catch(e){ console.warn('Agenda das outras empresas:',e); }
   return _agendaOutras;
 }
-function _agOutrasVisiveis(){ return isClienteExterno() ? [] : _agendaOutras.filter(_agAtivo); }
+function _agOutrasVisiveis(){ return isClienteExterno() ? [] : _agendaOutras.filter(_agAtivo).filter(a=>!(CARTAO_FASE_FINAL[a.empresaId] && /final/i.test(a.titulo||''))); }
 function _agChoques(a){ return _agOutrasVisiveis().filter(o=>_agSobrepoe(a,o)); }
 function agOcupadoInfo(id){
   const o=_agendaOutras.find(x=>x.id===id); if(!o) return;
@@ -2311,14 +2311,33 @@ async function abrirCartaoFaseFinal(d){
     if(b.dataset.a==='fechar') return fechar();
     if(!blob){ showToast('A imagem ainda não ficou pronta.'); return; }
     if(b.dataset.a==='baixar'){ const nomeArq='fase-final-'+(_cartaoPrimeiroNome(d.nome)||'candidato').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'')+'.png';
-      const a=document.createElement('a'); a.href=url; a.download=nomeArq; document.body.appendChild(a); a.click(); a.remove(); showToast('Imagem baixada'); }
+      const a=document.createElement('a'); a.href=url; a.download=nomeArq; document.body.appendChild(a); a.click(); a.remove(); const ag=await _cartaoGarantirAgenda(d); showToast('Imagem baixada'+(ag?'. '+ag:'')); }
     if(b.dataset.a==='copiar'){
-      try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('Imagem copiada. É só colar na conversa.'); }
+      try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); const ag=await _cartaoGarantirAgenda(d); showToast('Imagem copiada. É só colar na conversa.'+(ag?' '+ag:'')); }
       catch(e){ showToast('Este navegador não deixou copiar. Use "Baixar".'); }
     }
   });
   document.body.appendChild(o);
   await refaz();
+}
+// Ao copiar ou baixar a imagem, a Entrevista Final entra (ou é corrigida) na agenda
+// do cliente com a data e o horário da imagem. É a entrevista do gestor do cliente:
+// serve de controle, não vai para o Google Agenda e não conta como horário ocupado.
+async function _cartaoGarantirAgenda(d){
+  try{
+    if(!d || !d.candidatoId || !d.data || isClienteExterno()) return '';
+    const c=getCands().find(x=>x.id===d.candidatoId); if(!c) return '';
+    const hora=d.hora?String(d.hora).slice(0,5):'';
+    const ja=(_agenda||[]).filter(a=>a.candidatoId===c.id && a.status!=='cancelada' && _agEhFinal(a)).sort((x,y)=>(y.data+(y.horaIni||'')).localeCompare(x.data+(x.horaIni||'')))[0];
+    if(ja && ja.data===d.data && (ja.horaIni||'').slice(0,5)===hora) return '';
+    const v=getVagas().find(x=>x.id===c.vagaId); const cfg=_cartaoFinalCfg(d.empresaId)||{};
+    const lbl=(ETAPAS.find(e=>e.id==='vivencia')||{}).label||'Entrevista Final';
+    const a=ja ? Object.assign({}, ja, {data:d.data, horaIni:hora}) : { id:'ag-'+Date.now(), titulo:lbl, candidatoId:c.id, candidato:c.nome, vagaId:c.vagaId||null, vaga:v?v.titulo:(d.vaga||null), setor:v?v.setor:null,
+      data:d.data, horaIni:hora, horaFim:'', tipo:'presencial', link:'', local:(cfg.endereco||[]).join(' · '), status:'agendada', obs:'Entrevista com o gestor do cliente. Criada ao gerar a imagem da fase final.', criadoPor:getUserName(), googleEventId:null };
+    await upsertAgenda(a); _localUpsert(_agenda,a);
+    try{ renderAgenda(); }catch(e){}
+    return ja ? 'Agenda corrigida para '+_dataBR(d.data)+(hora?' às '+hora:'') : 'Fase final marcada na agenda: '+_dataBR(d.data)+(hora?' às '+hora:'');
+  }catch(e){ return 'Não consegui marcar na agenda.'; }
 }
 // Na ficha do candidato: botão para refazer ou baixar a imagem depois, a partir da
 // última Entrevista Final dele na agenda (data e horário continuam editáveis).
@@ -2328,7 +2347,7 @@ function _cartaoBotaoNaFicha(c){
     const velho=document.getElementById('mc-cartao-btn'); if(velho) velho.remove();
     if(!c || isClienteExterno() || !_cartaoFinalCfg()) return;
     const finais=(_agenda||[]).filter(a=>a.candidatoId===c.id && a.status!=='cancelada' && _agEhFinal(a)).sort((x,y)=>(y.data+(y.horaIni||'')).localeCompare(x.data+(x.horaIni||'')));
-    if(!finais.length && !['vivencia','aprovacao','admissao'].includes(c.etapa)) return;
+    if(!finais.length && !['entrevista_gestor','vivencia','aprovacao','admissao'].includes(c.etapa)) return;
     const b=document.createElement('button'); b.id='mc-cartao-btn'; b.type='button'; b.className='btn btn-ghost btn-sm'; b.style.marginLeft='10px'; b.style.verticalAlign='middle';
     b.textContent='🖼 Imagem da fase final'; b.title='Abre a imagem de parabéns da fase final para copiar ou baixar';
     b.onclick=()=>{ const v=getVagas().find(x=>x.id===c.vagaId); const a=finais[0]||{candidatoId:c.id,candidato:c.nome,data:'',horaIni:''};
@@ -2342,7 +2361,7 @@ function _cartaoDadosDoCompromisso(a){
   const cfg=_cartaoFinalCfg(a.empresaId)||{};
   // Cliente com endereço fixo: a fase final é presencial lá, mesmo que a sala online venha preenchida sozinha.
   const online=!(cfg.endereco&&cfg.endereco.length) && a.tipo!=='presencial';
-  return { empresaId:a.empresaId||currentEmpresa, nome:(c&&c.nome)||a.candidato||'', vaga:a.vaga||'', data:a.data, hora:a.horaIni||'', online, local:(a.local||'').trim() };
+  return { empresaId:a.empresaId||currentEmpresa, candidatoId:a.candidatoId||null, nome:(c&&c.nome)||a.candidato||'', vaga:a.vaga||'', data:a.data, hora:a.horaIni||'', online, local:(a.local||'').trim() };
 }
 function agAvisoCartao(){
   const b=document.getElementById('ag-cartao-btn'); if(!b) return;
