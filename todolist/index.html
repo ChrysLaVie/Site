@@ -248,9 +248,9 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
 
 <div class="overlay" id="ovr">
   <form class="modal" id="renForm" autocomplete="off">
-    <h2>Renomear frente</h2>
+    <h2 id="renTitle">Renomear frente</h2>
     <div class="field"><label for="renIn">Nome da frente</label><input id="renIn" maxlength="40" required></div>
-    <div class="actions"><button type="button" class="btn" id="renReset">Voltar ao nome original</button><button type="button" class="btn" id="renCancel">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+    <div class="actions" style="flex-wrap:wrap"><button type="button" class="btn" id="renDel" hidden style="margin-right:auto;color:var(--red-t)">Apagar frente</button><button type="button" class="btn" id="renReset">Voltar ao nome original</button><button type="button" class="btn" id="renCancel">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
   </form>
 </div>
 
@@ -269,7 +269,7 @@ let CODIGO='',QUEM='';
 let ESP=[],HOME=null,OUTROS=[];           /* espaços: o principal e os demais */
 let AREAS=[],AMAP={},BASE_NAMES={};       /* frentes da lateral: [chave,nome,corVar,corBadge] */
 let tasks=[],habits=[],armed=null,view='all',pollT=null,loaded=false;
-let areaOrder=null,areaNames={},taskOrder={},dragging=false,pendingRender=false,showAll={};
+let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],lastData=null,dragging=false,pendingRender=false,showAll={};
 try{CODIGO=localStorage.getItem(CODLS)||''}catch(e){}
 try{view=localStorage.getItem('todoView')||'all'}catch(e){}
 
@@ -290,7 +290,8 @@ function aplicar(d){
   areaOrder=Array.isArray(cfg.areas)?cfg.areas:null;
   areaNames=(cfg.names&&typeof cfg.names==='object')?cfg.names:{};
   taskOrder=(cfg.ordem&&typeof cfg.ordem==='object')?cfg.ordem:{};
-  AREAS=(HOME.frentes||[]).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
+  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];
+  AREAS=(HOME.frentes||[]).concat(extras).filter(f=>!ocultas.includes(f.chave)).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
     .concat(OUTROS.map(e=>['@'+e.id,e.rotulo||e.nome,'--green','bg']));
   BASE_NAMES=Object.fromEntries(AREAS.map(a=>[a[0],a[1]]));
   AREAS.forEach(a=>{const n=areaNames[a[0]];if(typeof n==='string'&&n.trim())a[1]=n.trim().slice(0,40)});
@@ -303,7 +304,7 @@ function aplicar(d){
   $('whoTxt').textContent=QUEM?'Olá, '+QUEM:'';
 }
 async function refresh(){
-  try{const d=await rpc('lv_todo_listar');if(dragging)return;aplicar(d);loaded=true;$('status').textContent='';fillSelects();render()}
+  try{const d=await rpc('lv_todo_listar');if(dragging)return;lastData=d;aplicar(d);loaded=true;$('status').textContent='';fillSelects();render()}
   catch(e){if(CODIGO)$('status').textContent='Sem conexão com a lista. Tentando de novo…'}}
 function schedule(){clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden&&!dragging&&!document.querySelector('.overlay.open'))refresh()},15000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&CODIGO)refresh()});
@@ -376,19 +377,28 @@ function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
 
 /* ordem e nomes das frentes (por usuário) */
 function orderedAreas(){if(!areaOrder)return AREAS;const pos=k=>{const i=areaOrder.indexOf(k);return i<0?1000+AREAS.findIndex(a=>a[0]===k):i};return AREAS.slice().sort((a,b)=>pos(a[0])-pos(b[0]))}
-async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);HOME.config={areas,names:areaNames,ordem:taskOrder};
-  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder}})}catch(e){$('status').textContent='Não consegui salvar.'}}
+async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas};
+  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
 async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
   taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
 let renKey=null;
 function renBtn(k){const b=el('button','ren','✎');b.type='button';b.title='Renomear';b.setAttribute('aria-label','Renomear '+(AMAP[k]?AMAP[k][1]:''));b.onclick=e=>{e.stopPropagation();openRename(k)};return b}
-function openRename(k){renKey=k;$('renIn').value=AMAP[k][1];$('ovr').classList.add('open');setTimeout(()=>{$('renIn').focus();$('renIn').select()},50)}
+const podeFrentes=()=>!!HOME&&HOME.tipo==='pessoal';
+function frenteVazia(k){return k[0]!=='@'&&!tasks.some(t=>t.area===k)&&!habits.some(h=>h.area===k)}
+function openRename(k){renKey=k;const novo=k==='+';$('renTitle').textContent=novo?'Nova frente':'Renomear frente';$('renIn').value=novo?'':AMAP[k][1];
+  $('renReset').hidden=novo;$('renDel').hidden=novo||!podeFrentes()||!frenteVazia(k)||AREAS.filter(a=>a[0][0]!=='@').length<2;$('ovr').classList.add('open');setTimeout(()=>{$('renIn').focus();$('renIn').select()},50)}
 function closeRename(){renKey=null;$('ovr').classList.remove('open')}
 function setName(k,v){if(!v||v===BASE_NAMES[k])delete areaNames[k];else areaNames[k]=v.slice(0,40);AMAP[k][1]=areaNames[k]||BASE_NAMES[k];fillSelects()}
 $('renCancel').onclick=closeRename;$('ovr').addEventListener('click',e=>{if(e.target===$('ovr'))closeRename()});
 $('renReset').onclick=async()=>{if(!renKey)return;setName(renKey,'');closeRename();render();await saveSettings()};
-$('renForm').addEventListener('submit',async e=>{e.preventDefault();if(!renKey)return;const v=$('renIn').value.trim();if(!v)return;setName(renKey,v);closeRename();render();await saveSettings()});
+async function refazer(){await saveSettings();if(lastData){aplicar(lastData);fillSelects()}render()}
+$('renForm').addEventListener('submit',async e=>{e.preventDefault();if(!renKey)return;const v=$('renIn').value.trim();if(!v)return;
+  if(renKey==='+'){const cores=['purple','blue','green','amber','pink','red','gray'];extras=extras.concat([{chave:'f'+Date.now().toString(36),nome:v.slice(0,40),cor:cores[extras.length%cores.length]}]);closeRename();await refazer();return}
+  setName(renKey,v);closeRename();render();await saveSettings()});
+$('renDel').onclick=async()=>{const k=renKey;if(!k||k==='+'||!frenteVazia(k))return;
+  if(extras.some(f=>f.chave===k))extras=extras.filter(f=>f.chave!==k);else ocultas=ocultas.concat([k]);
+  delete areaNames[k];delete taskOrder[k];if(areaOrder)areaOrder=areaOrder.filter(x=>x!==k);if(view===k)view='all';closeRename();await refazer()};
 function grip(){const g=el('span','grip','⠿');g.setAttribute('aria-hidden','true');g.title='Arraste para mudar a posição';return g}
 function makeSortable(container,sel,onDone){
   container.querySelectorAll(':scope > '+sel).forEach(item=>{const g=item.querySelector(':scope > .grip, :scope > .ct > .grip, :scope > .grip');if(!g)return;
@@ -445,6 +455,8 @@ function render(){
     const n=open.filter(t=>t.area===k&&(k[0]!=='@'||eMeu(t))).length;
     r.append(grip(),navBtn(k,l,n,c),renBtn(k));na.appendChild(r);ch.appendChild(chip(k,l,c))});
   makeSortable(na,'.navrow');
+  if(podeFrentes()){const nb=el('button','ni','＋ Nova frente');nb.type='button';nb.style.color='var(--hint)';nb.onclick=()=>openRename('+');na.appendChild(nb);
+    const nc=el('button','chip','＋ Frente');nc.type='button';nc.onclick=()=>openRename('+');ch.appendChild(nc)}
 
   const pct=base.length?Math.round(done.length/base.length*100):0;
   ms.append(met('Em aberto',open.length,'tarefas'),met('Próximos 7 dias',week.length-late.length,'com prazo','amber'));
