@@ -1021,6 +1021,7 @@ async function renderVagas() {
           <span class="vaga-setor">Banco de Talentos</span>
           <h3>Não encontrou a vaga ideal?</h3>
           <p>Cadastre seu currículo no banco de talentos da La Vie. Quando surgir uma oportunidade na sua área, em qualquer um dos nossos clientes, entramos em contato.</p>
+          <p style="margin-top:0.6rem;"><a href="/vocacional/" style="color:var(--charcoal);font-weight:500;">Não sabe qual área escolher? Faça o Teste Vocacional (5 minutos) →</a></p>
         </div>
         <button class="btn-primary" id="bancoBtn">Cadastrar currículo</button>
       </div>
@@ -1112,6 +1113,16 @@ function openApplyModal(vaga) {
   if (origemSel) origemSel.addEventListener('change', check);
   nome.addEventListener('input', check); email.addEventListener('input', check); whatsapp.addEventListener('input', check); lgpd.addEventListener('change', check);
   if (areaSel) areaSel.addEventListener('change', check);
+  // Quem chega do Teste Vocacional (/vocacional/) já vem com a área e os dados no link
+  try {
+    const q = new URLSearchParams(location.search);
+    if (ehBanco && areaSel && BANCO_AREAS.includes(q.get('banco'))) areaSel.value = q.get('banco');
+    if (q.get('nome') && !nome.value) nome.value = q.get('nome').slice(0, 120);
+    if (q.get('email') && !email.value) email.value = q.get('email').slice(0, 120);
+    if (q.get('telefone') && !whatsapp.value) whatsapp.value = q.get('telefone').slice(0, 40);
+    if (origemSel && !origemSel.value && q.get('utm_source') === 'vocacional') origemSel.value = 'outro';
+    check();
+  } catch (e) {}
 
   function handleFiles(fileList) {
     const incoming = Array.from(fileList || []);
