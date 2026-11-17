@@ -72,6 +72,13 @@
   }
   input:focus{outline:none;border-color:var(--charcoal)}
   .invalid{border-color:var(--high) !important;background:var(--high-soft) !important}
+  .chips{display:flex;flex-wrap:wrap;gap:0.5rem}
+  .chip{position:relative;cursor:pointer}
+  .chip input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
+  .chip span{display:inline-flex;align-items:center;padding:0.55rem 0.9rem;border:1px solid var(--border);border-radius:999px;background:var(--bg);font-size:0.82rem;font-weight:400;transition:.15s}
+  .chip input:checked + span{background:var(--charcoal);border-color:var(--charcoal);color:var(--white)}
+  .chip input:focus-visible + span{outline:2px solid var(--sand-dark);outline-offset:2px}
+  .group-invalid .chip span{border-color:var(--high)}
   .lgpd{display:flex;gap:0.7rem;align-items:flex-start;margin-top:1.3rem;font-size:0.8rem;color:var(--muted);font-weight:400;line-height:1.55}
   .lgpd input{margin-top:5px;flex:none;accent-color:var(--charcoal)}
   .lgpd a{color:var(--charcoal)}
@@ -252,10 +259,19 @@
       <div class="field full"><label for="f-nome">Nome completo <span class="req">*</span></label><input type="text" id="f-nome" autocomplete="name" placeholder="Seu nome"></div>
       <div class="field"><label for="f-email">E-mail <span class="req">*</span></label><input type="email" id="f-email" autocomplete="email" placeholder="seu@email.com"></div>
       <div class="field"><label for="f-whats">WhatsApp <span class="req">*</span></label><input type="tel" id="f-whats" autocomplete="tel" placeholder="(62) 9 0000-0000"></div>
+      <div class="field full" data-group="momento"><span class="qlabel" style="font-size:0.78rem;font-weight:500;">Qual é o seu momento hoje? <span class="req">*</span></span>
+        <div class="chips" style="margin-top:0.4rem;">
+          <label class="chip"><input type="radio" id="momento-1" name="momento" value="Primeiro emprego"><span>Primeiro emprego</span></label>
+          <label class="chip"><input type="radio" id="momento-2" name="momento" value="Estudando"><span>Estudando</span></label>
+          <label class="chip"><input type="radio" id="momento-3" name="momento" value="Empregado, pensando em mudar"><span>Empregado, pensando em mudar</span></label>
+          <label class="chip"><input type="radio" id="momento-4" name="momento" value="Buscando recolocação"><span>Buscando recolocação</span></label>
+          <label class="chip"><input type="radio" id="momento-5" name="momento" value="Quero mudar de área"><span>Quero mudar de área</span></label>
+        </div>
+      </div>
     </div>
     <input type="text" id="f-site" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
     <label class="lgpd" id="lgpdBox"><input type="checkbox" id="f-lgpd"><span>Autorizo a La Vie Consultoria a guardar meu resultado e entrar em contato sobre oportunidades. Li a <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>.</span></label>
-    <div class="msg-erro" id="msgDados">Preencha nome, e-mail e WhatsApp e marque a autorização para começar.</div>
+    <div class="msg-erro" id="msgDados">Preencha nome, e-mail e WhatsApp, escolha o seu momento e marque a autorização para começar.</div>
     <div class="actions"><div class="right"><button type="button" class="btn-primary" id="btnComecar">Começar o teste</button></div></div>
   </section>
 
@@ -410,8 +426,22 @@
     telasEl.appendChild(sec);
   }
 
-  const dados = { nome:'', email:'', whats:'' };
+  const dados = { nome:'', email:'', whats:'', momento:'' };
   const CHAVE_PROG = 'lv_voc_progresso';
+  // Funil sem dado pessoal: uma sessão por pessoa, com a tela mais alta alcançada
+  let sessaoId = null;
+  try{ const g = JSON.parse(sessionStorage.getItem('lv_voc_sessao') || 'null'); if (g && Date.now() - g.t < 2 * 3600 * 1000) sessaoId = g.id; }catch(e){}
+  async function marcarSessao(tela, concluiu){
+    if (!NO_AR) return;
+    try{
+      const q = new URLSearchParams(location.search);
+      const r = await fetch(`${SB_URL}/rest/v1/rpc/lv_vocacional_sessao`, { method:'POST', headers:{ apikey:SB_KEY, Authorization:`Bearer ${SB_KEY}`, 'Content-Type':'application/json' },
+        body: JSON.stringify({ p_id: sessaoId, p_tela: tela, p_concluiu: !!concluiu, p_momento: dados.momento || null,
+          p_origem: (q.get('utm_source') || q.get('origem') || (document.referrer ? new URL(document.referrer).hostname : '') || 'direto').slice(0, 120),
+          p_dispositivo: /Mobi|Android/i.test(navigator.userAgent) ? 'celular' : 'computador' }) });
+      if (r.ok){ const id = await r.json(); if (id && !sessaoId){ sessaoId = id; try{ sessionStorage.setItem('lv_voc_sessao', JSON.stringify({ id, t: Date.now() })); }catch(e){} } }
+    }catch(e){}
+  }
   function salvarProgresso(){
     try{ sessionStorage.setItem(CHAVE_PROG, JSON.stringify({ dados, atual, resp: respostas(), t: Date.now() })); }catch(e){}
   }
@@ -421,6 +451,7 @@
       if (!p || !p.dados || !p.dados.email || Date.now() - p.t > 2 * 3600 * 1000) return false;
       Object.assign(dados, p.dados);
       document.getElementById('f-nome').value = dados.nome; document.getElementById('f-email').value = dados.email; document.getElementById('f-whats').value = dados.whats; document.getElementById('f-lgpd').checked = true;
+      const m = Array.from(document.querySelectorAll('input[name=momento]')).find(i => i.value === dados.momento); if (m) m.checked = true;
       (p.resp || []).forEach((v, i) => { if (v) { const el = document.getElementById(`q${i}-${v}`); if (el) el.checked = true; } });
       mostrar(Math.max(0, Math.min(p.atual, nTelas - 1)), false);
       return true;
@@ -442,7 +473,7 @@
       document.getElementById('barFill').style.width = `${(fim / AFIRMACOES.length) * 100}%`;
     }
     if (rolar) document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
-    if (t >= 0) salvarProgresso();
+    if (t >= 0){ salvarProgresso(); marcarSessao(t + 1, false); }
   }
 
   document.getElementById('btnComecar').addEventListener('click', () => {
@@ -451,12 +482,15 @@
     [nome, email, whats].forEach(el => { const ruim = !el.value.trim() || (el.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())); el.classList.toggle('invalid', ruim); if (ruim) ok = false; });
     document.getElementById('lgpdBox').classList.toggle('invalid-box', !lgpd.checked);
     if (!lgpd.checked) ok = false;
+    const mom = document.querySelector('input[name=momento]:checked');
+    document.querySelector('[data-group=momento]').classList.toggle('group-invalid', !mom);
+    if (!mom) ok = false;
     document.getElementById('msgDados').classList.toggle('show', !ok);
     if (!ok) return;
-    dados.nome = nome.value.trim(); dados.email = email.value.trim().toLowerCase(); dados.whats = whats.value.trim();
+    dados.nome = nome.value.trim(); dados.email = email.value.trim().toLowerCase(); dados.whats = whats.value.trim(); dados.momento = mom.value;
     mostrar(0);
   });
-  document.querySelectorAll('#telaDados input').forEach(el => el.addEventListener('input', () => { el.classList.remove('invalid'); document.getElementById('lgpdBox').classList.remove('invalid-box'); }));
+  document.querySelectorAll('#telaDados input').forEach(el => el.addEventListener(el.type === 'radio' ? 'change' : 'input', () => { const g = el.closest('.group-invalid'); if (g) g.classList.remove('group-invalid'); el.classList.remove('invalid'); document.getElementById('lgpdBox').classList.remove('invalid-box'); }));
 
   telasEl.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -512,11 +546,14 @@
     if (document.getElementById('f-site').value) return true; // robô preencheu o campo isca: finge que gravou
     const lista = res.areas;
     const corpo = JSON.stringify({
-      nome: dados.nome, email: dados.email, whatsapp: dados.whats,
+      nome: dados.nome, email: dados.email, whatsapp: dados.whats, momento: dados.momento || null,
       area_principal: AREAS[lista[0].k].banco,
       areas_top: lista.slice(0, 3).map(x => AREAS[x.k].banco),
       pontuacoes: Object.assign(Object.fromEntries(lista.map(x => [AREAS[x.k].banco, x.pontos])), { holland: res.codigo, riasec: Object.fromEntries(res.holland.map(x => [x.k, x.pct])), fraco: res.fraco }),
       respostas: respostas(),
+      email_dados: { area_nome: res.fraco ? (RIASEC[res.holland[0].k].nome + ' e ' + RIASEC[res.holland[1].k].nome) : AREAS[lista[0].k].nome, pct: lista[0].pct, codigo: res.codigo, fraco: res.fraco,
+        resumo: AREAS[lista[0].k].resumo, funcoes: AREAS[lista[0].k].funcoes, dica: AREAS[lista[0].k].dica,
+        link_banco: linkBanco(res.fraco ? AREAS.out : AREAS[lista[0].k]) },
       lgpd: true, origem: (new URLSearchParams(location.search).get('utm_source') || new URLSearchParams(location.search).get('origem') || document.referrer || '').slice(0, 120) || null
     });
     for (let tent = 1; tent <= 3; tent++){
@@ -652,6 +689,7 @@
           <button type="button" class="btn btn-ghost" id="btnCopiar">Copiar link do teste</button>
         </div>
       </div>
+      <p class="orientativo" id="avisoEmail">Enviamos uma cópia deste resultado para ${esc(dados.email)}.</p>
       <p class="orientativo">Este resultado mostra seus interesses neste momento e serve como ponto de partida, não como veredito. Para uma orientação completa, converse com um psicólogo ou orientador de carreira.</p>
       <p id="avisoGravar" class="msg-erro" style="margin-top:1.2rem;">Seu resultado apareceu, mas não conseguimos guardá-lo. Se quiser, mande uma captura de tela para a La Vie pelo WhatsApp (62) 99274-1488.</p>`;
     document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
@@ -670,8 +708,9 @@
       try{ await baixarImagem(res); }catch(e){ b.textContent = 'Não deu para gerar a imagem'; setTimeout(() => { b.textContent = r; }, 2500); b.disabled = false; return; }
       b.textContent = r; b.disabled = false;
     });
+    marcarSessao(nTelas, true);
     const ok = await gravar(res);
-    if (NO_AR && !ok) document.getElementById('avisoGravar').classList.add('show');
+    if (NO_AR && !ok){ document.getElementById('avisoGravar').classList.add('show'); document.getElementById('avisoEmail').classList.add('hidden'); }
   }
 
   // Imagem 1080x1920 para stories, na paleta da marca (creme, bege, taupe, grafite)
