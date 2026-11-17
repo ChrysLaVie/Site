@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>To Do List</title>
 <link rel="icon" href="../logo.png">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap">
 <style>
@@ -204,11 +205,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div id="nav-main"></div>
     <div class="nav-s">Frentes</div>
     <div id="nav-areas"></div>
-    <div class="sidebar-foot"><div class="who" id="whoTxt"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="icon-btn" type="button" id="ajuda">? Como usar</button><button class="icon-btn theme-btn" type="button">☾ Tema claro / escuro</button><button class="icon-btn" type="button" id="sair">Sair</button></div></div>
+    <div class="sidebar-foot"><div class="who" id="whoTxt"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="icon-btn" type="button" id="gcalBtn">📅 Conectar Google Agenda</button><button class="icon-btn" type="button" id="gcalOff" hidden style="border:0;font-size:11.5px;padding:0;text-decoration:underline">Desconectar a agenda</button><button class="icon-btn" type="button" id="ajuda">? Como usar</button><button class="icon-btn theme-btn" type="button">☾ Tema claro / escuro</button><button class="icon-btn" type="button" id="sair">Sair</button></div></div>
   </aside>
 
   <div style="min-width:0">
-    <div class="mob-bar"><div class="mob-logo">La Vie<span>.</span> <span style="color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px">To Do List</span></div><span style="display:flex;gap:6px"><button class="icon-btn" type="button" id="ajudaM" aria-label="Como usar">?</button><button class="icon-btn theme-btn" type="button" aria-label="Trocar tema">☾</button></span></div>
+    <div class="mob-bar"><div class="mob-logo">La Vie<span>.</span> <span style="color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px">To Do List</span></div><span style="display:flex;gap:6px"><button class="icon-btn" type="button" id="gcalBtnM" aria-label="Google Agenda">📅</button><button class="icon-btn" type="button" id="ajudaM" aria-label="Como usar">?</button><button class="icon-btn theme-btn" type="button" aria-label="Trocar tema">☾</button></span></div>
     <div class="chips" id="chips"></div>
     <main class="main">
       <div class="ph">
@@ -275,7 +276,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
       <p><b>Visões.</b> "Tudo" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
-      <p><b>Agenda do Google.</b> Toda tarefa com prazo tem o botão "＋ Agenda". Ele abre a sua agenda com o evento pronto, é só salvar.</p>
+      <p><b>Agenda do Google.</b> Toque em "Conectar Google Agenda" e autorize uma vez. A partir daí, toda tarefa sua com prazo vira um evento de dia inteiro na sua agenda, com lembrete na véspera. Se você mudar o prazo, concluir ou apagar a tarefa, o evento acompanha. A atualização acontece enquanto o To Do List está aberto. Sem conectar, o botão "＋ Agenda" de cada tarefa abre o evento pronto para salvar à mão.</p>
       <p><b>Pergunte à Duda.</b> É um chat que responde sobre a sua lista e cria ou conclui tarefas quando você pede. É opcional e usa a sua própria chave da API do Claude.</p>
       <p><b>Privacidade.</b> O seu espaço é só seu. Quem divide um espaço com você vê apenas as tarefas daquele espaço.</p>
       <p><b>Tema e saída.</b> Troque entre claro e escuro quando quiser. "Sair" tira o seu código deste aparelho.</p>
@@ -334,7 +335,7 @@ function aplicar(d){
   $('whoTxt').textContent=QUEM?'Olá, '+QUEM:'';
 }
 async function refresh(){
-  try{const d=await rpc('lv_todo_listar');if(dragging)return;lastData=d;aplicar(d);loaded=true;$('status').textContent='';fillSelects();render()}
+  try{const d=await rpc('lv_todo_listar');if(dragging)return;lastData=d;aplicar(d);loaded=true;$('status').textContent='';fillSelects();render();gSync()}
   catch(e){if(CODIGO)$('status').textContent='Sem conexão com a lista. Tentando de novo…'}}
 function schedule(){clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden&&!dragging&&!document.querySelector('.overlay.open'))refresh()},15000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&CODIGO)refresh()});
@@ -653,6 +654,57 @@ $('askOpen').hidden=false;
 $('cfgkey').onclick=()=>{$('keybox').hidden=!$('keybox').hidden;$('apikey').value=getKey()};
 $('savekey').onclick=()=>{const k=$('apikey').value.trim();if(!k)return;try{localStorage.setItem(KEYLS,k)}catch(_){}$('keybox').hidden=true;$('chatNote').textContent='Chave salva neste navegador.';$('chatNote').hidden=false};
 $('delkey').onclick=()=>{try{localStorage.removeItem(KEYLS)}catch(_){}$('apikey').value='';$('keybox').hidden=true};
+
+/* ---------- Google Agenda: as tarefas com prazo viram eventos e acompanham as mudanças ---------- */
+const GCAL_CLIENT_ID='777938564621-9kf6102dpckufeo41taikacass58iudl.apps.googleusercontent.com';
+const GCAL_SCOPE='https://www.googleapis.com/auth/calendar.events';
+const GTK='lvTodoGcalToken',GOK='lvTodoGcalOk',GMAP='lvTodoGcalMap';
+let gTok=null,gAte=0,gClient=null,gPend=null,gBusy=false,gLastTry=0;
+try{const g=JSON.parse(localStorage.getItem(GTK)||'null');if(g&&g.token){gTok=g.token;gAte=+g.ate||0}}catch(e){}
+const gOk=()=>{try{return localStorage.getItem(GOK)==='1'}catch(e){return false}};
+const gValido=()=>!!gTok&&Date.now()<gAte;
+function gInit(){if(gClient||!(window.google&&google.accounts&&google.accounts.oauth2))return;
+  gClient=google.accounts.oauth2.initTokenClient({client_id:GCAL_CLIENT_ID,scope:GCAL_SCOPE,
+    callback:r=>{const p=gPend;gPend=null;if(!r||r.error||!r.access_token){gStatus();if(p)p(null);return}
+      gTok=r.access_token;gAte=Date.now()+((r.expires_in||3600)-120)*1000;
+      try{localStorage.setItem(GTK,JSON.stringify({token:gTok,ate:gAte}));localStorage.setItem(GOK,'1')}catch(e){}
+      gStatus();if(p)p(gTok);gSync()},
+    error_callback:()=>{const p=gPend;gPend=null;gStatus();if(p)p(null)}})}
+function gToken(interativo){if(gValido())return Promise.resolve(gTok);if(!interativo&&!gOk())return Promise.resolve(null);
+  gInit();if(!gClient)return Promise.resolve(null);
+  if(!interativo){if(Date.now()-gLastTry<600000)return Promise.resolve(null);gLastTry=Date.now()}
+  return new Promise(res=>{gPend=res;try{gClient.requestAccessToken({prompt:gOk()?'':'consent'})}catch(e){gPend=null;res(null)}})}
+function gConectar(){gInit();if(!gClient){$('status').textContent='Aguarde a página carregar por completo e tente de novo.';return}gToken(true)}
+function gDesconectar(){if(gTok&&window.google)try{google.accounts.oauth2.revoke(gTok,()=>{})}catch(e){}
+  gTok=null;gAte=0;try{localStorage.removeItem(GTK);localStorage.removeItem(GOK)}catch(e){}gStatus()}
+function gStatus(){const on=gOk(),ok=gValido();const b=$('gcalBtn');
+  b.textContent=on?(ok?'📅 Agenda conectada':'📅 Reconectar a agenda'):'📅 Conectar Google Agenda';
+  b.style.color=on&&ok?'var(--green-t)':'';$('gcalOff').hidden=!on;$('gcalBtnM').style.color=on&&ok?'var(--green-t)':''}
+$('gcalBtn').onclick=$('gcalBtnM').onclick=()=>{if(gOk()&&gValido())gSync(true);else gConectar()};
+$('gcalOff').onclick=gDesconectar;
+const gId=id=>'lvtodo'+[...new TextEncoder().encode(String(id))].map(b=>b.toString(16).padStart(2,'0')).join('');
+async function gApi(method,path,body){
+  const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events'+path,{method,headers:{'Authorization':'Bearer '+gTok,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){gTok=null;gAte=0;try{localStorage.removeItem(GTK)}catch(e){}gStatus()}return r.status}
+function gEvento(t){const d=parse(t.due),n=new Date(d);n.setDate(n.getDate()+1);
+  return{summary:t.title,description:(t.notes?t.notes+'\n\n':'')+'To Do List: '+location.origin+location.pathname,start:{date:isoOf(d)},end:{date:isoOf(n)},
+    transparency:'transparent',status:'confirmed',reminders:{useDefault:false,overrides:[{method:'popup',minutes:900}]}}}
+async function gSync(avisar){
+  if(gBusy||!HOME||!QUEM||!gOk())return;const tok=await gToken(false);if(!tok)return;gBusy=true;const chave=GMAP+':'+QUEM;let n=0;
+  try{let map={};try{map=JSON.parse(localStorage.getItem(chave)||'{}')}catch(e){}
+    /* só as minhas: tudo do meu espaço e, nos compartilhados, o que está comigo */
+    const idx={},want={};tasks.forEach(t=>{idx[t.id]=t;if(!t.done&&t.due&&(t.esp===HOME.id||eMeu(t)))want[t.id]=t.title+'|'+t.due+'|'+t.notes});
+    for(const id in want){if(map[id]===want[id])continue;const ev=gEvento(idx[id]);
+      let s=await gApi('PATCH','/'+gId(id),ev);
+      if(s===404){s=await gApi('POST','',Object.assign({id:gId(id)},ev));if(s===409)s=await gApi('PATCH','/'+gId(id),ev)}
+      if(s>=200&&s<300){map[id]=want[id];n++}else if(s===401||s===403)break}
+    for(const id in map){if(want[id])continue;const s=await gApi('DELETE','/'+gId(id));
+      if((s>=200&&s<300)||s===404||s===410){delete map[id];n++}else if(s===401||s===403)break}
+    try{localStorage.setItem(chave,JSON.stringify(map))}catch(e){}
+    if(avisar)$('status').textContent=n?'Agenda atualizada.':'Agenda em dia.'}
+  catch(e){if(avisar)$('status').textContent='Não consegui falar com a agenda.'}
+  finally{gBusy=false}}
+window.addEventListener('load',()=>{gInit();gStatus()});gStatus();
 
 /* entrada e saída */
 function sair(){CODIGO='';QUEM='';ESP=[];HOME=null;OUTROS=[];tasks=[];habits=[];AREAS=[];AMAP={};loaded=false;turns=[];msgs.textContent='';
