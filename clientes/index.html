@@ -859,6 +859,7 @@ header {
       <button type="button" class="btn btn-ghost btn-sm" onclick="avisarDaAgenda('copiar')">📋 Copiar</button>
       <button type="button" class="btn btn-ghost btn-sm" onclick="avisarDaAgenda('email')">✉ E-mail</button>
       <button type="button" class="btn btn-sm" style="background:#25D366;border-color:#25D366;color:#fff" onclick="avisarDaAgenda('whats')">💬 WhatsApp</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="ag-cartao-btn" style="display:none" onclick="cartaoFaseFinalDaAgenda()" title="Gera a imagem de parabéns com data, horário, endereço e quem procurar">🖼 Imagem da fase final</button>
     </div>
     <div style="font-size:11px;color:var(--mid);margin-top:6px">Usa a data, o horário e o link preenchidos acima. Não precisa digitar de novo.</div>
     <div id="ag-msg-extra" style="display:none;font-size:11px;color:#2e6b4f;margin-top:4px">A mensagem leva junto o resumo da vaga (empresa, local, condições, comissão e bônus).</div>
@@ -2196,7 +2197,137 @@ function _infoVagaNaConfirmacao(c, etapa){
   return r ? r.texto : '';
 }
 // Linha de aviso no formulário: diz quando a mensagem vai levar o resumo da vaga.
+// ── IMAGEM DA FASE FINAL (17/11/2026) ───────────────────────────────────────
+// Pedido da Chrys: quando o candidato passa para a fase final na Auto Club, ela
+// mandava uma imagem feita à mão. Agora o painel monta a imagem sozinho, com a
+// identidade da La Vie (creme, bege e taupe; grafite só no texto), a partir do
+// compromisso da agenda. Para ligar em outro cliente, acrescente uma linha aqui.
+const CARTAO_FASE_FINAL = {
+  autoclub: { empresa:'Auto Club Proteção Veicular', rotulo:'Entrevista com o gestor',
+    endereco:['R. Belo Horizonte, Qd. 109, Lt. 05','Jardim Guanabara · Goiânia/GO · CEP 74675-080'],
+    procurar:['Helen Vieira Feliciano','Letícia Feliciano'] }
+};
+function _cartaoFinalCfg(empresaId){ return CARTAO_FASE_FINAL[empresaId||currentEmpresa]||null; }
+function _cartaoImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
+function _cartaoPrimeiroNome(nome){ const p=String(nome||'').trim().split(/\s+/)[0]||''; return p ? p.charAt(0).toLocaleUpperCase('pt-BR')+p.slice(1).toLocaleLowerCase('pt-BR') : ''; }
+async function desenharCartaoFaseFinal(d){
+  const cfg=_cartaoFinalCfg(d.empresaId)||{};
+  const W=1080,H=1080,M=84, CREME='#F2F1ED', BEGE='#D8CFC4', AREIA='#EFE8DC', TAUPE='#8C7462', GRAF='#3A3A3A', MEIO='#5F5A54';
+  const SERIF='"Playfair Display", Georgia, serif', SANS='"DM Sans", Helvetica, Arial, sans-serif';
+  try{ await Promise.all(['700 68px "Playfair Display"','600 54px "Playfair Display"','400 30px "Playfair Display"','600 78px "DM Sans"','400 25px "DM Sans"'].map(x=>document.fonts.load(x))); }catch(e){}
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+  const caixa=(x,y,w,h,r)=>{ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); };
+  // texto com espaçamento entre letras (versaletes), desenhado letra a letra
+  const espacado=(t,x,y,esp,alinh)=>{ const ch=[...t]; const larg=ch.reduce((s,k)=>s+c.measureText(k).width+esp,0)-esp; let px=alinh==='center'?x-larg/2:(alinh==='right'?x-larg:x); c.textAlign='left'; ch.forEach(k=>{ c.fillText(k,px,y); px+=c.measureText(k).width+esp; }); return larg; };
+  // diminui a fonte até caber na largura
+  const cabe=(t,peso,tam,fam,max)=>{ let z=tam; do{ c.font=`${peso} ${z}px ${fam}`; if(c.measureText(t).width<=max) break; z-=1; }while(z>14); return z; };
+  // fundo
+  c.fillStyle=CREME; c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(216,207,196,.55)'; c.beginPath(); c.arc(30,40,235,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(W-10,H-10,190,0,Math.PI*2); c.fill();
+  // logo
+  const logo=await _cartaoImg('../logo.png'); if(logo) c.drawImage(logo, W-M-212, 30, 236, 236);
+  // cabeçalho
+  c.fillStyle=TAUPE; c.font=`600 21px ${SANS}`; c.textBaseline='alphabetic'; espacado('PROCESSO SELETIVO  ·  FASE FINAL', M, 128, 4.5);
+  c.fillStyle=GRAF; const nome=_cartaoPrimeiroNome(d.nome); const t1=nome?`Parabéns, ${nome}!`:'Parabéns!';
+  cabe(t1,700,70,SERIF,W-2*M-230); c.textAlign='left'; c.fillText(t1, M, 216);
+  c.font=`600 52px ${SERIF}`; const a1='Você passou para a '; c.fillText(a1, M, 288); const wa=c.measureText(a1).width; c.fillStyle=TAUPE; c.fillText('fase final', M+wa, 288);
+  c.fillStyle=TAUPE; c.fillRect(M, 322, 96, 3);
+  const sub=[d.vaga, cfg.empresa].filter(Boolean).join('  ·  '); c.fillStyle=MEIO; cabe(sub,400,27,SANS,W-2*M); c.fillText(sub, M, 376);
+  // cartão do compromisso
+  const cx=M, cy=420, cw=W-2*M, chh=312;
+  c.save(); c.shadowColor='rgba(58,58,58,.10)'; c.shadowBlur=28; c.shadowOffsetY=8; c.fillStyle='#FFFFFF'; caixa(cx,cy,cw,chh,30); c.fill(); c.restore();
+  c.strokeStyle=BEGE; c.lineWidth=1.5; caixa(cx,cy,cw,chh,30); c.stroke();
+  const bx=cx+28, by=cy+28, bw=236, bh=chh-56; c.fillStyle=AREIA; caixa(bx,by,bw,bh,22); c.fill();
+  const [ay,am,ad]=String(d.data||'').split('-').map(Number); const dt=(ay&&am&&ad)?new Date(ay,am-1,ad):null;
+  const SEM=['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'], MES=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  if(dt){
+    c.fillStyle=TAUPE; c.font=`600 18px ${SANS}`; espacado(SEM[dt.getDay()], bx+bw/2, by+50, 3, 'center');
+    // números em DM Sans: os algarismos da Playfair são de estilo antigo e o zero parece a letra o
+    c.fillStyle=GRAF; c.font=`600 118px ${SANS}`; c.textAlign='center'; c.fillText(String(ad), bx+bw/2, by+166);
+    c.fillStyle=TAUPE; c.font=`600 21px ${SANS}`; espacado(MES[am-1], bx+bw/2, by+214, 4, 'center');
+  }
+  const rx=bx+bw+44, rmax=cx+cw-rx-34;
+  c.fillStyle=TAUPE; c.font=`600 20px ${SANS}`; espacado(String(cfg.rotulo||'Entrevista final').toLocaleUpperCase('pt-BR'), rx, cy+72, 3.5);
+  const hora=d.hora?String(d.hora).slice(0,5).replace(':','h'):''; c.fillStyle=GRAF; c.textAlign='left'; if(hora){ c.font=`600 78px ${SANS}`; c.fillText(hora, rx, cy+156); } else { c.font=`600 40px ${SERIF}`; c.fillText('Horário a confirmar', rx, cy+146); }
+  c.fillStyle=BEGE; c.fillRect(rx, cy+184, rmax, 1.5);
+  c.fillStyle=TAUPE; c.font=`600 17px ${SANS}`; espacado(d.online?'COMO':'ONDE', rx, cy+222, 3.5);
+  const linhas=d.online?['Online','O link segue na mensagem.']:(d.local?[d.local]:(cfg.endereco||[]));
+  c.fillStyle=GRAF; linhas.slice(0,2).forEach((l,i)=>{ cabe(l,400,25,SANS,rmax); c.textAlign='left'; c.fillText(l, rx, cy+256+i*34); });
+  // quem procurar
+  const pro=(cfg.procurar||[]).slice(0,2); let yb=cy+chh+62;
+  if(pro.length && !d.online){
+    c.fillStyle=TAUPE; c.font=`600 19px ${SANS}`; espacado('AO CHEGAR, PROCURE POR', M, yb, 3.5);
+    const gap=24, pw=pro.length>1?(cw-gap)/2:cw, ph=96, py=yb+26;
+    pro.forEach((n,i)=>{ const px=M+i*(pw+gap);
+      c.fillStyle='#FFFFFF'; caixa(px,py,pw,ph,ph/2); c.fill(); c.strokeStyle=BEGE; c.lineWidth=1.5; caixa(px,py,pw,ph,ph/2); c.stroke();
+      c.fillStyle=AREIA; c.beginPath(); c.arc(px+ph/2,py+ph/2,32,0,Math.PI*2); c.fill();
+      const ini=n.split(/\s+/).filter(Boolean); const sig=((ini[0]||'')[0]||'')+((ini.length>1?ini[ini.length-1]:'')[0]||'');
+      c.fillStyle=TAUPE; c.font=`600 22px ${SANS}`; c.textAlign='center'; c.fillText(sig.toUpperCase(), px+ph/2, py+ph/2+8);
+      c.fillStyle=GRAF; cabe(n,600,28,SERIF,pw-ph-34); c.textAlign='left'; c.fillText(n, px+ph+4, py+ph/2+10);
+    });
+    yb=py+ph;
+  }
+  // fecho e rodapé
+  c.fillStyle=TAUPE; c.font=`400 30px ${SERIF}`; c.textAlign='center'; c.fillText('Estamos na torcida por você. Até breve!', W/2, 968);
+  c.fillStyle=BEGE; c.fillRect(M, 1000, W-2*M, 1.5);
+  c.fillStyle=GRAF; c.textAlign='left'; c.font=`600 21px ${SANS}`; c.fillText('La Vie Consultoria', M, 1038); const wl=c.measureText('La Vie Consultoria').width;
+  c.fillStyle=MEIO; c.font=`400 21px ${SANS}`; c.fillText('  ·  lavieconsultoria.com', M+wl, 1038);
+  c.textAlign='right'; c.fillText('WhatsApp (62) 99274-1488', W-M, 1038);
+  return cv;
+}
+async function abrirCartaoFaseFinal(d){
+  let cv; try{ cv=await desenharCartaoFaseFinal(d); }catch(e){ showToast('Não consegui montar a imagem.'); return; }
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+  if(!blob){ showToast('Não consegui montar a imagem.'); return; }
+  const url=URL.createObjectURL(blob);
+  let o=document.getElementById('cartao-final-ov'); if(o) o.remove();
+  o=document.createElement('div'); o.id='cartao-final-ov';
+  o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(58,58,58,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+  o.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:540px;width:100%;max-height:94vh;overflow:auto;box-shadow:var(--shadow-md)">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:4px">Imagem da fase final</div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:12px">Copie e cole na conversa do WhatsApp do candidato, ou baixe a imagem.</div>
+    <img alt="Imagem da fase final" src="${url}" style="width:100%;display:block;border-radius:10px;border:1px solid var(--bege)">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button>
+      <button class="btn btn-ghost btn-sm" data-a="baixar">Baixar</button>
+      <button class="btn btn-primary btn-sm" data-a="copiar">Copiar imagem</button>
+    </div></div>`;
+  const nomeArq='fase-final-'+(_cartaoPrimeiroNome(d.nome)||'candidato').toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'')+'.png';
+  o.addEventListener('click', async ev=>{
+    const b=ev.target.closest('button[data-a]');
+    if(!b){ if(ev.target===o){ o.remove(); URL.revokeObjectURL(url); } return; }
+    if(b.dataset.a==='fechar'){ o.remove(); URL.revokeObjectURL(url); }
+    if(b.dataset.a==='baixar'){ const a=document.createElement('a'); a.href=url; a.download=nomeArq; document.body.appendChild(a); a.click(); a.remove(); showToast('Imagem baixada'); }
+    if(b.dataset.a==='copiar'){
+      try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('Imagem copiada. É só colar na conversa.'); }
+      catch(e){ showToast('Este navegador não deixou copiar. Use "Baixar".'); }
+    }
+  });
+  document.body.appendChild(o);
+}
+// Dados da imagem a partir de um compromisso da agenda (ou do que está preenchido na janela).
+function _cartaoDadosDoCompromisso(a){
+  const c=a.candidatoId ? getCands().find(x=>x.id===a.candidatoId) : null;
+  const cfg=_cartaoFinalCfg(a.empresaId)||{};
+  // Cliente com endereço fixo: a fase final é presencial lá, mesmo que a sala online venha preenchida sozinha.
+  const online=!(cfg.endereco&&cfg.endereco.length) && a.tipo!=='presencial';
+  return { empresaId:a.empresaId||currentEmpresa, nome:(c&&c.nome)||a.candidato||'', vaga:a.vaga||'', data:a.data, hora:a.horaIni||'', online, local:(a.local||'').trim() };
+}
+function agAvisoCartao(){
+  const b=document.getElementById('ag-cartao-btn'); if(!b) return;
+  const et=(document.getElementById('ag-etapa')||{}).value||'';
+  b.style.display=(!isClienteExterno() && _cartaoFinalCfg() && _agEhFinal({titulo:et}) && (document.getElementById('ag-cand')||{}).value) ? '' : 'none';
+}
+function cartaoFaseFinalDaAgenda(){
+  const candId=document.getElementById('ag-cand').value; const data=document.getElementById('ag-data').value;
+  if(!candId || !data){ showToast('Escolha o candidato e a data primeiro.'); return; }
+  const cand=_cands.find(c=>c.id===candId); const vaga=cand?getVagas().find(v=>v.id===cand.vagaId):null;
+  abrirCartaoFaseFinal(_cartaoDadosDoCompromisso({ candidatoId:candId, candidato:cand?cand.nome:'', vaga:vaga?vaga.titulo:'', data, horaIni:document.getElementById('ag-ini').value,
+    tipo:document.getElementById('ag-tipo').value, link:document.getElementById('ag-link').value.trim(), local:document.getElementById('ag-local').value.trim() }));
+}
+
 function agAvisoInfoVaga(){
+  try{ agAvisoCartao(); }catch(e){}
   const el=document.getElementById('ag-msg-extra'); if(!el) return;
   const c=getCands().find(x=>x.id===document.getElementById('ag-cand').value);
   const tem=!!_infoVagaNaConfirmacao(c, document.getElementById('ag-etapa').value);
@@ -2276,6 +2407,7 @@ async function salvarAgenda(){
     googleEventId: idExistente ? (_agenda.find(x=>x.id===idExistente)||{}).googleEventId : null
   };
   const statusAnterior = idExistente ? (_agenda.find(x=>x.id===idExistente)||{}).status : null;
+  const _agCartaoAntes = idExistente ? Object.assign({}, _agenda.find(x=>x.id===idExistente)||{}) : null;
   // Trava de clique duplo (16/11/2026): enquanto grava e sincroniza com o Google
   // (pode levar alguns segundos), um segundo clique em Salvar é ignorado. Antes,
   // cada clique criava outro agendamento e outro convite ao candidato.
@@ -2325,6 +2457,9 @@ async function salvarAgenda(){
     const eventId = await gcalSincronizarEvento(a);
     if(eventId && eventId !== a.googleEventId){ a.googleEventId = eventId; await upsertAgenda(a); _localUpsert(_agenda,a); }
     closeModal('modal-agenda'); renderAgenda(); showToast(eventId ? '✅ Entrevista agendada e sincronizada com o Google Calendar!' : '✅ Entrevista agendada!');
+    try{
+      if(!isClienteExterno() && _cartaoFinalCfg(a.empresaId) && _agEhFinal(a) && a.candidatoId && a.status==='agendada' && (!_agCartaoAntes || _agCartaoAntes.data!==a.data || _agCartaoAntes.horaIni!==a.horaIni)) setTimeout(()=>abrirCartaoFaseFinal(_cartaoDadosDoCompromisso(a)), 350);
+    }catch(e){}
   }
   catch(e){
     // O banco recusa o mesmo candidato duas vezes no mesmo dia e hora (gatilho trg_lv_agenda_sem_duplicata).
