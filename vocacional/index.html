@@ -154,15 +154,45 @@
   .orientativo{margin-top:1.4rem;font-size:0.76rem;color:var(--muted);font-weight:400;text-align:center;line-height:1.55}
   footer{margin-top:2.6rem;text-align:center;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
 
+  /* Resultado: cabeçalho vira barra fina */
+  body.resultado .brandbar{margin-bottom:0}
+  body.resultado .logo{height:84px}
+  body.resultado header{margin-bottom:22px}
+  body.resultado header h1,body.resultado header p,body.resultado header .fatos{display:none}
+  body.resultado header .eyebrow{margin-bottom:0}
+  .selo-wrap{display:flex;flex-direction:column;align-items:center;gap:0.9rem;text-align:center}
+  .selo{
+    width:138px;height:138px;border-radius:50%;border:1.5px solid var(--sand-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--bg);position:relative;
+  }
+  .selo::before{content:"";position:absolute;inset:6px;border-radius:50%;border:1px solid var(--sand)}
+  .selo b{font-family:var(--serif);font-weight:500;font-size:2.4rem;letter-spacing:0.08em;color:var(--dark);line-height:1}
+  .selo small{font-size:0.56rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-top:0.35rem}
+  .radar-wrap{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:1.2rem 1.6rem;align-items:center;margin-top:0.4rem}
+  .radar-wrap svg{width:100%;height:auto;max-width:360px;display:block;margin:0 auto}
+  .radar-legenda{display:grid;gap:0.4rem;font-size:0.82rem;font-weight:400}
+  .radar-legenda > div{display:flex;justify-content:space-between;gap:0.8rem;border-bottom:1px solid var(--border);padding-bottom:0.3rem}
+  .radar-legenda b{font-weight:500;color:var(--dark)}
+  .radar-legenda span{color:var(--muted);font-variant-numeric:tabular-nums}
+  .radar-legenda small{display:block;font-size:0.72rem;color:var(--muted);font-weight:400;line-height:1.4}
+  .btn-img{background:var(--sand-dark);color:var(--white)}
+  .btn-img:hover{background:var(--accent)}
   @media(max-width:600px){
     html{font-size:106.25%}
+    .radar-wrap{grid-template-columns:1fr}
+    .selo{width:118px;height:118px}
+    .fatos{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
+    .fato span{font-size:0.58rem;letter-spacing:0.1em}
+    .fato b{font-size:1.4rem}
+    .selo b{font-size:2rem}
     body{padding-block:28px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
-    .logo{height:112px}
+    .logo{height:88px}
+    body.resultado .logo{height:56px}
     .card{padding:1.5rem 1.15rem}
     .grid,.secund{grid-template-columns:1fr}
     .escala{gap:0.35rem}
     .opc span{height:44px;font-size:0.85rem}
-    .escala-rotulos small{font-size:0.56rem}
+    .escala-rotulos small{font-size:0.54rem}
     .barra{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 2.8rem;font-size:0.78rem}
     .actions button,.actions .btn{flex:1}
     .actions .right{width:100%;margin-left:0}
@@ -322,7 +352,7 @@
     ['ate','A','Gosto de encontrar um jeito agradável de dar uma notícia difícil.'],
     ['log','I','Gosto de planejar a melhor sequência de uma operação para ganhar tempo.']
   ];
-  const ROTULOS = ['Nada a ver comigo','Pouco a ver','Mais ou menos','Bastante a ver','Tudo a ver comigo'];
+  const ROTULOS = ['Nada a ver','Pouco a ver','Mais ou menos','Bastante','Tudo a ver'];
   const POR_TELA = 4;
 
   const telasEl = document.getElementById('telas');
@@ -331,12 +361,12 @@
     const itens = AFIRMACOES.slice(t * POR_TELA, (t + 1) * POR_TELA).map((a, j) => {
       const i = t * POR_TELA + j;
       const opcs = [1,2,3,4,5].map(v => `<label class="opc"><input type="radio" id="q${i}-${v}" name="q${i}" value="${v}" data-area="${a[0]}"><span>${v}</span></label>`).join('');
-      return `<div class="item" data-q="${i}"><p>${i + 1}. ${a[1]}</p><div class="escala">${opcs}</div>
-        <div class="escala-rotulos"><small>${ROTULOS[0]}</small><small></small><small>${ROTULOS[2]}</small><small></small><small>${ROTULOS[4]}</small></div></div>`;
+      return `<div class="item" data-q="${i}"><p>${i + 1}. ${a[2]}</p><div class="escala">${opcs}</div>
+        <div class="escala-rotulos">${ROTULOS.map(r => `<small>${r}</small>`).join('')}</div></div>`;
     }).join('');
     const sec = document.createElement('section');
     sec.className = 'card tela'; sec.id = 'tela' + t;
-    sec.innerHTML = `<div class="legenda"><span>1 = ${ROTULOS[0].toLowerCase()}</span><span>5 = ${ROTULOS[4].toLowerCase()}</span></div>${itens}
+    sec.innerHTML = `<div class="legenda"><span>1 = nada a ver comigo</span><span>5 = tudo a ver comigo</span></div>${itens}
       <div class="msg-erro" id="erro${t}">Responda todas as afirmações desta tela para continuar.</div>
       <div class="actions"><button type="button" class="btn-ghost" data-voltar="${t}">Voltar</button>
       <div class="right"><button type="button" class="btn-primary" data-avancar="${t}">${t === nTelas - 1 ? 'Ver meu resultado' : 'Continuar'}</button></div></div>`;
@@ -437,32 +467,66 @@
     return false;
   }
 
+  // Radar dos 6 tipos de Holland (SVG), na ordem R I A S E C
+  function radarSVG(holland, tam = 260, cores = { linha:'#3A3A3A', area:'rgba(140,131,119,0.35)', grade:'#D8CFC4', texto:'#6F6B64' }){
+    const ordem = 'RIASEC'.split(''); const W = tam * 1.75, H = tam * 1.08, cx = W / 2, cy = H / 2, r = tam * 0.36;
+    const pt = (i, f) => { const a = -Math.PI / 2 + i * Math.PI / 3; return [cx + Math.cos(a) * r * f, cy + Math.sin(a) * r * f]; };
+    const poli = f => ordem.map((_, i) => pt(i, f).join(',')).join(' ');
+    const valor = k => Math.max(0.04, (holland.find(x => x.k === k) || { pct:0 }).pct / 100);
+    const dados = ordem.map((k, i) => pt(i, valor(k)).join(',')).join(' ');
+    const fs = (tam * 0.042).toFixed(1);
+    const rot = ordem.map((k, i) => { const [x, y] = pt(i, 1.16); const anc = i === 0 || i === 3 ? 'middle' : (i < 3 ? 'start' : 'end'); const dy = i === 0 ? -4 : (i === 3 ? 14 : 5);
+      return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anc}" font-size="${fs}" fill="${cores.texto}" font-family="DM Sans, Arial, sans-serif" letter-spacing="0.08em">${RIASEC[k].nome.toUpperCase()}</text>`; }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar do perfil de interesses">
+      ${[0.25, 0.5, 0.75, 1].map(f => `<polygon points="${poli(f)}" fill="none" stroke="${cores.grade}" stroke-width="1"/>`).join('')}
+      ${ordem.map((_, i) => `<line x1="${cx}" y1="${cy}" x2="${pt(i, 1)[0].toFixed(1)}" y2="${pt(i, 1)[1].toFixed(1)}" stroke="${cores.grade}" stroke-width="1"/>`).join('')}
+      <polygon points="${dados}" fill="${cores.area}" stroke="${cores.linha}" stroke-width="1.6" stroke-linejoin="round"/>
+      ${ordem.map((k, i) => { const [x, y] = pt(i, valor(k)); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${cores.linha}"/>`; }).join('')}
+      ${rot}</svg>`;
+  }
+
+  let ultimoResultado = null;
   async function finalizar(){
-    const res = pontuar(); const lista = res.areas;
+    const res = pontuar(); const lista = res.areas; ultimoResultado = res;
     const top = AREAS[lista[0].k], seg = AREAS[lista[1].k], ter = AREAS[lista[2].k];
     const primeiro = dados.nome.split(' ')[0];
     const h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k], h3 = RIASEC[res.holland[2].k];
     const textoShare = `Fiz o Teste Vocacional da La Vie: meu perfil é ${h1.nome} e ${h2.nome}, e a área com mais a minha cara é ${top.nome}. Descubra a sua em 7 minutos: ${SITE}/vocacional/`;
     const el = document.getElementById('telaResultado');
+    const selo = `<div class="selo"><b>${res.codigo}</b><small>Código Holland</small></div>`;
     const topo = res.fraco
-      ? `<div class="res-topo">
-          <span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
-          <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2>
-          <div class="pct">Código Holland ${res.codigo}</div>
+      ? `<div class="res-topo"><div class="selo-wrap">${selo}
+          <div><span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
+          <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2></div></div>
           <p class="resumo">Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso, e o Teste DISC completa o quadro.</p>
         </div>`
-      : `<div class="res-topo">
-          <span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
+      : `<div class="res-topo"><div class="selo-wrap">${selo}
+          <div><span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
           <h2>${esc(top.nome)}</h2>
-          <div class="pct">${lista[0].pct}% de afinidade · perfil ${esc(h1.nome)} e ${esc(h2.nome)}</div>
+          <div class="pct">${lista[0].pct}% de afinidade · perfil ${esc(h1.nome)} e ${esc(h2.nome)}</div></div></div>
           <p class="resumo">${esc(top.resumo)}</p>
         </div>`;
+    const cta = res.fraco ? `
+      <div class="cta">
+        <h3>Complete o seu perfil com o Teste DISC</h3>
+        <p>O DISC mostra como você se comporta no trabalho e ajuda a La Vie a te indicar para a vaga certa, em qualquer área. Leva uns 10 minutos.</p>
+        <a class="btn btn-primary" href="${linkDisc()}" target="_blank" rel="noopener noreferrer">Fazer o Teste DISC →</a>
+        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se quiser entrar no banco de talentos mesmo assim: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a> ou <a href="${linkBanco(AREAS.out)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(AREAS.out.banco)}</a>.</p>
+      </div>` : `
+      <div class="cta">
+        <h3>Entre no banco de talentos da La Vie</h3>
+        <p>Cadastre seu currículo na área de ${esc(top.banco)}. Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato. Seus dados já vão preenchidos e, depois do cadastro, você faz o Teste DISC para completar o seu perfil.</p>
+        <a class="btn btn-primary" href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em ${esc(top.banco)} →</a>
+        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Prefere outra área? <a href="${linkBanco(seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(seg.banco)}</a> ou <a href="${linkBanco(ter)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(ter.banco)}</a>.</p>
+      </div>`;
     el.innerHTML = topo + `
+      ${res.fraco ? '' : `<div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>`}
+      ${cta}
       <div class="res-bloco"><h3>Seu perfil de interesses (Holland)</h3>
-        <p style="margin-bottom:0.6rem;">Código <b>${res.codigo}</b>: você é principalmente <b>${esc(h1.nome)}</b> (${esc(h1.resumo)}), com traços <b>${esc(h2.nome)}</b> (${esc(h2.resumo)}) e <b>${esc(h3.nome)}</b> (${esc(h3.resumo)}).</p>
-        <div class="barras">${res.holland.map((x, i) => `<div class="barra ${i === 0 ? 'top' : ''}"><span class="nome">${esc(RIASEC[x.k].nome)}</span><span class="trilho"><i style="width:${Math.max(x.pct, 3)}%"></i></span><span class="num">${x.pct}%</span></div>`).join('')}</div></div>
+        <div class="radar-wrap">${radarSVG(res.holland)}
+          <div class="radar-legenda">${res.holland.map((x, i) => `<div><div><b>${esc(RIASEC[x.k].nome)}</b>${i < 3 ? `<small>${esc(RIASEC[x.k].resumo)}</small>` : ''}</div><span>${x.pct}%</span></div>`).join('')}</div>
+        </div></div>
       ${res.fraco ? '' : `
-      <div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>
       <div class="res-bloco"><h3>Para se destacar nessa área</h3><p>${esc(top.dica)}</p></div>
       <div class="res-bloco"><h3>Também têm a sua cara</h3>
         <div class="secund">
@@ -471,31 +535,19 @@
         </div></div>`}
       <div class="res-bloco"><h3>Afinidade com as áreas em que a La Vie recruta</h3>
         <div class="barras">${lista.map((x, i) => `<div class="barra ${i === 0 && !res.fraco ? 'top' : ''}"><span class="nome">${esc(AREAS[x.k].nome)}</span><span class="trilho"><i style="width:${Math.max(x.pct, 3)}%"></i></span><span class="num">${x.pct}%</span></div>`).join('')}</div></div>
-      ${res.fraco ? `
-      <div class="cta">
-        <h3>Complete o seu perfil com o Teste DISC</h3>
-        <p>O DISC mostra como você se comporta no trabalho e ajuda a La Vie a te indicar para a vaga certa, em qualquer área. Leva uns 10 minutos.</p>
-        <a class="btn btn-primary" href="${linkDisc()}" target="_blank" rel="noopener noreferrer">Fazer o Teste DISC →</a>
-        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Se quiser entrar no banco de talentos mesmo assim: <a href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(top.banco)}</a> ou <a href="${linkBanco(AREAS.out || seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc((AREAS.out || seg).banco)}</a>.</p>
-      </div>` : `
-      <div class="cta">
-        <h3>Entre no banco de talentos da La Vie</h3>
-        <p>Cadastre seu currículo na área de ${esc(top.banco)}. Quando surgir uma vaga com o seu perfil em uma das empresas que atendemos, entramos em contato. Seus dados já vão preenchidos e, depois do cadastro, você faz o Teste DISC para completar o seu perfil.</p>
-        <a class="btn btn-primary" href="${linkBanco(top)}" target="_blank" rel="noopener noreferrer">Cadastrar currículo em ${esc(top.banco)} →</a>
-        <p style="margin-top:0.9rem;margin-bottom:0;font-size:0.78rem;color:var(--muted);">Prefere outra área? <a href="${linkBanco(seg)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(seg.banco)}</a> ou <a href="${linkBanco(ter)}" target="_blank" rel="noopener noreferrer" style="color:var(--charcoal);">${esc(ter.banco)}</a>.</p>
-      </div>`}
       <div class="compartilhar">
-        <p>Conhece alguém que está em dúvida sobre a própria área?</p>
+        <p>Conhece alguém que está em dúvida sobre a própria área? Compartilhe o seu resultado.</p>
         <div class="acoes">
+          <button type="button" class="btn btn-img" id="btnImagem">Baixar minha imagem para os stories</button>
           <a class="btn btn-whats" href="https://wa.me/?text=${encodeURIComponent(textoShare)}" target="_blank" rel="noopener noreferrer">Compartilhar no WhatsApp</a>
           <button type="button" class="btn btn-ghost" id="btnCopiar">Copiar link do teste</button>
-          <a class="btn btn-ghost" href="${SITE}/vagas/" target="_blank" rel="noopener noreferrer">Ver vagas abertas</a>
         </div>
       </div>
       <p class="orientativo">Este resultado mostra seus interesses neste momento e serve como ponto de partida, não como veredito. Para uma orientação completa, converse com um psicólogo ou orientador de carreira.</p>
       <p id="avisoGravar" class="msg-erro" style="margin-top:1.2rem;">Seu resultado apareceu, mas não conseguimos guardá-lo. Se quiser, mande uma captura de tela para a La Vie pelo WhatsApp (62) 99274-1488.</p>`;
     document.querySelectorAll('.tela').forEach(s => s.classList.remove('ativa'));
     document.getElementById('progress').classList.add('hidden');
+    document.body.classList.add('resultado');
     el.classList.add('ativa');
     document.getElementById('topo').scrollIntoView({ behavior:'smooth', block:'start' });
     document.getElementById('btnCopiar').addEventListener('click', async function(){
@@ -504,8 +556,54 @@
       catch(e){ b.textContent = `${SITE}/vocacional/`; }
       setTimeout(() => { b.textContent = 'Copiar link do teste'; }, 2500);
     });
+    document.getElementById('btnImagem').addEventListener('click', async function(){
+      const b = this; b.disabled = true; const r = b.textContent; b.textContent = 'Gerando imagem…';
+      try{ await baixarImagem(res); }catch(e){ b.textContent = 'Não deu para gerar a imagem'; setTimeout(() => { b.textContent = r; }, 2500); b.disabled = false; return; }
+      b.textContent = r; b.disabled = false;
+    });
     const ok = await gravar(res);
     if (NO_AR && !ok) document.getElementById('avisoGravar').classList.add('show');
+  }
+
+  // Imagem 1080x1920 para stories, na paleta da marca (creme, bege, taupe, grafite)
+  async function baixarImagem(res){
+    const W = 1080, H = 1920;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+    try{ await document.fonts.load('400 60px "Cormorant Garamond"'); await document.fonts.load('500 30px "DM Sans"'); await document.fonts.load('300 30px "DM Sans"'); }catch(e){}
+    const SERIF = '"Cormorant Garamond", Georgia, serif', SANS = '"DM Sans", Arial, sans-serif';
+    g.fillStyle = '#F2F1ED'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#E8E4DE'; g.fillRect(0, 0, W, 560);
+    const top = AREAS[res.areas[0].k], h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k];
+    const centro = (txt, y, font, cor, esp = 0) => { g.font = font; g.fillStyle = cor; g.textAlign = 'center'; if (esp){ g.letterSpacing = esp + 'px'; } g.fillText(txt, W / 2, y); g.letterSpacing = '0px'; };
+    // logo
+    const logo = document.querySelector('.logo');
+    if (logo && logo.complete && logo.naturalWidth){ const lh = 190, lw = lh * logo.naturalWidth / logo.naturalHeight; g.drawImage(logo, (W - lw) / 2, 110, lw, lh); }
+    centro('TESTE VOCACIONAL', 380, `500 26px ${SANS}`, '#8C8377', 7);
+    centro('A área com mais a minha cara é', 470, `300 40px ${SERIF}`, '#3A3A3A');
+    // selo
+    const cx = W / 2, cy = 760;
+    g.beginPath(); g.arc(cx, cy, 150, 0, Math.PI * 2); g.fillStyle = '#F2F1ED'; g.fill(); g.lineWidth = 3; g.strokeStyle = '#B8AFA4'; g.stroke();
+    g.beginPath(); g.arc(cx, cy, 136, 0, Math.PI * 2); g.lineWidth = 1.5; g.strokeStyle = '#D8CFC4'; g.stroke();
+    centro(res.codigo, cy + 26, `500 112px ${SERIF}`, '#1a1917', 8);
+    centro('CÓDIGO HOLLAND', cy + 74, `500 18px ${SANS}`, '#8C8377', 5);
+    // área
+    const areaTxt = res.fraco ? `${h1.nome} e ${h2.nome}` : top.nome;
+    let fs = 92; g.font = `300 ${fs}px ${SERIF}`; while (g.measureText(areaTxt).width > W - 140 && fs > 50){ fs -= 4; g.font = `300 ${fs}px ${SERIF}`; }
+    centro(areaTxt, 1050, `300 ${fs}px ${SERIF}`, '#1a1917');
+    centro(res.fraco ? 'meu perfil de interesses' : `${res.areas[0].pct}% de afinidade · perfil ${h1.nome} e ${h2.nome}`, 1115, `italic 400 34px ${SERIF}`, '#8C8377');
+    // radar
+    const svg = radarSVG(res.holland, 620, { linha:'#3A3A3A', area:'rgba(140,131,119,0.35)', grade:'#D8CFC4', texto:'#6F6B64' });
+    const img = new Image();
+    await new Promise((ok, erro) => { img.onload = ok; img.onerror = erro; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="617" ')); });
+    g.drawImage(img, (W - 1000) / 2, 1160, 1000, 617);
+    // rodapé
+    g.fillStyle = '#3A3A3A'; g.fillRect(0, H - 150, W, 150);
+    centro('Descubra a sua área em 7 minutos', H - 92, `300 32px ${SANS}`, '#F2F1ED');
+    centro('lavieconsultoria.com/vocacional', H - 46, `500 30px ${SANS}`, '#F2F1ED', 2);
+    const blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `teste-vocacional-la-vie-${res.codigo.toLowerCase()}.png`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
   function linkDisc(){
     const p = new URLSearchParams({ nome: dados.nome, email: dados.email, telefone: dados.whats, vaga: 'Banco de Talentos · Outras áreas' });
