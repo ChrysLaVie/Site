@@ -184,6 +184,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
 .keybox[hidden]{display:none}
 .keybox span{color:var(--muted)}
 .keybox input{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;font-size:14px;color:var(--text);outline:none}
+.help p{font-size:14px;margin-bottom:.8rem;color:var(--text)}.help b{font-weight:600}
+.lnk{font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}.lnk:hover{color:var(--accent)}
 .who{font-size:12.5px;color:var(--muted);margin-bottom:8px;text-align:center}
 </style>
 </head>
@@ -202,11 +204,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div id="nav-main"></div>
     <div class="nav-s">Frentes</div>
     <div id="nav-areas"></div>
-    <div class="sidebar-foot"><div class="who" id="whoTxt"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="icon-btn theme-btn" type="button">☾ Tema claro / escuro</button><button class="icon-btn" type="button" id="sair">Sair</button></div></div>
+    <div class="sidebar-foot"><div class="who" id="whoTxt"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="icon-btn" type="button" id="ajuda">? Como usar</button><button class="icon-btn theme-btn" type="button">☾ Tema claro / escuro</button><button class="icon-btn" type="button" id="sair">Sair</button></div></div>
   </aside>
 
   <div style="min-width:0">
-    <div class="mob-bar"><div class="mob-logo">La Vie<span>.</span> <span style="color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px">To Do List</span></div><button class="icon-btn theme-btn" type="button" aria-label="Trocar tema">☾</button></div>
+    <div class="mob-bar"><div class="mob-logo">La Vie<span>.</span> <span style="color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px">To Do List</span></div><span style="display:flex;gap:6px"><button class="icon-btn" type="button" id="ajudaM" aria-label="Como usar">?</button><button class="icon-btn theme-btn" type="button" aria-label="Trocar tema">☾</button></span></div>
     <div class="chips" id="chips"></div>
     <main class="main">
       <div class="ph">
@@ -231,7 +233,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
 
 <div class="overlay" id="ov">
   <form class="modal" id="add" autocomplete="off">
-    <h2>Nova tarefa</h2>
+    <h2 id="addTitle">Nova tarefa</h2>
     <div class="field"><label for="nt">O que precisa fazer</label><input id="nt" required></div>
     <div class="field" id="neWrap" hidden><label for="ne">Onde</label><select id="ne"></select></div>
     <div class="two">
@@ -242,7 +244,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="field" id="nrWrap" hidden><label for="nr">Responsável</label><select id="nr"></select></div>
     <div class="field" id="nhWrap" hidden><label class="chkline"><input type="checkbox" id="nh"> É um hábito ou rotina</label></div>
     <div class="field" id="nfWrap" hidden><label for="nf">Frequência</label><select id="nf"><option value="">Todo dia</option><option value="1">1 vez por semana</option><option value="2">2 vezes por semana</option><option value="3">3 vezes por semana</option><option value="4">4 vezes por semana</option><option value="5">5 vezes por semana</option><option value="6">6 vezes por semana</option></select></div>
-    <div class="actions"><button type="button" class="btn" id="cancel">Cancelar</button><button type="submit" class="btn btn-primary">Adicionar</button></div>
+    <div class="actions"><button type="button" class="btn" id="cancel">Cancelar</button><button type="submit" class="btn btn-primary" id="addBtn">Adicionar</button></div>
   </form>
 </div>
 
@@ -252,6 +254,34 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="field"><label for="renIn">Nome da frente</label><input id="renIn" maxlength="40" required></div>
     <div class="actions" style="flex-wrap:wrap"><button type="button" class="btn" id="renDel" hidden style="margin-right:auto;color:var(--red-t)">Apagar frente</button><button type="button" class="btn" id="renReset">Voltar ao nome original</button><button type="button" class="btn" id="renCancel">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
   </form>
+</div>
+
+<div class="overlay" id="ovh">
+  <form class="modal" id="habForm" autocomplete="off">
+    <h2>Editar hábito</h2>
+    <div class="field"><label for="hbT">Nome</label><input id="hbT" maxlength="200" required></div>
+    <div class="field"><label for="hbF">Frequência</label><select id="hbF"><option value="">Todo dia</option><option value="1">1 vez por semana</option><option value="2">2 vezes por semana</option><option value="3">3 vezes por semana</option><option value="4">4 vezes por semana</option><option value="5">5 vezes por semana</option><option value="6">6 vezes por semana</option></select></div>
+    <div class="field"><label for="hbO">Observação (opcional)</label><input id="hbO" maxlength="300"></div>
+    <div class="actions"><button type="button" class="btn" id="hbCancel">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+  </form>
+</div>
+
+<div class="overlay" id="ovj">
+  <div class="modal" style="max-width:560px;max-height:86vh;overflow-y:auto">
+    <h2>Como usar</h2>
+    <div class="help">
+      <p><b>Tarefas.</b> Toque em "＋ Nova tarefa", escolha a frente e, se quiser, o prazo e uma observação. Marque a caixinha para concluir. "Editar" muda o nome, a frente, o prazo e a observação. "Apagar" pede um segundo toque para confirmar.</p>
+      <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência.</p>
+      <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
+      <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
+      <p><b>Visões.</b> "Tudo" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
+      <p><b>Agenda do Google.</b> Toda tarefa com prazo tem o botão "＋ Agenda". Ele abre a sua agenda com o evento pronto, é só salvar.</p>
+      <p><b>Pergunte à Duda.</b> É um chat que responde sobre a sua lista e cria ou conclui tarefas quando você pede. É opcional e usa a sua própria chave da API do Claude.</p>
+      <p><b>Privacidade.</b> O seu espaço é só seu. Quem divide um espaço com você vê apenas as tarefas daquele espaço.</p>
+      <p><b>Tema e saída.</b> Troque entre claro e escuro quando quiser. "Sair" tira o seu código deste aparelho.</p>
+    </div>
+    <div class="actions"><button type="button" class="btn btn-primary" id="ajFechar">Entendi</button></div>
+  </div>
 </div>
 
 <script>
@@ -362,11 +392,15 @@ function row(t,showArea,sufixo,drag){
   if(compart(e)&&t.resp)meta.appendChild(el('span','badge '+(t.resp===QUEM?'bp':t.resp.includes(' e ')?'bg':'bb'),'👤 '+t.resp));
   const di=dueInfo(t.due);if(di)meta.appendChild(el('span','badge '+(t.done?'bgr':di.cls),t.done?di.txt.replace(/^Atrasada · /,''):di.txt));
   if(t.notes)meta.appendChild(el('span','note',t.notes));
+  if(t.due&&!t.done){const a=el('a','lnk','＋ Agenda');a.href=agendaUrl(t);a.target='_blank';a.rel='noopener';a.title='Abrir no Google Agenda';meta.appendChild(a)}
   if(meta.childNodes.length)tx.appendChild(meta);
   const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
   del.onclick=()=>{if(armed===key){armed=null;remove(t)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
+  const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openEdit(t);
   r.dataset.id=t.id;if(drag){const g=grip();g.title='Arraste para mudar a ordem';g.style.marginTop='3px';r.append(g)}
-  r.append(cb,tx,del);return r}
+  r.append(cb,tx,ed,del);return r}
+function agendaUrl(t){const d=parse(t.due),f=x=>isoOf(x).replace(/-/g,''),n=new Date(d);n.setDate(n.getDate()+1);
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t.title)+'&dates='+f(d)+'/'+f(n)+'&details='+encodeURIComponent((t.notes?t.notes+'\n\n':'')+'To Do List: '+location.origin+location.pathname)}
 function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
   const c=el('section','card');const h=el('div','ct');
   if(color){const d=el('span','dot');d.style.setProperty('--c',`var(${color})`);h.appendChild(d)}
@@ -418,6 +452,14 @@ function weekCount(h){const days=h.days||{};const d=today();const dow=(d.getDay(
 async function toggleDay(h,k){const v=!(h.days||{})[k];h.days=Object.assign({},h.days||{});if(v)h.days[k]=true;else delete h.days[k];render();
   try{await rpc('lv_todo_habito_salvar',{p_habito:{id:h.id,dia:k,valor:v}})}catch(e){$('status').textContent='Não consegui salvar o hábito.';refresh()}}
 async function removeHabit(h){try{await rpc('lv_todo_habito_apagar',{p_id:h.id});refresh()}catch(e){$('status').textContent='Não consegui apagar.'}}
+let habId=null;
+function openHab(h){habId=h.id;$('hbT').value=h.title;$('hbF').value=h.goal?String(h.goal):'';$('hbO').value=h.notes||'';$('ovh').classList.add('open');setTimeout(()=>$('hbT').focus(),50)}
+function closeHab(){habId=null;$('ovh').classList.remove('open')}
+$('hbCancel').onclick=closeHab;$('ovh').addEventListener('click',e=>{if(e.target===$('ovh'))closeHab()});
+$('habForm').addEventListener('submit',async e=>{e.preventDefault();const t=$('hbT').value.trim();if(!habId||!t)return;
+  try{await rpc('lv_todo_habito_salvar',{p_habito:{id:habId,titulo:t,meta_semana:$('hbF').value||'',obs:$('hbO').value.trim()}});closeHab();refresh()}catch(err){$('status').textContent='Não consegui salvar o hábito.'}});
+function openAjuda(){$('ovj').classList.add('open')}function closeAjuda(){$('ovj').classList.remove('open')}
+$('ajuda').onclick=openAjuda;$('ajudaM').onclick=openAjuda;$('ajFechar').onclick=closeAjuda;$('ovj').addEventListener('click',e=>{if(e.target===$('ovj'))closeAjuda()});
 function habitCard(hs){
   const c=el('section','card');const h=el('div','ct');const d=el('span','dot');d.style.setProperty('--c','var(--pink)');h.append(d,'Hábitos e rotinas');
   const daily=hs.filter(x=>!x.goal);const doneToday=daily.filter(x=>(x.days||{})[isoOf(today())]).length;if(daily.length)h.appendChild(el('span','badge '+(doneToday===daily.length?'bg':'bk'),doneToday+'/'+daily.length+' diários hoje'));c.appendChild(h);
@@ -434,7 +476,8 @@ function habitCard(hs){
       b.onclick=()=>toggleDay(x,k);ds.appendChild(b)}
     const key='h-'+x.id;const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
     del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
-    r.append(t,ds,del);c.appendChild(r)});
+    const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);
+    r.append(t,ds,ed,del);c.appendChild(r)});
   return c}
 
 function render(){
@@ -495,7 +538,10 @@ async function toggle(t,v){t.done=v;t.doneAt=v?Date.now():null;render();
 async function remove(t){try{await rpc('lv_todo_apagar',{p_id:t.id});refresh()}catch(e){$('status').textContent='Não consegui apagar. Tente de novo.'}}
 
 /* nova tarefa */
-const ov=$('ov');
+const ov=$('ov');let editId=null;
+function openEdit(t){editId=t.id;$('ne').value=t.esp;fillFrentes();$('neWrap').hidden=true;$('nhWrap').hidden=true;$('nh').checked=false;$('nfWrap').hidden=true;
+  $('nt').value=t.title;$('na').value=t.frente;$('nd').value=t.due||'';$('nn').value=t.notes||'';if(t.resp&&[...$('nr').options].some(o=>o.textContent===t.resp))$('nr').value=t.resp;
+  $('addTitle').textContent='Editar tarefa';$('addBtn').textContent='Salvar';ov.classList.add('open');setTimeout(()=>$('nt').focus(),50)}
 function respOpts(e){const m=(e&&e.membros)||[];return m.length>1?m.concat([m.join(' e ')]):m}
 function fillSelects(){
   if(!HOME)return;const ne=$('ne'),cur=ne.value;ne.textContent='';
@@ -512,17 +558,18 @@ function fillFrentes(){
 $('ne').addEventListener('change',fillFrentes);
 function openAdd(){if(!HOME)return;if(AMAP[view]){if(view[0]==='@'){$('ne').value=view.slice(1);fillFrentes()}else{$('ne').value=HOME.id;fillFrentes();$('na').value=view}}
   ov.classList.add('open');setTimeout(()=>$('nt').focus(),50)}
-function closeAdd(){ov.classList.remove('open');$('add').reset();$('nfWrap').hidden=true;if(HOME){$('ne').value=HOME.id;fillFrentes()}}
+function closeAdd(){ov.classList.remove('open');$('add').reset();$('nfWrap').hidden=true;editId=null;$('addTitle').textContent='Nova tarefa';$('addBtn').textContent='Adicionar';if(HOME){$('ne').value=HOME.id;$('neWrap').hidden=ESP.length<2;fillFrentes()}}
 $('fab').onclick=openAdd;$('nh').addEventListener('change',e=>{$('nfWrap').hidden=!e.target.checked});$('cancel').onclick=closeAdd;
 ov.addEventListener('click',e=>{if(e.target===ov)closeAdd()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAdd();closeRename()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAdd();closeRename();closeHab();closeAjuda()}});
 $('add').addEventListener('submit',async e=>{e.preventDefault();const title=$('nt').value.trim();if(!title||!HOME)return;
   const esp=$('ne').value||HOME.id,frente=$('na').value,obs=$('nn').value.trim();
   try{
-    if($('nh').checked&&!$('nhWrap').hidden)await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:esp,titulo:title,frente,meta_semana:$('nf').value||'',obs}});
+    if(editId){const p={id:editId,titulo:title,frente,prazo:$('nd').value||'',obs};if(compart(espDe(esp)))p.responsavel=$('nr').value;await rpc('lv_todo_salvar',{p_tarefa:p})}
+    else if($('nh').checked&&!$('nhWrap').hidden)await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:esp,titulo:title,frente,meta_semana:$('nf').value||'',obs}});
     else await rpc('lv_todo_salvar',{p_tarefa:{espaco_id:esp,titulo:title,frente,responsavel:compart(espDe(esp))?$('nr').value:QUEM,prazo:$('nd').value||'',obs}});
     closeAdd();refresh()}
-  catch(err){$('status').textContent='Não consegui adicionar. Tente de novo.'}});
+  catch(err){$('status').textContent='Não consegui salvar. Tente de novo.'}});
 
 /* ---------- Chat "Pergunte à Duda": só enxerga o que a pessoa enxerga ---------- */
 function getKey(){try{return localStorage.getItem(KEYLS)||''}catch(_){return''}}
