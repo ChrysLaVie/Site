@@ -38,24 +38,46 @@
   html{scroll-behavior:smooth;font-size:112.5%}
   body{
     font-family:var(--sans);background:var(--bg);color:var(--charcoal);line-height:1.7;font-weight:300;
-    -webkit-font-smoothing:antialiased;padding-block:48px;
-    padding-left:max(20px, env(safe-area-inset-left, 0px));padding-right:max(20px, env(safe-area-inset-right, 0px));
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:720px;margin:0 auto}
+  .wrap{max-width:760px;margin:0 auto;padding-left:max(20px, env(safe-area-inset-left, 0px));padding-right:max(20px, env(safe-area-inset-right, 0px))}
   em{font-style:italic;color:var(--dark)}
-  .brandbar{display:flex;justify-content:center;margin-bottom:18px}
-  .logo{height:150px;width:auto;object-fit:contain;max-width:100%}
-  header{text-align:center;margin-bottom:34px}
+  .filete{display:block;width:56px;height:1px;background:var(--accent);margin:0 0 1.2rem}
+
+  /* Barra da marca */
+  .topbar{border-bottom:1px solid var(--border);background:var(--bg)}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:12px}
+  .logo{height:64px;width:auto;object-fit:contain;max-width:100%;display:block}
+  .topnav{display:flex;gap:1.6rem}
+  .topnav a{font-size:0.66rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;color:var(--charcoal);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+  .topnav a:hover{border-bottom-color:var(--accent)}
+
+  /* Abertura */
+  .hero{background:var(--bg-alt);padding:3.4rem 0 3rem}
+  .hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2.4rem;align-items:center}
   .eyebrow{display:block;font-size:0.68rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:1rem}
-  h1{font-family:var(--serif);font-weight:300;font-size:clamp(2.1rem,5vw,3rem);line-height:1.08;letter-spacing:-0.005em;color:var(--charcoal);text-wrap:balance}
-  header p{color:var(--muted);margin:1rem auto 0;max-width:52ch;font-weight:400;font-size:0.95rem}
-  .fatos{display:flex;justify-content:center;gap:2.2rem;flex-wrap:wrap;margin-top:1.4rem}
-  .fato{text-align:center}
-  .fato b{display:block;font-family:var(--serif);font-size:1.7rem;font-weight:400;color:var(--dark);line-height:1.1}
-  .fato span{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
-  header .base{font-size:0.78rem;color:var(--accent);max-width:54ch;margin-top:1.2rem}
+  h1{font-family:var(--serif);font-weight:300;font-size:clamp(2.3rem,5.4vw,3.4rem);line-height:1.04;letter-spacing:-0.01em;color:var(--dark);text-wrap:balance}
+  .hero .lead{color:var(--charcoal);margin:1.2rem 0 0;max-width:52ch;font-weight:400;font-size:0.95rem}
+  .fatos{display:flex;margin-top:1.8rem;border-top:1px solid var(--sand-dark);padding-top:1.1rem}
+  .fato{flex:1;padding-right:1rem}
+  .fato + .fato{border-left:1px solid var(--sand-dark);padding-left:1.1rem}
+  .fato b{display:block;font-family:var(--serif);font-size:1.75rem;font-weight:400;color:var(--dark);line-height:1.1}
+  .fato span{font-size:0.64rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
+  .hero .base{font-size:0.76rem;color:var(--muted);max-width:56ch;margin-top:1.3rem;font-weight:400}
+  .selo-hero{width:168px;height:168px;border-radius:50%;border:1px solid var(--sand-dark);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--bg)}
+  .selo-hero::before{content:"";position:absolute;inset:7px;border-radius:50%;border:1px solid var(--sand)}
+  .selo-hero b{font-family:var(--serif);font-weight:400;font-size:2.1rem;line-height:1;color:var(--dark);letter-spacing:0.06em}
+  .selo-hero small{font-size:0.54rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-top:0.45rem;line-height:1.4;max-width:7.5em}
+  main{padding:2.4rem 0 1rem}
+  body.andamento .hero,body.resultado .hero{padding:1.1rem 0}
+  body.andamento .hero .wrap,body.resultado .hero .wrap{display:block}
+  body.andamento .hero h1,body.andamento .hero .lead,body.andamento .hero .fatos,body.andamento .hero .base,body.andamento .hero .selo-hero,body.andamento .hero .filete{display:none}
+  body.andamento .hero .eyebrow{margin-bottom:0}
 
   .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2.2rem}
+  .card-head{display:flex;align-items:baseline;gap:1rem;margin:-2.2rem -2.2rem 1.5rem;padding:1rem 2.2rem;background:var(--bg-alt);border-bottom:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0}
+  .card-head b{font-family:var(--serif);font-weight:300;font-size:1.6rem;color:var(--accent);line-height:1}
+  .card-head span{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;color:var(--charcoal)}
   .tela{display:none}
   .tela.ativa{display:block;animation:fade .3s ease}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -120,8 +142,8 @@
   .btn-primary{background:var(--charcoal);color:var(--white)}
   .btn-primary:hover{background:var(--dark);transform:translateY(-1px)}
   .btn-primary:disabled{opacity:.6;cursor:wait;transform:none}
-  .btn-whats{background:var(--whats);color:var(--white)}
-  .btn-whats:hover{background:var(--whats-dark)}
+  .btn-whats{background:transparent;border-color:var(--sand-dark);color:var(--charcoal)}
+  .btn-whats:hover{border-color:var(--charcoal);background:var(--bg-alt)}
   .btn-ghost{background:transparent;border-color:var(--border);color:var(--charcoal)}
   .btn-ghost:hover{border-color:var(--charcoal);background:var(--bg-alt)}
   .hidden{display:none !important}
@@ -160,21 +182,39 @@
   .compartilhar .acoes{display:flex;gap:0.7rem;justify-content:center;flex-wrap:wrap}
   .compartilhar .btn{padding:0.75rem 1.3rem;font-size:0.68rem}
   .orientativo{margin-top:1.4rem;font-size:0.76rem;color:var(--muted);font-weight:400;text-align:center;line-height:1.55}
-  .saiba{max-width:62ch;margin:3rem auto 0;font-size:0.9rem;font-weight:400;color:var(--charcoal)}
-  .saiba h2{font-family:var(--serif);font-weight:400;font-size:1.45rem;color:var(--dark);margin:1.6rem 0 0.5rem;line-height:1.2}
-  .saiba p{margin-bottom:0.8rem}
-  .saiba dt{font-weight:500;color:var(--dark);margin-top:0.9rem}
-  .saiba dd{margin:0.2rem 0 0;color:var(--charcoal)}
+  /* Como funciona e perguntas */
+  .saiba{margin-top:2.6rem;font-size:0.9rem;font-weight:400;color:var(--charcoal)}
+  .saiba .band{background:var(--bg-alt);padding:3.2rem 0}
+  .saiba h2{font-family:var(--serif);font-weight:300;font-size:clamp(1.7rem,3.6vw,2.2rem);color:var(--dark);margin:0 0 1.6rem;line-height:1.1}
+  .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--sand-dark)}
+  .passo{padding:1.3rem 1.2rem 1.3rem 0}
+  .passo + .passo{border-left:1px solid var(--sand-dark);padding-left:1.3rem}
+  .passo b{display:block;font-family:var(--serif);font-weight:300;font-size:2rem;color:var(--accent);line-height:1;margin-bottom:0.6rem}
+  .passo h3{font-family:var(--serif);font-weight:400;font-size:1.2rem;color:var(--dark);line-height:1.2;margin-bottom:0.35rem}
+  .passo p{font-size:0.84rem;color:var(--charcoal);line-height:1.55;margin:0}
+  .sobre{padding:3rem 0 0.5rem}
+  .sobre p{max-width:62ch;margin-bottom:0.9rem}
+  .faq{padding:1.4rem 0 3rem}
+  .faq details{border-top:1px solid var(--border)}
+  .faq details:last-of-type{border-bottom:1px solid var(--border)}
+  .faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:0.95rem 0;font-weight:500;color:var(--dark);font-size:0.92rem}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";font-family:var(--serif);font-size:1.5rem;font-weight:300;color:var(--accent);line-height:1;flex:none}
+  .faq details[open] summary::after{content:"\2212"}
+  .faq details p{padding:0 0 1rem;max-width:62ch;color:var(--charcoal)}
   .saiba a{color:var(--charcoal)}
   body.andamento .saiba,body.resultado .saiba{display:none}
-  footer{margin-top:2.6rem;text-align:center;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
+  .rodape{border-top:1px solid var(--border);padding:2.2rem 0 2.6rem}
+  .rodape .wrap{display:flex;justify-content:space-between;align-items:center;gap:1.5rem;flex-wrap:wrap}
+  .rodape .logo{height:56px}
+  .rodape nav{display:flex;gap:1.4rem;flex-wrap:wrap}
+  .rodape a{font-size:0.66rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;color:var(--charcoal);text-decoration:none}
+  .rodape a:hover{color:var(--accent)}
+  .rodape small{width:100%;font-size:0.66rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500}
 
-  /* Resultado: cabeçalho vira barra fina */
-  body.resultado .brandbar{margin-bottom:0}
-  body.resultado .logo{height:84px}
-  body.resultado header{margin-bottom:22px}
-  body.resultado header h1,body.resultado header p,body.resultado header .fatos{display:none}
-  body.resultado header .eyebrow{margin-bottom:0}
+  /* Resultado: abertura vira barra fina */
+  body.resultado .hero h1,body.resultado .hero .lead,body.resultado .hero .fatos,body.resultado .hero .base,body.resultado .hero .selo-hero,body.resultado .hero .filete{display:none}
+  body.resultado .hero .eyebrow{margin-bottom:0}
   .selo-wrap{display:flex;flex-direction:column;align-items:center;gap:0.9rem;text-align:center}
   .selo{
     width:138px;height:138px;border-radius:50%;border:1.5px solid var(--sand-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -205,15 +245,29 @@
   @media(max-width:600px){
     html{font-size:106.25%}
     .radar-wrap{grid-template-columns:1fr}
-    .selo{width:118px;height:118px}
-    .fatos{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
-    .fato span{font-size:0.58rem;letter-spacing:0.1em}
+    .selo{width:132px;height:132px}
+    .selo small{font-size:0.5rem;letter-spacing:0.14em}
+    .fato{padding-right:0.5rem}
+    .fato + .fato{padding-left:0.7rem}
+    .fato span{font-size:0.56rem;letter-spacing:0.1em}
     .fato b{font-size:1.4rem}
     .selo b{font-size:2rem}
-    body{padding-block:28px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
-    .logo{height:88px}
-    body.resultado .logo{height:56px}
+    .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+    .logo{height:52px}
+    .topnav{gap:1rem}
+    .topnav a{font-size:0.6rem;letter-spacing:0.14em}
+    .hero{padding:2.4rem 0 2.2rem}
+    .hero .wrap{grid-template-columns:1fr;gap:1.4rem}
+    .selo-hero{width:118px;height:118px;order:-1}
+    .selo-hero b{font-size:1.5rem}
+    .selo-hero small{font-size:0.48rem}
+    main{padding-top:1.6rem}
     .card{padding:1.5rem 1.15rem}
+    .card-head{margin:-1.5rem -1.15rem 1.2rem;padding:0.8rem 1.15rem}
+    .passos{grid-template-columns:1fr}
+    .passo{padding:1rem 0}
+    .passo + .passo{border-left:0;border-top:1px solid var(--sand-dark);padding-left:0}
+    .rodape .wrap{flex-direction:column;align-items:flex-start}
     .grid,.secund{grid-template-columns:1fr}
     .escala{gap:0.35rem}
     .opc span{height:44px;font-size:0.85rem}
@@ -227,21 +281,28 @@
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="brandbar"><img class="logo" src="/logo.png" alt="La Vie Consultoria"></div>
+<div class="topbar"><div class="wrap">
+  <a href="/" aria-label="La Vie Consultoria"><img class="logo" src="/logo.png" alt="La Vie Consultoria"></a>
+  <nav class="topnav"><a href="/vagas/">Vagas</a><a href="/">Site</a></nav>
+</div></div>
 
-  <header id="topo">
+<header id="topo" class="hero"><div class="wrap">
+  <div>
     <span class="eyebrow">Teste Vocacional</span>
+    <span class="filete"></span>
     <h1>Qual área de trabalho tem <em>a sua cara?</em></h1>
-    <p>54 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você vê seu perfil de interesses e a área, entre as oito em que a La Vie recruta, com mais a ver com você. Já dá para entrar no banco de talentos nessa área.</p>
+    <p class="lead">54 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você vê seu perfil de interesses e a área, entre as oito em que a La Vie recruta, com mais a ver com você. Já dá para entrar no banco de talentos nessa área.</p>
     <div class="fatos">
       <div class="fato"><b>8 min</b><span>para responder</span></div>
       <div class="fato"><b>8</b><span>áreas da La Vie</span></div>
       <div class="fato"><b>na hora</b><span>resultado</span></div>
     </div>
     <p class="base">Baseado na teoria de interesses profissionais de John Holland (RIASEC), a mesma usada pelo O*NET Interest Profiler. O resultado é um ponto de partida, não um veredito.</p>
-  </header>
+  </div>
+  <div class="selo-hero" aria-hidden="true"><b>RIASEC</b><small>Modelo de Holland</small></div>
+</div></header>
 
+<main class="wrap">
   <div class="previa hidden" id="previa">Prévia para aprovação. Nesta versão o resultado não é gravado.</div>
 
   <div class="progress hidden" id="progress">
@@ -254,7 +315,8 @@
 
   <!-- Tela 0: dados -->
   <section class="card tela ativa" id="telaDados">
-    <p style="font-size:0.9rem;font-weight:400;color:var(--muted);">Antes de começar, como podemos te chamar e te avisar quando surgir uma vaga na sua área?</p>
+    <div class="card-head"><b>01</b><span>Antes de começar</span></div>
+    <p style="font-size:0.9rem;font-weight:400;color:var(--muted);">Como podemos te chamar e te avisar quando surgir uma vaga na sua área?</p>
     <div class="grid">
       <div class="field full"><label for="f-nome">Nome completo <span class="req">*</span></label><input type="text" id="f-nome" autocomplete="name" placeholder="Seu nome"></div>
       <div class="field"><label for="f-email">E-mail <span class="req">*</span></label><input type="email" id="f-email" autocomplete="email" placeholder="seu@email.com"></div>
@@ -280,25 +342,42 @@
 
   <!-- Resultado -->
   <section class="card tela" id="telaResultado"></section>
+</main>
 
-  <section class="saiba" id="saiba">
-    <h2>O que é o Teste Vocacional da La Vie</h2>
-    <p>É um teste vocacional gratuito e online, feito pela La Vie Consultoria, de Goiânia, para quem quer descobrir em qual área de trabalho tem mais chance de se dar bem: administrativo, comercial e vendas, recursos humanos, financeiro, marketing, educação, atendimento ou logística. Serve para quem está procurando o primeiro emprego, pensando em mudar de área ou em dúvida sobre que vaga buscar.</p>
-    <h2>Como funciona</h2>
-    <p>Você responde 54 afirmações curtas sobre o que gosta de fazer e como trabalha, dando uma nota de 1 (nada a ver comigo) a 5 (tudo a ver comigo). Leva uns 8 minutos. O resultado sai na hora: a área com mais afinidade, as funções que combinam com você, uma dica de currículo para essa área e o seu perfil de interesses pelo modelo de John Holland (RIASEC), o mesmo usado por instrumentos de orientação de carreira reconhecidos no mundo todo. No fim, você pode entrar no banco de talentos da La Vie na área indicada e ser avisado quando surgir uma vaga.</p>
-    <h2>Perguntas frequentes</h2>
-    <dl>
-      <dt>O teste é gratuito?</dt><dd>Sim, sem custo e sem conteúdo escondido atrás de pagamento.</dd>
-      <dt>Preciso me cadastrar?</dt><dd>Pedimos nome, e-mail e WhatsApp antes de começar, para guardar o seu resultado e poder avisar quando surgir uma vaga na sua área. Os dados seguem a nossa <a href="/politica-de-privacidade">Política de Privacidade</a>.</dd>
-      <dt>O resultado substitui uma orientação profissional?</dt><dd>Não. Ele mostra seus interesses neste momento e serve como ponto de partida. Para uma orientação completa, procure um psicólogo ou orientador de carreira.</dd>
-      <dt>Qual a diferença para o Teste DISC?</dt><dd>O Teste Vocacional indica a área com mais a ver com os seus interesses. O <a href="/disc/">Teste DISC</a> mostra como você se comporta no trabalho. Os dois juntos formam o seu perfil no banco de talentos da La Vie.</dd>
-      <dt>Posso refazer o teste?</dt><dd>Pode. Interesses mudam com o tempo e com a experiência; vale refazer depois de alguns meses.</dd>
-      <dt>Sou empresa e quero usar o teste na minha equipe</dt><dd>A La Vie aplica avaliações de perfil em processos seletivos e em projetos de gestão de pessoas. <a href="/empresas/?servico=liderancas">Fale com a gente</a>.</dd>
-    </dl>
-  </section>
+<section class="saiba" id="saiba">
+  <div class="band"><div class="wrap">
+    <span class="eyebrow">Como funciona</span>
+    <h2>Três passos, <em>oito minutos.</em></h2>
+    <div class="passos">
+      <div class="passo"><b>01</b><h3>Responda</h3><p>54 frases do tipo "Gosto de organizar rotinas e prazos", com nota de 1 (nada a ver comigo) a 5 (tudo a ver comigo). Sem resposta certa ou errada.</p></div>
+      <div class="passo"><b>02</b><h3>Receba o resultado</h3><p>Na hora: o seu código de três letras, a área com mais afinidade, as funções que combinam com você, o gráfico do seu perfil e uma dica de currículo.</p></div>
+      <div class="passo"><b>03</b><h3>Entre no Banco de Talentos</h3><p>Se quiser, cadastre o currículo já na sua área e seja avisado quando surgir uma vaga. As vagas abertas aparecem no resultado.</p></div>
+    </div>
+  </div></div>
+  <div class="wrap">
+    <div class="sobre">
+      <span class="eyebrow">O que é</span>
+      <h2>Um teste vocacional gratuito, <em>ligado a vagas reais.</em></h2>
+      <p>Feito pela La Vie Consultoria, de Goiânia, para quem quer descobrir em qual área de trabalho tem mais chance de se dar bem: administrativo, comercial e vendas, recursos humanos, financeiro, marketing, educação, atendimento ou logística. Serve para quem está procurando o primeiro emprego, pensando em mudar de área ou em dúvida sobre que vaga buscar.</p>
+      <p>O perfil de interesses segue o modelo de John Holland (RIASEC), o mesmo usado por instrumentos de orientação de carreira reconhecidos no mundo todo.</p>
+    </div>
+    <div class="faq">
+      <span class="eyebrow">Perguntas frequentes</span>
+      <details><summary>O teste é gratuito?</summary><p>Sim, sem custo e sem conteúdo escondido atrás de pagamento.</p></details>
+      <details><summary>Preciso me cadastrar?</summary><p>Pedimos nome, e-mail e WhatsApp antes de começar, para guardar o seu resultado e poder avisar quando surgir uma vaga na sua área. Os dados seguem a nossa <a href="/politica-de-privacidade">Política de Privacidade</a>.</p></details>
+      <details><summary>O resultado substitui uma orientação profissional?</summary><p>Não. Ele mostra seus interesses neste momento e serve como ponto de partida. Para uma orientação completa, procure um psicólogo ou orientador de carreira.</p></details>
+      <details><summary>Qual a diferença para o Teste DISC?</summary><p>O Teste Vocacional indica a área com mais a ver com os seus interesses. O <a href="/disc/">Teste DISC</a> mostra como você se comporta no trabalho. Os dois juntos formam o seu perfil no banco de talentos da La Vie.</p></details>
+      <details><summary>Posso refazer o teste?</summary><p>Pode. Interesses mudam com o tempo e com a experiência; vale refazer depois de alguns meses.</p></details>
+      <details><summary>Sou empresa e quero usar o teste na minha equipe</summary><p>A La Vie aplica avaliações de perfil em processos seletivos e em projetos de gestão de pessoas. <a href="/empresas/?servico=liderancas">Fale com a gente</a>.</p></details>
+    </div>
+  </div>
+</section>
 
-  <footer>La Vie Consultoria · Gestão Empresarial Integrada</footer>
-</div>
+<footer class="rodape"><div class="wrap">
+  <img class="logo" src="/logo.png" alt="La Vie Consultoria">
+  <nav><a href="/">Site</a><a href="/vagas/">Vagas</a><a href="/disc/">Teste DISC</a><a href="/empresas/">Para empresas</a><a href="/politica-de-privacidade">Privacidade</a></nav>
+  <small>La Vie Consultoria · Gestão Empresarial Integrada · Goiânia</small>
+</div></footer>
 
 <script>
   const NO_AR = /(^|\.)lavieconsultoria\.com$/.test(location.hostname);
