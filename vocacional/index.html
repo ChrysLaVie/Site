@@ -175,6 +175,16 @@
   .radar-legenda b{font-weight:500;color:var(--dark)}
   .radar-legenda span{color:var(--muted);font-variant-numeric:tabular-nums}
   .radar-legenda small{display:block;font-size:0.72rem;color:var(--muted);font-weight:400;line-height:1.4}
+  .vagas-area{display:grid;gap:0.6rem}
+  .vaga-item{display:flex;justify-content:space-between;align-items:center;gap:1rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;text-decoration:none;color:inherit;transition:border-color .15s}
+  .vaga-item:hover{border-color:var(--charcoal)}
+  .vaga-item b{display:block;font-weight:500;color:var(--dark);font-size:0.92rem;line-height:1.3}
+  .vaga-item small{display:block;font-size:0.76rem;color:var(--muted);font-weight:400;margin-top:0.15rem}
+  .vaga-item span{flex:none;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;color:var(--charcoal);white-space:nowrap}
+  .cv{margin-top:1.6rem;padding:1.4rem 1.5rem;border:1px solid var(--sand-dark);border-radius:var(--radius);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1rem 1.5rem;align-items:center}
+  .cv h3{font-family:var(--serif);font-weight:400;font-size:1.3rem;color:var(--dark);line-height:1.2;text-transform:none;letter-spacing:0;margin-bottom:0.3rem}
+  .cv p{font-size:0.85rem;color:var(--charcoal);font-weight:400;margin:0}
+  .cv .btn{white-space:nowrap}
   .btn-img{background:var(--sand-dark);color:var(--white)}
   .btn-img:hover{background:var(--accent)}
   @media(max-width:600px){
@@ -196,6 +206,8 @@
     .barra{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 2.8rem;font-size:0.78rem}
     .actions button,.actions .btn{flex:1}
     .actions .right{width:100%;margin-left:0}
+    .cv{grid-template-columns:1fr}
+    .cv .btn{white-space:normal}
   }
 </style>
 </head>
@@ -510,9 +522,49 @@
       ${rot}</svg>`;
   }
 
+  // Vagas abertas do site, classificadas nas 8 áreas pelo título e pela área cadastrada
+  // (mesma lógica do banco de talentos do R&S: marketing antes de vendas).
+  function areaDaVaga(v){
+    const t = ((v.title || '') + ' ' + (v.area || '')).toLowerCase();
+    if (/marketing|social media|designer|comunica|conte[uú]do/.test(t)) return 'mkt';
+    if (/vend|comercial|capta|consultor|representante|neg[oó]cio/.test(t)) return 'com';
+    if (/\brh\b|recursos humanos|\bdp\b|departamento pessoal|gente|pessoas|recrut/.test(t)) return 'rh';
+    if (/financ|cont[aá]b|fiscal|tesour|cobran/.test(t)) return 'fin';
+    if (/motorista|log[ií]stic|estoqu|expedi|entreg|carreteir/.test(t)) return 'log';
+    if (/atend|recep|relacionamento|suporte|sac\b/.test(t)) return 'ate';
+    if (/professor|ensino|acad[eê]mic|pedag|coordenador de curso|tutor|docente/.test(t)) return 'edu';
+    if (/administrativ|secret[aá]ri|assistente|auxiliar|gabinete|compras/.test(t)) return 'adm';
+    return null;
+  }
+  let vagasAbertas = null;
+  async function carregarVagas(){
+    if (vagasAbertas) return vagasAbertas;
+    try{
+      const r = await fetch(`${SB_URL}/rest/v1/vagas?select=id,title,area,local,tipo,modelo,slug,created_at&ativa=eq.true&order=created_at.desc`, { headers:{ apikey:SB_KEY, Authorization:`Bearer ${SB_KEY}` } });
+      vagasAbertas = r.ok ? await r.json() : [];
+    }catch(e){ vagasAbertas = []; }
+    return vagasAbertas;
+  }
+  const slugTexto = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\((a|o|as|os|es)\)/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  function htmlVagas(vagas, areaK){
+    const minhas = vagas.filter(v => areaDaVaga(v) === areaK).slice(0, 4);
+    if (!minhas.length) return '';
+    return `<div class="res-bloco"><h3>Vagas abertas agora na sua área</h3><div class="vagas-area">${minhas.map(v => {
+      const link = `${SITE}/vagas/${v.slug || slugTexto(v.title)}?utm_source=vocacional`;
+      const meta = [v.local, v.tipo, v.modelo].filter(Boolean).join(' · ');
+      return `<a class="vaga-item" href="${link}" target="_blank" rel="noopener noreferrer"><div><b>${esc(v.title)}</b><small>${esc(meta)}</small></div><span>Candidatar-se →</span></a>`;
+    }).join('')}</div></div>`;
+  }
+  function linkWhatsCurriculo(res){
+    const top = AREAS[res.areas[0].k];
+    const msg = `Olá! Fiz o Teste Vocacional da La Vie (código ${res.codigo}, área ${top.nome}) e quero saber como funciona a análise de currículo.`;
+    return `https://wa.me/${WHATSAPP_LAVIE}?text=${encodeURIComponent(msg)}`;
+  }
+
   let ultimoResultado = null;
   async function finalizar(){
     const res = pontuar(); const lista = res.areas; ultimoResultado = res; guardarEntrega(res);
+    const vagas = await carregarVagas();
     try{ sessionStorage.removeItem('lv_voc_progresso'); }catch(e){}
     const top = AREAS[lista[0].k], seg = AREAS[lista[1].k], ter = AREAS[lista[2].k];
     const primeiro = dados.nome.split(' ')[0];
@@ -547,13 +599,19 @@
       </div>`;
     el.innerHTML = topo + `
       ${res.fraco ? '' : `<div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>`}
+      ${res.fraco ? '' : htmlVagas(vagas, lista[0].k)}
       ${cta}
       <div class="res-bloco"><h3>Seu perfil de interesses (Holland, estimado)</h3>
         <div class="radar-wrap">${radarSVG(res.holland)}
           <div class="radar-legenda">${res.holland.map((x, i) => `<div><div><b>${esc(RIASEC[x.k].nome)}</b>${i < 3 ? `<small>${esc(RIASEC[x.k].resumo)}</small>` : ''}</div><span>${x.pct}%</span></div>`).join('')}</div>
         </div></div>
       ${res.fraco ? '' : `
-      <div class="res-bloco"><h3>Para se destacar nessa área</h3><p>${esc(top.dica)}</p></div>
+      <div class="res-bloco"><h3>Para se destacar nessa área</h3><p>${esc(top.dica)}</p></div>`}
+      <div class="cv">
+        <div><h3>Seu currículo mostra isso?</h3><p>A La Vie analisa o seu currículo com o olhar de quem recruta e, se quiser, monta um currículo estratégico para a sua área. Fale com a gente e saiba como funciona.</p></div>
+        <a class="btn btn-ghost" href="${linkWhatsCurriculo(res)}" target="_blank" rel="noopener noreferrer">Quero ajuda com o currículo</a>
+      </div>
+      ${res.fraco ? '' : `
       <div class="res-bloco"><h3>Também têm a sua cara</h3>
         <div class="secund">
           <div><b>${esc(seg.nome)}</b><small>${lista[1].pct}% de afinidade. ${esc(seg.resumo.split('.')[0])}.</small></div>
