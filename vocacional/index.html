@@ -308,7 +308,7 @@
   <div class="progress hidden" id="progress">
     <div class="progress-top">
       <span class="progress-label" id="progressLabel">Afirmações</span>
-      <span class="progress-count" id="progressCount">1 a 6 de 54</span>
+      <span class="progress-count" id="progressCount">1 a 9 de 54</span>
     </div>
     <div class="bar"><span id="barFill"></span></div>
   </div>
@@ -491,7 +491,7 @@
     [null,'R','Me sinto bem ao ar livre ou em ambientes de produção, longe de escritório.']
   ];
   const ROTULOS = ['Nada a ver','Pouco a ver','Mais ou menos','Bastante','Tudo a ver'];
-  const POR_TELA = 6;
+  const POR_TELA = 9; // 6 telas de 9 afirmações (antes eram 9 telas de 6; pedido de um testador em 16/11)
 
   const telasEl = document.getElementById('telas');
   const nTelas = Math.ceil(AFIRMACOES.length / POR_TELA);
@@ -554,6 +554,7 @@
     else {
       telaDe(t).classList.add('ativa'); progress.classList.remove('hidden');
       const ini = t * POR_TELA + 1, fim = Math.min((t + 1) * POR_TELA, AFIRMACOES.length);
+      document.getElementById('progressLabel').textContent = `Parte ${t + 1} de ${nTelas}`;
       document.getElementById('progressCount').textContent = `${ini} a ${fim} de ${AFIRMACOES.length}`;
       document.getElementById('barFill').style.width = `${(fim / AFIRMACOES.length) * 100}%`;
     }
