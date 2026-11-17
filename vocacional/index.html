@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teste Vocacional · La Vie Consultoria</title>
-<meta name="description" content="Descubra em 7 minutos a área de trabalho com mais a sua cara, com base na teoria de interesses de Holland, e entre no banco de talentos da La Vie Consultoria.">
+<meta name="description" content="Descubra em 8 minutos a área de trabalho com mais a sua cara, com base na teoria de interesses de Holland, e entre no banco de talentos da La Vie Consultoria.">
 <link rel="icon" type="image/png" href="/logo.png" media="(prefers-color-scheme: light)">
 <link rel="icon" type="image/png" href="/logo-branco.png" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/png" href="/logo.png">
@@ -14,7 +14,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://lavieconsultoria.com/vocacional/">
 <meta property="og:title" content="Teste Vocacional La Vie · Qual área tem a sua cara?">
-<meta property="og:description" content="48 afirmações, 7 minutos, resultado na hora. Descubra sua área e entre no banco de talentos da La Vie.">
+<meta property="og:description" content="54 afirmações, 8 minutos, resultado na hora. Descubra sua área e entre no banco de talentos da La Vie.">
 <meta property="og:image" content="https://lavieconsultoria.com/vocacional/og-vocacional.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -233,9 +233,9 @@
   <header id="topo">
     <span class="eyebrow">Teste Vocacional</span>
     <h1>Qual área de trabalho tem <em>a sua cara?</em></h1>
-    <p>48 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você vê seu perfil de interesses e a área, entre as oito em que a La Vie recruta, com mais a ver com você. Já dá para entrar no banco de talentos nessa área.</p>
+    <p>54 afirmações rápidas sobre o que você gosta de fazer e como você trabalha. No final, você vê seu perfil de interesses e a área, entre as oito em que a La Vie recruta, com mais a ver com você. Já dá para entrar no banco de talentos nessa área.</p>
     <div class="fatos">
-      <div class="fato"><b>7 min</b><span>para responder</span></div>
+      <div class="fato"><b>8 min</b><span>para responder</span></div>
       <div class="fato"><b>8</b><span>áreas da La Vie</span></div>
       <div class="fato"><b>na hora</b><span>resultado</span></div>
     </div>
@@ -247,7 +247,7 @@
   <div class="progress hidden" id="progress">
     <div class="progress-top">
       <span class="progress-label" id="progressLabel">Afirmações</span>
-      <span class="progress-count" id="progressCount">1 a 4 de 48</span>
+      <span class="progress-count" id="progressCount">1 a 6 de 54</span>
     </div>
     <div class="bar"><span id="barFill"></span></div>
   </div>
@@ -285,7 +285,7 @@
     <h2>O que é o Teste Vocacional da La Vie</h2>
     <p>É um teste vocacional gratuito e online, feito pela La Vie Consultoria, de Goiânia, para quem quer descobrir em qual área de trabalho tem mais chance de se dar bem: administrativo, comercial e vendas, recursos humanos, financeiro, marketing, educação, atendimento ou logística. Serve para quem está procurando o primeiro emprego, pensando em mudar de área ou em dúvida sobre que vaga buscar.</p>
     <h2>Como funciona</h2>
-    <p>Você responde 48 afirmações curtas sobre o que gosta de fazer e como trabalha, dando uma nota de 1 (nada a ver comigo) a 5 (tudo a ver comigo). Leva uns 7 minutos. O resultado sai na hora: a área com mais afinidade, as funções que combinam com você, uma dica de currículo para essa área e o seu perfil de interesses pelo modelo de John Holland (RIASEC), o mesmo usado por instrumentos de orientação de carreira reconhecidos no mundo todo. No fim, você pode entrar no banco de talentos da La Vie na área indicada e ser avisado quando surgir uma vaga.</p>
+    <p>Você responde 54 afirmações curtas sobre o que gosta de fazer e como trabalha, dando uma nota de 1 (nada a ver comigo) a 5 (tudo a ver comigo). Leva uns 8 minutos. O resultado sai na hora: a área com mais afinidade, as funções que combinam com você, uma dica de currículo para essa área e o seu perfil de interesses pelo modelo de John Holland (RIASEC), o mesmo usado por instrumentos de orientação de carreira reconhecidos no mundo todo. No fim, você pode entrar no banco de talentos da La Vie na área indicada e ser avisado quando surgir uma vaga.</p>
     <h2>Perguntas frequentes</h2>
     <dl>
       <dt>O teste é gratuito?</dt><dd>Sim, sem custo e sem conteúdo escondido atrás de pagamento.</dd>
@@ -353,7 +353,7 @@
     E: { nome:'Empreendedor',  resumo:'convence, lidera, negocia e gosta de meta' },
     C: { nome:'Convencional',  resumo:'organiza, confere, segue método e mantém tudo em ordem' }
   };
-  // 48 afirmações: 6 por área, cada uma com o tipo de Holland que ela mede.
+  // 54 afirmações: 6 por área, cada uma com o tipo de Holland que ela mede.
   // Frases de atividade, sem nomear a área, em rodízio para cada tela misturar áreas.
   const AFIRMACOES = [
     ['adm','C','Monto planilhas e controles para acompanhar pedidos, prazos e documentos.'],
@@ -403,10 +403,16 @@
     ['mkt','A','Reparo em cores, fontes e no visual das coisas antes da maioria das pessoas.'],
     ['edu','E','Me sinto à vontade falando para um grupo.'],
     ['ate','A','Gosto de encontrar um jeito agradável de dar uma notícia difícil.'],
-    ['log','I','Gosto de planejar a melhor sequência de uma operação para ganhar tempo.']
+    ['log','I','Gosto de planejar a melhor sequência de uma operação para ganhar tempo.'],
+    [null,'R','Gosto de consertar, montar ou mexer em coisas com as próprias mãos.'],
+    [null,'A','Tenho facilidade para imaginar algo novo e dar forma a essa ideia.'],
+    [null,'R','Prefiro resolver um problema na prática a discutir sobre ele.'],
+    [null,'I','Gosto de pesquisar a fundo antes de formar opinião.'],
+    [null,'A','Música, imagem, texto ou design fazem parte do meu dia de algum jeito.'],
+    [null,'R','Me sinto bem ao ar livre ou em ambientes de produção, longe de escritório.']
   ];
   const ROTULOS = ['Nada a ver','Pouco a ver','Mais ou menos','Bastante','Tudo a ver'];
-  const POR_TELA = 4;
+  const POR_TELA = 6;
 
   const telasEl = document.getElementById('telas');
   const nTelas = Math.ceil(AFIRMACOES.length / POR_TELA);
@@ -513,15 +519,28 @@
     const soma = {}, somaR = {}, nR = {};
     ORDEM_AREAS.forEach(k => soma[k] = 0); Object.keys(RIASEC).forEach(k => { somaR[k] = 0; nR[k] = 0; });
     const resp = respostas();
-    resp.forEach((v, i) => { const [area, tipo] = AFIRMACOES[i]; soma[area] += v; somaR[tipo] += v; nR[tipo]++; });
+    resp.forEach((v, i) => { const [area, tipo] = AFIRMACOES[i]; if (area) soma[area] += v; somaR[tipo] += v; nR[tipo]++; });
     const minA = N_POR_AREA, maxA = N_POR_AREA * 5;
-    const areas = ORDEM_AREAS.map(k => ({ k, pontos: soma[k], pct: Math.round((soma[k] - minA) / (maxA - minA) * 100) }));
+    // Afinidade relativa: quanto a área se destaca da média da própria pessoa. Quem marca
+    // 4 e 5 em tudo não sai com todas as áreas altas; a escala continua de 0 a 100.
+    const medias = ORDEM_AREAS.map(k => soma[k] / N_POR_AREA);
+    const mediaGeral = medias.reduce((a, b) => a + b, 0) / medias.length;
+    const areas = ORDEM_AREAS.map(k => {
+      const media = soma[k] / N_POR_AREA;
+      const bruta = (soma[k] - minA) / (maxA - minA);              // 0 a 1
+      const rel = Math.max(-1, Math.min(1, (media - mediaGeral) / 2)); // -1 a 1 (2 pontos acima da média = topo)
+      const pct = Math.round(Math.max(0, Math.min(100, (0.5 * bruta + 0.5 * (0.5 + rel / 2)) * 100)));
+      return { k, pontos: soma[k], pct };
+    });
     // Desempate: quem tem mais notas 5 na área fica na frente; depois a ordem fixa
     const cincos = k => resp.filter((v, i) => AFIRMACOES[i][0] === k && v === 5).length;
     areas.sort((a, b) => b.pontos - a.pontos || cincos(b.k) - cincos(a.k) || ORDEM_AREAS.indexOf(a.k) - ORDEM_AREAS.indexOf(b.k));
     const holland = Object.keys(RIASEC).map(k => ({ k, media: nR[k] ? somaR[k] / nR[k] : 0, pct: nR[k] ? Math.round((somaR[k] / nR[k] - 1) / 4 * 100) : 0 }));
     holland.sort((a, b) => b.media - a.media || 'RIASEC'.indexOf(a.k) - 'RIASEC'.indexOf(b.k));
-    return { areas, holland, codigo: holland.slice(0, 3).map(x => x.k).join(''), fraco: areas[0].pct < 50 };
+    // Sem destaque: ou tudo baixo (fraco) ou tudo parecido (plano, ex.: 5 em todas)
+    const plano = (areas[0].pontos - mediaGeral * N_POR_AREA) < 3;
+    const fraco = areas[0].pontos < N_POR_AREA * 3.5;
+    return { areas, holland, codigo: holland.slice(0, 3).map(x => x.k).join(''), fraco: fraco || plano, plano: plano && !fraco };
   }
   function respostas(){
     return AFIRMACOES.map((_, i) => { const el = document.querySelector(`input[name="q${i}"]:checked`); return el ? Number(el.value) : 0; });
@@ -631,14 +650,16 @@
     const top = AREAS[lista[0].k], seg = AREAS[lista[1].k], ter = AREAS[lista[2].k];
     const primeiro = dados.nome.split(' ')[0];
     const h1 = RIASEC[res.holland[0].k], h2 = RIASEC[res.holland[1].k], h3 = RIASEC[res.holland[2].k];
-    const textoShare = `Fiz o Teste Vocacional da La Vie: meu perfil é ${h1.nome} e ${h2.nome}, e a área com mais a minha cara é ${top.nome}. Descubra a sua em 7 minutos: ${SITE}/vocacional/`;
+    const textoShare = `Fiz o Teste Vocacional da La Vie: meu perfil é ${h1.nome} e ${h2.nome}, e a área com mais a minha cara é ${top.nome}. Descubra a sua em 8 minutos: ${SITE}/vocacional/`;
     const el = document.getElementById('telaResultado');
     const selo = `<div class="selo"><b>${res.codigo}</b><small>Código Holland</small></div>`;
     const topo = res.fraco
       ? `<div class="res-topo"><div class="selo-wrap">${selo}
           <div><span class="eyebrow">${esc(primeiro)}, seu perfil de interesses é</span>
           <h2>${esc(h1.nome)} e ${esc(h2.nome)}</h2></div></div>
-          <p class="resumo">Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso, e o Teste DISC completa o quadro.</p>
+          <p class="resumo">${res.plano
+            ? `Suas respostas ficaram parecidas em todas as oito áreas, então nenhuma se destacou. Isso acontece quando a pessoa se vê em quase tudo, e aí o teste não consegue apontar uma direção. Se quiser, refaça com mais calma, marcando 5 só no que é mesmo a sua cara. O perfil de interesses abaixo já ajuda, e o Teste DISC completa o quadro.`
+            : `Nenhuma das oito áreas em que a La Vie recruta se destacou nas suas respostas (a mais próxima foi ${esc(top.nome)}, com ${lista[0].pct}% de afinidade). Isso costuma indicar que o seu caminho está em outra área, como tecnologia, saúde, engenharia ou um ofício específico. O perfil de interesses abaixo ajuda a pensar nisso, e o Teste DISC completa o quadro.`}</p>
         </div>`
       : `<div class="res-topo"><div class="selo-wrap">${selo}
           <div><span class="eyebrow">${esc(primeiro)}, a área com mais a sua cara é</span>
@@ -663,7 +684,7 @@
       ${res.fraco ? '' : `<div class="res-bloco"><h3>Funções que combinam com você</h3><div class="tags">${top.funcoes.map(f => `<span>${esc(f)}</span>`).join('')}</div></div>`}
       ${res.fraco ? '' : htmlVagas(vagas, lista[0].k)}
       ${cta}
-      <div class="res-bloco"><h3>Seu perfil de interesses (Holland, estimado)</h3>
+      <div class="res-bloco"><h3>Seu perfil de interesses (Holland)</h3>
         <div class="radar-wrap">${radarSVG(res.holland)}
           <div class="radar-legenda">${res.holland.map((x, i) => `<div><div><b>${esc(RIASEC[x.k].nome)}</b>${i < 3 ? `<small>${esc(RIASEC[x.k].resumo)}</small>` : ''}</div><span>${x.pct}%</span></div>`).join('')}</div>
         </div></div>
@@ -746,7 +767,7 @@
     g.drawImage(img, (W - 1000) / 2, 1160, 1000, 617);
     // rodapé
     g.fillStyle = '#3A3A3A'; g.fillRect(0, H - 150, W, 150);
-    centro('Descubra a sua área em 7 minutos', H - 92, `300 32px ${SANS}`, '#F2F1ED');
+    centro('Descubra a sua área em 8 minutos', H - 92, `300 32px ${SANS}`, '#F2F1ED');
     centro('lavieconsultoria.com/vocacional', H - 46, `500 30px ${SANS}`, '#F2F1ED', 2);
     const blob = await new Promise(ok => cv.toBlob(ok, 'image/png'));
     return new File([blob], `teste-vocacional-la-vie-${res.codigo.toLowerCase()}.png`, { type:'image/png' });
@@ -755,7 +776,7 @@
     const arquivo = await gerarImagem(res);
     // No celular, abre a folha de compartilhamento (Instagram, WhatsApp, salvar); no computador, baixa o arquivo
     if (navigator.canShare && navigator.canShare({ files:[arquivo] })){
-      try{ await navigator.share({ files:[arquivo], title:'Teste Vocacional La Vie', text:`Descubra a sua área em 7 minutos: ${SITE}/vocacional/` }); return; }
+      try{ await navigator.share({ files:[arquivo], title:'Teste Vocacional La Vie', text:`Descubra a sua área em 8 minutos: ${SITE}/vocacional/` }); return; }
       catch(e){ if (e && e.name === 'AbortError') return; }
     }
     const url = URL.createObjectURL(arquivo);
