@@ -2499,7 +2499,7 @@ async function salvarAgenda(){
     // candidato (uma vez por entrevista), para a falta ficar no histórico.
     if(a.status==='nao_compareceu' && cand){
       const alvo = ETAPAS.find(e=>e.label===etapa);
-      if(statusAnterior!=='nao_compareceu' && alvo) await registrarNaoCompareceu(cand.id, alvo.id, data, 'agenda');
+      if(statusAnterior!=='nao_compareceu' && alvo && await registrarNaoCompareceu(cand.id, alvo.id, data, 'agenda')) setTimeout(()=>_aposFalta(cand.id), 400);
     }
     // Se estiver conectada ao Google Calendar, cria (ou atualiza, se já
     // existir) o evento correspondente — antes isso exigia salvar, reabrir e
@@ -3070,6 +3070,23 @@ Você ainda tem interesse em participar do processo? Se sim, me responda por aqu
 Fico no aguardo.
 
 ${ASSINATURA}`},
+  // Segunda falta à entrevista (18/11/2026, pedido da Chrys): mensagem firme,
+  // sem e-mail nem site na assinatura, e "consultoria" (não "consultora").
+  noShow2:{nome:'Segunda falta: candidatura encerrada',campos:[],texto:
+`Olá, {nome}! Tudo bem?
+
+Aqui é a Chrys, da La Vie Consultoria.
+
+Sua entrevista para a vaga de {vaga} foi remarcada e, mais uma vez, você não compareceu nem avisou.
+
+Cada entrevista ocupa um horário reservado só para você na agenda da nossa consultoria. Quando esse horário fica vazio, outro candidato que também busca uma oportunidade perde a chance de ser atendido. Conduzimos nossos processos com seriedade e esperamos o mesmo compromisso de quem participa.
+
+Por isso, sua participação neste processo seletivo está encerrada.
+
+Desejo sucesso na sua trajetória. Em próximas oportunidades, se não puder comparecer, avise com antecedência. Isso faz diferença para todos.
+
+Chrysthyan Kelly Ferreira Alves
+La Vie Consultoria`},
   feedbackPositivoRH:{nome:'Retorno positivo após entrevista La Vie',campos:[],texto:
 `Olá, {nome}! Tudo bem?
 
@@ -3168,7 +3185,7 @@ Atenciosamente,
 ${ASSINATURA}`}
 };
 // Menu manual (💬) — todas que você dispara sem mudar etapa:
-const MSG_MENU=['inicial','pendenteDisc','pendenteForm','avisoFinal24h','confirmaOnline','confirmaPresencial','reagendar','noShow','encaminhaAdmissao','bancoTalentos','vagaEncerrada'];
+const MSG_MENU=['inicial','pendenteDisc','pendenteForm','avisoFinal24h','confirmaOnline','confirmaPresencial','reagendar','noShow','noShow2','encaminhaAdmissao','bancoTalentos','vagaEncerrada'];
 
 // ── Preenche {nome}/{vaga} e abre pop-up para [CAMPOS], depois WhatsApp/e-mail ──
 let _msgCtx=null;
@@ -3785,7 +3802,7 @@ function renderCandidatos() {
     const ult=_ultimaAtualizacao(c);
     const ultTxt=ult?String(ult.texto).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'):'';
     const entrevTit=nE?` title="${nE} entrevista${nE>1?'s':''} registrada${nE>1?'s':''}"`:'';
-    return `<tr><td><strong class="cand-nome" onclick="moverCandidato('${c.id}')" title="Abrir cadastro">${c.nome}</strong>${ult?`<span class="cand-ult" title="${_dataHoraBR(ult.data)} · ${ultTxt}">${_dataBR(String(ult.data).slice(0,10)).slice(0,5)} · ${ultTxt}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}"${entrevTit}>${label}</span></td><td>${_candFasesHtml(c,vaga,entrevistas)}</td><td style="font-size:12px;color:var(--mid);white-space:nowrap">${dt}</td><td>${acoes}</td></tr>`;
+    return `<tr><td><strong class="cand-nome" onclick="moverCandidato('${c.id}')" title="Abrir cadastro">${c.nome}</strong>${_alertaFaltasHtml(c)}${ult?`<span class="cand-ult" title="${_dataHoraBR(ult.data)} · ${ultTxt}">${_dataBR(String(ult.data).slice(0,10)).slice(0,5)} · ${ultTxt}</span>`:''}</td><td style="font-size:12px">${vaga?vaga.titulo:'—'}</td><td><span class="tag tag-${tag}"${entrevTit}>${label}</span></td><td>${_candFasesHtml(c,vaga,entrevistas)}</td><td style="font-size:12px;color:var(--mid);white-space:nowrap">${dt}</td><td>${acoes}</td></tr>`;
   }).join('');
 }
 // ── Material, fases e match à vista na lista de Candidatos (15/11/2026) ──────
@@ -3910,11 +3927,70 @@ async function registrarNaoCompareceu(candId, etapaId, quando, origem){
   const texto=`Não compareceu à ${etapaLbl}${dia?' (marcada para '+dia+')':''}.`;
   const ultima=(c.historico||[]).filter(h=>h&&h.tipo==='noshow').slice(-1)[0];
   if(ultima && ultima.obs===texto && Date.now()-new Date(ultima.data).getTime() < 10*60*1000) return true;
-  c.historico=[...(c.historico||[]), { tipo:'noshow', etapaCobrada:etapaId, data:new Date().toISOString(), obs:texto, usuario:getUserName(), origem:origem||null }];
+  _idxFaltasCache=null; c.historico=[...(c.historico||[]), { tipo:'noshow', etapaCobrada:etapaId, data:new Date().toISOString(), obs:texto, usuario:getUserName(), origem:origem||null }];
   try{ await upsertCand(c); }catch(e){ c.historico=c.historico.slice(0,-1); alert('Não foi possível registrar o não comparecimento: '+(e.message||e)); return false; }
   return true;
 }
-function _faltasCand(c){ return (c&&c.historico||[]).filter(h=>h&&h.tipo==='noshow').length; }
+// Conta faltas por entrevista, não por registro: a mesma falta marcada na
+// agenda e no roteiro (ou no cadastro no mesmo dia) conta uma vez só.
+function _faltasCand(c){
+  const dias=new Set();
+  (c&&c.historico||[]).forEach(h=>{ if(!h||h.tipo!=='noshow') return; const m=String(h.obs||'').match(/marcada para (\d{2}\/\d{2}\/\d{4})/); dias.add(m?m[1]:_dataBR(String(h.data||'').slice(0,10))); });
+  return dias.size;
+}
+// Sinal vermelho de falta (18/11/2026): quem faltou duas vezes à entrevista
+// fica marcado em todos os cadastros da mesma pessoa (mesmo e-mail, telefone
+// ou CPF), inclusive no Banco de Talentos e em candidaturas futuras.
+function _chavesPessoa(c){
+  const k=[]; const em=String(c&&c.email||'').trim().toLowerCase(); if(em) k.push('e:'+em);
+  const tel=String(c&&c.tel||c&&c.telefone||'').replace(/\D/g,'').replace(/^55(?=\d{10,11}$)/,''); if(tel.length>=10) k.push('t:'+tel);
+  const cpf=String(c&&c.cpf||'').replace(/\D/g,''); if(cpf.length===11) k.push('c:'+cpf);
+  return k;
+}
+let _idxFaltasCache=null;
+function _idxFaltas(){
+  if(_idxFaltasCache && Date.now()-_idxFaltasCache.em<1500 && _idxFaltasCache.n===(_cands||[]).length) return _idxFaltasCache.m;
+  const m=new Map();
+  (_cands||[]).forEach(x=>{
+    const f=_faltasCand(x), mk=(x.historico||[]).some(h=>h&&h.alerta==='faltou_2x');
+    if(!f && !mk) return;
+    _chavesPessoa(x).concat(['id:'+x.id]).forEach(k=>{ if(!m.has(k)) m.set(k,[]); m.get(k).push({id:x.id,f,mk}); });
+  });
+  _idxFaltasCache={em:Date.now(), n:(_cands||[]).length, m};
+  return m;
+}
+function _alertaFaltasPessoa(c){
+  if(!c) return null;
+  const m=_idxFaltas(), vistos=new Map();
+  _chavesPessoa(c).concat(['id:'+c.id]).forEach(k=>(m.get(k)||[]).forEach(r=>vistos.set(r.id,r)));
+  let faltas=0, marcado=false;
+  vistos.forEach(r=>{ faltas+=r.f; if(r.mk) marcado=true; });
+  return (marcado||faltas>=2) ? {faltas} : null;
+}
+function _alertaFaltasHtml(c){
+  const a=_alertaFaltasPessoa(c); if(!a) return '';
+  return `<span title="Faltou ${a.faltas>=2?a.faltas+' vezes':'duas vezes'} a entrevistas marcadas sem avisar" style="display:inline-block;margin-left:6px;padding:1px 7px;border-radius:10px;background:#B4412F;color:#fff;font-size:11px;font-weight:700;vertical-align:middle">⚠ Faltou ${a.faltas>=2?a.faltas+'x':'2x'}</span>`;
+}
+// Depois de registrar uma falta: na primeira, oferece a mensagem de sempre;
+// a partir da segunda, encerra a participação (reprovado, sem o e-mail
+// automático de retorno) e abre a mensagem firme para copiar ou mandar no WhatsApp.
+async function _aposFalta(candId){
+  const c=(_cands||[]).find(x=>x.id===candId); if(!c) return;
+  if(_faltasCand(c)>=2){
+    if(c.etapa!=='reprovado' && confirm(`Esta é a ${_faltasCand(c)}ª falta de ${c.nome}.\n\nEncerrar a participação dele(a) no processo e abrir a mensagem de encerramento para mandar pelo WhatsApp?\n\nO cadastro fica com o sinal vermelho de falta. O e-mail automático de reprovação não é enviado.`)){
+      const idx=_cands.findIndex(x=>x.id===candId);
+      const hist=[...(c.historico||[])];
+      hist.push({etapa:'reprovado', data:new Date().toISOString(), obs:'Reprovado: faltou duas vezes à entrevista, mesmo depois de remarcar.', usuario:getUserName(), alerta:'faltou_2x', semEmailReprovacao:true});
+      _cands[idx]={...c, etapa:'reprovado', historico:hist}; _idxFaltasCache=null;
+      try{ await upsertCand(_cands[idx]); }catch(e){ alert('Não foi possível encerrar a participação: '+(e.message||e)); return; }
+      try{ renderFunil(); renderCandidatos(); renderAcoesPendentes(); }catch(e){}
+      showToast('✗ '+c.nome.split(' ')[0]+' saiu do processo (segunda falta)');
+      abrirMensagem(candId,'noShow2');
+    }
+    return;
+  }
+  if(MSG_TEMPLATES.noShow && confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?')) abrirMensagem(candId,'noShow');
+}
 async function marcarNaoCompareceu(){
   const id=document.getElementById('mc-id').value; const c=getCands().find(x=>x.id===id); if(!c) return;
   const etapaId=_ETAPAS_COM_ENTREVISTA.includes(c.etapa)?c.etapa:'entrevista_gestor';
@@ -3922,7 +3998,7 @@ async function marcarNaoCompareceu(){
   if(!await registrarNaoCompareceu(c.id, etapaId, null, 'cadastro')) return;
   renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){}
   showToast('Não comparecimento registrado');
-  if(MSG_TEMPLATES.noShow && confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?')) abrirMensagem(c.id,'noShow');
+  await _aposFalta(c.id);
 }
 // Atualizações prontas: um clique registra no histórico. As de cobrança e
 // convite usam o mesmo formato das mensagens do painel (tipo 'cobranca' /
@@ -4029,7 +4105,7 @@ async function apagarNota(data){
   try{ await upsertCand(c); }catch(e){ c.historico=antes; alert('Não foi possível apagar: '+(e.message||e)); return; }
   renderNotasCand(); renderCandidatos(); try{ renderAcoesPendentes(); }catch(e){} showToast('✕ Anotação apagada');
 }
-function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').textContent=c.nome;_cartaoBotaoNaFicha(c);
+function moverCandidato(id){const c=getCands().find(x=>x.id===id);if(!c)return;document.getElementById('mc-id').value=id;document.getElementById('mc-titulo').innerHTML=String(c.nome||'').replace(/</g,'&lt;')+_alertaFaltasHtml(c);_cartaoBotaoNaFicha(c);
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-cpf').value=c.cpf||'';document.getElementById('mc-tel').value=c.tel||'';document.getElementById('mc-email').value=c.email||'';
   const selV=document.getElementById('mc-vaga');selV.innerHTML=getVagasVisiveis().map(v=>`<option value="${v.id}" ${v.id===c.vagaId?'selected':''}>${v.titulo}</option>`).join('');
   const selE=document.getElementById('mc-etapa');
@@ -5226,7 +5302,7 @@ async function salvarEntrevista(){
     setTimeout(()=>{btn.textContent='💾 Salvar no histórico';btn.classList.remove('saved');},3000);
     if(rec.resultado==='nao_compareceu'){
       showToast('Não comparecimento registrado no histórico do candidato');
-      if(candidatoIdFinal && MSG_TEMPLATES.noShow && confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?')) abrirMensagem(candidatoIdFinal,'noShow');
+      if(candidatoIdFinal) await _aposFalta(candidatoIdFinal);
     } else showToast('✅ Entrevista salva e candidato adicionado ao funil!');
   }catch(e){
     const semRede=/failed to fetch|networkerror|load failed/i.test(e.message||'');
