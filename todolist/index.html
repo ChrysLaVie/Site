@@ -109,6 +109,9 @@ button,input,select{font-family:inherit}
 .note{font-size:12.5px;color:var(--muted)}
 .del{border:none;background:none;color:var(--hint);padding:4px 6px;cursor:pointer;border-radius:6px;font-size:12px;flex:none}
 .del:hover{color:var(--red);background:var(--red-bg)}
+.urg{border:0;background:none;cursor:pointer;padding:3px 5px;border-radius:6px;font-size:14px;line-height:1;flex:none;filter:grayscale(1);opacity:.35;transition:opacity .15s,filter .15s}
+.urg:hover{opacity:.8;background:var(--surface2)}
+.urg.on{filter:none;opacity:1}
 .del.arm{color:#fff;background:var(--red)}
 .empty{color:var(--muted);font-size:14px;padding:1.5rem 0 1rem;text-align:center}
 .fab{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));right:max(1.5rem,env(safe-area-inset-right,0px));background:var(--accent);color:var(--accent-ink);border:none;border-radius:4px;padding:12px 22px;letter-spacing:.02em;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(26,25,23,.18);display:flex;align-items:center;gap:8px;z-index:20;transition:transform .2s}
@@ -276,6 +279,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
       <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência.</p>
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
+      <p><b>Urgência.</b> Clique no 🔥 de qualquer tarefa para colocar na Urgência. Ela aparece no topo da Visão geral e na visão "Urgência". Clique de novo para tirar. Ao concluir, ela sai sozinha.</p>
       <p><b>Visões.</b> "Visão geral" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
       <p><b>Agenda do Google.</b> Toque em "Conectar Google Agenda" e autorize uma vez. A partir daí, toda tarefa sua com prazo vira um evento de dia inteiro na sua agenda, com lembrete na véspera. Se você mudar o prazo, concluir ou apagar a tarefa, o evento acompanha. A atualização acontece enquanto o To Do List está aberto. Sem conectar, o botão "＋ Agenda" de cada tarefa abre o evento pronto para salvar à mão.</p>
       <p><b>Pergunte à Duda.</b> É um chat que responde sobre a sua lista e cria ou conclui tarefas quando você pede. É opcional e usa a sua própria chave da API do Claude.</p>
@@ -301,7 +305,7 @@ let CODIGO='',QUEM='';
 let ESP=[],HOME=null,OUTROS=[];           /* espaços: o principal e os demais */
 let AREAS=[],AMAP={},BASE_NAMES={};       /* frentes da lateral: [chave,nome,corVar,corBadge] */
 let tasks=[],habits=[],armed=null,view='all',pollT=null,loaded=false;
-let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],lastData=null,dragging=false,pendingRender=false,showAll={};
+let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],lastData=null,dragging=false,pendingRender=false,showAll={};
 try{CODIGO=localStorage.getItem(CODLS)||''}catch(e){}
 try{view=localStorage.getItem('todoView')||'all'}catch(e){}
 
@@ -322,7 +326,7 @@ function aplicar(d){
   areaOrder=Array.isArray(cfg.areas)?cfg.areas:null;
   areaNames=(cfg.names&&typeof cfg.names==='object')?cfg.names:{};
   taskOrder=(cfg.ordem&&typeof cfg.ordem==='object')?cfg.ordem:{};
-  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];
+  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];
   AREAS=(HOME.frentes||[]).concat(extras).filter(f=>!ocultas.includes(f.chave)).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
     .concat(OUTROS.map(e=>['@'+e.id,e.rotulo||e.nome,'--green','bg']));
   BASE_NAMES=Object.fromEntries(AREAS.map(a=>[a[0],a[1]]));
@@ -368,7 +372,7 @@ function ordTasks(k,items){const o=taskOrder[k]||[];return items.sort((a,b)=>{co
 const eMeu=t=>!t.resp||t.resp.split(' e ').includes(QUEM);
 
 /* visões */
-function views(){const v=[['all','Visão geral']];
+function views(){const v=[['all','Visão geral'],['urg','Urgência']];
   if(compart(HOME))(HOME.membros||[]).forEach(n=>v.push(['r:'+n,n===QUEM?'Minhas':'De '+n]));
   v.push(['week','Próximos 7 dias'],['late','Atrasadas'],['done','Concluídas']);return v}
 function setView(v){view=v;try{localStorage.setItem('todoView',v)}catch(e){}render()}
@@ -400,7 +404,10 @@ function row(t,showArea,sufixo,drag){
   del.onclick=()=>{if(armed===key){armed=null;remove(t)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
   const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openEdit(t);
   r.dataset.id=t.id;if(drag){const g=grip();g.title='Arraste para mudar a ordem';g.style.marginTop='3px';r.append(g)}
-  r.append(cb,tx,ed,del);return r}
+  if(!t.done){const u=el('button','urg'+(eUrg(t)?' on':''),'🔥');u.type='button';u.title=eUrg(t)?'Tirar da Urgência':'Colocar na Urgência';u.setAttribute('aria-label',u.title+': '+t.title);u.setAttribute('aria-pressed',eUrg(t)?'true':'false');u.onclick=()=>setUrg(t,!eUrg(t));r.append(cb,tx,u,ed,del)}
+  else r.append(cb,tx,ed,del);return r}
+const eUrg=t=>urgentes.includes(t.id);
+async function setUrg(t,v){urgentes=urgentes.filter(id=>id!==t.id);if(v)urgentes.unshift(t.id);render();await saveSettings()}
 function agendaUrl(t){const d=parse(t.due),f=x=>isoOf(x).replace(/-/g,''),n=new Date(d);n.setDate(n.getDate()+1);
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t.title)+'&dates='+f(d)+'/'+f(n)+'&details='+encodeURIComponent((t.notes?t.notes+'\n\n':'')+'To Do List: '+location.origin+location.pathname)}
 function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
@@ -413,8 +420,9 @@ function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
 
 /* ordem e nomes das frentes (por usuário) */
 function orderedAreas(){if(!areaOrder)return AREAS;const pos=k=>{const i=areaOrder.indexOf(k);return i<0?1000+AREAS.findIndex(a=>a[0]===k):i};return AREAS.slice().sort((a,b)=>pos(a[0])-pos(b[0]))}
-async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas};
-  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas}})}catch(e){$('status').textContent='Não consegui salvar.'}}
+async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);if(loaded){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));urgentes=urgentes.filter(id=>vivos.has(id))}
+  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes};
+  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
 async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
   taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
@@ -492,9 +500,10 @@ function render(){
   const open=base.filter(t=>!t.done),done=base.filter(t=>t.done);
   const late=open.filter(t=>{const i=dueInfo(t.due);return i&&i.diff<0}).sort(byDue);
   const week=open.filter(t=>{const i=dueInfo(t.due);return i&&i.diff<=7}).sort(byDue);
+  const urg=tasks.filter(t=>!t.done&&eUrg(t)).sort((a,b)=>urgentes.indexOf(a.id)-urgentes.indexOf(b.id));
   const VS=views();if(!VS.find(v=>v[0]===view)&&!AMAP[view])view='all';
   const ofWho=w=>open.filter(t=>t.resp.split(' e ').includes(w));
-  const count=k=>k==='all'?open.length:k==='week'?week.length:k==='late'?late.length:k==='done'?done.length:ofWho(k.slice(2)).length;
+  const count=k=>k==='all'?open.length:k==='urg'?urg.length:k==='week'?week.length:k==='late'?late.length:k==='done'?done.length:ofWho(k.slice(2)).length;
   VS.forEach(([k,l])=>{nm.appendChild(navBtn(k,l,count(k)));ch.appendChild(chip(k,l))});
   orderedAreas().forEach(([k,l,c])=>{const r=el('div','navrow');r.dataset.area=k;
     const n=open.filter(t=>t.area===k&&(k[0]!=='@'||eMeu(t))).length;
@@ -512,12 +521,14 @@ function render(){
   if(AMAP[view]){const rb=renBtn(view);rb.textContent='✎ Renomear';rb.classList.add('txt');$('pt').appendChild(rb)}
   if(view==='all'){
     if(habits.length)list.appendChild(habitCard(habits));
+    if(urg.length)list.appendChild(card('🔥 Urgência','--red',urg,true,urg.length+'','br','-u'));
     if(week.length)list.appendChild(card('Prazos dos próximos 7 dias',null,week,true,week.length+'','ba','-w'));
     orderedAreas().forEach(([k,l,c])=>{let it=ordTasks(k,open.filter(t=>t.area===k));if(k[0]==='@')it=it.filter(eMeu);if(!it.length)return;
       const cd=card(l,c,it,false,it.length+' em aberto',null,null,k);cd.classList.add('acard');cd.dataset.area=k;cd.querySelector('.ct').prepend(grip());cd.querySelector('.ct').appendChild(renBtn(k));list.appendChild(cd)});
     makeSortable(list,'.acard');
     if(!tasks.length&&!habits.length)list.appendChild(card('Sua lista',null,[],false));
-  }else if(view==='week'){list.appendChild(card('Prazos dos próximos 7 dias',null,week,true))}
+  }else if(view==='urg'){if(urg.length)list.appendChild(card('🔥 Urgência','--red',urg,true));else list.appendChild(el('div','empty','Clique no 🔥 de qualquer tarefa para trazer ela para cá.'))}
+  else if(view==='week'){list.appendChild(card('Prazos dos próximos 7 dias',null,week,true))}
   else if(view==='late'){list.appendChild(card('Atrasadas',null,late,true))}
   else if(view==='done'){list.appendChild(card('Concluídas',null,done.sort((a,b)=>(b.doneAt||0)-(a.doneAt||0)),true))}
   else if(view.startsWith('r:')){const w=view.slice(2);list.appendChild(card((w===QUEM?'Minhas tarefas':'Tarefas de '+w)+' (inclui as divididas)',null,ofWho(w).sort(byDue),true))}
@@ -609,7 +620,7 @@ $('askOpen').onclick=openChat;$('askClose').onclick=closeChat;
 $('chatNew').onclick=()=>{ctl&&ctl.abort();turns=[];saveHist();msgs.textContent='';$('chatNote').hidden=true;showSugs()};
 function snapshot(){
   const lines=tasks.slice().sort(byDue).map(t=>{const a=(AMAP[t.area]||['','?'])[1];const e=espDe(t.esp);
-    return `- [${t.done?'x':' '}] id=${t.id} | ${t.title} | frente: ${a}${t.area[0]==='@'?' / '+frenteNome(e,t.frente):''}${compart(e)&&t.resp?' | responsável: '+t.resp:''}${t.due?' | prazo: '+t.due:''}${t.notes?' | obs: '+t.notes:''}`});
+    return `- [${t.done?'x':' '}] id=${t.id} | ${t.title}${eUrg(t)&&!t.done?' | URGENTE':''} | frente: ${a}${t.area[0]==='@'?' / '+frenteNome(e,t.frente):''}${compart(e)&&t.resp?' | responsável: '+t.resp:''}${t.due?' | prazo: '+t.due:''}${t.notes?' | obs: '+t.notes:''}`});
   const hl=habits.map(h=>`- hábito: id=${h.id} | ${h.title} | meta: ${h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
   return lines.concat(hl).join('\n')||'(lista vazia)'}
 function rules(){const d=new Date();const hoje=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -626,6 +637,7 @@ Regras:
 - Se o pedido puder ser de mais de uma tarefa da lista, pergunte qual antes de mexer.
 - Só apague tarefa quando pedirem com a palavra apagar, excluir ou remover. Concluir não é apagar.
 - Leve em conta a conversa anterior: "essa", "a de antes" e "aquela" se referem ao que acabou de ser falado.
+- "URGENTE" na lista quer dizer que a tarefa está na Urgência (o 🔥). Para pôr ou tirar, use marcar_urgencia.
 - A tela de início do To Do List se chama "Visão geral". Use esse nome quando falar dela.
 - Sem markdown pesado: no máximo listas simples com "•".
 
@@ -645,6 +657,10 @@ function tools(){return[
   async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');
     const v=i.feita!==false;await rpc('lv_todo_salvar',{p_tarefa:{id:t.id,feita:v}});
     bubble('sys',(v?'✓ Concluída: ':'↺ Reaberta: ')+t.title);refresh();return{ok:true}}},
+ {name:'marcar_urgencia',description:'Coloca (urgente=true) ou tira (urgente=false) uma tarefa da Urgência, pelo id da lista.',
+  inputSchema:{type:'object',properties:{id:{type:'string'},urgente:{type:'boolean'}},required:['id','urgente']},
+  async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');const v=i.urgente!==false;
+    await setUrg(t,v);bubble('sys',(v?'🔥 Na Urgência: ':'Fora da Urgência: ')+t.title);return{ok:true}}},
  {name:'editar_tarefa',description:'Altera uma tarefa que já existe, pelo id da lista. Envie só os campos que mudam. prazo vazio remove o prazo. frente só vale para tarefas das frentes próprias da pessoa.',
   inputSchema:{type:'object',properties:{id:{type:'string'},titulo:{type:'string'},frente:{type:'string',enum:AREAS.filter(a=>a[0][0]!=='@').map(a=>a[0])},prazo:{type:'string',description:'AAAA-MM-DD, ou vazio para tirar o prazo'},obs:{type:'string'},responsavel:{type:'string'}},required:['id']},
   async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');const e=espDe(t.esp);
