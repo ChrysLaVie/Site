@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Comercial · La Vie Consultoria</title>
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* Área Comercial (CRM) da La Vie. Identidade: creme, areia, taupe; grafite só em botão e selo. */
+:root{
+  --bg:#F2F1ED; --bg-alt:#E8E4DE; --surface:#FFFFFF; --surface-2:#FAFAF8;
+  --ink:#1a1917; --charcoal:#3A3A3A; --muted:#6F6B64; --hint:#9A948C;
+  --sand:#D8CFC4; --sand-lt:#EAE7E1; --accent:#8C8377;
+  --border:rgba(58,58,58,0.12); --border-2:rgba(58,58,58,0.20);
+  --green:#5E7A5A; --green-bg:#E6ECE2; --green-t:#46603F;
+  --red:#A8553F; --red-bg:#F3E3DC; --red-t:#7E3A28;
+  --amber:#A8844F; --amber-bg:#F2E9DA; --amber-t:#7A5E33;
+  --blue-bg:#E3E8EC; --blue-t:#3E4F5E;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'DM Sans',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --r:6px; --shadow:0 2px 16px rgba(58,58,58,0.07); --shadow-md:0 8px 40px rgba(26,25,23,0.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--charcoal);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:inherit}
+.hidden{display:none !important}
+
+/* Cabeçalho */
+.top{background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.top-in{max-width:1280px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none;min-width:0}
+.brand img{height:54px;width:auto;display:block}
+.brand-t{font-family:var(--serif);font-size:25px;font-weight:500;color:var(--ink);line-height:1}
+.brand-s{font-size:10.5px;letter-spacing:2.2px;text-transform:uppercase;color:var(--accent);margin-top:5px}
+.top-r{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.who{font-size:12px;color:var(--muted)}
+.tabs{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:11px 14px 10px;cursor:pointer;color:var(--muted);font-size:13.5px;white-space:nowrap;letter-spacing:.2px}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.tab .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--red-bg);color:var(--red-t);font-size:11px;font-weight:600;text-align:center}
+
+.wrap{max-width:1280px;margin:0 auto;padding:26px 24px 80px}
+.h1{font-family:var(--serif);font-size:34px;font-weight:500;color:var(--ink);line-height:1.1}
+.h1 em{font-style:italic}
+.sub{color:var(--muted);font-size:13.5px;margin-top:6px}
+.filete{display:block;width:56px;height:1px;background:var(--accent);margin:14px 0 22px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.h2{font-family:var(--serif);font-size:23px;font-weight:500;color:var(--ink);margin:28px 0 12px}
+.eyebrow{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:500}
+
+/* Botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--charcoal);background:var(--charcoal);color:#fff;padding:9px 16px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--ink)}
+.btn.ghost{background:transparent;color:var(--charcoal);border-color:var(--border-2)}
+.btn.ghost:hover{background:var(--sand-lt)}
+.btn.sm{padding:6px 11px;font-size:12px}
+.btn.danger{background:transparent;color:var(--red-t);border-color:rgba(168,85,63,.4)}
+.btn.danger:hover{background:var(--red-bg)}
+.btn:disabled{opacity:.55;cursor:default}
+.link{background:none;border:none;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-size:12.5px;padding:0}
+.link:hover{color:var(--ink)}
+
+/* Campos */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.inp,.sel,.txa{border:1px solid var(--border-2);background:var(--surface);border-radius:var(--r);padding:9px 11px;width:100%;outline:none}
+.inp:focus,.sel:focus,.txa:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(140,131,119,.18)}
+.tools .inp{max-width:300px}.tools .sel{width:auto}
+.txa{min-height:74px;resize:vertical}
+.fld{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;min-width:0}
+.fld label{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:500}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px}
+.chk input{width:16px;height:16px;accent-color:var(--charcoal)}
+.help{font-size:12px;color:var(--hint);margin-top:-6px;margin-bottom:14px}
+
+/* Cartões e listas */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{padding:18px 20px}
+.kpi .v{font-family:var(--serif);font-size:32px;color:var(--ink);line-height:1.05;margin-top:8px}
+.kpi .d{font-size:12px;color:var(--muted);margin-top:4px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.box{padding:6px 0}
+.box-h{display:flex;justify-content:space-between;align-items:center;padding:14px 20px 8px}
+.box-h h3{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink)}
+.item{display:flex;gap:12px;align-items:flex-start;padding:11px 20px;border-top:1px solid var(--border);cursor:pointer}
+.item:hover{background:var(--surface-2)}
+.item .t{font-weight:500;color:var(--ink)}
+.item .m{font-size:12.5px;color:var(--muted)}
+.item .r{margin-left:auto;text-align:right;flex-shrink:0;font-size:12.5px;color:var(--muted)}
+.empty{padding:18px 20px 22px;color:var(--hint);font-size:13px;border-top:1px solid var(--border)}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;background:var(--sand-lt);color:var(--charcoal);white-space:nowrap;letter-spacing:.2px}
+.chip.g{background:var(--green-bg);color:var(--green-t)}
+.chip.r{background:var(--red-bg);color:var(--red-t)}
+.chip.a{background:var(--amber-bg);color:var(--amber-t)}
+.chip.b{background:var(--blue-bg);color:var(--blue-t)}
+.chip.d{background:var(--charcoal);color:#fff}
+.chip.o{background:transparent;border:1px solid var(--border-2);color:var(--muted)}
+
+/* Tabelas */
+.tbl-w{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:12px 16px;border-bottom:1px solid var(--border-2);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+tr.clk{cursor:pointer}tr.clk:hover td{background:var(--surface-2)}
+tr:last-child td{border-bottom:none}
+td .t{font-weight:500;color:var(--ink)}
+td .m{font-size:12.5px;color:var(--muted)}
+.num{text-align:right;white-space:nowrap}
+
+/* Funil */
+.kan{display:flex;gap:12px;overflow-x:auto;padding-bottom:14px;align-items:flex-start}
+.kcol{flex:1 0 216px;max-width:300px;background:var(--bg-alt);border-radius:8px;padding:10px;min-height:150px}
+.kcol.over{outline:2px dashed var(--accent);outline-offset:-2px}
+.kcol-h{display:flex;justify-content:space-between;align-items:baseline;padding:4px 6px 10px}
+.kcol-h b{font-family:var(--serif);font-size:18px;font-weight:500;color:var(--ink)}
+.kcol-h span{font-size:12px;color:var(--muted)}
+.kcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 12px;margin-bottom:8px;cursor:grab;box-shadow:0 1px 4px rgba(58,58,58,.05)}
+.kcard:hover{border-color:var(--border-2)}
+.kcard.drag{opacity:.45}
+.kcard .t{font-weight:500;color:var(--ink);line-height:1.3}
+.kcard .m{font-size:12.5px;color:var(--muted);margin-top:2px}
+.kcard .f{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.kcard .v{font-size:12.5px;color:var(--ink);font-weight:500}
+
+/* Catálogo */
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.prod{padding:18px 20px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.prod:hover{border-color:var(--border-2)}
+.prod .n{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink);line-height:1.2}
+.prod .p{font-weight:600;color:var(--ink)}
+.prod .dsc{font-size:12.5px;color:var(--muted);white-space:pre-line}
+.calc{margin-top:8px;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r)}
+.calc .out{margin-top:8px;font-size:13px;color:var(--ink)}
+.fx{display:grid;grid-template-columns:1fr 90px 30px;gap:8px;margin-bottom:8px;align-items:center}
+
+/* Janela e gaveta */
+.ov{position:fixed;inset:0;background:rgba(26,25,23,.42);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto}
+.modal{background:var(--surface);border-radius:10px;box-shadow:var(--shadow-md);width:100%;max-width:640px}
+.modal-h{display:flex;justify-content:space-between;align-items:center;padding:20px 24px 0}
+.modal-h h3{font-family:var(--serif);font-size:26px;font-weight:500;color:var(--ink)}
+.x{background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px}
+.modal-b{padding:16px 24px 6px}
+.modal-f{display:flex;gap:10px;justify-content:flex-end;padding:14px 24px 22px;flex-wrap:wrap}
+.modal-f .sp{margin-right:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--bg);z-index:90;box-shadow:var(--shadow-md);overflow-y:auto;padding:22px 26px 60px}
+.dr-ov{position:fixed;inset:0;background:rgba(26,25,23,.3);z-index:89}
+.dl{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13.5px}
+.dl dt{color:var(--muted);font-size:12px;padding-top:1px}
+.dl dd{color:var(--ink);overflow-wrap:anywhere}
+.tl{border-left:1px solid var(--sand);margin-left:6px;padding-left:16px}
+.tl-i{position:relative;padding:0 0 14px}
+.tl-i::before{content:'';position:absolute;left:-20px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.tl-i .w{font-size:11.5px;color:var(--hint)}
+.msg{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--charcoal);color:#fff;padding:11px 20px;border-radius:var(--r);z-index:200;font-size:13px;box-shadow:var(--shadow-md);max-width:90vw}
+.msg.err{background:var(--red-t)}
+.gate{max-width:440px;margin:14vh auto;padding:40px 34px;text-align:center}
+.gate img{height:84px;margin-bottom:18px}
+
+@media (max-width:900px){
+  .kpis{grid-template-columns:1fr 1fr}.cols2{grid-template-columns:1fr}
+  .top-in,.tabs,.wrap{padding-left:16px;padding-right:16px}
+  .row2,.row3{grid-template-columns:1fr}
+  .h1{font-size:28px}.who,.brand-s{display:none}
+  .drawer{padding:18px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate card hidden">
+  <img src="/logo.png" alt="La Vie Consultoria">
+  <div class="h1" id="gate-t">Comercial</div>
+  <p class="sub" id="gate-m" style="margin:10px 0 22px"></p>
+  <a class="btn" href="/clientes/">Entrar pelo sistema La Vie</a>
+</div>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <div class="top-in">
+      <a class="brand" href="/clientes/comercial/">
+        <img src="/logo.png" alt="La Vie Consultoria">
+        <div><div class="brand-t">Comercial</div><div class="brand-s">Clientes · Vendas · Produtos</div></div>
+      </a>
+      <div class="top-r">
+        <span class="who" id="who"></span>
+        <button class="btn" data-act="novo-lead">Novo lead</button>
+        <a class="btn ghost" href="/clientes/">Voltar ao R&amp;S</a>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <main class="wrap" id="view"></main>
+</div>
+
+<div id="drawer-root"></div>
+<div id="modal-root"></div>
+<div id="msg-root"></div>
+
+<script>
+// ══ CRM La Vie · Fase 1 (18/11/2026) ════════════════════════════════════════
+// Mesmo login do painel de R&S (mesmo banco, sessão compartilhada). Só o perfil
+// lavie_master ativo enxerga; a regra de verdade está no banco (RLS das tabelas crm_*).
+const SUPABASE_URL = 'https://pdtwypuqfnglfaadubvz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZSbHiK2ZkFT3q0OJt--4qw_Q2Oc3MMK';
+const sb = window.__CRM_SB__ || supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+});
+
+const ETAPAS = [
+  ['lead','Lead novo'],['contato','Contato feito'],['diagnostico','Diagnóstico'],
+  ['proposta','Proposta enviada'],['negociacao','Negociação'],['ganho','Ganho'],['perdido','Perdido']
+];
+const ETAPAS_ABERTAS = ['lead','contato','diagnostico','proposta','negociacao'];
+const SITUACOES = [['lead','Lead'],['cliente_ativo','Cliente ativo'],['cliente_inativo','Cliente inativo'],['parceiro','Parceiro']];
+const SIT_CHIP = {lead:'a',cliente_ativo:'g',cliente_inativo:'o',parceiro:'b'};
+const STATUS_PROP = [['rascunho','Em elaboração'],['enviada','Enviada'],['em_analise','Em análise'],['aceita','Aceita'],['recusada','Recusada'],['vencida','Vencida'],['a_confirmar','A confirmar']];
+const PROP_CHIP = {rascunho:'o',enviada:'a',em_analise:'a',aceita:'g',recusada:'r',vencida:'r',a_confirmar:'b'};
+const PROP_ABERTA = ['enviada','em_analise'];
+const LINHAS = ['Pessoas','Processos','Qualidade','Estratégia','Financeiro','Carreira','Contábil'];
+const TIPOS_PRECO = [['fixo','Valor fixo'],['a_partir','A partir de'],['percentual_salario','Percentual do salário'],['mensal','Mensalidade'],['hora','Por hora'],['gratuito','Gratuito'],['sob_consulta','Sob consulta']];
+const PUBLICOS = [['pj','Empresas'],['pf','Pessoas'],['ambos','Empresas e pessoas']];
+const STATUS_PROD = [['ativo','Ativo'],['em_formatacao','Em formatação'],['inativo','Inativo']];
+const TIPOS_ATIV = [['nota','Anotação'],['contato','Contato'],['reuniao','Reunião']];
+const ORIGENS = ['Indicação','WhatsApp','Site (formulário de empresas)','Teste Vocacional','Instagram','LinkedIn','Grupo de vagas','Cliente atual','Parceiro','Evento','Outro'];
+const ABAS = [['hoje','Hoje'],['funil','Funil'],['contas','Contas'],['propostas','Propostas'],['catalogo','Catálogo']];
+
+const S = { aba:'hoje', perfil:null, contas:[], contatos:[], produtos:[], opps:[], itens:[], propostas:[], atividades:[], pagamentos:[],
+            f:{ contas:{q:'',sit:'',tipo:'',ocultas:false}, propostas:{q:'',status:'abertas'}, funil:{q:'',fechadas:false}, cat:{linha:'',status:''} } };
+
+// ── utilidades ──────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function nome(lista, k){ const x = lista.find(i => i[0]===k); return x ? x[1] : (k||''); }
+function hojeISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtData(iso){ if(!iso) return ''; const p=String(iso).slice(0,10).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
+function fmtDataHora(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function dias(deISO, ateISO){ const a=new Date(String(deISO).slice(0,10)+'T12:00:00'), b=new Date(String(ateISO).slice(0,10)+'T12:00:00'); return Math.round((b-a)/86400000); }
+function somaDias(iso, n){ const d=new Date(String(iso).slice(0,10)+'T12:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function brl(v){ if(v==null||v==='') return ''; return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits: Number(v)%1?2:0, maximumFractionDigits:2}); }
+function num(txt){ if(txt==null) return null; let s=String(txt).trim().replace(/[R$\s]/g,''); if(!s) return null; if(s.indexOf(',')>=0) s=s.replace(/\./g,'').replace(',','.'); else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,''); const n=Number(s); return isFinite(n) ? n : null; }
+function pl(n, um, varios){ return n+' '+(n===1?um:varios); }
+function vazio(v){ const s=(v==null?'':String(v)).trim(); return s===''?null:s; }
+function opts(lista, sel, vazioTxt){ return (vazioTxt!=null?'<option value="">'+esc(vazioTxt)+'</option>':'') + lista.map(o => { const k=Array.isArray(o)?o[0]:o, t=Array.isArray(o)?o[1]:o; return '<option value="'+esc(k)+'"'+(String(sel==null?'':sel)===String(k)?' selected':'')+'>'+esc(t)+'</option>'; }).join(''); }
+function conta(id){ return S.contas.find(c => c.id===id); }
+function contaNome(id){ const c=conta(id); return c ? c.nome : '(conta removida)'; }
+function link(url){ if(!url) return ''; const u=String(url).trim(); return /^https?:\/\//i.test(u) ? u : ''; }
+function aviso(txt, erro){ const r=$('msg-root'); r.innerHTML='<div class="msg'+(erro?' err':'')+'" role="status">'+esc(txt)+'</div>'; clearTimeout(aviso._t); aviso._t=setTimeout(()=>{ r.innerHTML=''; }, erro?6000:2600); }
+function falhou(r, oque){ if(r && r.error){ console.error('[CRM]', oque, r.error); aviso('Não foi possível '+oque+'. '+(r.error.message||''), true); return true; } return false; }
+
+// ── regras de leitura ───────────────────────────────────────────────────────
+function oppAberta(o){ return ETAPAS_ABERTAS.includes(o.etapa); }
+function propValidaAte(p){ return (p.enviada_em && p.validade_dias) ? somaDias(p.enviada_em, p.validade_dias) : null; }
+function propVencida(p){ const v=propValidaAte(p); return PROP_ABERTA.includes(p.status) && v && v < hojeISO(); }
+function precoTxt(p){
+  const v=brl(p.valor), a=brl(p.valor_ate);
+  switch(p.tipo_preco){
+    case 'fixo': return v || 'Valor a definir';
+    case 'a_partir': return v ? 'A partir de '+v : 'Valor a definir';
+    case 'mensal': return v ? (a ? v+' a '+a+' por mês' : v+' por mês') : 'Mensalidade a definir';
+    case 'hora': return v ? (a ? v+' a '+a+' por hora' : v+' por hora') : 'Valor da hora a definir';
+    case 'percentual_salario': return 'Percentual do salário da vaga';
+    case 'gratuito': return 'Gratuito';
+    default: return 'Sob consulta';
+  }
+}
+function faixasDe(p){ return Array.isArray(p.faixas) ? p.faixas.filter(f => f && f.pct!=null) : []; }
+function faixaTxt(fs, i){ const f=fs[i], ant = i>0 ? fs[i-1].ate : null; if(f.ate==null) return 'Acima de '+brl(ant); return (ant==null ? 'Até '+brl(f.ate) : 'De '+brl(ant+0.01)+' a '+brl(f.ate)); }
+function calcHonorario(p, salario){ const fs=faixasDe(p); for(const f of fs){ if(f.ate==null || salario<=Number(f.ate)) return {pct:Number(f.pct), valor: Math.round(salario*Number(f.pct))/100}; } return null; }
+
+// ── carga ───────────────────────────────────────────────────────────────────
+async function carregar(){
+  const q = (t, ord, asc) => sb.from(t).select('*').order(ord, {ascending: asc!==false});
+  const rs = await Promise.all([
+    q('crm_contas','nome'), q('crm_contatos','nome'), q('crm_produtos','ordem'), q('crm_oportunidades','criado_em',false),
+    q('crm_oportunidade_itens','criado_em'), q('crm_propostas','enviada_em',false), sb.from('crm_atividades').select('*').order('em',{ascending:false}).limit(1000)
+  ]);
+  const erro = rs.find(r => r.error);
+  if(erro){ console.error('[CRM] carga', erro.error); aviso('Não foi possível carregar os dados. '+(erro.error.message||''), true); }
+  [S.contas,S.contatos,S.produtos,S.opps,S.itens,S.propostas,S.atividades] = rs.map(r => r.data || []);
+  try{ const p = await sb.from('pagamentos').select('empresa_id,status,valor,vencimento'); S.pagamentos = p.data || []; }catch(e){ S.pagamentos=[]; }
+}
+function trocar(lista, linha){ const i=lista.findIndex(x => x.id===linha.id); if(i>=0) lista[i]=linha; else lista.unshift(linha); }
+async function recarregarAtividades(){ const r = await sb.from('crm_atividades').select('*').order('em',{ascending:false}).limit(1000); if(!r.error) S.atividades = r.data||[]; }
+
+// ── navegação ───────────────────────────────────────────────────────────────
+function pendenciasHoje(){ const h=hojeISO(); return S.opps.filter(o => oppAberta(o) && o.proxima_acao_em && o.proxima_acao_em<=h).length; }
+function render(){
+  const n = pendenciasHoje();
+  $('tabs').innerHTML = ABAS.map(a => '<button class="tab'+(S.aba===a[0]?' on':'')+'" data-act="aba" data-id="'+a[0]+'">'+a[1]+(a[0]==='hoje'&&n?'<span class="n">'+n+'</span>':'')+'</button>').join('');
+  const v = {hoje:vHoje, funil:vFunil, contas:vContas, propostas:vPropostas, catalogo:vCatalogo}[S.aba];
+  $('view').innerHTML = v();
+  if(S.drawer) abrirConta(S.drawer, true);
+}
+
+// ── HOJE ────────────────────────────────────────────────────────────────────
+function itemOpp(o, extra){
+  return '<div class="item" data-act="opp" data-id="'+o.id+'"><div><div class="t">'+esc(o.titulo)+'</div><div class="m">'+esc(contaNome(o.conta_id))+(o.proxima_acao?' · '+esc(o.proxima_acao):'')+'</div></div><div class="r">'+(extra||'')+'</div></div>';
+}
+function vHoje(){
+  const h = hojeISO(), abertas = S.opps.filter(oppAberta);
+  const total = abertas.reduce((s,o) => s+(Number(o.valor)||0), 0), mensal = abertas.reduce((s,o) => s+(Number(o.valor_mensal)||0), 0);
+  const atras = abertas.filter(o => o.proxima_acao_em && o.proxima_acao_em<=h).sort((a,b) => a.proxima_acao_em.localeCompare(b.proxima_acao_em));
+  const prox = abertas.filter(o => o.proxima_acao_em && o.proxima_acao_em>h && o.proxima_acao_em<=somaDias(h,7)).sort((a,b) => a.proxima_acao_em.localeCompare(b.proxima_acao_em));
+  const semAcao = abertas.filter(o => !o.proxima_acao_em);
+  const props = S.propostas.filter(p => PROP_ABERTA.includes(p.status)).sort((a,b) => String(a.enviada_em||'').localeCompare(String(b.enviada_em||'')));
+  const conferir = S.propostas.filter(p => p.conferir || p.status==='a_confirmar').length + S.contas.filter(c => c.conferir && !c.oculta).length;
+  const ativos = S.contas.filter(c => c.situacao==='cliente_ativo' && !c.oculta).length;
+  const d = new Date();
+  return '<div class="head"><div><div class="eyebrow">'+esc(d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))+'</div><div class="h1">O que pede <em>retorno</em> hoje</div></div></div><span class="filete"></span>'
+  + '<div class="kpis">'
+  + '<div class="card kpi"><div class="eyebrow">Funil em aberto</div><div class="v">'+abertas.length+'</div><div class="d">'+(total?brl(total):'Sem valor estimado')+(mensal?' e '+brl(mensal)+' por mês':'')+'</div></div>'
+  + '<div class="card kpi"><div class="eyebrow">Propostas aguardando</div><div class="v">'+props.length+'</div><div class="d">'+props.filter(propVencida).length+' com validade vencida</div></div>'
+  + '<div class="card kpi"><div class="eyebrow">Retornos para hoje</div><div class="v">'+atras.length+'</div><div class="d">'+pl(semAcao.length,'oportunidade sem próxima ação','oportunidades sem próxima ação')+'</div></div>'
+  + '<div class="card kpi"><div class="eyebrow">Clientes ativos</div><div class="v">'+ativos+'</div><div class="d">'+pl(S.contas.filter(c => c.situacao==='lead' && !c.oculta).length,'lead em carteira','leads em carteira')+'</div></div>'
+  + '</div>'
+  + (conferir ? '<p class="sub" style="margin-top:14px">'+(conferir===1?'Há 1 registro da carga inicial marcado para conferir.':'Há '+conferir+' registros da carga inicial marcados para conferir.')+' <button class="link" data-act="ver-conferir">Ver propostas a confirmar</button></p>' : '')
+  + '<div class="cols2" style="margin-top:22px">'
+  + '<div class="card box"><div class="box-h"><h3>Retornos de hoje e atrasados</h3></div>'
+  + (atras.length ? atras.map(o => itemOpp(o, '<span class="chip '+(o.proxima_acao_em<h?'r':'a')+'">'+(o.proxima_acao_em<h?'Atrasado desde '+fmtData(o.proxima_acao_em):'Hoje')+'</span>')).join('') : '<div class="empty">Nenhum retorno marcado para hoje.</div>')
+  + '<div class="box-h" style="padding-top:18px"><h3>Próximos 7 dias</h3></div>'
+  + (prox.length ? prox.map(o => itemOpp(o, fmtData(o.proxima_acao_em))).join('') : '<div class="empty">Nada agendado para os próximos dias.</div>')
+  + '</div>'
+  + '<div class="card box"><div class="box-h"><h3>Propostas sem resposta</h3></div>'
+  + (props.length ? props.map(p => { const dd = p.enviada_em ? dias(p.enviada_em, h) : null;
+      return '<div class="item" data-act="prop" data-id="'+p.id+'"><div><div class="t">'+esc(contaNome(p.conta_id))+'</div><div class="m">'+esc(p.titulo)+'</div></div><div class="r">'+(dd!=null?'há '+dd+(dd===1?' dia':' dias'):'sem data')+(propVencida(p)?'<br><span class="chip r">Validade vencida</span>':'')+'</div></div>'; }).join('') : '<div class="empty">Nenhuma proposta aguardando resposta.</div>')
+  + '<div class="box-h" style="padding-top:18px"><h3>Sem próxima ação</h3></div>'
+  + (semAcao.length ? semAcao.map(o => itemOpp(o, '<span class="chip o">Definir retorno</span>')).join('') : '<div class="empty">Toda oportunidade aberta tem retorno marcado.</div>')
+  + '</div></div>';
+}
+
+// ── FUNIL ───────────────────────────────────────────────────────────────────
+function cardOpp(o){
+  const h=hojeISO(), v=[o.valor?brl(o.valor):'', o.valor_mensal?brl(o.valor_mensal)+'/mês':''].filter(Boolean).join(' + ');
+  let chip='';
+  if(oppAberta(o)){ chip = !o.proxima_acao_em ? '<span class="chip o">Sem retorno</span>' : '<span class="chip '+(o.proxima_acao_em<h?'r':o.proxima_acao_em===h?'a':'')+'">'+fmtData(o.proxima_acao_em)+'</span>'; }
+  else if(o.fechado_em) chip = '<span class="chip '+(o.etapa==='ganho'?'g':'o')+'">'+fmtData(o.fechado_em)+'</span>';
+  return '<div class="kcard" draggable="true" data-act="opp" data-id="'+o.id+'"><div class="t">'+esc(o.titulo)+'</div><div class="m">'+esc(contaNome(o.conta_id))+'</div><div class="f">'+(v?'<span class="v">'+v+'</span>':'')+chip+(o.conferir?'<span class="chip b">Conferir</span>':'')+'</div></div>';
+}
+function vFunil(){
+  const f=S.f.funil, q=f.q.toLowerCase();
+  const lista = S.opps.filter(o => !q || (o.titulo+' '+contaNome(o.conta_id)).toLowerCase().includes(q));
+  const etapas = ETAPAS.filter(e => f.fechadas || ETAPAS_ABERTAS.includes(e[0]));
+  return '<div class="head"><div><div class="h1">Funil de <em>vendas</em></div><div class="sub">Arraste o cartão para mudar de etapa, ou abra para editar.</div></div><button class="btn" data-act="novo-lead">Nova oportunidade</button></div><span class="filete"></span>'
+  + '<div class="tools"><input class="inp" id="f-funil-q" placeholder="Buscar por cliente ou oportunidade" value="'+esc(f.q)+'" data-in="funil.q"><label class="chk" style="margin:0"><input type="checkbox" data-in="funil.fechadas" '+(f.fechadas?'checked':'')+'>Mostrar ganhas e perdidas</label></div>'
+  + '<div class="kan">' + etapas.map(e => { const os = lista.filter(o => o.etapa===e[0]); const tot = os.reduce((s,o) => s+(Number(o.valor)||0), 0);
+      return '<div class="kcol" data-etapa="'+e[0]+'"><div class="kcol-h"><b>'+e[1]+'</b><span>'+os.length+(tot?' · '+brl(tot):'')+'</span></div>'+(os.map(cardOpp).join('')||'<div class="m" style="padding:6px;color:var(--hint);font-size:12.5px">Vazio</div>')+'</div>'; }).join('') + '</div>';
+}
+
+// ── CONTAS ──────────────────────────────────────────────────────────────────
+function vContas(){
+  const f=S.f.contas, q=f.q.toLowerCase();
+  const lista = S.contas.filter(c => (f.ocultas || !c.oculta) && (!f.sit || c.situacao===f.sit) && (!f.tipo || c.tipo===f.tipo)
+    && (!q || (c.nome+' '+(c.segmento||'')+' '+(c.cidade||'')+' '+S.contatos.filter(k => k.conta_id===c.id).map(k => k.nome).join(' ')).toLowerCase().includes(q)));
+  return '<div class="head"><div><div class="h1">Contas e <em>contatos</em></div><div class="sub">Empresas e pessoas com quem a La Vie tem relação comercial.</div></div><button class="btn" data-act="conta-nova">Nova conta</button></div><span class="filete"></span>'
+  + '<div class="tools"><input class="inp" placeholder="Buscar por nome, segmento ou contato" value="'+esc(f.q)+'" data-in="contas.q"><select class="sel" data-in="contas.sit">'+opts(SITUACOES,f.sit,'Todas as situações')+'</select><select class="sel" data-in="contas.tipo">'+opts([['pj','Empresas'],['pf','Pessoas']],f.tipo,'Empresas e pessoas')+'</select><label class="chk" style="margin:0"><input type="checkbox" data-in="contas.ocultas" '+(f.ocultas?'checked':'')+'>Mostrar ocultas</label></div>'
+  + '<div class="card tbl-w"><table><thead><tr><th>Conta</th><th>Situação</th><th>Contato principal</th><th>Em aberto</th><th>Último registro</th></tr></thead><tbody>'
+  + (lista.map(c => { const ks=S.contatos.filter(k => k.conta_id===c.id), k=ks.find(x => x.decisor)||ks[0]; const ab=S.opps.filter(o => o.conta_id===c.id && oppAberta(o)).length; const ult=S.atividades.find(a => a.conta_id===c.id);
+      return '<tr class="clk" data-act="conta" data-id="'+c.id+'"><td><div class="t">'+esc(c.nome)+(c.oculta?' <span class="chip o">Oculta</span>':'')+(c.conferir?' <span class="chip b">Conferir</span>':'')+'</div><div class="m">'+esc([c.tipo==='pf'?'Pessoa':'Empresa', c.segmento, c.cidade].filter(Boolean).join(' · '))+'</div></td><td><span class="chip '+SIT_CHIP[c.situacao]+'">'+esc(nome(SITUACOES,c.situacao))+'</span></td><td>'+(k?'<div>'+esc(k.nome)+'</div><div class="m">'+esc(k.cargo||'')+'</div>':'<span class="m">Sem contato</span>')+'</td><td>'+(ab||'<span class="m">0</span>')+'</td><td class="m">'+(ult?fmtData(ult.em):'')+'</td></tr>'; }).join('')
+     || '<tr><td colspan="5" class="m">Nenhuma conta encontrada.</td></tr>')
+  + '</tbody></table></div>';
+}
+
+function abrirConta(id, manter){
+  const c = conta(id); if(!c){ fecharConta(); return; }
+  S.drawer = id;
+  const ks=S.contatos.filter(k => k.conta_id===id), os=S.opps.filter(o => o.conta_id===id), ps=S.propostas.filter(p => p.conta_id===id), as=S.atividades.filter(a => a.conta_id===id);
+  const pg = c.empresa_id ? S.pagamentos.filter(p => p.empresa_id===c.empresa_id) : [];
+  const rec = pg.filter(p => p.status==='pago').reduce((s,p) => s+(Number(p.valor)||0),0), pen = pg.filter(p => p.status==='pendente').reduce((s,p) => s+(Number(p.valor)||0),0);
+  const dd = (t,v) => v ? '<dt>'+t+'</dt><dd>'+v+'</dd>' : '';
+  const st = link(c.site), pu = link(c.pasta_url);
+  const html = '<div class="dr-ov" data-act="conta-fechar"></div><aside class="drawer" role="dialog" aria-label="Conta">'
+  + '<div class="head" style="align-items:flex-start"><div><div class="eyebrow">'+(c.tipo==='pf'?'Pessoa':'Empresa')+'</div><div class="h1" style="font-size:30px">'+esc(c.nome)+'</div><div style="margin-top:8px"><span class="chip '+SIT_CHIP[c.situacao]+'">'+esc(nome(SITUACOES,c.situacao))+'</span>'+(c.oculta?' <span class="chip o">Oculta</span>':'')+(c.conferir?' <span class="chip b">Conferir</span>':'')+'</div></div><button class="x" data-act="conta-fechar" aria-label="Fechar">&times;</button></div>'
+  + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px"><button class="btn sm" data-act="opp-nova" data-id="'+id+'">Nova oportunidade</button><button class="btn sm ghost" data-act="prop-nova" data-id="'+id+'">Nova proposta</button><button class="btn sm ghost" data-act="conta-editar" data-id="'+id+'">Editar conta</button></div>'
+  + '<div class="card" style="padding:18px 20px"><dl class="dl">'+dd('Segmento',esc(c.segmento))+dd('Cidade',esc([c.cidade,c.uf].filter(Boolean).join(' / ')))+dd('CNPJ ou CPF',esc(c.documento))+dd('Origem',esc(c.origem))+dd('Site',st?'<a href="'+esc(st)+'" target="_blank" rel="noopener">'+esc(c.site)+'</a>':esc(c.site))+dd('Instagram',esc(c.instagram))+dd('Pasta',pu?'<a href="'+esc(pu)+'" target="_blank" rel="noopener">Abrir pasta</a>':esc(c.pasta_url))+dd('No sistema R&amp;S',c.empresa_id?esc(c.empresa_id):'')+dd('Observações',c.obs?'<span style="white-space:pre-line">'+esc(c.obs)+'</span>':'')+'</dl>'
+  + (pg.length ? '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:26px;flex-wrap:wrap"><div><div class="eyebrow">Recebido</div><div style="font-family:var(--serif);font-size:22px;color:var(--ink)">'+brl(rec)+'</div></div><div><div class="eyebrow">A receber</div><div style="font-family:var(--serif);font-size:22px;color:'+(pen?'var(--red-t)':'var(--ink)')+'">'+brl(pen)+'</div></div><div class="m" style="align-self:flex-end;font-size:12px;color:var(--hint)">Do Financeiro do R&amp;S</div></div>' : '')
+  + '</div>'
+  + '<div class="h2" style="display:flex;justify-content:space-between;align-items:baseline">Contatos <button class="link" data-act="contato-novo" data-id="'+id+'">Adicionar contato</button></div><div class="card box" style="padding:0">'
+  + (ks.map(k => '<div class="item" data-act="contato" data-id="'+k.id+'"><div><div class="t">'+esc(k.nome)+(k.decisor?' <span class="chip d">Decide</span>':'')+'</div><div class="m">'+esc([k.cargo,k.telefone,k.email].filter(Boolean).join(' · '))+'</div>'+(k.obs?'<div class="m">'+esc(k.obs)+'</div>':'')+'</div></div>').join('') || '<div class="empty" style="border:none">Nenhum contato cadastrado.</div>')+'</div>'
+  + '<div class="h2">Oportunidades</div><div class="card box" style="padding:0">'
+  + (os.map(o => '<div class="item" data-act="opp" data-id="'+o.id+'"><div><div class="t">'+esc(o.titulo)+'</div><div class="m">'+esc(nome(ETAPAS,o.etapa))+(o.proxima_acao?' · '+esc(o.proxima_acao):'')+(o.proxima_acao_em?' em '+fmtData(o.proxima_acao_em):'')+'</div></div><div class="r">'+esc([o.valor?brl(o.valor):'',o.valor_mensal?brl(o.valor_mensal)+'/mês':''].filter(Boolean).join(' + '))+'</div></div>').join('') || '<div class="empty" style="border:none">Nenhuma oportunidade registrada.</div>')+'</div>'
+  + '<div class="h2">Propostas</div><div class="card box" style="padding:0">'
+  + (ps.map(p => '<div class="item" data-act="prop" data-id="'+p.id+'"><div><div class="t">'+esc(p.titulo)+'</div><div class="m">'+(p.enviada_em?fmtData(p.enviada_em):'Sem data')+(p.destinatario?' · A/C '+esc(p.destinatario):'')+'</div></div><div class="r"><span class="chip '+PROP_CHIP[p.status]+'">'+esc(nome(STATUS_PROP,p.status))+'</span><br>'+esc(p.valor?brl(p.valor):(p.valor_texto||''))+'</div></div>').join('') || '<div class="empty" style="border:none">Nenhuma proposta registrada.</div>')+'</div>'
+  + '<div class="h2">Histórico</div><div class="card" style="padding:16px 20px;margin-bottom:16px"><div class="row2" style="grid-template-columns:150px 1fr"><select class="sel" id="at-tipo">'+opts(TIPOS_ATIV,'contato')+'</select><input class="inp" id="at-txt" placeholder="O que aconteceu? Ex.: falei com a Valquíria, retorno na sexta"></div><div style="text-align:right;margin-top:10px"><button class="btn sm" data-act="ativ-salvar" data-id="'+id+'">Registrar</button></div></div>'
+  + '<div class="tl">'+(as.map(a => '<div class="tl-i"><div>'+esc(a.texto)+'</div><div class="w">'+fmtDataHora(a.em)+(a.criado_por?' · '+esc(a.criado_por):'')+'</div></div>').join('') || '<div class="m" style="color:var(--hint)">Sem registros ainda.</div>')+'</div>'
+  + '</aside>';
+  const root = $('drawer-root'); const sc = manter && root.querySelector('.drawer') ? root.querySelector('.drawer').scrollTop : 0;
+  root.innerHTML = html; if(sc) root.querySelector('.drawer').scrollTop = sc;
+}
+function fecharConta(){ S.drawer=null; $('drawer-root').innerHTML=''; }
+
+// ── PROPOSTAS ───────────────────────────────────────────────────────────────
+function vPropostas(){
+  const f=S.f.propostas, q=f.q.toLowerCase();
+  const lista = S.propostas.filter(p => (f.status==='' || (f.status==='abertas' ? ['rascunho','enviada','em_analise','a_confirmar'].includes(p.status) : p.status===f.status))
+    && (!q || (p.titulo+' '+contaNome(p.conta_id)+' '+(p.destinatario||'')).toLowerCase().includes(q)));
+  return '<div class="head"><div><div class="h1">Propostas <em>enviadas</em></div><div class="sub">O que foi enviado, para quem, quando e em que pé está.</div></div><button class="btn" data-act="prop-nova">Nova proposta</button></div><span class="filete"></span>'
+  + '<div class="tools"><input class="inp" placeholder="Buscar por cliente ou proposta" value="'+esc(f.q)+'" data-in="propostas.q"><select class="sel" data-in="propostas.status">'+opts([['abertas','Em aberto e a confirmar']].concat(STATUS_PROP),f.status,'Todas')+'</select></div>'
+  + '<div class="card tbl-w"><table><thead><tr><th>Cliente e proposta</th><th>Enviada em</th><th>Validade</th><th class="num">Valor</th><th>Situação</th><th>Arquivo</th></tr></thead><tbody>'
+  + (lista.map(p => { const va=propValidaAte(p), u=link(p.arquivo_url);
+      return '<tr class="clk" data-act="prop" data-id="'+p.id+'"><td><div class="t">'+esc(contaNome(p.conta_id))+'</div><div class="m">'+esc(p.titulo)+(p.destinatario?' · A/C '+esc(p.destinatario):'')+'</div></td><td>'+(fmtData(p.enviada_em)||'<span class="m">Sem data</span>')+'</td><td>'+(va?fmtData(va)+(propVencida(p)?'<br><span class="chip r">Vencida</span>':''):'<span class="m">Não informada</span>')+'</td><td class="num">'+esc(p.valor?brl(p.valor):(p.valor_texto||''))+'</td><td><span class="chip '+PROP_CHIP[p.status]+'">'+esc(nome(STATUS_PROP,p.status))+'</span>'+(p.conferir?' <span class="chip b">Conferir</span>':'')+'</td><td>'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" data-stop="1">Abrir</a>':'<span class="m">'+esc(p.arquivo_nome?'No computador':'')+'</span>')+'</td></tr>'; }).join('')
+     || '<tr><td colspan="6" class="m">Nenhuma proposta neste filtro.</td></tr>')
+  + '</tbody></table></div>';
+}
+
+// ── CATÁLOGO ────────────────────────────────────────────────────────────────
+function vCatalogo(){
+  const f=S.f.cat;
+  const lista = S.produtos.filter(p => (!f.linha || p.linha===f.linha) && (f.status ? p.status===f.status : p.status!=='inativo'));
+  const linhas = [...new Set(LINHAS.concat(S.produtos.map(p => p.linha)))].filter(l => lista.some(p => p.linha===l));
+  return '<div class="head"><div><div class="h1">Catálogo de <em>produtos</em></div><div class="sub">O que a La Vie vende, para quem e por quanto.</div></div><button class="btn" data-act="prod-novo">Novo produto</button></div><span class="filete"></span>'
+  + '<div class="tools"><select class="sel" data-in="cat.linha">'+opts([...new Set(LINHAS.concat(S.produtos.map(p => p.linha)))],f.linha,'Todas as linhas')+'</select><select class="sel" data-in="cat.status">'+opts(STATUS_PROD,f.status,'Ativos e em formatação')+'</select></div>'
+  + (linhas.map(l => '<div class="h2">'+esc(l)+'</div><div class="cat">'+lista.filter(p => p.linha===l).map(p => { const fs=faixasDe(p);
+      return '<div class="card prod" data-act="prod" data-id="'+p.id+'"><div><span class="chip '+(p.publico==='pf'?'b':p.publico==='ambos'?'a':'')+'">'+esc(nome(PUBLICOS,p.publico))+'</span>'+(p.status!=='ativo'?' <span class="chip o">'+esc(nome(STATUS_PROD,p.status))+'</span>':'')+(p.parceria?' <span class="chip o">Parceria</span>':'')+'</div><div class="n">'+esc(p.nome)+'</div><div class="p">'+esc(precoTxt(p))+'</div>'
+        + (fs.length ? '<div class="dsc">'+fs.map((x,i) => esc(faixaTxt(fs,i))+': '+Number(x.pct)+'%').join('\n')+'</div>' : '')
+        + (p.detalhe_preco?'<div class="dsc">'+esc(p.detalhe_preco)+'</div>':'')+(p.descricao?'<div class="dsc">'+esc(p.descricao)+'</div>':'')+(p.parceria?'<div class="dsc">Parceria: '+esc(p.parceria)+'</div>':'')
+        + (fs.length ? '<div class="calc" data-stop="1"><label class="eyebrow" for="calc-'+p.id+'">Simular honorário</label><input class="inp" id="calc-'+p.id+'" data-calc="'+p.id+'" inputmode="decimal" placeholder="Salário da vaga, ex.: 3.000" style="margin-top:6px"><div class="out" id="calc-out-'+p.id+'"></div></div>' : '')
+        + '</div>'; }).join('')+'</div>').join('')
+     || '<div class="card empty" style="border:1px solid var(--border)">Nenhum produto neste filtro.</div>');
+}
+
+// ── janelas ─────────────────────────────────────────────────────────────────
+let _modal = null;
+function modal(titulo, corpo, cfg){
+  _modal = cfg || {};
+  $('modal-root').innerHTML = '<div class="ov" data-act="modal-fundo"><div class="modal" role="dialog" aria-label="'+esc(titulo)+'"><div class="modal-h"><h3>'+esc(titulo)+'</h3><button class="x" data-act="modal-fechar" aria-label="Fechar">&times;</button></div><div class="modal-b">'+corpo+'</div><div class="modal-f">'
+    + (_modal.extra ? '<span class="sp">'+_modal.extra+'</span>' : '')
+    + '<button class="btn ghost" data-act="modal-fechar">'+(_modal.semSalvar?'Fechar':'Cancelar')+'</button>'+(_modal.semSalvar?'':'<button class="btn" data-act="modal-salvar" id="m-salvar">'+esc(_modal.rotulo||'Salvar')+'</button>')+'</div></div></div>';
+  const p = $('modal-root').querySelector('.modal-b input:not([type=checkbox]), .modal-b select, .modal-b textarea'); if(p && !_modal.semFoco) p.focus();
+}
+function fecharModal(){ _modal=null; $('modal-root').innerHTML=''; }
+function confirmar(titulo, texto, rotulo, fn){ modal(titulo, '<p style="margin-bottom:10px">'+esc(texto)+'</p>', {rotulo:rotulo, salvar:fn, semFoco:true}); }
+const val = id => { const e=$(id); return e ? e.value : ''; };
+const marc = id => { const e=$(id); return !!(e && e.checked); };
+const F = (rot, html) => '<div class="fld"><label>'+rot+'</label>'+html+'</div>';
+
+// Conta
+function mConta(id){
+  const c = id ? conta(id) : {tipo:'pj',situacao:'lead'};
+  modal(id?'Editar conta':'Nova conta',
+    '<div class="row2">'+F('Nome','<input class="inp" id="c-nome" value="'+esc(c.nome)+'">')+F('Tipo','<select class="sel" id="c-tipo">'+opts([['pj','Empresa'],['pf','Pessoa']],c.tipo)+'</select>')+'</div>'
+    +'<div class="row2">'+F('Situação','<select class="sel" id="c-sit">'+opts(SITUACOES,c.situacao)+'</select>')+F('Origem','<input class="inp" id="c-origem" list="dl-origens" value="'+esc(c.origem)+'">')+'</div>'
+    +'<div class="row3">'+F('Segmento','<input class="inp" id="c-seg" value="'+esc(c.segmento)+'">')+F('Cidade','<input class="inp" id="c-cid" value="'+esc(c.cidade)+'">')+F('UF','<input class="inp" id="c-uf" maxlength="2" value="'+esc(c.uf)+'">')+'</div>'
+    +'<div class="row2">'+F('CNPJ ou CPF (opcional)','<input class="inp" id="c-doc" value="'+esc(c.documento)+'">')+F('Instagram','<input class="inp" id="c-ig" value="'+esc(c.instagram)+'">')+'</div>'
+    +'<div class="row2">'+F('Site','<input class="inp" id="c-site" value="'+esc(c.site)+'">')+F('Link da pasta no Drive','<input class="inp" id="c-pasta" value="'+esc(c.pasta_url)+'">')+'</div>'
+    +F('Observações','<textarea class="txa" id="c-obs">'+esc(c.obs)+'</textarea>')
+    +(id?'<label class="chk"><input type="checkbox" id="c-oculta" '+(c.oculta?'checked':'')+'>Ocultar esta conta das listas (não apaga nada)</label>':'')
+    +'<datalist id="dl-origens">'+ORIGENS.map(o => '<option value="'+esc(o)+'">').join('')+'</datalist>',
+    { salvar: async () => {
+        const d = { nome:vazio(val('c-nome')), tipo:val('c-tipo'), situacao:val('c-sit'), origem:vazio(val('c-origem')), segmento:vazio(val('c-seg')), cidade:vazio(val('c-cid')), uf:vazio(val('c-uf').toUpperCase()), documento:vazio(val('c-doc')), instagram:vazio(val('c-ig')), site:vazio(val('c-site')), pasta_url:vazio(val('c-pasta')), obs:vazio(val('c-obs')), conferir:false };
+        if(!d.nome){ aviso('Informe o nome da conta.', true); return false; }
+        if(id) d.oculta = marc('c-oculta');
+        const r = id ? await sb.from('crm_contas').update(d).eq('id',id).select().single() : await sb.from('crm_contas').insert(d).select().single();
+        if(falhou(r,'salvar a conta')) return false;
+        trocar(S.contas, r.data); S.contas.sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+        if(!id) S.drawer = r.data.id;
+        aviso('Conta salva.');
+      } });
+}
+
+// Contato
+function mContato(id, contaId){
+  const k = id ? S.contatos.find(x => x.id===id) : {conta_id:contaId};
+  modal(id?'Editar contato':'Novo contato',
+    '<div class="row2">'+F('Nome','<input class="inp" id="k-nome" value="'+esc(k.nome)+'">')+F('Cargo ou papel','<input class="inp" id="k-cargo" value="'+esc(k.cargo)+'">')+'</div>'
+    +'<div class="row2">'+F('WhatsApp ou telefone','<input class="inp" id="k-tel" value="'+esc(k.telefone)+'">')+F('E-mail','<input class="inp" id="k-email" type="email" value="'+esc(k.email)+'">')+'</div>'
+    +'<label class="chk"><input type="checkbox" id="k-dec" '+(k.decisor?'checked':'')+'>É quem decide a contratação</label>'
+    +F('Observações','<textarea class="txa" id="k-obs">'+esc(k.obs)+'</textarea>'),
+    { extra: id ? '<button class="btn danger sm" data-act="contato-excluir" data-id="'+id+'">Excluir contato</button>' : '',
+      salvar: async () => {
+        const d = { conta_id:k.conta_id, nome:vazio(val('k-nome')), cargo:vazio(val('k-cargo')), telefone:vazio(val('k-tel')), email:vazio(val('k-email')), decisor:marc('k-dec'), obs:vazio(val('k-obs')) };
+        if(!d.nome){ aviso('Informe o nome do contato.', true); return false; }
+        const r = id ? await sb.from('crm_contatos').update(d).eq('id',id).select().single() : await sb.from('crm_contatos').insert(d).select().single();
+        if(falhou(r,'salvar o contato')) return false;
+        trocar(S.contatos, r.data); aviso('Contato salvo.');
+      } });
+}
+
+// Oportunidade (também serve de "Novo lead": cria a conta na mesma janela)
+function linhaItem(it){
+  return '<div class="fx" data-item><select class="sel" data-item-prod>'+opts(S.produtos.filter(p => p.status!=='inativo' || p.id===it.produto_id).map(p => [p.id, p.nome]), it.produto_id, 'Escolha o produto')+'</select><input class="inp" data-item-valor inputmode="decimal" placeholder="Valor" value="'+esc(it.valor!=null?String(it.valor).replace('.',','):'')+'"><button class="x" data-act="item-remover" aria-label="Remover produto" style="font-size:20px">&times;</button></div>';
+}
+function mOpp(id, contaId){
+  const o = id ? S.opps.find(x => x.id===id) : {etapa:'lead', conta_id:contaId||''};
+  const its = id ? S.itens.filter(i => i.oportunidade_id===id) : [];
+  const ks = S.contatos.filter(k => k.conta_id===o.conta_id);
+  modal(id?'Oportunidade':(contaId?'Nova oportunidade':'Novo lead'),
+    F('Conta','<select class="sel" id="o-conta">'+(id||contaId?'':'<option value="__nova">Nova conta (preencher abaixo)</option>')+opts(S.contas.filter(c => !c.oculta || c.id===o.conta_id).map(c => [c.id,c.nome]), o.conta_id, id||contaId?null:undefined)+'</select>')
+    +'<div id="o-nova" class="'+(id||contaId?'hidden':'')+'"><div class="row2">'+F('Nome da empresa ou pessoa','<input class="inp" id="o-n-nome">')+F('Tipo','<select class="sel" id="o-n-tipo">'+opts([['pj','Empresa'],['pf','Pessoa']],'pj')+'</select>')+'</div><div class="row3">'+F('Contato','<input class="inp" id="o-n-contato" placeholder="Com quem falou">')+F('WhatsApp','<input class="inp" id="o-n-tel">')+F('E-mail','<input class="inp" id="o-n-email" type="email">')+'</div></div>'
+    +F('O que a pessoa quer (título da oportunidade)','<input class="inp" id="o-titulo" value="'+esc(o.titulo)+'" placeholder="Ex.: R&S de 3 vagas de loja">')
+    +'<div class="row2">'+F('Etapa','<select class="sel" id="o-etapa">'+opts(ETAPAS,o.etapa)+'</select>')+F('Origem','<input class="inp" id="o-origem" list="dl-origens2" value="'+esc(o.origem)+'">')+'</div>'
+    +'<div id="o-perda" class="'+(o.etapa==='perdido'?'':'hidden')+'">'+F('Motivo da perda','<input class="inp" id="o-motivo" value="'+esc(o.motivo_perda)+'" placeholder="Ex.: preço, contratou outro, sem resposta">')+'</div>'
+    +(ks.length?F('Contato na conta','<select class="sel" id="o-contato">'+opts(ks.map(k => [k.id,k.nome]),o.contato_id,'Não definido')+'</select>'):'')
+    +'<div class="row2">'+F('Valor estimado (venda única)','<input class="inp" id="o-valor" inputmode="decimal" value="'+esc(o.valor!=null?String(o.valor).replace('.',','):'')+'">')+F('Valor mensal (recorrente)','<input class="inp" id="o-mensal" inputmode="decimal" value="'+esc(o.valor_mensal!=null?String(o.valor_mensal).replace('.',','):'')+'">')+'</div>'
+    +'<div class="row2" style="grid-template-columns:1fr 180px">'+F('Próxima ação','<input class="inp" id="o-acao" value="'+esc(o.proxima_acao)+'" placeholder="Ex.: ligar para saber da proposta">')+F('Quando','<input class="inp" id="o-quando" type="date" value="'+esc(o.proxima_acao_em||'')+'">')+'</div>'
+    +'<div class="fld"><label>Produtos do catálogo</label><div id="o-itens">'+its.map(linhaItem).join('')+'</div><div><button class="link" data-act="item-add">Adicionar produto</button></div></div>'
+    +F('Observações','<textarea class="txa" id="o-obs">'+esc(o.obs)+'</textarea>')
+    +'<datalist id="dl-origens2">'+ORIGENS.map(x => '<option value="'+esc(x)+'">').join('')+'</datalist>',
+    { extra: id ? '<button class="btn danger sm" data-act="opp-excluir" data-id="'+id+'">Excluir</button>' : '',
+      salvar: async () => {
+        let cid = val('o-conta');
+        const d = { titulo:vazio(val('o-titulo')), etapa:val('o-etapa'), origem:vazio(val('o-origem')), valor:num(val('o-valor')), valor_mensal:num(val('o-mensal')), proxima_acao:vazio(val('o-acao')), proxima_acao_em:vazio(val('o-quando')), obs:vazio(val('o-obs')), motivo_perda:vazio(val('o-motivo')), contato_id: vazio(val('o-contato')), conferir:false };
+        if(!d.titulo){ aviso('Escreva o que a pessoa quer.', true); return false; }
+        if(d.etapa==='perdido' && !d.motivo_perda){ aviso('Informe o motivo da perda.', true); return false; }
+        if(cid==='__nova'){
+          const n = vazio(val('o-n-nome')); if(!n){ aviso('Informe o nome da empresa ou pessoa.', true); return false; }
+          const rc = await sb.from('crm_contas').insert({nome:n, tipo:val('o-n-tipo'), situacao:'lead', origem:d.origem}).select().single();
+          if(falhou(rc,'criar a conta')) return false;
+          trocar(S.contas, rc.data); S.contas.sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR')); cid = rc.data.id;
+          const kn = vazio(val('o-n-contato')) || (val('o-n-tipo')==='pf' ? n : null);
+          if(kn && (kn!==n || val('o-n-tel') || val('o-n-email') || val('o-n-tipo')==='pf')){
+            const rk = await sb.from('crm_contatos').insert({conta_id:cid, nome:kn, telefone:vazio(val('o-n-tel')), email:vazio(val('o-n-email')), decisor:true}).select().single();
+            if(!falhou(rk,'salvar o contato')){ trocar(S.contatos, rk.data); d.contato_id = rk.data.id; }
+          }
+        }
+        if(!cid){ aviso('Escolha a conta.', true); return false; }
+        d.conta_id = cid;
+        const r = id ? await sb.from('crm_oportunidades').update(d).eq('id',id).select().single() : await sb.from('crm_oportunidades').insert(d).select().single();
+        if(falhou(r,'salvar a oportunidade')) return false;
+        trocar(S.opps, r.data);
+        const novos = [...document.querySelectorAll('#o-itens [data-item]')].map(l => ({ oportunidade_id:r.data.id, produto_id: l.querySelector('[data-item-prod]').value || null, valor: num(l.querySelector('[data-item-valor]').value) })).filter(x => x.produto_id);
+        const antes = JSON.stringify(its.map(i => [i.produto_id, i.valor==null?null:Number(i.valor)])), agora = JSON.stringify(novos.map(i => [i.produto_id, i.valor]));
+        if(antes!==agora){
+          if(its.length){ const rd = await sb.from('crm_oportunidade_itens').delete().eq('oportunidade_id', r.data.id); if(falhou(rd,'atualizar os produtos')) return false; }
+          S.itens = S.itens.filter(i => i.oportunidade_id!==r.data.id);
+          if(novos.length){ const ri = await sb.from('crm_oportunidade_itens').insert(novos).select(); if(!falhou(ri,'salvar os produtos')) S.itens = S.itens.concat(ri.data||[]); }
+        }
+        await recarregarAtividades(); aviso('Oportunidade salva.');
+      } });
+}
+async function moverOpp(id, etapa, motivo){
+  const o = S.opps.find(x => x.id===id); if(!o || o.etapa===etapa) return;
+  if(etapa==='perdido' && !motivo){
+    modal('Motivo da perda', F('Por que essa venda não aconteceu?','<input class="inp" id="mv-motivo" placeholder="Ex.: preço, contratou outro, sem resposta">'), { rotulo:'Marcar como perdida', salvar: async () => { const m=vazio(val('mv-motivo')); if(!m){ aviso('Informe o motivo.', true); return false; } await moverOpp(id,'perdido',m); } });
+    return;
+  }
+  const d = {etapa:etapa}; if(motivo) d.motivo_perda = motivo;
+  const r = await sb.from('crm_oportunidades').update(d).eq('id',id).select().single();
+  if(falhou(r,'mover a oportunidade')) return;
+  trocar(S.opps, r.data); await recarregarAtividades(); render(); aviso('Movida para '+nome(ETAPAS,etapa)+'.');
+}
+
+// Proposta
+function mProp(id, contaId){
+  const p = id ? S.propostas.find(x => x.id===id) : {status:'enviada', conta_id:contaId||'', enviada_em:hojeISO(), validade_dias:15};
+  const os = S.opps.filter(o => o.conta_id===p.conta_id);
+  const u = link(p.arquivo_url);
+  modal(id?'Proposta':'Nova proposta',
+    F('Conta','<select class="sel" id="p-conta">'+opts(S.contas.filter(c => !c.oculta || c.id===p.conta_id).map(c => [c.id,c.nome]), p.conta_id, 'Escolha a conta')+'</select>')
+    +F('Título da proposta','<input class="inp" id="p-titulo" value="'+esc(p.titulo)+'" placeholder="Ex.: Recrutamento e Seleção por vaga">')
+    +'<div class="row2">'+F('Aos cuidados de','<input class="inp" id="p-dest" value="'+esc(p.destinatario)+'">')+F('Situação','<select class="sel" id="p-status">'+opts(STATUS_PROP,p.status)+'</select>')+'</div>'
+    +'<div class="row3">'+F('Enviada em','<input class="inp" id="p-data" type="date" value="'+esc(p.enviada_em||'')+'">')+F('Validade (dias)','<input class="inp" id="p-val" type="number" min="0" value="'+esc(p.validade_dias==null?'':p.validade_dias)+'">')+F('Valor total','<input class="inp" id="p-valor" inputmode="decimal" value="'+esc(p.valor!=null?String(p.valor).replace('.',','):'')+'">')+'</div>'
+    +F('Como o valor foi apresentado','<input class="inp" id="p-vtxt" value="'+esc(p.valor_texto)+'" placeholder="Ex.: 70% do salário por vaga; R$ 6.000 ou R$ 10.500">')
+    +'<div id="p-opp-w">'+(os.length?F('Oportunidade ligada','<select class="sel" id="p-opp">'+opts(os.map(o => [o.id,o.titulo]),p.oportunidade_id,'Nenhuma')+'</select>'):'')+'</div>'
+    +F('Link do arquivo (Drive)','<input class="inp" id="p-url" value="'+esc(p.arquivo_url)+'" placeholder="https://drive.google.com/...">')
+    +(p.arquivo_nome?'<p class="help">Arquivo: '+esc(p.arquivo_nome)+'</p>':'')
+    +F('Observações','<textarea class="txa" id="p-obs">'+esc(p.obs)+'</textarea>'),
+    { extra: (id ? '<button class="btn danger sm" data-act="prop-excluir" data-id="'+id+'">Excluir</button>' : '') + (u ? ' <a class="btn ghost sm" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir arquivo</a>' : ''),
+      salvar: async () => {
+        const d = { conta_id:vazio(val('p-conta')), titulo:vazio(val('p-titulo')), destinatario:vazio(val('p-dest')), status:val('p-status'), enviada_em:vazio(val('p-data')), validade_dias: val('p-val')===''?null:parseInt(val('p-val'),10), valor:num(val('p-valor')), valor_texto:vazio(val('p-vtxt')), oportunidade_id: vazio(val('p-opp')), arquivo_url:vazio(val('p-url')), obs:vazio(val('p-obs')), conferir:false };
+        if(!d.conta_id){ aviso('Escolha a conta.', true); return false; }
+        if(!d.titulo){ aviso('Informe o título da proposta.', true); return false; }
+        const r = id ? await sb.from('crm_propostas').update(d).eq('id',id).select().single() : await sb.from('crm_propostas').insert(d).select().single();
+        if(falhou(r,'salvar a proposta')) return false;
+        trocar(S.propostas, r.data); await recarregarAtividades(); aviso('Proposta salva.');
+      } });
+}
+
+// Produto
+function linhaFaixa(f, ultima){ return '<div class="fx" data-faixa><input class="inp" data-fx-ate inputmode="decimal" placeholder="'+(ultima?'Acima (deixe vazio)':'Até R$')+'" value="'+esc(f.ate!=null?String(f.ate).replace('.',','):'')+'"><input class="inp" data-fx-pct inputmode="decimal" placeholder="%" value="'+esc(f.pct!=null?String(f.pct).replace('.',','):'')+'"><button class="x" data-act="faixa-remover" aria-label="Remover faixa" style="font-size:20px">&times;</button></div>'; }
+function mProd(id){
+  const p = id ? S.produtos.find(x => x.id===id) : {linha:'Pessoas', publico:'pj', tipo_preco:'fixo', status:'ativo'};
+  const fs = faixasDe(p);
+  modal(id?'Produto':'Novo produto',
+    F('Nome do produto','<input class="inp" id="pr-nome" value="'+esc(p.nome)+'">')
+    +'<div class="row3">'+F('Linha','<input class="inp" id="pr-linha" list="dl-linhas" value="'+esc(p.linha)+'">')+F('Para quem','<select class="sel" id="pr-pub">'+opts(PUBLICOS,p.publico)+'</select>')+F('Situação','<select class="sel" id="pr-status">'+opts(STATUS_PROD,p.status)+'</select>')+'</div>'
+    +'<div class="row3">'+F('Tipo de preço','<select class="sel" id="pr-tipo">'+opts(TIPOS_PRECO,p.tipo_preco)+'</select>')+F('Valor','<input class="inp" id="pr-valor" inputmode="decimal" value="'+esc(p.valor!=null?String(p.valor).replace('.',','):'')+'">')+F('Até (se for faixa)','<input class="inp" id="pr-ate" inputmode="decimal" value="'+esc(p.valor_ate!=null?String(p.valor_ate).replace('.',','):'')+'">')+'</div>'
+    +'<div id="pr-fx-w" class="'+(p.tipo_preco==='percentual_salario'?'':'hidden')+'"><div class="fld"><label>Faixas de salário e percentual</label><div id="pr-faixas">'+(fs.length?fs:[{ate:null,pct:null}]).map((f,i,a) => linhaFaixa(f, i===a.length-1)).join('')+'</div><div><button class="link" data-act="faixa-add">Adicionar faixa</button></div></div><p class="help">Uma faixa por linha, da menor para a maior. A última fica sem valor em "Até".</p></div>'
+    +F('Condições de preço','<textarea class="txa" id="pr-det" placeholder="Ex.: 50% na abertura e 50% no fechamento. Garantia de 60 dias.">'+esc(p.detalhe_preco)+'</textarea>')
+    +F('O que entrega','<textarea class="txa" id="pr-desc">'+esc(p.descricao)+'</textarea>')
+    +F('Parceria (se houver divisão)','<input class="inp" id="pr-parc" value="'+esc(p.parceria)+'" placeholder="Ex.: Murilo Matos, 50% para cada">')
+    +'<datalist id="dl-linhas">'+LINHAS.map(l => '<option value="'+esc(l)+'">').join('')+'</datalist>',
+    { extra: id ? '<button class="btn danger sm" data-act="prod-excluir" data-id="'+id+'">Excluir</button>' : '',
+      salvar: async () => {
+        const tipo = val('pr-tipo');
+        let faixas = null;
+        if(tipo==='percentual_salario'){
+          faixas = [...document.querySelectorAll('#pr-faixas [data-faixa]')].map(l => ({ ate:num(l.querySelector('[data-fx-ate]').value), pct:num(l.querySelector('[data-fx-pct]').value) })).filter(f => f.pct!=null);
+          faixas.sort((a,b) => (a.ate==null?Infinity:a.ate) - (b.ate==null?Infinity:b.ate));
+          if(!faixas.length) faixas = null;
+        }
+        const d = { nome:vazio(val('pr-nome')), linha:vazio(val('pr-linha'))||'Pessoas', publico:val('pr-pub'), status:val('pr-status'), tipo_preco:tipo, valor:num(val('pr-valor')), valor_ate:num(val('pr-ate')), faixas:faixas, detalhe_preco:vazio(val('pr-det')), descricao:vazio(val('pr-desc')), parceria:vazio(val('pr-parc')) };
+        if(!d.nome){ aviso('Informe o nome do produto.', true); return false; }
+        if(!id) d.ordem = (S.produtos.reduce((m,x) => Math.max(m, x.ordem||0), 0) + 10);
+        const r = id ? await sb.from('crm_produtos').update(d).eq('id',id).select().single() : await sb.from('crm_produtos').insert(d).select().single();
+        if(falhou(r,'salvar o produto')) return false;
+        trocar(S.produtos, r.data); S.produtos.sort((a,b) => (a.ordem||0)-(b.ordem||0)); aviso('Produto salvo.');
+      } });
+}
+
+async function excluir(tabela, id, lista, oque){
+  const r = await sb.from(tabela).delete().eq('id', id);
+  if(falhou(r,'excluir '+oque)) return false;
+  S[lista] = S[lista].filter(x => x.id!==id);
+  if(lista==='opps') S.itens = S.itens.filter(i => i.oportunidade_id!==id);
+  await recarregarAtividades(); aviso('Excluído.');
+}
+
+// ── eventos ─────────────────────────────────────────────────────────────────
+document.addEventListener('click', async ev => {
+  if(ev.target.closest('[data-stop]') && !ev.target.closest('[data-act="modal-fechar"]')) { ev.stopPropagation(); return; }
+  const el = ev.target.closest('[data-act]'); if(!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if(act==='modal-fundo'){ if(ev.target===el) fecharModal(); return; }
+  switch(act){
+    case 'aba': S.aba=id; fecharConta(); render(); window.scrollTo(0,0); break;
+    case 'novo-lead': mOpp(); break;
+    case 'ver-conferir': S.aba='propostas'; S.f.propostas.status='a_confirmar'; render(); break;
+    case 'conta': abrirConta(id); break;
+    case 'conta-fechar': fecharConta(); break;
+    case 'conta-nova': mConta(); break;
+    case 'conta-editar': mConta(id); break;
+    case 'contato': mContato(id); break;
+    case 'contato-novo': mContato(null, id); break;
+    case 'contato-excluir': confirmar('Excluir contato','Este contato será removido da conta.','Excluir', async () => { await excluir('crm_contatos', id, 'contatos', 'o contato'); }); break;
+    case 'opp': mOpp(id); break;
+    case 'opp-nova': mOpp(null, id); break;
+    case 'opp-excluir': confirmar('Excluir oportunidade','A oportunidade sai do funil. O histórico da conta continua.','Excluir', async () => { await excluir('crm_oportunidades', id, 'opps', 'a oportunidade'); }); break;
+    case 'prop': mProp(id); break;
+    case 'prop-nova': mProp(null, id); break;
+    case 'prop-excluir': confirmar('Excluir proposta','O registro desta proposta será removido.','Excluir', async () => { await excluir('crm_propostas', id, 'propostas', 'a proposta'); }); break;
+    case 'prod': mProd(id); break;
+    case 'prod-novo': mProd(); break;
+    case 'prod-excluir': confirmar('Excluir produto','O produto sai do catálogo. Prefira marcar como Inativo se ele já foi vendido.','Excluir', async () => { await excluir('crm_produtos', id, 'produtos', 'o produto'); }); break;
+    case 'item-add': ev.preventDefault(); $('o-itens').insertAdjacentHTML('beforeend', linhaItem({})); break;
+    case 'item-remover': ev.preventDefault(); el.closest('[data-item]').remove(); break;
+    case 'faixa-add': ev.preventDefault(); $('pr-faixas').insertAdjacentHTML('beforeend', linhaFaixa({}, true)); break;
+    case 'faixa-remover': ev.preventDefault(); el.closest('[data-faixa]').remove(); break;
+    case 'ativ-salvar': {
+      const t = vazio(val('at-txt')); if(!t){ aviso('Escreva o que aconteceu.', true); break; }
+      const r = await sb.from('crm_atividades').insert({conta_id:id, tipo:val('at-tipo'), texto:t, criado_por:S.perfil ? S.perfil.nome : null}).select().single();
+      if(falhou(r,'registrar')) break;
+      S.atividades.unshift(r.data); render(); aviso('Registrado.'); break; }
+    case 'modal-fechar': fecharModal(); break;
+    case 'modal-salvar': {
+      if(!_modal || !_modal.salvar) break;
+      const b = $('m-salvar'); if(b){ b.disabled = true; }
+      let ok; try{ ok = await _modal.salvar(); }catch(e){ console.error('[CRM]', e); aviso('Algo deu errado ao salvar. Tente de novo.', true); ok=false; }
+      if(ok===false){ const b2=$('m-salvar'); if(b2) b2.disabled=false; break; }
+      if(_modal && $('m-salvar')===b) fecharModal();
+      render(); break; }
+  }
+});
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if(t.dataset.calc){ const p = S.produtos.find(x => x.id===t.dataset.calc), s = num(t.value), o = $('calc-out-'+t.dataset.calc);
+    if(!p || !s){ o.textContent=''; return; } const r = calcHonorario(p, s);
+    o.innerHTML = r ? '<b>'+brl(r.valor)+'</b> ('+r.pct+'% de '+brl(s)+')<br>'+brl(r.valor/2)+' na abertura e '+brl(r.valor/2)+' no fechamento' : ''; return; }
+  if(t.dataset.in && t.type!=='checkbox' && t.tagName!=='SELECT'){ const [g,k] = t.dataset.in.split('.'); S.f[g][k] = t.value; const pos = t.selectionStart; render(); const n = document.querySelector('[data-in="'+t.dataset.in+'"]'); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} } }
+});
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if(t.dataset.in && (t.type==='checkbox' || t.tagName==='SELECT')){ const [g,k] = t.dataset.in.split('.'); S.f[g][k] = t.type==='checkbox' ? t.checked : t.value; render(); return; }
+  if(t.id==='o-conta'){ $('o-nova').classList.toggle('hidden', t.value!=='__nova'); }
+  if(t.id==='o-etapa'){ $('o-perda').classList.toggle('hidden', t.value!=='perdido'); }
+  if(t.id==='pr-tipo'){ $('pr-fx-w').classList.toggle('hidden', t.value!=='percentual_salario'); }
+  if(t.id==='p-conta'){ const os = S.opps.filter(o => o.conta_id===t.value); $('p-opp-w').innerHTML = os.length ? F('Oportunidade ligada','<select class="sel" id="p-opp">'+opts(os.map(o => [o.id,o.titulo]),'','Nenhuma')+'</select>') : ''; }
+});
+document.addEventListener('keydown', ev => {
+  if(ev.key==='Escape'){ if(_modal) fecharModal(); else if(S.drawer) fecharConta(); }
+  if(ev.key==='Enter' && ev.target.id==='at-txt'){ const b = document.querySelector('[data-act="ativ-salvar"]'); if(b) b.click(); }
+});
+// arrastar no funil
+let _arr = null;
+document.addEventListener('dragstart', ev => { const c = ev.target.closest && ev.target.closest('.kcard'); if(!c) return; _arr = c.dataset.id; c.classList.add('drag'); try{ ev.dataTransfer.setData('text/plain', _arr); ev.dataTransfer.effectAllowed='move'; }catch(e){} });
+document.addEventListener('dragend', () => { _arr=null; document.querySelectorAll('.kcard.drag,.kcol.over').forEach(e => e.classList.remove('drag','over')); });
+document.addEventListener('dragover', ev => { const k = ev.target.closest && ev.target.closest('.kcol'); if(!k || !_arr) return; ev.preventDefault(); document.querySelectorAll('.kcol.over').forEach(e => { if(e!==k) e.classList.remove('over'); }); k.classList.add('over'); });
+document.addEventListener('drop', ev => { const k = ev.target.closest && ev.target.closest('.kcol'); if(!k || !_arr) return; ev.preventDefault(); const id=_arr; _arr=null; moverOpp(id, k.dataset.etapa); });
+
+// ── entrada ─────────────────────────────────────────────────────────────────
+function portao(titulo, texto){ $('app').classList.add('hidden'); $('gate-t').textContent = titulo; $('gate-m').textContent = texto; $('gate').classList.remove('hidden'); }
+async function iniciar(){
+  let user = null;
+  try{ const { data } = await sb.auth.getSession(); user = data && data.session ? data.session.user : null; }catch(e){}
+  if(!user){ portao('Comercial', 'Esta área usa o mesmo acesso do sistema La Vie. Entre por lá e volte para cá.'); return; }
+  let perfil = null;
+  try{ const r = await sb.from('profiles').select('nome,nome_completo,role,ativo').eq('id', user.id).maybeSingle(); perfil = r.data; }catch(e){}
+  if(!perfil || !perfil.ativo || perfil.role!=='lavie_master'){ portao('Área restrita', 'A área Comercial é de uso interno da La Vie Consultoria.'); return; }
+  S.perfil = { nome: perfil.nome || perfil.nome_completo || user.email };
+  $('who').textContent = perfil.nome_completo || perfil.nome || user.email;
+  await carregar();
+  $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
+  render();
+}
+iniciar();
+</script>
+</body>
+</html>
