@@ -214,7 +214,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="chips" id="chips"></div>
     <main class="main">
       <div class="ph">
-        <div><div class="pt" id="pt">Tudo</div><div class="ps" id="ps"></div></div>
+        <div><div class="pt" id="pt">Visão geral</div><div class="ps" id="ps"></div></div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="status" id="status">Carregando sua lista…</span><button class="ask-btn" id="askOpen" type="button" hidden>💬 Pergunte à Duda</button></div>
       </div>
       <section class="chat" id="chat" aria-label="Pergunte à Duda">
@@ -276,7 +276,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
       <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência.</p>
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
-      <p><b>Visões.</b> "Tudo" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
+      <p><b>Visões.</b> "Visão geral" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
       <p><b>Agenda do Google.</b> Toque em "Conectar Google Agenda" e autorize uma vez. A partir daí, toda tarefa sua com prazo vira um evento de dia inteiro na sua agenda, com lembrete na véspera. Se você mudar o prazo, concluir ou apagar a tarefa, o evento acompanha. A atualização acontece enquanto o To Do List está aberto. Sem conectar, o botão "＋ Agenda" de cada tarefa abre o evento pronto para salvar à mão.</p>
       <p><b>Pergunte à Duda.</b> É um chat que responde sobre a sua lista e cria ou conclui tarefas quando você pede. É opcional e usa a sua própria chave da API do Claude.</p>
       <p><b>Privacidade.</b> O seu espaço é só seu. Quem divide um espaço com você vê apenas as tarefas daquele espaço.</p>
@@ -368,7 +368,7 @@ function ordTasks(k,items){const o=taskOrder[k]||[];return items.sort((a,b)=>{co
 const eMeu=t=>!t.resp||t.resp.split(' e ').includes(QUEM);
 
 /* visões */
-function views(){const v=[['all','Tudo']];
+function views(){const v=[['all','Visão geral']];
   if(compart(HOME))(HOME.membros||[]).forEach(n=>v.push(['r:'+n,n===QUEM?'Minhas':'De '+n]));
   v.push(['week','Próximos 7 dias'],['late','Atrasadas'],['done','Concluídas']);return v}
 function setView(v){view=v;try{localStorage.setItem('todoView',v)}catch(e){}render()}
@@ -508,7 +508,7 @@ function render(){
   if(late.length)ms.append(met('Atrasadas',late.length,'resolver primeiro','red'));
   ms.append(met('Concluídas',done.length,pct+'% do total','green',pct));
 
-  $('pt').textContent=(VS.find(v=>v[0]===view)||AMAP[view]||['','Tudo'])[1];
+  $('pt').textContent=(VS.find(v=>v[0]===view)||AMAP[view]||['','Visão geral'])[1];
   if(AMAP[view]){const rb=renBtn(view);rb.textContent='✎ Renomear';rb.classList.add('txt');$('pt').appendChild(rb)}
   if(view==='all'){
     if(habits.length)list.appendChild(habitCard(habits));
@@ -626,6 +626,7 @@ Regras:
 - Se o pedido puder ser de mais de uma tarefa da lista, pergunte qual antes de mexer.
 - Só apague tarefa quando pedirem com a palavra apagar, excluir ou remover. Concluir não é apagar.
 - Leve em conta a conversa anterior: "essa", "a de antes" e "aquela" se referem ao que acabou de ser falado.
+- A tela de início do To Do List se chama "Visão geral". Use esse nome quando falar dela.
 - Sem markdown pesado: no máximo listas simples com "•".
 
 Lista atual:
