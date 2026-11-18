@@ -6,6 +6,13 @@
 <meta name="robots" content="noindex,nofollow">
 <title>To Do List</title>
 <link rel="icon" href="../logo.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="To Do">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F2F1ED">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap">
@@ -329,7 +336,7 @@ let CODIGO='',QUEM='';
 let ESP=[],HOME=null,OUTROS=[];           /* espaços: o principal e os demais */
 let AREAS=[],AMAP={},BASE_NAMES={};       /* frentes da lateral: [chave,nome,corVar,corBadge] */
 let tasks=[],habits=[],armed=null,view='all',pollT=null,loaded=false;
-let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],copos={},lastData=null,dragging=false,pendingRender=false,showAll={};
+let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],copos={},agendaServ='',lastData=null,dragging=false,pendingRender=false,showAll={};
 try{CODIGO=localStorage.getItem(CODLS)||''}catch(e){}
 try{view=localStorage.getItem('todoView')||'all'}catch(e){}
 
@@ -350,7 +357,7 @@ function aplicar(d){
   areaOrder=Array.isArray(cfg.areas)?cfg.areas:null;
   areaNames=(cfg.names&&typeof cfg.names==='object')?cfg.names:{};
   taskOrder=(cfg.ordem&&typeof cfg.ordem==='object')?cfg.ordem:{};
-  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];copos=cfg.copos&&typeof cfg.copos==='object'?cfg.copos:{};
+  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];copos=cfg.copos&&typeof cfg.copos==='object'?cfg.copos:{};agendaServ=cfg.agenda==='secretaria'?'secretaria':'';
   AREAS=(HOME.frentes||[]).concat(extras).filter(f=>!ocultas.includes(f.chave)).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
     .concat(OUTROS.map(e=>['@'+e.id,e.rotulo||e.nome,'--green','bg']));
   BASE_NAMES=Object.fromEntries(AREAS.map(a=>[a[0],a[1]]));
@@ -445,8 +452,8 @@ function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
 /* ordem e nomes das frentes (por usuário) */
 function orderedAreas(){if(!areaOrder)return AREAS;const pos=k=>{const i=areaOrder.indexOf(k);return i<0?1000+AREAS.findIndex(a=>a[0]===k):i};return AREAS.slice().sort((a,b)=>pos(a[0])-pos(b[0]))}
 async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);if(loaded){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));urgentes=urgentes.filter(id=>vivos.has(id))}
-  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos};
-  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos}})}catch(e){$('status').textContent='Não consegui salvar.'}}
+  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,agenda:agendaServ};
+  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,agenda:agendaServ}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
 async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
   taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
@@ -807,12 +814,13 @@ function gDesconectar(){if(gTok&&window.google)try{google.accounts.oauth2.revoke
 function gPendentes(){if(!HOME||!QUEM)return 0;let map={};try{map=JSON.parse(localStorage.getItem(GMAP+':'+QUEM)||'{}')}catch(e){}
   const want={};tasks.forEach(t=>{if(!t.done&&t.due&&(t.esp===HOME.id||eMeu(t)))want[t.id]=t.title+'|'+t.due+'|'+t.notes});
   let n=0;for(const id in want)if(map[id]!==want[id])n++;for(const id in map)if(!want[id])n++;return n}
-function gStatus(){const on=gOk(),ok=gValido();const b=$('gcalBtn');const pend=on&&!ok?gPendentes():0;
+function gStatus(){const b=$('gcalBtn');if(agendaServ){b.textContent='📅 Agenda automática';b.title='A Secretária da La Vie leva os seus prazos para a Google Agenda às 06h, 14h e 18h. Você não precisa fazer nada.';b.style.color='var(--green-t)';$('gcalBtnM').textContent='📅';$('gcalBtnM').style.color='var(--green-t)';$('gcalOff').hidden=true;return}
+  const on=gOk(),ok=gValido();const pend=on&&!ok?gPendentes():0;
   b.textContent=on?(ok?'📅 Agenda conectada':(pend?'📅 Atualizar agenda ('+pend+')':'📅 Agenda em dia')):'📅 Conectar Google Agenda';
   b.title=on&&!ok?(pend?'Há '+pend+' mudança(s) para levar à agenda. Toque para atualizar.':'Nada novo para levar à agenda.'):'';
   $('gcalBtnM').textContent=pend?'📅'+pend:'📅';
   b.style.color=on&&ok?'var(--green-t)':'';$('gcalOff').hidden=!on;$('gcalBtnM').style.color=on&&ok?'var(--green-t)':''}
-$('gcalBtn').onclick=$('gcalBtnM').onclick=async()=>{if(gOk()&&gValido())gSync(true);else{const t=await gToken(true);if(t)gSync(true)}};
+$('gcalBtn').onclick=$('gcalBtnM').onclick=async()=>{if(agendaServ){$('status').textContent='A agenda é automática: a Secretária da La Vie leva os seus prazos às 06h, 14h e 18h.';return}if(gOk()&&gValido())gSync(true);else{const t=await gToken(true);if(t)gSync(true)}};
 $('gcalOff').onclick=gDesconectar;
 const gId=id=>'lvtodo'+[...new TextEncoder().encode(String(id))].map(b=>b.toString(16).padStart(2,'0')).join('');
 async function gApi(method,path,body){
@@ -822,6 +830,7 @@ function gEvento(t){const d=parse(t.due),n=new Date(d);n.setDate(n.getDate()+1);
   return{summary:t.title,description:(t.notes?t.notes+'\n\n':'')+'To Do List: '+location.origin+location.pathname,start:{date:isoOf(d)},end:{date:isoOf(n)},
     transparency:'transparent',status:'confirmed',reminders:{useDefault:false,overrides:[{method:'popup',minutes:900}]}}}
 async function gSync(avisar){
+  if(agendaServ){gStatus();return}
   if(gBusy||!HOME||!QUEM||!gOk())return;const tok=await gToken(false);if(!tok){gStatus();return}gBusy=true;const chave=GMAP+':'+QUEM;let n=0;
   try{let map={};try{map=JSON.parse(localStorage.getItem(chave)||'{}')}catch(e){}
     /* só as minhas: tudo do meu espaço e, nos compartilhados, o que está comigo */
