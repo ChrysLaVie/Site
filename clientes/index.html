@@ -3974,7 +3974,7 @@ function _alertaFaltasHtml(c){
 // Depois de registrar uma falta: na primeira, oferece a mensagem de sempre;
 // a partir da segunda, encerra a participação (reprovado, sem o e-mail
 // automático de retorno) e abre a mensagem firme para copiar ou mandar no WhatsApp.
-async function _aposFalta(candId){
+async function _aposFalta(candId, op){
   const c=(_cands||[]).find(x=>x.id===candId); if(!c) return;
   if(_faltasCand(c)>=2){
     if(c.etapa!=='reprovado' && confirm(`Esta é a ${_faltasCand(c)}ª falta de ${c.nome}.\n\nEncerrar a participação dele(a) no processo e abrir a mensagem de encerramento para mandar pelo WhatsApp?\n\nO cadastro fica com o sinal vermelho de falta. O e-mail automático de reprovação não é enviado.`)){
@@ -3989,7 +3989,8 @@ async function _aposFalta(candId){
     }
     return;
   }
-  if(MSG_TEMPLATES.noShow && confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?')) abrirMensagem(candId,'noShow');
+  // Vindo do salvar da entrevista, a mensagem já abre pronta para copiar.
+  if(MSG_TEMPLATES.noShow && ((op&&op.direto) || confirm('Quer abrir a mensagem de "não compareceu" para mandar ao candidato?'))) abrirMensagem(candId,'noShow');
 }
 async function marcarNaoCompareceu(){
   const id=document.getElementById('mc-id').value; const c=getCands().find(x=>x.id===id); if(!c) return;
@@ -5300,10 +5301,13 @@ async function salvarEntrevista(){
     const btn=document.getElementById('save-btn');
     btn.disabled=false; btn.textContent='✓ Salvo!';btn.classList.add('saved');
     setTimeout(()=>{btn.textContent='💾 Salvar no histórico';btn.classList.remove('saved');},3000);
+    // Salvou é porque terminou (pedido da Chrys, 18/11/2026): fecha o roteiro e
+    // volta para a escolha de uma nova entrevista. Para reabrir, use o Histórico.
+    try{ backToRoteiros(); window.scrollTo({top:0,behavior:'smooth'}); }catch(e){}
     if(rec.resultado==='nao_compareceu'){
       showToast('Não comparecimento registrado no histórico do candidato');
-      if(candidatoIdFinal) await _aposFalta(candidatoIdFinal);
-    } else showToast('✅ Entrevista salva e candidato adicionado ao funil!');
+      if(candidatoIdFinal) await _aposFalta(candidatoIdFinal, {direto:true});
+    } else showToast('✅ Entrevista salva. Pode abrir a próxima.');
   }catch(e){
     const semRede=/failed to fetch|networkerror|load failed/i.test(e.message||'');
     const motivo=semRede ? 'a conexão com o banco falhou por um instante (internet ou servidor)' : e.message;
