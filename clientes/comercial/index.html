@@ -245,13 +245,15 @@ const PUBLICOS = [['pj','Empresas'],['pf','Pessoas'],['ambos','Empresas e pessoa
 const STATUS_PROD = [['ativo','Ativo'],['em_formatacao','Em formatação'],['inativo','Inativo']];
 const TIPOS_ATIV = [['nota','Anotação'],['contato','Contato'],['reuniao','Reunião']];
 const ORIGENS = ['Indicação','WhatsApp','Site (formulário de empresas)','Teste Vocacional','Instagram','LinkedIn','Grupo de vagas','Cliente atual','Parceiro','Evento','Outro'];
-const ABAS = [['hoje','Hoje'],['funil','Funil'],['contas','Contas'],['propostas','Propostas'],['catalogo','Catálogo'],['materiais','Materiais']];
+const ABAS = [['hoje','Hoje'],['funil','Funil'],['contas','Contas'],['propostas','Propostas'],['catalogo','Catálogo'],['materiais','Materiais'],['canais','Canais']];
+const PROD_CANAL = [['nenhum','Só vagas'],['pj','Produtos para empresas'],['pf','Produtos para pessoas'],['ambos','Produtos para empresas e pessoas']];
+const PROD_CANAL_CHIP = {nenhum:'o', pj:'', pf:'b', ambos:'a'};
 const CANAIS = ['WhatsApp','Instagram','LinkedIn','Facebook','Telegram','E-mail','Site','Outro'];
 const TIPOS_MAT = [['arte','Arte'],['video','Vídeo'],['texto','Texto'],['documento','Documento']];
 const BUCKET_MAT = 'crm-materiais';
 
-const S = { aba:'hoje', perfil:null, contas:[], contatos:[], produtos:[], opps:[], itens:[], propostas:[], atividades:[], pagamentos:[], materiais:[], urls:{},
-            f:{ contas:{q:'',sit:'',tipo:'',ocultas:false}, propostas:{q:'',status:'abertas'}, funil:{q:'',fechadas:false}, cat:{linha:'',status:''}, mat:{q:'',canal:'',arquivados:false} } };
+const S = { aba:'hoje', perfil:null, contas:[], contatos:[], produtos:[], opps:[], itens:[], propostas:[], atividades:[], pagamentos:[], materiais:[], urls:{}, canais:[],
+            f:{ contas:{q:'',sit:'',tipo:'',ocultas:false}, propostas:{q:'',status:'abertas'}, funil:{q:'',fechadas:false}, cat:{linha:'',status:''}, mat:{q:'',canal:'',arquivados:false}, canais:{uso:'',inativos:false} } };
 
 // ── utilidades ──────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -307,6 +309,8 @@ async function carregar(){
   const m = await sb.from('crm_materiais').select('*').order('criado_em',{ascending:false});
   if(m.error){ console.error('[CRM] materiais', m.error); S.materiais = []; } else S.materiais = m.data || [];
   await assinarArquivos(S.materiais.map(x => x.arquivo_path).filter(Boolean));
+  const c = await sb.from('crm_canais').select('*').order('ordem',{ascending:true});
+  if(c.error){ console.error('[CRM] canais', c.error); S.canais = []; } else S.canais = c.data || [];
 }
 // Os arquivos ficam em bucket privado: a página pede um link temporário (1 hora) para mostrar e baixar.
 async function assinarArquivos(paths){
@@ -322,7 +326,7 @@ function pendenciasHoje(){ const h=hojeISO(); return S.opps.filter(o => oppAbert
 function render(){
   const n = pendenciasHoje();
   $('tabs').innerHTML = ABAS.map(a => '<button class="tab'+(S.aba===a[0]?' on':'')+'" data-act="aba" data-id="'+a[0]+'">'+a[1]+(a[0]==='hoje'&&n?'<span class="n">'+n+'</span>':'')+'</button>').join('');
-  const v = {hoje:vHoje, funil:vFunil, contas:vContas, propostas:vPropostas, catalogo:vCatalogo, materiais:vMateriais}[S.aba];
+  const v = {hoje:vHoje, funil:vFunil, contas:vContas, propostas:vPropostas, catalogo:vCatalogo, materiais:vMateriais, canais:vCanais}[S.aba];
   $('view').innerHTML = v();
   if(S.drawer) abrirConta(S.drawer, true);
 }
@@ -513,7 +517,7 @@ function mMaterial(id){
 }
 function mUso(id){
   const m = S.materiais.find(x => x.id===id); if(!m) return;
-  modal('Registrar uso', '<p class="help" style="margin:0 0 14px">'+esc(m.titulo)+'</p><div class="row2" style="grid-template-columns:170px 1fr">'+F('Quando','<input class="inp" id="us-em" type="date" value="'+hojeISO()+'">')+F('Onde','<input class="inp" id="us-onde" placeholder="Ex.: grupo de networking, stories, e-mail da semana">')+'</div>'
+  modal('Registrar uso', '<p class="help" style="margin:0 0 14px">'+esc(m.titulo)+'</p><div class="row2" style="grid-template-columns:170px 1fr">'+F('Quando','<input class="inp" id="us-em" type="date" value="'+hojeISO()+'">')+F('Onde','<input class="inp" id="us-onde" list="dl-onde" placeholder="Ex.: grupo de networking, stories, e-mail da semana">')+'</div><datalist id="dl-onde">'+S.canais.filter(c => c.ativo).map(c => '<option value="'+esc(c.nome)+'">').join('')+'</datalist>'
     + ((m.usos||[]).length ? '<div class="fld"><label>Já usado em</label>'+(m.usos||[]).map(u => '<div class="m" style="font-size:13px;color:var(--muted)">'+esc([fmtData(u.em),u.onde].filter(Boolean).join(' · '))+'</div>').join('')+'</div>' : ''),
     { rotulo:'Registrar', salvar: async () => {
         const onde = vazio(val('us-onde')); if(!onde){ aviso('Diga onde foi usado.', true); return false; }
@@ -526,6 +530,43 @@ function mUso(id){
 async function copiarTexto(txt){
   try{ await navigator.clipboard.writeText(txt); return true; }
   catch(e){ const t=document.createElement('textarea'); t.value=txt; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(e2){} t.remove(); return ok; }
+}
+
+// ── CANAIS DE DIVULGAÇÃO ────────────────────────────────────────────────────
+function canalServe(c, pub){ return pub==='nenhum' ? c.produtos==='nenhum' : (c.produtos===pub || c.produtos==='ambos'); }
+function vCanais(){
+  const f=S.f.canais;
+  const base = S.canais.filter(c => f.inativos || c.ativo);
+  const lista = base.filter(c => !f.uso || canalServe(c, f.uso));
+  const grupos = [...new Set(lista.map(c => c.grupo))];
+  const nPj = base.filter(c => canalServe(c,'pj')).length, nPf = base.filter(c => canalServe(c,'pf')).length;
+  return '<div class="head"><div><div class="h1">Canais de <em>divulgação</em></div><div class="sub">Onde a La Vie divulga as vagas e onde também cabe divulgar produtos.</div></div><button class="btn" data-act="canal-novo">Novo canal</button></div><span class="filete"></span>'
+  + '<div class="tools"><select class="sel" data-in="canais.uso">'+opts([['pj','Servem para produtos de empresas'],['pf','Servem para produtos de pessoas'],['nenhum','Só para vagas']],f.uso,'Todos os canais')+'</select><label class="chk" style="margin:0"><input type="checkbox" data-in="canais.inativos" '+(f.inativos?'checked':'')+'>Mostrar inativos</label><span class="sub" style="margin:0">'+pl(base.length,'canal','canais')+': '+nPj+' para produtos de empresas e '+nPf+' para produtos de pessoas.</span></div>'
+  + (grupos.map((g,i) => '<div class="h2" style="display:flex;align-items:baseline;gap:12px"><span style="color:var(--accent);font-style:italic">'+String(i+1).padStart(2,'0')+'</span>'+esc(g)+'</div><div class="card box" style="padding:0">'
+      + lista.filter(c => c.grupo===g).map((c,j) => { const u=link(c.link_url);
+          return '<div class="item" data-act="canal" data-id="'+c.id+'"'+(j===0?' style="border-top:none"':'')+'><div><div class="t">'+esc(c.nome)+(c.ativo?'':' <span class="chip o">Inativo</span>')+'</div>'+(c.descricao?'<div class="m">'+esc(c.descricao)+'</div>':'')+(c.obs?'<div class="m" style="color:var(--accent)">'+esc(c.obs)+'</div>':'')+'<div style="margin-top:7px">'+(c.divulga_vagas?'<span class="chip g">Vagas</span> ':'')+'<span class="chip '+PROD_CANAL_CHIP[c.produtos]+'">'+esc(nome(PROD_CANAL,c.produtos))+'</span></div></div><div class="r">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" data-stop="1">Abrir</a>':'')+'</div></div>'; }).join('')
+      + '</div>').join('')
+     || '<div class="card empty" style="border:1px solid var(--border)">Nenhum canal neste filtro.</div>');
+}
+function mCanal(id){
+  const c = id ? S.canais.find(x => x.id===id) : {divulga_vagas:false, produtos:'pj', ativo:true};
+  modal(id?'Canal':'Novo canal',
+    '<div class="row2">'+F('Nome do canal','<input class="inp" id="cn-nome" value="'+esc(c.nome)+'">')+F('Grupo','<input class="inp" id="cn-grupo" list="dl-grupos" value="'+esc(c.grupo)+'" placeholder="Ex.: LinkedIn">')+'</div>'
+    +F('Link','<input class="inp" id="cn-link" value="'+esc(c.link_url)+'" placeholder="https://">')
+    +F('Como é usado','<textarea class="txa" id="cn-desc">'+esc(c.descricao)+'</textarea>')
+    +'<div class="row2">'+F('Serve para divulgar produtos','<select class="sel" id="cn-prod">'+opts([['nenhum','Não, só vagas'],['pj','Sim, para empresas'],['pf','Sim, para pessoas'],['ambos','Sim, para empresas e pessoas']],c.produtos)+'</select>')+'<div class="fld"><label>Vagas</label><label class="chk" style="margin:9px 0 0"><input type="checkbox" id="cn-vagas" '+(c.divulga_vagas?'checked':'')+'>Usado para divulgar vagas</label></div></div>'
+    +F('Observações','<textarea class="txa" id="cn-obs">'+esc(c.obs)+'</textarea>')
+    +(id?'<label class="chk"><input type="checkbox" id="cn-ativo" '+(c.ativo?'checked':'')+'>Canal ativo</label>':'')
+    +'<datalist id="dl-grupos">'+[...new Set(S.canais.map(x => x.grupo))].map(g => '<option value="'+esc(g)+'">').join('')+'</datalist>',
+    { extra: id ? '<button class="btn danger sm" data-act="canal-excluir" data-id="'+id+'">Excluir</button>' : '',
+      salvar: async () => {
+        const d = { nome:vazio(val('cn-nome')), grupo:vazio(val('cn-grupo'))||'Outros', link_url:vazio(val('cn-link')), descricao:vazio(val('cn-desc')), produtos:val('cn-prod'), divulga_vagas:marc('cn-vagas'), obs:vazio(val('cn-obs')) };
+        if(!d.nome){ aviso('Informe o nome do canal.', true); return false; }
+        if(id) d.ativo = marc('cn-ativo'); else d.ordem = (S.canais.filter(x => x.grupo===d.grupo).reduce((m,x) => Math.max(m, x.ordem||0), S.canais.reduce((m,x) => Math.max(m, x.ordem||0), 0)) + 5);
+        const r = id ? await sb.from('crm_canais').update(d).eq('id',id).select().single() : await sb.from('crm_canais').insert(d).select().single();
+        if(falhou(r,'salvar o canal')) return false;
+        trocar(S.canais, r.data); S.canais.sort((a,b) => (a.ordem||0)-(b.ordem||0)); aviso('Canal salvo.');
+      } });
 }
 
 // ── janelas ─────────────────────────────────────────────────────────────────
@@ -712,7 +753,7 @@ async function excluir(tabela, id, lista, oque){
   if(falhou(r,'excluir '+oque)) return false;
   S[lista] = S[lista].filter(x => x.id!==id);
   if(lista==='opps') S.itens = S.itens.filter(i => i.oportunidade_id!==id);
-  if(lista!=='materiais') await recarregarAtividades();
+  if(lista!=='materiais' && lista!=='canais') await recarregarAtividades();
   aviso('Excluído.');
 }
 
@@ -742,6 +783,9 @@ document.addEventListener('click', async ev => {
     case 'prod': mProd(id); break;
     case 'prod-novo': mProd(); break;
     case 'prod-excluir': confirmar('Excluir produto','O produto sai do catálogo. Prefira marcar como Inativo se ele já foi vendido.','Excluir', async () => { await excluir('crm_produtos', id, 'produtos', 'o produto'); }); break;
+    case 'canal': mCanal(id); break;
+    case 'canal-novo': mCanal(); break;
+    case 'canal-excluir': confirmar('Excluir canal','O canal sai da lista. Prefira desmarcar "Canal ativo" se ele só está parado.','Excluir', async () => { await excluir('crm_canais', id, 'canais', 'o canal'); }); break;
     case 'mat': mMaterial(id); break;
     case 'mat-novo': mMaterial(); break;
     case 'mat-uso': mUso(id); break;
