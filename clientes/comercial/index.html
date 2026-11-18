@@ -144,6 +144,18 @@ td .m{font-size:12.5px;color:var(--muted)}
 .calc .out{margin-top:8px;font-size:13px;color:var(--ink)}
 .fx{display:grid;grid-template-columns:1fr 90px 30px;gap:8px;margin-bottom:8px;align-items:center}
 
+/* Materiais */
+.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.mat{display:flex;flex-direction:column;overflow:hidden;cursor:pointer}
+.mat:hover{border-color:var(--border-2)}
+.mat-img{aspect-ratio:4/5;background:var(--sand-lt);display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12.5px;overflow:hidden}
+.mat-img img,.mat-img video{width:100%;height:100%;object-fit:cover;display:block}
+.mat-b{padding:14px 16px 6px;display:flex;flex-direction:column;gap:6px;flex:1}
+.mat-b .n{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink);line-height:1.2}
+.mat-leg{font-size:12.5px;color:var(--muted);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.mat-f{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 16px 16px}
+.uso{display:grid;grid-template-columns:150px 1fr 30px;gap:8px;margin-bottom:8px;align-items:center}
+
 /* Janela e gaveta */
 .ov{position:fixed;inset:0;background:rgba(26,25,23,.42);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto}
 .modal{background:var(--surface);border-radius:10px;box-shadow:var(--shadow-md);width:100%;max-width:640px}
@@ -190,7 +202,7 @@ td .m{font-size:12.5px;color:var(--muted)}
     <div class="top-in">
       <a class="brand" href="/clientes/comercial/">
         <img src="/logo.png" alt="La Vie Consultoria">
-        <div><div class="brand-t">Comercial</div><div class="brand-s">Clientes · Vendas · Produtos</div></div>
+        <div><div class="brand-t">Comercial</div><div class="brand-s">Clientes · Vendas · Produtos · Marketing</div></div>
       </a>
       <div class="top-r">
         <span class="who" id="who"></span>
@@ -233,10 +245,13 @@ const PUBLICOS = [['pj','Empresas'],['pf','Pessoas'],['ambos','Empresas e pessoa
 const STATUS_PROD = [['ativo','Ativo'],['em_formatacao','Em formatação'],['inativo','Inativo']];
 const TIPOS_ATIV = [['nota','Anotação'],['contato','Contato'],['reuniao','Reunião']];
 const ORIGENS = ['Indicação','WhatsApp','Site (formulário de empresas)','Teste Vocacional','Instagram','LinkedIn','Grupo de vagas','Cliente atual','Parceiro','Evento','Outro'];
-const ABAS = [['hoje','Hoje'],['funil','Funil'],['contas','Contas'],['propostas','Propostas'],['catalogo','Catálogo']];
+const ABAS = [['hoje','Hoje'],['funil','Funil'],['contas','Contas'],['propostas','Propostas'],['catalogo','Catálogo'],['materiais','Materiais']];
+const CANAIS = ['WhatsApp','Instagram','LinkedIn','Facebook','Telegram','E-mail','Site','Outro'];
+const TIPOS_MAT = [['arte','Arte'],['video','Vídeo'],['texto','Texto'],['documento','Documento']];
+const BUCKET_MAT = 'crm-materiais';
 
-const S = { aba:'hoje', perfil:null, contas:[], contatos:[], produtos:[], opps:[], itens:[], propostas:[], atividades:[], pagamentos:[],
-            f:{ contas:{q:'',sit:'',tipo:'',ocultas:false}, propostas:{q:'',status:'abertas'}, funil:{q:'',fechadas:false}, cat:{linha:'',status:''} } };
+const S = { aba:'hoje', perfil:null, contas:[], contatos:[], produtos:[], opps:[], itens:[], propostas:[], atividades:[], pagamentos:[], materiais:[], urls:{},
+            f:{ contas:{q:'',sit:'',tipo:'',ocultas:false}, propostas:{q:'',status:'abertas'}, funil:{q:'',fechadas:false}, cat:{linha:'',status:''}, mat:{q:'',canal:'',arquivados:false} } };
 
 // ── utilidades ──────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -289,6 +304,15 @@ async function carregar(){
   if(erro){ console.error('[CRM] carga', erro.error); aviso('Não foi possível carregar os dados. '+(erro.error.message||''), true); }
   [S.contas,S.contatos,S.produtos,S.opps,S.itens,S.propostas,S.atividades] = rs.map(r => r.data || []);
   try{ const p = await sb.from('pagamentos').select('empresa_id,status,valor,vencimento'); S.pagamentos = p.data || []; }catch(e){ S.pagamentos=[]; }
+  const m = await sb.from('crm_materiais').select('*').order('criado_em',{ascending:false});
+  if(m.error){ console.error('[CRM] materiais', m.error); S.materiais = []; } else S.materiais = m.data || [];
+  await assinarArquivos(S.materiais.map(x => x.arquivo_path).filter(Boolean));
+}
+// Os arquivos ficam em bucket privado: a página pede um link temporário (1 hora) para mostrar e baixar.
+async function assinarArquivos(paths){
+  const faltam = paths.filter(p => !S.urls[p]); if(!faltam.length) return;
+  try{ const r = await sb.storage.from(BUCKET_MAT).createSignedUrls(faltam, 3600);
+    (r.data||[]).forEach(x => { if(x && x.signedUrl && x.path) S.urls[x.path] = x.signedUrl; }); }catch(e){ console.error('[CRM] links dos arquivos', e); }
 }
 function trocar(lista, linha){ const i=lista.findIndex(x => x.id===linha.id); if(i>=0) lista[i]=linha; else lista.unshift(linha); }
 async function recarregarAtividades(){ const r = await sb.from('crm_atividades').select('*').order('em',{ascending:false}).limit(1000); if(!r.error) S.atividades = r.data||[]; }
@@ -298,7 +322,7 @@ function pendenciasHoje(){ const h=hojeISO(); return S.opps.filter(o => oppAbert
 function render(){
   const n = pendenciasHoje();
   $('tabs').innerHTML = ABAS.map(a => '<button class="tab'+(S.aba===a[0]?' on':'')+'" data-act="aba" data-id="'+a[0]+'">'+a[1]+(a[0]==='hoje'&&n?'<span class="n">'+n+'</span>':'')+'</button>').join('');
-  const v = {hoje:vHoje, funil:vFunil, contas:vContas, propostas:vPropostas, catalogo:vCatalogo}[S.aba];
+  const v = {hoje:vHoje, funil:vFunil, contas:vContas, propostas:vPropostas, catalogo:vCatalogo, materiais:vMateriais}[S.aba];
   $('view').innerHTML = v();
   if(S.drawer) abrirConta(S.drawer, true);
 }
@@ -427,6 +451,81 @@ function vCatalogo(){
         + (fs.length ? '<div class="calc" data-stop="1"><label class="eyebrow" for="calc-'+p.id+'">Simular honorário</label><input class="inp" id="calc-'+p.id+'" data-calc="'+p.id+'" inputmode="decimal" placeholder="Salário da vaga, ex.: 3.000" style="margin-top:6px"><div class="out" id="calc-out-'+p.id+'"></div></div>' : '')
         + '</div>'; }).join('')+'</div>').join('')
      || '<div class="card empty" style="border:1px solid var(--border)">Nenhum produto neste filtro.</div>');
+}
+
+// ── MATERIAIS (banco de marketing) ──────────────────────────────────────────
+function matUrl(m){ return (m.arquivo_path && S.urls[m.arquivo_path]) || link(m.link_url) || ''; }
+function matEh(m, re){ return re.test(String(m.arquivo_mime||'')) || re.test(String(m.arquivo_nome||m.link_url||'').split('?')[0].toLowerCase()); }
+function matPrevia(m){
+  const u = matUrl(m);
+  if(u && matEh(m, /^image\/|\.(png|jpe?g|webp|gif)$/)) return '<img src="'+esc(u)+'" alt="" loading="lazy">';
+  if(u && matEh(m, /^video\/|\.(mp4|mov|webm)$/)) return '<video src="'+esc(u)+'" muted preload="metadata"></video>';
+  return '<span>'+esc(m.tipo==='texto' ? 'Só texto' : (m.arquivo_nome || 'Sem arquivo'))+'</span>';
+}
+function vMateriais(){
+  const f=S.f.mat, q=f.q.toLowerCase();
+  const lista = S.materiais.filter(m => (f.arquivados || !m.arquivado) && (!f.canal || m.canal===f.canal) && (!q || (m.titulo+' '+(m.objetivo||'')+' '+(m.legenda||'')).toLowerCase().includes(q)));
+  const canais = [...new Set(CANAIS.concat(S.materiais.map(m => m.canal).filter(Boolean)))];
+  return '<div class="head"><div><div class="h1">Materiais de <em>marketing</em></div><div class="sub">Artes, legendas e textos prontos para usar de novo, com o registro de onde já foram usados.</div></div><button class="btn" data-act="mat-novo">Novo material</button></div><span class="filete"></span>'
+  + '<div class="tools"><input class="inp" placeholder="Buscar por título, objetivo ou texto" value="'+esc(f.q)+'" data-in="mat.q"><select class="sel" data-in="mat.canal">'+opts(canais,f.canal,'Todos os canais')+'</select><label class="chk" style="margin:0"><input type="checkbox" data-in="mat.arquivados" '+(f.arquivados?'checked':'')+'>Mostrar arquivados</label></div>'
+  + (lista.length ? '<div class="mats">'+lista.map(m => { const u=matUrl(m), n=(m.usos||[]).length;
+      return '<div class="card mat" data-act="mat" data-id="'+m.id+'"><div class="mat-img">'+matPrevia(m)+'</div><div class="mat-b"><div>'+(m.canal?'<span class="chip">'+esc(m.canal)+'</span> ':'')+'<span class="chip '+(m.publico==='pf'?'b':m.publico==='ambos'?'a':'o')+'">'+esc(nome(PUBLICOS,m.publico))+'</span>'+(m.arquivado?' <span class="chip o">Arquivado</span>':'')+'</div><div class="n">'+esc(m.titulo)+'</div>'+(m.objetivo?'<div class="m" style="font-size:12.5px;color:var(--accent)">'+esc(m.objetivo)+'</div>':'')+(m.legenda?'<div class="mat-leg">'+esc(m.legenda)+'</div>':'')+'</div>'
+        + '<div class="mat-f">'+(m.legenda?'<button class="btn sm" data-act="mat-copiar" data-id="'+m.id+'">Copiar legenda</button>':'')+(u?'<a class="btn sm ghost" href="'+esc(u)+'" target="_blank" rel="noopener" download="'+esc(m.arquivo_nome||'')+'" data-stop="1">Baixar arquivo</a>':'')+'<button class="link" data-act="mat-uso" data-id="'+m.id+'">'+(n?'Usado '+pl(n,'vez','vezes'):'Registrar uso')+'</button></div></div>'; }).join('')+'</div>'
+     : '<div class="card empty" style="border:1px solid var(--border)">Nenhum material neste filtro.</div>');
+}
+function linhaUso(u){ return '<div class="uso" data-uso><input class="inp" type="date" data-uso-em value="'+esc(u.em||'')+'"><input class="inp" data-uso-onde placeholder="Onde foi usado. Ex.: grupo de networking" value="'+esc(u.onde||'')+'"><button class="x" data-act="uso-remover" aria-label="Remover uso" style="font-size:20px">&times;</button></div>'; }
+function nomeArquivoSeguro(n){ return String(n||'arquivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9._-]+/g,'-').slice(-90); }
+function mMaterial(id){
+  const m = id ? S.materiais.find(x => x.id===id) : {tipo:'arte', publico:'pj', usos:[]};
+  const u = matUrl(m);
+  modal(id?'Material':'Novo material',
+    F('Título','<input class="inp" id="mt-titulo" value="'+esc(m.titulo)+'" placeholder="Ex.: Apresentação da La Vie para empresários">')
+    +'<div class="row3">'+F('Tipo','<select class="sel" id="mt-tipo">'+opts(TIPOS_MAT,m.tipo)+'</select>')+F('Canal','<input class="inp" id="mt-canal" list="dl-canais" value="'+esc(m.canal)+'">')+F('Para quem','<select class="sel" id="mt-pub">'+opts(PUBLICOS,m.publico)+'</select>')+'</div>'
+    +F('Objetivo','<input class="inp" id="mt-obj" value="'+esc(m.objetivo)+'" placeholder="Ex.: apresentação em grupos de networking">')
+    +F('Legenda ou texto','<textarea class="txa" id="mt-leg" style="min-height:190px">'+esc(m.legenda)+'</textarea>')
+    +F('Arquivo (imagem, vídeo ou documento)','<input class="inp" id="mt-arq" type="file">')
+    +(m.arquivo_nome?'<p class="help">Arquivo atual: '+esc(m.arquivo_nome)+'. Escolha outro só se quiser trocar.</p>':'')
+    +F('Link (Canva, Drive ou outro)','<input class="inp" id="mt-link" value="'+esc(m.link_url)+'" placeholder="https://">')
+    +F('Produto do catálogo','<select class="sel" id="mt-prod">'+opts(S.produtos.map(p => [p.id,p.nome]),m.produto_id,'Nenhum (institucional)')+'</select>')
+    +'<div class="fld"><label>Onde já foi usado</label><div id="mt-usos">'+(m.usos||[]).map(linhaUso).join('')+'</div><div><button class="link" data-act="uso-add">Registrar uso</button></div></div>'
+    +F('Observações','<textarea class="txa" id="mt-obs">'+esc(m.obs)+'</textarea>')
+    +(id?'<label class="chk"><input type="checkbox" id="mt-arqv" '+(m.arquivado?'checked':'')+'>Arquivar (sai da lista, não apaga)</label>':'')
+    +'<datalist id="dl-canais">'+CANAIS.map(c => '<option value="'+esc(c)+'">').join('')+'</datalist>',
+    { extra: (id ? '<button class="btn danger sm" data-act="mat-excluir" data-id="'+id+'">Excluir</button>' : '') + (u ? ' <a class="btn ghost sm" href="'+esc(u)+'" target="_blank" rel="noopener">Abrir arquivo</a>' : ''),
+      salvar: async () => {
+        const d = { titulo:vazio(val('mt-titulo')), tipo:val('mt-tipo'), canal:vazio(val('mt-canal')), publico:val('mt-pub'), objetivo:vazio(val('mt-obj')), legenda:vazio(val('mt-leg')), link_url:vazio(val('mt-link')), produto_id:vazio(val('mt-prod')), obs:vazio(val('mt-obs')),
+          usos:[...document.querySelectorAll('#mt-usos [data-uso]')].map(l => ({ em:l.querySelector('[data-uso-em]').value||null, onde:vazio(l.querySelector('[data-uso-onde]').value) })).filter(x => x.em || x.onde) };
+        if(!d.titulo){ aviso('Informe o título do material.', true); return false; }
+        if(id) d.arquivado = marc('mt-arqv');
+        const arq = $('mt-arq') && $('mt-arq').files && $('mt-arq').files[0];
+        if(arq){
+          const caminho = 'materiais/'+Date.now()+'_'+nomeArquivoSeguro(arq.name);
+          const up = await sb.storage.from(BUCKET_MAT).upload(caminho, arq, {contentType: arq.type || undefined, upsert:false});
+          if(falhou(up,'enviar o arquivo')) return false;
+          if(m.arquivo_path){ try{ await sb.storage.from(BUCKET_MAT).remove([m.arquivo_path]); }catch(e){} }
+          d.arquivo_path = caminho; d.arquivo_nome = arq.name; d.arquivo_mime = arq.type || null;
+        }
+        const r = id ? await sb.from('crm_materiais').update(d).eq('id',id).select().single() : await sb.from('crm_materiais').insert(d).select().single();
+        if(falhou(r,'salvar o material')) return false;
+        trocar(S.materiais, r.data); if(r.data.arquivo_path) await assinarArquivos([r.data.arquivo_path]);
+        aviso('Material salvo.');
+      } });
+}
+function mUso(id){
+  const m = S.materiais.find(x => x.id===id); if(!m) return;
+  modal('Registrar uso', '<p class="help" style="margin:0 0 14px">'+esc(m.titulo)+'</p><div class="row2" style="grid-template-columns:170px 1fr">'+F('Quando','<input class="inp" id="us-em" type="date" value="'+hojeISO()+'">')+F('Onde','<input class="inp" id="us-onde" placeholder="Ex.: grupo de networking, stories, e-mail da semana">')+'</div>'
+    + ((m.usos||[]).length ? '<div class="fld"><label>Já usado em</label>'+(m.usos||[]).map(u => '<div class="m" style="font-size:13px;color:var(--muted)">'+esc([fmtData(u.em),u.onde].filter(Boolean).join(' · '))+'</div>').join('')+'</div>' : ''),
+    { rotulo:'Registrar', salvar: async () => {
+        const onde = vazio(val('us-onde')); if(!onde){ aviso('Diga onde foi usado.', true); return false; }
+        const usos = (m.usos||[]).concat([{em: val('us-em')||hojeISO(), onde: onde}]);
+        const r = await sb.from('crm_materiais').update({usos: usos}).eq('id',id).select().single();
+        if(falhou(r,'registrar o uso')) return false;
+        trocar(S.materiais, r.data); aviso('Uso registrado.');
+      } });
+}
+async function copiarTexto(txt){
+  try{ await navigator.clipboard.writeText(txt); return true; }
+  catch(e){ const t=document.createElement('textarea'); t.value=txt; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(e2){} t.remove(); return ok; }
 }
 
 // ── janelas ─────────────────────────────────────────────────────────────────
@@ -613,7 +712,8 @@ async function excluir(tabela, id, lista, oque){
   if(falhou(r,'excluir '+oque)) return false;
   S[lista] = S[lista].filter(x => x.id!==id);
   if(lista==='opps') S.itens = S.itens.filter(i => i.oportunidade_id!==id);
-  await recarregarAtividades(); aviso('Excluído.');
+  if(lista!=='materiais') await recarregarAtividades();
+  aviso('Excluído.');
 }
 
 // ── eventos ─────────────────────────────────────────────────────────────────
@@ -642,6 +742,15 @@ document.addEventListener('click', async ev => {
     case 'prod': mProd(id); break;
     case 'prod-novo': mProd(); break;
     case 'prod-excluir': confirmar('Excluir produto','O produto sai do catálogo. Prefira marcar como Inativo se ele já foi vendido.','Excluir', async () => { await excluir('crm_produtos', id, 'produtos', 'o produto'); }); break;
+    case 'mat': mMaterial(id); break;
+    case 'mat-novo': mMaterial(); break;
+    case 'mat-uso': mUso(id); break;
+    case 'mat-copiar': { const m = S.materiais.find(x => x.id===id); if(!m) break; aviso((await copiarTexto(m.legenda||'')) ? 'Legenda copiada.' : 'Não foi possível copiar. Abra o material e copie o texto.', false); break; }
+    case 'mat-excluir': confirmar('Excluir material','O registro e o arquivo guardado serão removidos. Prefira Arquivar se quiser só tirar da lista.','Excluir', async () => {
+        const m = S.materiais.find(x => x.id===id); const ok = await excluir('crm_materiais', id, 'materiais', 'o material');
+        if(ok!==false && m && m.arquivo_path){ try{ await sb.storage.from(BUCKET_MAT).remove([m.arquivo_path]); }catch(e){} } }); break;
+    case 'uso-add': ev.preventDefault(); $('mt-usos').insertAdjacentHTML('beforeend', linhaUso({em:hojeISO()})); break;
+    case 'uso-remover': ev.preventDefault(); el.closest('[data-uso]').remove(); break;
     case 'item-add': ev.preventDefault(); $('o-itens').insertAdjacentHTML('beforeend', linhaItem({})); break;
     case 'item-remover': ev.preventDefault(); el.closest('[data-item]').remove(); break;
     case 'faixa-add': ev.preventDefault(); $('pr-faixas').insertAdjacentHTML('beforeend', linhaFaixa({}, true)); break;
