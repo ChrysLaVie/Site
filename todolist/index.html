@@ -160,6 +160,16 @@ body.chatting .mets,body.chatting #list,body.chatting .fab{display:none}
 .htitle{flex:1;min-width:150px;font-size:14.5px}
 .hstreak{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .days{display:flex;gap:6px}
+.agua{flex:2 1 300px;display:flex;flex-direction:column;gap:8px}
+.abar{height:14px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
+.abar span{display:block;height:100%;background:var(--blue);border-radius:999px;transition:width .3s}
+.abar.ok span{background:var(--green)}
+.atxt{font-size:13px;color:var(--muted)}.atxt b{color:var(--text);font-weight:600}
+.abtns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.abtns button{border:1px solid var(--border2);background:none;color:var(--text);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.abtns button:hover{border-color:var(--blue)}
+.abtns button:disabled{opacity:.4;cursor:default}
+.abtns input{width:84px;padding:5px 8px;border:1px solid var(--border2);border-radius:8px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:inherit}
 .day{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--hint);background:none;border:0;cursor:pointer;padding:0;font-family:inherit}
 .day i{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border2);display:grid;place-items:center;font-style:normal;font-size:13px;color:#fff;transition:all .15s}
 .day:hover i{border-color:var(--pink)}
@@ -248,7 +258,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="field"><label for="nn">Observação (opcional)</label><input id="nn"></div>
     <div class="field" id="nrWrap" hidden><label for="nr">Responsável</label><select id="nr"></select></div>
     <div class="field" id="nhWrap" hidden><label class="chkline"><input type="checkbox" id="nh"> É um hábito ou rotina</label></div>
-    <div class="field" id="nfWrap" hidden><label for="nf">Frequência</label><select id="nf"><option value="">Todo dia</option><option value="1">1 vez por semana</option><option value="2">2 vezes por semana</option><option value="3">3 vezes por semana</option><option value="4">4 vezes por semana</option><option value="5">5 vezes por semana</option><option value="6">6 vezes por semana</option></select></div>
+    <div class="field" id="nfWrap" hidden><label for="nf">Frequência</label><select id="nf"><option value="">Todo dia</option><option value="1">1 vez por semana</option><option value="2">2 vezes por semana</option><option value="3">3 vezes por semana</option><option value="4">4 vezes por semana</option><option value="5">5 vezes por semana</option><option value="6">6 vezes por semana</option></select><label for="nm" style="margin-top:8px">Meta diária em ml (opcional, para água)</label><input id="nm" type="number" min="1" max="20000" step="50" placeholder="ex.: 2700"></div>
     <div class="actions"><button type="button" class="btn" id="cancel">Cancelar</button><button type="submit" class="btn btn-primary" id="addBtn">Adicionar</button></div>
   </form>
 </div>
@@ -266,6 +276,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <h2>Editar hábito</h2>
     <div class="field"><label for="hbT">Nome</label><input id="hbT" maxlength="200" required></div>
     <div class="field"><label for="hbF">Frequência</label><select id="hbF"><option value="">Todo dia</option><option value="1">1 vez por semana</option><option value="2">2 vezes por semana</option><option value="3">3 vezes por semana</option><option value="4">4 vezes por semana</option><option value="5">5 vezes por semana</option><option value="6">6 vezes por semana</option></select></div>
+    <div class="field"><label for="hbM">Meta diária em ml (opcional, para água)</label><input id="hbM" type="number" min="1" max="20000" step="50" placeholder="ex.: 2700"></div>
     <div class="field"><label for="hbO">Observação (opcional)</label><input id="hbO" maxlength="300"></div>
     <div class="actions"><button type="button" class="btn" id="hbCancel">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
   </form>
@@ -277,6 +288,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="help">
       <p><b>Tarefas.</b> Toque em "＋ Nova tarefa", escolha a frente e, se quiser, o prazo e uma observação. Marque a caixinha para concluir. "Editar" muda o nome, a frente, o prazo e a observação. "Apagar" pede um segundo toque para confirmar.</p>
       <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência.</p>
+      <p><b>Água.</b> Um hábito com meta diária em ml vira uma barra que enche. Use +200, +300 ou +500 ml, ou digite outro valor e toque em "Registrar". "↶ Desfazer" tira o último registro de hoje. Ao chegar na meta, o dia fica feito e conta na sequência 🔥. Para criar, informe a meta em ml no hábito novo ou em "Editar".</p>
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
       <p><b>Urgência.</b> Clique no 🔥 de qualquer tarefa para colocar na Urgência. Ela aparece no topo da Visão geral e na visão "Urgência". Clique de novo para tirar. Ao concluir, ela sai sozinha.</p>
@@ -335,7 +347,7 @@ function aplicar(d){
   tasks=(d.tarefas||[]).map(r=>({id:r.id,title:r.titulo,esp:r.espaco_id,frente:r.frente,
     area:r.espaco_id===HOME.id?r.frente:'@'+r.espaco_id,resp:r.responsavel||'',due:r.prazo||'',done:!!r.feita,
     doneAt:r.feita_em?Date.parse(r.feita_em):null,notes:r.obs||'',createdAt:Date.parse(r.criado_em)||0}));
-  habits=(d.habitos||[]).map(h=>({id:h.id,title:h.titulo,esp:h.espaco_id,area:h.frente||'habitos',goal:h.meta_semana||0,
+  habits=(d.habitos||[]).map(h=>({id:h.id,title:h.titulo,esp:h.espaco_id,area:h.frente||'habitos',goal:h.meta_semana||0,ml:h.meta_ml||0,qtd:h.qtd||{},
     days:h.dias||{},notes:h.obs||'',createdAt:Date.parse(h.criado_em)||0}));
   $('whoTxt').textContent=QUEM?'Olá, '+QUEM:'';
 }
@@ -462,12 +474,31 @@ function weekCount(h){const days=h.days||{};const d=today();const dow=(d.getDay(
 async function toggleDay(h,k){const v=!(h.days||{})[k];h.days=Object.assign({},h.days||{});if(v)h.days[k]=true;else delete h.days[k];render();
   try{await rpc('lv_todo_habito_salvar',{p_habito:{id:h.id,dia:k,valor:v}})}catch(e){$('status').textContent='Não consegui salvar o hábito.';refresh()}}
 async function removeHabit(h){try{await rpc('lv_todo_habito_apagar',{p_id:h.id});refresh()}catch(e){$('status').textContent='Não consegui apagar.'}}
+const fmtMl=n=>Number(n||0).toLocaleString('pt-BR');
+const desfKey=h=>'lvTodoAgua:'+h.id+':'+isoOf(today());
+function pilha(h){try{return JSON.parse(localStorage.getItem(desfKey(h))||'[]')}catch(_){return[]}}
+function setPilha(h,a){try{localStorage.setItem(desfKey(h),JSON.stringify(a.slice(-30)))}catch(_){}}
+async function addMl(h,ml,dia,semPilha){ml=Math.round(Number(ml));if(!ml||Math.abs(ml)>10000)return false;const k=dia||isoOf(today());
+  const tot=Math.max(0,(Number((h.qtd||{})[k])||0)+ml);h.qtd=Object.assign({},h.qtd||{});if(tot)h.qtd[k]=tot;else delete h.qtd[k];
+  h.days=Object.assign({},h.days||{});if(h.ml&&tot>=h.ml)h.days[k]=true;else if(h.ml)delete h.days[k];
+  if(!semPilha&&k===isoOf(today())){const a=pilha(h);if(ml>0)a.push(ml);setPilha(h,a)}render();
+  try{await rpc('lv_todo_habito_salvar',{p_habito:{id:h.id,dia:k,add_ml:ml}});return true}catch(e){$('status').textContent='Não consegui salvar a água.';refresh();return false}}
+async function desfazerMl(h){const a=pilha(h);const v=a.pop();if(!v)return;setPilha(h,a);await addMl(h,-v,null,true)}
+function aguaBox(x){const k=isoOf(today()),q=Number((x.qtd||{})[k])||0,pct=Math.min(100,Math.round(q/x.ml*100)),ok=q>=x.ml;
+  const w=el('div','agua');const bar=el('div','abar'+(ok?' ok':''));const sp=el('span');sp.style.width=pct+'%';bar.appendChild(sp);
+  bar.setAttribute('role','progressbar');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(x.ml));bar.setAttribute('aria-valuenow',String(q));bar.setAttribute('aria-label',x.title);
+  const tx=el('div','atxt');const b=el('b',null,fmtMl(q));tx.append(b,' de '+fmtMl(x.ml)+' ml hoje'+(ok?', meta batida! ✅':', faltam '+fmtMl(x.ml-q)+' ml'));
+  const bt=el('div','abtns');[200,300,500].forEach(v=>{const u=el('button',null,'+'+v+' ml');u.type='button';u.onclick=()=>addMl(x,v);bt.appendChild(u)});
+  const inp=el('input');inp.type='number';inp.min='1';inp.max='5000';inp.step='10';inp.placeholder='outro, ml';inp.setAttribute('aria-label','Outra quantidade em ml');
+  const go=el('button',null,'Registrar');go.type='button';const reg=()=>{const v=parseInt(inp.value,10);if(v>0&&v<=5000){inp.value='';addMl(x,v)}};go.onclick=reg;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();reg()}};
+  const un=el('button',null,'↶ Desfazer');un.type='button';un.disabled=!pilha(x).length;un.title='Desfaz o último registro de hoje';un.onclick=()=>desfazerMl(x);
+  bt.append(inp,go,un);w.append(bar,tx,bt);return w}
 let habId=null;
-function openHab(h){habId=h.id;$('hbT').value=h.title;$('hbF').value=h.goal?String(h.goal):'';$('hbO').value=h.notes||'';$('ovh').classList.add('open');setTimeout(()=>$('hbT').focus(),50)}
+function openHab(h){habId=h.id;$('hbT').value=h.title;$('hbF').value=h.goal?String(h.goal):'';$('hbM').value=h.ml?String(h.ml):'';$('hbO').value=h.notes||'';$('ovh').classList.add('open');setTimeout(()=>$('hbT').focus(),50)}
 function closeHab(){habId=null;$('ovh').classList.remove('open')}
 $('hbCancel').onclick=closeHab;$('ovh').addEventListener('click',e=>{if(e.target===$('ovh'))closeHab()});
 $('habForm').addEventListener('submit',async e=>{e.preventDefault();const t=$('hbT').value.trim();if(!habId||!t)return;
-  try{await rpc('lv_todo_habito_salvar',{p_habito:{id:habId,titulo:t,meta_semana:$('hbF').value||'',obs:$('hbO').value.trim()}});closeHab();refresh()}catch(err){$('status').textContent='Não consegui salvar o hábito.'}});
+  try{await rpc('lv_todo_habito_salvar',{p_habito:{id:habId,titulo:t,meta_semana:$('hbM').value?'':($('hbF').value||''),meta_ml:$('hbM').value||'',obs:$('hbO').value.trim()}});closeHab();refresh()}catch(err){$('status').textContent='Não consegui salvar o hábito.'}});
 function openAjuda(){$('ovj').classList.add('open')}function closeAjuda(){$('ovj').classList.remove('open')}
 $('ajuda').onclick=openAjuda;$('ajudaM').onclick=openAjuda;$('ajFechar').onclick=closeAjuda;$('ovj').addEventListener('click',e=>{if(e.target===$('ovj'))closeAjuda()});
 function habitCard(hs){
@@ -476,8 +507,11 @@ function habitCard(hs){
   hs.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{
     const r=el('div','hrow');const t=el('div','htitle',x.title);const s=streak(x);
     if(x.goal){const wk=weekCount(x),ok=wk>=x.goal;const sp=el('span','hstreak',(ok?'✅ ':'🎯 ')+wk+' de '+x.goal+' nesta semana'+(ok?', meta batida!':''));if(ok)sp.style.color='var(--green-t)';t.appendChild(sp)}
-    else t.appendChild(el('span','hstreak',s?('🔥 '+s+(s===1?' dia seguido':' dias seguidos')):'Todo dia. Marque o dia que fizer'));
+    else t.appendChild(el('span','hstreak',s?('🔥 '+s+(s===1?' dia seguido':' dias seguidos')):(x.ml?'Meta de '+fmtMl(x.ml)+' ml por dia':'Todo dia. Marque o dia que fizer')));
     if(x.notes)t.appendChild(el('span','hstreak',x.notes));
+    if(x.ml){const key='h-'+x.id;const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
+      del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
+      const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,aguaBox(x),ed,del);c.appendChild(r);return}
     const ds=el('div','days');
     for(let i=6;i>=0;i--){const dd=today();dd.setDate(dd.getDate()-i);const k=isoOf(dd);const on=!!(x.days||{})[k];
       const b=el('button','day'+(on?' on':'')+(i===0?' today':''));b.type='button';b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',x.title+' em '+dd.toLocaleDateString('pt-BR'));
@@ -580,7 +614,7 @@ $('add').addEventListener('submit',async e=>{e.preventDefault();const title=$('n
   const esp=$('ne').value||HOME.id,frente=$('na').value,obs=$('nn').value.trim();
   try{
     if(editId){const p={id:editId,titulo:title,frente,prazo:$('nd').value||'',obs};if(compart(espDe(esp)))p.responsavel=$('nr').value;await rpc('lv_todo_salvar',{p_tarefa:p})}
-    else if($('nh').checked&&!$('nhWrap').hidden)await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:esp,titulo:title,frente,meta_semana:$('nf').value||'',obs}});
+    else if($('nh').checked&&!$('nhWrap').hidden)await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:esp,titulo:title,frente,meta_semana:$('nm').value?'':($('nf').value||''),meta_ml:$('nm').value||'',obs}});
     else await rpc('lv_todo_salvar',{p_tarefa:{espaco_id:esp,titulo:title,frente,responsavel:compart(espDe(esp))?$('nr').value:QUEM,prazo:$('nd').value||'',obs}});
     closeAdd();refresh()}
   catch(err){$('status').textContent='Não consegui salvar. Tente de novo.'}});
@@ -621,7 +655,7 @@ $('chatNew').onclick=()=>{ctl&&ctl.abort();turns=[];saveHist();msgs.textContent=
 function snapshot(){
   const lines=tasks.slice().sort(byDue).map(t=>{const a=(AMAP[t.area]||['','?'])[1];const e=espDe(t.esp);
     return `- [${t.done?'x':' '}] id=${t.id} | ${t.title}${eUrg(t)&&!t.done?' | URGENTE':''} | frente: ${a}${t.area[0]==='@'?' / '+frenteNome(e,t.frente):''}${compart(e)&&t.resp?' | responsável: '+t.resp:''}${t.due?' | prazo: '+t.due:''}${t.notes?' | obs: '+t.notes:''}`});
-  const hl=habits.map(h=>`- hábito: id=${h.id} | ${h.title} | meta: ${h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
+  const hl=habits.map(h=>`- hábito: id=${h.id} | ${h.title} | meta: ${h.ml?fmtMl(h.ml)+' ml por dia (hoje: '+fmtMl((h.qtd||{})[isoOf(today())]||0)+' ml)':h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
   return lines.concat(hl).join('\n')||'(lista vazia)'}
 function rules(){const d=new Date();const hoje=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   return `Você é a Duda, assistente do To Do List. Quem está perguntando agora: ${QUEM||"não identificado"}.
@@ -637,6 +671,7 @@ Regras:
 - Se o pedido puder ser de mais de uma tarefa da lista, pergunte qual antes de mexer.
 - Só apague tarefa quando pedirem com a palavra apagar, excluir ou remover. Concluir não é apagar.
 - Leve em conta a conversa anterior: "essa", "a de antes" e "aquela" se referem ao que acabou de ser falado.
+- Água: quando pedirem para registrar água ("bebi 500 ml", "tomei um copo", "mais meio litro"), use registrar_agua. Para corrigir um registro errado, use ml negativo.
 - "URGENTE" na lista quer dizer que a tarefa está na Urgência (o 🔥). Para pôr ou tirar, use marcar_urgencia.
 - A tela de início do To Do List se chama "Visão geral". Use esse nome quando falar dela.
 - Sem markdown pesado: no máximo listas simples com "•".
@@ -674,11 +709,17 @@ function tools(){return[
   async execute(i){const t=tasks.find(x=>x.id===String(i.id));if(!t)throw new Error('id não encontrado na lista');
     await rpc('lv_todo_apagar',{p_id:t.id});bubble('sys','✕ Apagada: '+t.title);refresh();return{ok:true}}},
  {name:'adicionar_habito',description:'Cria um hábito novo no espaço pessoal. vezes_por_semana de 1 a 7; sem número, é todo dia.',
-  inputSchema:{type:'object',properties:{titulo:{type:'string'},vezes_por_semana:{type:'integer'},obs:{type:'string'}},required:['titulo']},
+  inputSchema:{type:'object',properties:{titulo:{type:'string'},vezes_por_semana:{type:'integer'},meta_ml:{type:'integer',description:'meta diária em ml, para hábitos de quantidade como água'},obs:{type:'string'}},required:['titulo']},
   async execute(i){if(!podeFrentes())throw new Error('hábitos só no espaço pessoal');const n=parseInt(i.vezes_por_semana,10);
     const fr=(AREAS.find(a=>a[0]==='habitos')||AREAS[0])[0];
-    await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:HOME.id,titulo:String(i.titulo).slice(0,200),frente:fr,meta_semana:n>=1&&n<=6?String(n):'',obs:String(i.obs||'').slice(0,300)}});
+    await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:HOME.id,titulo:String(i.titulo).slice(0,200),frente:fr,meta_semana:i.meta_ml?'':(n>=1&&n<=6?String(n):''),meta_ml:parseInt(i.meta_ml,10)>0?String(parseInt(i.meta_ml,10)):'',obs:String(i.obs||'').slice(0,300)}});
     bubble('sys','✓ Hábito criado: '+i.titulo);refresh();return{ok:true}}},
+ {name:'registrar_agua',description:'Registra quantidade (ml) num hábito com meta em ml, como a água. ml positivo soma; negativo corrige para menos. Sem id, usa o primeiro hábito com meta em ml. Sem data, vale hoje. Litros: 1 L = 1000 ml; copo sem medida = 200 ml.',
+  inputSchema:{type:'object',properties:{ml:{type:'integer'},id:{type:'string'},data:{type:'string',description:'AAAA-MM-DD'}},required:['ml']},
+  async execute(i){const h=i.id?habits.find(x=>String(x.id)===String(i.id)):habits.find(x=>x.ml);if(!h||!h.ml)throw new Error('não há hábito com meta em ml');
+    const ml=parseInt(i.ml,10);if(!ml||Math.abs(ml)>5000)throw new Error('quantidade inválida');
+    const d=/^\d{4}-\d{2}-\d{2}$/.test(String(i.data||''))?String(i.data):null;if(!(await addMl(h,ml,d)))throw new Error('não salvou');
+    const k=d||isoOf(today());const q=Number((h.qtd||{})[k])||0;bubble('sys','💧 '+(ml>0?'+':'')+fmtMl(ml)+' ml: '+fmtMl(q)+' de '+fmtMl(h.ml)+' ml');return{ok:true,total_ml:q,meta_ml:h.ml}}},
  {name:'marcar_habito',description:'Marca ou desmarca um hábito em um dia, pelo id do hábito. Sem data, vale hoje.',
   inputSchema:{type:'object',properties:{id:{type:'string'},data:{type:'string',description:'AAAA-MM-DD'},feito:{type:'boolean'}},required:['id','feito']},
   async execute(i){const h=habits.find(x=>String(x.id)===String(i.id));if(!h)throw new Error('hábito não encontrado');
