@@ -306,7 +306,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <h2>Como usar</h2>
     <div class="help">
       <p><b>Tarefas.</b> Toque em "＋ Nova tarefa", escolha a frente e, se quiser, o prazo e uma observação. Marque a caixinha para concluir. "Editar" muda o nome, a frente, o prazo e a observação. "Apagar" pede um segundo toque para confirmar.</p>
-      <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência.</p>
+      <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência. Para mudar a ordem, segure o ⠿ à esquerda do hábito e arraste para cima ou para baixo.</p>
       <p><b>Água.</b> Um hábito com meta diária em ml vira uma fileira de copinhos. A cada copo que você beber, toque em "🥤 Bebi um copo" (ou em qualquer copinho) e ele enche. Escolha o tamanho do seu copo uma vez só; o número de copos do dia sai da meta. "outro valor" soma uma quantidade diferente e "↶ Desfazer" tira o último registro de hoje. Todo dia começa do zero. Ao chegar na meta, o dia fica feito e conta na sequência 🔥. Para criar, informe a meta em ml no hábito novo ou em "Editar".</p>
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
@@ -336,7 +336,7 @@ let CODIGO='',QUEM='';
 let ESP=[],HOME=null,OUTROS=[];           /* espaços: o principal e os demais */
 let AREAS=[],AMAP={},BASE_NAMES={};       /* frentes da lateral: [chave,nome,corVar,corBadge] */
 let tasks=[],habits=[],armed=null,view='all',pollT=null,loaded=false;
-let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],copos={},agendaServ='',lastData=null,dragging=false,pendingRender=false,showAll={};
+let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],copos={},ordemHab=[],agendaServ='',lastData=null,dragging=false,pendingRender=false,showAll={};
 try{CODIGO=localStorage.getItem(CODLS)||''}catch(e){}
 try{view=localStorage.getItem('todoView')||'all'}catch(e){}
 
@@ -357,7 +357,7 @@ function aplicar(d){
   areaOrder=Array.isArray(cfg.areas)?cfg.areas:null;
   areaNames=(cfg.names&&typeof cfg.names==='object')?cfg.names:{};
   taskOrder=(cfg.ordem&&typeof cfg.ordem==='object')?cfg.ordem:{};
-  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];copos=cfg.copos&&typeof cfg.copos==='object'?cfg.copos:{};agendaServ=cfg.agenda==='secretaria'?'secretaria':'';
+  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];copos=cfg.copos&&typeof cfg.copos==='object'?cfg.copos:{};agendaServ=cfg.agenda==='secretaria'?'secretaria':'';ordemHab=Array.isArray(cfg.ordemHab)?cfg.ordemHab.map(String):[];
   AREAS=(HOME.frentes||[]).concat(extras).filter(f=>!ocultas.includes(f.chave)).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
     .concat(OUTROS.map(e=>['@'+e.id,e.rotulo||e.nome,'--green','bg']));
   BASE_NAMES=Object.fromEntries(AREAS.map(a=>[a[0],a[1]]));
@@ -452,8 +452,8 @@ function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
 /* ordem e nomes das frentes (por usuário) */
 function orderedAreas(){if(!areaOrder)return AREAS;const pos=k=>{const i=areaOrder.indexOf(k);return i<0?1000+AREAS.findIndex(a=>a[0]===k):i};return AREAS.slice().sort((a,b)=>pos(a[0])-pos(b[0]))}
 async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);if(loaded){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));urgentes=urgentes.filter(id=>vivos.has(id))}
-  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,agenda:agendaServ};
-  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,agenda:agendaServ}})}catch(e){$('status').textContent='Não consegui salvar.'}}
+  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,ordemHab,agenda:agendaServ};
+  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,ordemHab,agenda:agendaServ}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
 async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
   taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
@@ -537,8 +537,9 @@ $('ajuda').onclick=openAjuda;$('ajudaM').onclick=openAjuda;$('ajFechar').onclick
 function habitCard(hs){
   const c=el('section','card');const h=el('div','ct');const d=el('span','dot');d.style.setProperty('--c','var(--pink)');h.append(d,'Hábitos e rotinas');
   const daily=hs.filter(x=>!x.goal);const doneToday=daily.filter(x=>(x.days||{})[isoOf(today())]).length;if(daily.length)h.appendChild(el('span','badge '+(doneToday===daily.length?'bg':'bk'),doneToday+'/'+daily.length+' diários hoje'));c.appendChild(h);
-  hs.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{
-    const r=el('div','hrow');const t=el('div','htitle',x.title);const s=streak(x);
+  const pos=x=>{const i=ordemHab.indexOf(String(x.id));return i<0?1e9:i};
+  hs.slice().sort((a,b)=>pos(a)-pos(b)||(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{
+    const r=el('div','hrow');r.dataset.id=x.id;if(hs.length>1)r.appendChild(grip());const t=el('div','htitle',x.title);const s=streak(x);
     if(x.goal){const wk=weekCount(x),ok=wk>=x.goal;const sp=el('span','hstreak',(ok?'✅ ':'🎯 ')+wk+' de '+x.goal+' nesta semana'+(ok?', meta batida!':''));if(ok)sp.style.color='var(--green-t)';t.appendChild(sp)}
     else t.appendChild(el('span','hstreak',s?('🔥 '+s+(s===1?' dia seguido':' dias seguidos')):(x.ml?'Meta de '+fmtMl(x.ml)+' ml por dia':'Todo dia. Marque o dia que fizer')));
     if(x.notes)t.appendChild(el('span','hstreak',x.notes));
@@ -555,6 +556,7 @@ function habitCard(hs){
     del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
     const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);
     r.append(t,ds,ed,del);c.appendChild(r)});
+  if(hs.length>1)makeSortable(c,'.hrow',()=>{const ids=[...c.querySelectorAll(':scope > .hrow')].map(x=>x.dataset.id);ordemHab=ids.concat(ordemHab.filter(id=>!ids.includes(id)));saveSettings()});
   return c}
 
 function render(){
