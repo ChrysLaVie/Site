@@ -161,6 +161,18 @@ body.chatting .mets,body.chatting #list,body.chatting .fab{display:none}
 .hstreak{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .days{display:flex;gap:6px}
 .agua{flex:2 1 300px;display:flex;flex-direction:column;gap:8px}
+.copos{display:flex;flex-wrap:wrap;gap:6px}
+.copo{width:30px;height:38px;border:0;padding:0;background:none;cursor:pointer;position:relative}
+.copo .cv{position:absolute;inset:0;clip-path:polygon(0 0,100% 0,84% 100%,16% 100%);background:var(--surface2);overflow:hidden}
+.copo .cv i{position:absolute;left:0;right:0;bottom:0;background:var(--blue);transition:height .3s}
+.copo.cheio .cv i{background:var(--blue)}
+.agua.ok .copo .cv i{background:var(--green)}
+.copo:hover .cv{background:var(--border2)}
+.amais{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.amais .big{border:0;background:var(--blue);color:#fff;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.agua.ok .amais .big{background:var(--green)}
+.amais select{padding:5px 8px;border:1px solid var(--border2);border-radius:8px;font-size:12.5px;background:var(--surface);color:var(--text);font-family:inherit}
+.amais .lk{border:0;background:none;color:var(--muted);text-decoration:underline;text-underline-offset:2px;font-size:12.5px;cursor:pointer;padding:0;font-family:inherit}
 .abar{height:14px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
 .abar span{display:block;height:100%;background:var(--blue);border-radius:999px;transition:width .3s}
 .abar.ok span{background:var(--green)}
@@ -288,7 +300,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="help">
       <p><b>Tarefas.</b> Toque em "＋ Nova tarefa", escolha a frente e, se quiser, o prazo e uma observação. Marque a caixinha para concluir. "Editar" muda o nome, a frente, o prazo e a observação. "Apagar" pede um segundo toque para confirmar.</p>
       <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência.</p>
-      <p><b>Água.</b> Um hábito com meta diária em ml vira uma barra que enche. Use +200, +300 ou +500 ml, ou digite outro valor e toque em "Registrar". "↶ Desfazer" tira o último registro de hoje. Ao chegar na meta, o dia fica feito e conta na sequência 🔥. Para criar, informe a meta em ml no hábito novo ou em "Editar".</p>
+      <p><b>Água.</b> Um hábito com meta diária em ml vira uma fileira de copinhos. A cada copo que você beber, toque em "🥤 Bebi um copo" (ou em qualquer copinho) e ele enche. Escolha o tamanho do seu copo uma vez só; o número de copos do dia sai da meta. "outro valor" soma uma quantidade diferente e "↶ Desfazer" tira o último registro de hoje. Todo dia começa do zero. Ao chegar na meta, o dia fica feito e conta na sequência 🔥. Para criar, informe a meta em ml no hábito novo ou em "Editar".</p>
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
       <p><b>Urgência.</b> Clique no 🔥 de qualquer tarefa para colocar na Urgência. Ela aparece no topo da Visão geral e na visão "Urgência". Clique de novo para tirar. Ao concluir, ela sai sozinha.</p>
@@ -317,7 +329,7 @@ let CODIGO='',QUEM='';
 let ESP=[],HOME=null,OUTROS=[];           /* espaços: o principal e os demais */
 let AREAS=[],AMAP={},BASE_NAMES={};       /* frentes da lateral: [chave,nome,corVar,corBadge] */
 let tasks=[],habits=[],armed=null,view='all',pollT=null,loaded=false;
-let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],lastData=null,dragging=false,pendingRender=false,showAll={};
+let areaOrder=null,areaNames={},taskOrder={},extras=[],ocultas=[],urgentes=[],copos={},lastData=null,dragging=false,pendingRender=false,showAll={};
 try{CODIGO=localStorage.getItem(CODLS)||''}catch(e){}
 try{view=localStorage.getItem('todoView')||'all'}catch(e){}
 
@@ -338,7 +350,7 @@ function aplicar(d){
   areaOrder=Array.isArray(cfg.areas)?cfg.areas:null;
   areaNames=(cfg.names&&typeof cfg.names==='object')?cfg.names:{};
   taskOrder=(cfg.ordem&&typeof cfg.ordem==='object')?cfg.ordem:{};
-  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];
+  extras=Array.isArray(cfg.extras)?cfg.extras:[];ocultas=Array.isArray(cfg.ocultas)?cfg.ocultas:[];urgentes=Array.isArray(cfg.urgentes)?cfg.urgentes.map(String):[];copos=cfg.copos&&typeof cfg.copos==='object'?cfg.copos:{};
   AREAS=(HOME.frentes||[]).concat(extras).filter(f=>!ocultas.includes(f.chave)).map(f=>{const c=COR[f.cor]||COR.gray;return[f.chave,f.nome,c[0],c[1]]})
     .concat(OUTROS.map(e=>['@'+e.id,e.rotulo||e.nome,'--green','bg']));
   BASE_NAMES=Object.fromEntries(AREAS.map(a=>[a[0],a[1]]));
@@ -433,8 +445,8 @@ function card(title,color,items,showArea,badgeTxt,badgeCls,sufixo,sortKey){
 /* ordem e nomes das frentes (por usuário) */
 function orderedAreas(){if(!areaOrder)return AREAS;const pos=k=>{const i=areaOrder.indexOf(k);return i<0?1000+AREAS.findIndex(a=>a[0]===k):i};return AREAS.slice().sort((a,b)=>pos(a[0])-pos(b[0]))}
 async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>a[0]);if(loaded){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));urgentes=urgentes.filter(id=>vivos.has(id))}
-  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes};
-  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes}})}catch(e){$('status').textContent='Não consegui salvar.'}}
+  HOME.config={areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos};
+  try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
 async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
   taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
@@ -484,15 +496,29 @@ async function addMl(h,ml,dia,semPilha){ml=Math.round(Number(ml));if(!ml||Math.a
   if(!semPilha&&k===isoOf(today())){const a=pilha(h);if(ml>0)a.push(ml);setPilha(h,a)}render();
   try{await rpc('lv_todo_habito_salvar',{p_habito:{id:h.id,dia:k,add_ml:ml}});return true}catch(e){$('status').textContent='Não consegui salvar a água.';refresh();return false}}
 async function desfazerMl(h){const a=pilha(h);const v=a.pop();if(!v)return;setPilha(h,a);await addMl(h,-v,null,true)}
-function aguaBox(x){const k=isoOf(today()),q=Number((x.qtd||{})[k])||0,pct=Math.min(100,Math.round(q/x.ml*100)),ok=q>=x.ml;
-  const w=el('div','agua');const bar=el('div','abar'+(ok?' ok':''));const sp=el('span');sp.style.width=pct+'%';bar.appendChild(sp);
-  bar.setAttribute('role','progressbar');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax',String(x.ml));bar.setAttribute('aria-valuenow',String(q));bar.setAttribute('aria-label',x.title);
-  const tx=el('div','atxt');const b=el('b',null,fmtMl(q));tx.append(b,' de '+fmtMl(x.ml)+' ml hoje'+(ok?', meta batida! ✅':', faltam '+fmtMl(x.ml-q)+' ml'));
-  const bt=el('div','abtns');[200,300,500].forEach(v=>{const u=el('button',null,'+'+v+' ml');u.type='button';u.onclick=()=>addMl(x,v);bt.appendChild(u)});
-  const inp=el('input');inp.type='number';inp.min='1';inp.max='5000';inp.step='10';inp.placeholder='outro, ml';inp.setAttribute('aria-label','Outra quantidade em ml');
-  const go=el('button',null,'Registrar');go.type='button';const reg=()=>{const v=parseInt(inp.value,10);if(v>0&&v<=5000){inp.value='';addMl(x,v)}};go.onclick=reg;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();reg()}};
-  const un=el('button',null,'↶ Desfazer');un.type='button';un.disabled=!pilha(x).length;un.title='Desfaz o último registro de hoje';un.onclick=()=>desfazerMl(x);
-  bt.append(inp,go,un);w.append(bar,tx,bt);return w}
+const copoDe=h=>{const v=parseInt(copos[h.id],10);return v>=50&&v<=2000?v:300};
+async function setCopo(h,v){copos=Object.assign({},copos,{[h.id]:v});render();await saveSettings()}
+let aguaOutro={};
+function aguaBox(x){const k=isoOf(today()),q=Number((x.qtd||{})[k])||0,ok=q>=x.ml,cp=copoDe(x),n=Math.max(1,Math.ceil(x.ml/cp));
+  const w=el('div','agua'+(ok?' ok':''));
+  const tx=el('div','atxt');const b=el('b',null,fmtMl(q)+' ml');const cheios=Math.floor(q/cp);
+  tx.append(b,' de '+fmtMl(x.ml)+' ml hoje · '+Math.min(cheios,n)+' de '+n+' copos'+(ok?' · meta batida! ✅':' · faltam '+fmtMl(x.ml-q)+' ml'));
+  const cs=el('div','copos');cs.setAttribute('aria-label',cheios+' de '+n+' copos');
+  for(let c=0;c<Math.max(n,Math.ceil(q/cp));c++){const fill=Math.max(0,Math.min(1,(q-c*cp)/cp));const u=el('button','copo'+(fill>=1?' cheio':''));u.type='button';
+    const cv=el('span','cv');const lq=el('i');lq.style.height=Math.round(fill*100)+'%';cv.appendChild(lq);u.appendChild(cv);
+    u.title=fill>=1?'Copo '+(c+1)+' cheio':'Toque para somar um copo de '+cp+' ml';u.setAttribute('aria-label',u.title);
+    u.onclick=()=>addMl(x,cp);cs.appendChild(u)}
+  const am=el('div','amais');const big=el('button','big','🥤 Bebi um copo (+'+fmtMl(cp)+' ml)');big.type='button';big.onclick=()=>addMl(x,cp);
+  const sel=el('select');sel.setAttribute('aria-label','Tamanho do copo');[150,200,250,300,350,400,500,600,750,1000].forEach(v=>{const o=el('option',null,'copo de '+fmtMl(v)+' ml');o.value=String(v);if(v===cp)o.selected=true;sel.appendChild(o)});
+  if(![150,200,250,300,350,400,500,600,750,1000].includes(cp)){const o=el('option',null,'copo de '+fmtMl(cp)+' ml');o.value=String(cp);o.selected=true;sel.appendChild(o)}
+  sel.onchange=()=>setCopo(x,parseInt(sel.value,10));
+  const un=el('button','lk','↶ Desfazer');un.type='button';un.disabled=!pilha(x).length;if(un.disabled)un.style.opacity='.4';un.title='Desfaz o último registro de hoje';un.onclick=()=>desfazerMl(x);
+  const ou=el('button','lk','outro valor');ou.type='button';ou.onclick=()=>{aguaOutro[x.id]=!aguaOutro[x.id];render()};
+  am.append(big,sel,un,ou);w.append(cs,tx,am);
+  if(aguaOutro[x.id]){const bt=el('div','abtns');const inp=el('input');inp.type='number';inp.min='1';inp.max='5000';inp.step='10';inp.placeholder='ml';inp.setAttribute('aria-label','Quantidade em ml');
+    const go=el('button',null,'Somar');go.type='button';const reg=()=>{const v=parseInt(inp.value,10);if(v>0&&v<=5000){aguaOutro[x.id]=false;addMl(x,v)}};go.onclick=reg;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();reg()}};
+    bt.append(inp,go);w.appendChild(bt);setTimeout(()=>inp.focus(),30)}
+  return w}
 let habId=null;
 function openHab(h){habId=h.id;$('hbT').value=h.title;$('hbF').value=h.goal?String(h.goal):'';$('hbM').value=h.ml?String(h.ml):'';$('hbO').value=h.notes||'';$('ovh').classList.add('open');setTimeout(()=>$('hbT').focus(),50)}
 function closeHab(){habId=null;$('ovh').classList.remove('open')}
@@ -655,7 +681,7 @@ $('chatNew').onclick=()=>{ctl&&ctl.abort();turns=[];saveHist();msgs.textContent=
 function snapshot(){
   const lines=tasks.slice().sort(byDue).map(t=>{const a=(AMAP[t.area]||['','?'])[1];const e=espDe(t.esp);
     return `- [${t.done?'x':' '}] id=${t.id} | ${t.title}${eUrg(t)&&!t.done?' | URGENTE':''} | frente: ${a}${t.area[0]==='@'?' / '+frenteNome(e,t.frente):''}${compart(e)&&t.resp?' | responsável: '+t.resp:''}${t.due?' | prazo: '+t.due:''}${t.notes?' | obs: '+t.notes:''}`});
-  const hl=habits.map(h=>`- hábito: id=${h.id} | ${h.title} | meta: ${h.ml?fmtMl(h.ml)+' ml por dia (hoje: '+fmtMl((h.qtd||{})[isoOf(today())]||0)+' ml)':h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
+  const hl=habits.map(h=>`- hábito: id=${h.id} | ${h.title} | meta: ${h.ml?fmtMl(h.ml)+' ml por dia (hoje: '+fmtMl((h.qtd||{})[isoOf(today())]||0)+' ml; copo dela: '+copoDe(h)+' ml)':h.goal?h.goal+'x por semana (feito '+weekCount(h)+'x nesta semana)':'todo dia'} | feito hoje: ${(h.days||{})[isoOf(today())]?'sim':'não'} | sequência: ${streak(h)} dias`);
   return lines.concat(hl).join('\n')||'(lista vazia)'}
 function rules(){const d=new Date();const hoje=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   return `Você é a Duda, assistente do To Do List. Quem está perguntando agora: ${QUEM||"não identificado"}.
@@ -714,7 +740,7 @@ function tools(){return[
     const fr=(AREAS.find(a=>a[0]==='habitos')||AREAS[0])[0];
     await rpc('lv_todo_habito_salvar',{p_habito:{espaco_id:HOME.id,titulo:String(i.titulo).slice(0,200),frente:fr,meta_semana:i.meta_ml?'':(n>=1&&n<=6?String(n):''),meta_ml:parseInt(i.meta_ml,10)>0?String(parseInt(i.meta_ml,10)):'',obs:String(i.obs||'').slice(0,300)}});
     bubble('sys','✓ Hábito criado: '+i.titulo);refresh();return{ok:true}}},
- {name:'registrar_agua',description:'Registra quantidade (ml) num hábito com meta em ml, como a água. ml positivo soma; negativo corrige para menos. Sem id, usa o primeiro hábito com meta em ml. Sem data, vale hoje. Litros: 1 L = 1000 ml; copo sem medida = 200 ml.',
+ {name:'registrar_agua',description:'Registra quantidade (ml) num hábito com meta em ml, como a água. ml positivo soma; negativo corrige para menos. Sem id, usa o primeiro hábito com meta em ml. Sem data, vale hoje. Litros: 1 L = 1000 ml; copo sem medida = o tamanho de copo escolhido na página (padrão 300 ml).',
   inputSchema:{type:'object',properties:{ml:{type:'integer'},id:{type:'string'},data:{type:'string',description:'AAAA-MM-DD'}},required:['ml']},
   async execute(i){const h=i.id?habits.find(x=>String(x.id)===String(i.id)):habits.find(x=>x.ml);if(!h||!h.ml)throw new Error('não há hábito com meta em ml');
     const ml=parseInt(i.ml,10);if(!ml||Math.abs(ml)>5000)throw new Error('quantidade inválida');
