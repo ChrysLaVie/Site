@@ -305,7 +305,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
       <p><b>Urgência.</b> Clique no 🔥 de qualquer tarefa para colocar na Urgência. Ela aparece no topo da Visão geral e na visão "Urgência". Clique de novo para tirar. Ao concluir, ela sai sozinha.</p>
       <p><b>Visões.</b> "Visão geral" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
-      <p><b>Agenda do Google.</b> Toque em "Conectar Google Agenda" e autorize uma vez. A partir daí, toda tarefa sua com prazo vira um evento de dia inteiro na sua agenda, com lembrete na véspera. Se você mudar o prazo, concluir ou apagar a tarefa, o evento acompanha. A atualização acontece enquanto o To Do List está aberto. Sem conectar, o botão "＋ Agenda" de cada tarefa abre o evento pronto para salvar à mão.</p>
+      <p><b>Agenda do Google.</b> Toque em "Conectar Google Agenda" e autorize uma vez. A partir daí, toda tarefa sua com prazo vira um evento de dia inteiro na sua agenda, com lembrete na véspera. Se você mudar o prazo, concluir ou apagar a tarefa, o evento acompanha. A atualização acontece enquanto o To Do List está aberto. O Google só deixa a página usar a agenda por 1 hora a cada autorização; depois disso a página nunca abre o login sozinha: quando houver mudança para levar, o botão mostra "📅 Atualizar agenda (número)" e um toque resolve. Sem conectar, o botão "＋ Agenda" de cada tarefa abre o evento pronto para salvar à mão.</p>
       <p><b>Pergunte à Duda.</b> É um chat que responde sobre a sua lista e cria ou conclui tarefas quando você pede. É opcional e usa a sua própria chave da API do Claude.</p>
       <p><b>Privacidade.</b> O seu espaço é só seu. Quem divide um espaço com você vê apenas as tarefas daquele espaço.</p>
       <p><b>Tema e saída.</b> Troque entre claro e escuro quando quiser. "Sair" tira o seu código deste aparelho.</p>
@@ -796,19 +796,23 @@ function gInit(){if(gClient||!(window.google&&google.accounts&&google.accounts.o
     callback:r=>{const p=gPend;gPend=null;if(!r||r.error||!r.access_token){gStatus();if(p)p(null);return}
       gTok=r.access_token;gAte=Date.now()+((r.expires_in||3600)-120)*1000;
       try{localStorage.setItem(GTK,JSON.stringify({token:gTok,ate:gAte}));localStorage.setItem(GOK,'1')}catch(e){}
-      gStatus();if(p)p(gTok);gSync()},
+      gStatus();if(p)p(gTok);if(!p)gSync()},
     error_callback:()=>{const p=gPend;gPend=null;gStatus();if(p)p(null)}})}
-function gToken(interativo){if(gValido())return Promise.resolve(gTok);if(!interativo&&!gOk())return Promise.resolve(null);
+function gToken(interativo){if(gValido())return Promise.resolve(gTok);if(!interativo)return Promise.resolve(null);
   gInit();if(!gClient)return Promise.resolve(null);
-  if(!interativo){if(Date.now()-gLastTry<600000)return Promise.resolve(null);gLastTry=Date.now()}
   return new Promise(res=>{gPend=res;try{gClient.requestAccessToken({prompt:gOk()?'':'consent'})}catch(e){gPend=null;res(null)}})}
 function gConectar(){gInit();if(!gClient){$('status').textContent='Aguarde a página carregar por completo e tente de novo.';return}gToken(true)}
 function gDesconectar(){if(gTok&&window.google)try{google.accounts.oauth2.revoke(gTok,()=>{})}catch(e){}
   gTok=null;gAte=0;try{localStorage.removeItem(GTK);localStorage.removeItem(GOK)}catch(e){}gStatus()}
-function gStatus(){const on=gOk(),ok=gValido();const b=$('gcalBtn');
-  b.textContent=on?(ok?'📅 Agenda conectada':'📅 Reconectar a agenda'):'📅 Conectar Google Agenda';
+function gPendentes(){if(!HOME||!QUEM)return 0;let map={};try{map=JSON.parse(localStorage.getItem(GMAP+':'+QUEM)||'{}')}catch(e){}
+  const want={};tasks.forEach(t=>{if(!t.done&&t.due&&(t.esp===HOME.id||eMeu(t)))want[t.id]=t.title+'|'+t.due+'|'+t.notes});
+  let n=0;for(const id in want)if(map[id]!==want[id])n++;for(const id in map)if(!want[id])n++;return n}
+function gStatus(){const on=gOk(),ok=gValido();const b=$('gcalBtn');const pend=on&&!ok?gPendentes():0;
+  b.textContent=on?(ok?'📅 Agenda conectada':(pend?'📅 Atualizar agenda ('+pend+')':'📅 Agenda em dia')):'📅 Conectar Google Agenda';
+  b.title=on&&!ok?(pend?'Há '+pend+' mudança(s) para levar à agenda. Toque para atualizar.':'Nada novo para levar à agenda.'):'';
+  $('gcalBtnM').textContent=pend?'📅'+pend:'📅';
   b.style.color=on&&ok?'var(--green-t)':'';$('gcalOff').hidden=!on;$('gcalBtnM').style.color=on&&ok?'var(--green-t)':''}
-$('gcalBtn').onclick=$('gcalBtnM').onclick=()=>{if(gOk()&&gValido())gSync(true);else gConectar()};
+$('gcalBtn').onclick=$('gcalBtnM').onclick=async()=>{if(gOk()&&gValido())gSync(true);else{const t=await gToken(true);if(t)gSync(true)}};
 $('gcalOff').onclick=gDesconectar;
 const gId=id=>'lvtodo'+[...new TextEncoder().encode(String(id))].map(b=>b.toString(16).padStart(2,'0')).join('');
 async function gApi(method,path,body){
@@ -818,7 +822,7 @@ function gEvento(t){const d=parse(t.due),n=new Date(d);n.setDate(n.getDate()+1);
   return{summary:t.title,description:(t.notes?t.notes+'\n\n':'')+'To Do List: '+location.origin+location.pathname,start:{date:isoOf(d)},end:{date:isoOf(n)},
     transparency:'transparent',status:'confirmed',reminders:{useDefault:false,overrides:[{method:'popup',minutes:900}]}}}
 async function gSync(avisar){
-  if(gBusy||!HOME||!QUEM||!gOk())return;const tok=await gToken(false);if(!tok)return;gBusy=true;const chave=GMAP+':'+QUEM;let n=0;
+  if(gBusy||!HOME||!QUEM||!gOk())return;const tok=await gToken(false);if(!tok){gStatus();return}gBusy=true;const chave=GMAP+':'+QUEM;let n=0;
   try{let map={};try{map=JSON.parse(localStorage.getItem(chave)||'{}')}catch(e){}
     /* só as minhas: tudo do meu espaço e, nos compartilhados, o que está comigo */
     const idx={},want={};tasks.forEach(t=>{idx[t.id]=t;if(!t.done&&t.due&&(t.esp===HOME.id||eMeu(t)))want[t.id]=t.title+'|'+t.due+'|'+t.notes});
@@ -829,7 +833,7 @@ async function gSync(avisar){
     for(const id in map){if(want[id])continue;const s=await gApi('DELETE','/'+gId(id));
       if((s>=200&&s<300)||s===404||s===410){delete map[id];n++}else if(s===401||s===403)break}
     try{localStorage.setItem(chave,JSON.stringify(map))}catch(e){}
-    if(avisar)$('status').textContent=n?'Agenda atualizada.':'Agenda em dia.'}
+    if(avisar)$('status').textContent=n?'Agenda atualizada.':'Agenda em dia.';gStatus()}
   catch(e){if(avisar)$('status').textContent='Não consegui falar com a agenda.'}
   finally{gBusy=false}}
 window.addEventListener('load',()=>{gInit();gStatus()});gStatus();
