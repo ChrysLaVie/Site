@@ -184,6 +184,20 @@ body.chatting .mets,body.chatting #list,body.chatting .fab{display:none}
 .abar{height:14px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
 .abar span{display:block;height:100%;background:var(--blue);border-radius:999px;transition:width .3s}
 .abar.ok span{background:var(--green)}
+.med{flex:2 1 300px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.med .mult b{font-size:16px;font-weight:600}
+.med .mform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.med .mform label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}
+.med .mform input{padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:15px;background:var(--surface);color:var(--text);font-family:inherit;width:118px}
+.med .mform input[type=date]{width:152px}
+.med .mform .big{border:0;background:var(--green);color:#fff;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.med .mgraf{display:flex;flex-wrap:wrap;gap:12px}
+.med .mgraf figure{margin:0;flex:1 1 180px;max-width:300px}
+.med .mgraf figcaption{font-size:12px;color:var(--muted)}
+.med .mgraf svg{display:block;width:100%;height:54px}
+.med .mhist{font-size:13px;border-collapse:collapse;width:100%;max-width:440px}
+.med .mhist td,.med .mhist th{padding:5px 10px 5px 0;text-align:left;border-top:1px solid var(--border)}
+.med .mhist th{font-weight:500;color:var(--muted);font-size:12px;border-top:0}
 .atxt{font-size:13px;color:var(--muted)}.atxt b{color:var(--text);font-weight:600}
 .abtns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .abtns button{border:1px solid var(--border2);background:none;color:var(--text);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
@@ -297,6 +311,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
     <div class="field"><label for="hbT">Nome</label><input id="hbT" maxlength="200" required></div>
     <div class="field"><label for="hbF">Frequência</label><select id="hbF"><option value="">Todo dia</option><option value="1">1 vez por semana</option><option value="2">2 vezes por semana</option><option value="3">3 vezes por semana</option><option value="4">4 vezes por semana</option><option value="5">5 vezes por semana</option><option value="6">6 vezes por semana</option></select></div>
     <div class="field"><label for="hbM">Meta diária em ml (opcional, para água)</label><input id="hbM" type="number" min="1" max="20000" step="50" placeholder="ex.: 2700"></div>
+    <div class="field"><label class="chkline"><input type="checkbox" id="hbP"> Registrar peso e % de gordura neste hábito</label></div>
     <div class="field"><label for="hbO">Observação (opcional)</label><input id="hbO" maxlength="300"></div>
     <div class="actions"><button type="button" class="btn" id="hbCancel">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
   </form>
@@ -309,6 +324,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
       <p><b>Tarefas.</b> Toque em "＋ Nova tarefa", escolha a frente e, se quiser, o prazo e uma observação. Marque a caixinha para concluir. "Editar" muda o nome, a frente, o prazo e a observação. "Apagar" pede um segundo toque para confirmar.</p>
       <p><b>Hábitos e rotinas.</b> Na nova tarefa, marque "É um hábito ou rotina" e escolha a frequência: todo dia ou de 1 a 6 vezes por semana. Toque na bolinha do dia em que você fez. O hábito nunca some: ele mostra a sequência de dias ou quantas vezes você já fez na semana. "Editar" muda o nome e a frequência. Para mudar a ordem, segure o ⠿ à esquerda do hábito e arraste para cima ou para baixo.</p>
       <p><b>Água.</b> Um hábito com meta diária em ml vira uma fileira de copinhos. A cada copo que você beber, toque em "🥤 Bebi um copo" (ou em qualquer copinho) e ele enche. Escolha o tamanho do seu copo uma vez só; o número de copos do dia sai da meta. "outro valor" soma uma quantidade diferente e "↶ Desfazer" tira o último registro de hoje. Todo dia começa do zero. Ao chegar na meta, o dia fica feito e conta na sequência 🔥. Para criar, informe a meta em ml no hábito novo ou em "Editar".</p>
+      <p><b>Peso e % de gordura.</b> Em "Editar" de um hábito, marque "Registrar peso e % de gordura". O hábito passa a ter o botão "＋ Registrar": informe a data, o peso e a % de gordura e salve. Ele mostra o último registro, a diferença para o anterior, um gráfico e o histórico. Registrar já marca o hábito como feito no dia.</p>
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
       <p><b>Urgência.</b> Clique no 🔥 de qualquer tarefa para colocar na Urgência. Ela aparece no topo da Visão geral e na visão "Urgência". Clique de novo para tirar. Ao concluir, ela sai sozinha.</p>
@@ -368,14 +384,14 @@ function aplicar(d){
   tasks=(d.tarefas||[]).map(r=>({id:r.id,title:r.titulo,esp:r.espaco_id,frente:r.frente,
     area:r.espaco_id===HOME.id?r.frente:'@'+r.espaco_id,resp:r.responsavel||'',due:r.prazo||'',done:!!r.feita,
     doneAt:r.feita_em?Date.parse(r.feita_em):null,notes:r.obs||'',createdAt:Date.parse(r.criado_em)||0}));
-  habits=(d.habitos||[]).map(h=>({id:h.id,title:h.titulo,esp:h.espaco_id,area:h.frente||'habitos',goal:h.meta_semana||0,ml:h.meta_ml||0,qtd:h.qtd||{},
+  habits=(d.habitos||[]).map(h=>({id:h.id,title:h.titulo,esp:h.espaco_id,area:h.frente||'habitos',goal:h.meta_semana||0,ml:h.meta_ml||0,qtd:h.qtd||{},campos:Array.isArray(h.campos)&&h.campos.length?h.campos:null,med:h.medidas&&typeof h.medidas==='object'?h.medidas:{},
     days:h.dias||{},notes:h.obs||'',createdAt:Date.parse(h.criado_em)||0}));
   $('whoTxt').textContent=QUEM?'Olá, '+QUEM:'';
 }
 async function refresh(){
   try{const d=await rpc('lv_todo_listar');if(dragging)return;lastData=d;aplicar(d);loaded=true;$('status').textContent='';fillSelects();render();gSync()}
   catch(e){if(CODIGO)$('status').textContent='Sem conexão com a lista. Tentando de novo…'}}
-function schedule(){clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden&&!dragging&&!document.querySelector('.overlay.open'))refresh()},15000)}
+function schedule(){clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden&&!dragging&&!document.querySelector('.overlay.open')&&!document.querySelector('.mform'))refresh()},15000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&CODIGO)refresh()});
 
 {const s=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});$('ps').textContent=s.charAt(0).toUpperCase()+s.slice(1)}
@@ -531,12 +547,54 @@ function aguaBox(x){const k=isoOf(today()),q=Number((x.qtd||{})[k])||0,ok=q>=x.m
     const go=el('button',null,'Somar');go.type='button';const reg=()=>{const v=parseInt(inp.value,10);if(v>0&&v<=5000){aguaOutro[x.id]=false;addMl(x,v)}};go.onclick=reg;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();reg()}};
     bt.append(inp,go);w.appendChild(bt);setTimeout(()=>inp.focus(),30)}
   return w}
-let habId=null;
-function openHab(h){habId=h.id;$('hbT').value=h.title;$('hbF').value=h.goal?String(h.goal):'';$('hbM').value=h.ml?String(h.ml):'';$('hbO').value=h.notes||'';$('ovh').classList.add('open');setTimeout(()=>$('hbT').focus(),50)}
+const CAMPOS_PESO=[{chave:'peso',nome:'Peso',un:'kg'},{chave:'gordura',nome:'Gordura',un:'%'}];
+const fmtN=n=>Number(n).toLocaleString('pt-BR',{maximumFractionDigits:1});
+const numBr=s=>{const t=String(s==null?'':s).trim().replace(',','.');if(!t)return null;const v=Number(t);return isFinite(v)?Math.round(v*10)/10:NaN};
+const medVal=(c,v)=>c.un==='%'?fmtN(v)+'%':fmtN(v)+' '+c.un;
+const dataBr=k=>{const p=String(k).split('-');return p[2]+'/'+p[1]+'/'+p[0]};
+let medAberto={},medHist={};
+async function salvarMedida(h,dia,obj){h.med=Object.assign({},h.med||{});h.days=Object.assign({},h.days||{});
+  if(obj){h.med[dia]=obj;h.days[dia]=true}else{delete h.med[dia];delete h.days[dia]}render();
+  try{await rpc('lv_todo_habito_salvar',{p_habito:{id:h.id,dia:dia,medida:obj}});return true}catch(e){$('status').textContent='Não consegui salvar o registro.';refresh();return false}}
+function medGraf(c,pts){const W=300,H=54,P=6;const vs=pts.map(p=>p[1]);const mn=Math.min.apply(null,vs),mx=Math.max.apply(null,vs),sp=(mx-mn)||1;
+  const ns='http://www.w3.org/2000/svg';const sv=document.createElementNS(ns,'svg');sv.setAttribute('viewBox','0 0 '+W+' '+H);sv.setAttribute('preserveAspectRatio','none');sv.setAttribute('role','img');
+  sv.setAttribute('aria-label',c.nome+' de '+medVal(c,vs[0])+' a '+medVal(c,vs[vs.length-1]));
+  const xy=pts.map((p,i)=>[P+(W-2*P)*(pts.length===1?0.5:i/(pts.length-1)),H-P-(H-2*P)*((p[1]-mn)/sp)]);
+  const pl=document.createElementNS(ns,'polyline');pl.setAttribute('points',xy.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' '));pl.setAttribute('fill','none');pl.setAttribute('stroke','var(--accent)');pl.setAttribute('stroke-width','2');pl.setAttribute('vector-effect','non-scaling-stroke');sv.appendChild(pl);
+  const f=el('figure');f.append(el('figcaption',null,c.nome+': de '+medVal(c,vs[0])+' para '+medVal(c,vs[vs.length-1])),sv);return f}
+function medidaBox(x){const w=el('div','med');const med=x.med||{};const dias=Object.keys(med).sort();const ult=dias[dias.length-1],ant=dias[dias.length-2];
+  const tx=el('div','mult');
+  if(ult){const m=med[ult]||{};const partes=x.campos.filter(c=>m[c.chave]!=null).map(c=>{let s=c.nome+': '+medVal(c,m[c.chave]);
+      if(ant&&med[ant]&&med[ant][c.chave]!=null){const df=Math.round((m[c.chave]-med[ant][c.chave])*10)/10;if(df)s+=' ('+(df>0?'+':'-')+fmtN(Math.abs(df))+')'}return s});
+    tx.append(el('b',null,partes.join(' · ')),el('span','hstreak','Último registro em '+dataBr(ult)+(ant?'. Entre parênteses, a diferença para '+dataBr(ant)+'.':'.')))}
+  else tx.append(el('span','hstreak','Nenhum registro ainda. Toque em "＋ Registrar".'));
+  const am=el('div','amais');const big=el('button','big',medAberto[x.id]?'Fechar':'＋ Registrar');big.type='button';big.onclick=()=>{medAberto[x.id]=!medAberto[x.id];render()};am.appendChild(big);
+  if(dias.length){const hi=el('button','lk',medHist[x.id]?'esconder histórico':'ver histórico ('+dias.length+')');hi.type='button';hi.onclick=()=>{medHist[x.id]=!medHist[x.id];render()};am.appendChild(hi)}
+  w.append(tx,am);
+  if(medAberto[x.id]){const fm=el('div','mform');const hoje=isoOf(today());const ld=el('label',null,'Data');const dt=el('input');dt.type='date';dt.value=hoje;dt.max=hoje;ld.appendChild(dt);fm.appendChild(ld);
+    const ins=x.campos.map(c=>{const l=el('label',null,c.nome+' ('+c.un+')');const i=el('input');i.type='text';i.inputMode='decimal';i.autocomplete='off';i.placeholder=c.un==='%'?'ex.: 27,5':'ex.: 68,4';i.dataset.k=c.chave;
+      if(med[hoje]&&med[hoje][c.chave]!=null)i.value=fmtN(med[hoje][c.chave]);l.appendChild(i);fm.appendChild(l);return[c,i]});
+    const go=el('button','big','Salvar registro');go.type='button';
+    const reg=()=>{const dia=dt.value;if(!/^\d{4}-\d{2}-\d{2}$/.test(dia)||dia>hoje){$('status').textContent='Escolha uma data até hoje.';return}
+      const obj={};for(const par of ins){const v=numBr(par[1].value);if(v===null)continue;if(isNaN(v)||v<=0||v>(par[0].un==='%'?100:1000)){$('status').textContent='Confira o valor de '+par[0].nome+'.';par[1].focus();return}obj[par[0].chave]=v}
+      if(!Object.keys(obj).length){$('status').textContent='Preencha pelo menos um valor.';ins[0][1].focus();return}
+      $('status').textContent='';medAberto[x.id]=false;salvarMedida(x,dia,obj)};
+    go.onclick=reg;ins.forEach(par=>{par[1].onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();reg()}}});
+    dt.onchange=()=>{const m=med[dt.value]||{};ins.forEach(par=>{par[1].value=m[par[0].chave]!=null?fmtN(m[par[0].chave]):''})};
+    fm.appendChild(go);w.appendChild(fm);setTimeout(()=>{if(document.activeElement===document.body)ins[0][1].focus()},30)}
+  if(dias.length>1){const g=el('div','mgraf');x.campos.forEach(c=>{const pts=dias.filter(d=>med[d]&&med[d][c.chave]!=null).map(d=>[d,med[d][c.chave]]);if(pts.length>1)g.appendChild(medGraf(c,pts))});if(g.children.length)w.appendChild(g)}
+  if(medHist[x.id]&&dias.length){const tb=el('table','mhist');const hr=el('tr');hr.appendChild(el('th',null,'Data'));x.campos.forEach(c=>hr.appendChild(el('th',null,c.nome)));hr.appendChild(el('th',null,''));tb.appendChild(hr);
+    dias.slice().reverse().forEach(d=>{const tr=el('tr');tr.appendChild(el('td',null,dataBr(d)));x.campos.forEach(c=>tr.appendChild(el('td',null,med[d][c.chave]!=null?medVal(c,med[d][c.chave]):'')));
+      const key='m-'+x.id+d;const bt=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');bt.type='button';
+      bt.onclick=()=>{if(armed===key){armed=null;salvarMedida(x,d,null)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
+      const td=el('td');td.appendChild(bt);tr.appendChild(td);tb.appendChild(tr)});w.appendChild(tb)}
+  return w}
+let habId=null,habCampos=false;
+function openHab(h){habId=h.id;habCampos=!!h.campos;$('hbP').checked=habCampos;$('hbT').value=h.title;$('hbF').value=h.goal?String(h.goal):'';$('hbM').value=h.ml?String(h.ml):'';$('hbO').value=h.notes||'';$('ovh').classList.add('open');setTimeout(()=>$('hbT').focus(),50)}
 function closeHab(){habId=null;$('ovh').classList.remove('open')}
 $('hbCancel').onclick=closeHab;$('ovh').addEventListener('click',e=>{if(e.target===$('ovh'))closeHab()});
 $('habForm').addEventListener('submit',async e=>{e.preventDefault();const t=$('hbT').value.trim();if(!habId||!t)return;
-  try{await rpc('lv_todo_habito_salvar',{p_habito:{id:habId,titulo:t,meta_semana:$('hbM').value?'':($('hbF').value||''),meta_ml:$('hbM').value||'',obs:$('hbO').value.trim()}});closeHab();refresh()}catch(err){$('status').textContent='Não consegui salvar o hábito.'}});
+  try{await rpc('lv_todo_habito_salvar',{p_habito:Object.assign({id:habId,titulo:t,meta_semana:$('hbM').value?'':($('hbF').value||''),meta_ml:$('hbM').value||'',obs:$('hbO').value.trim()},$('hbP').checked!==habCampos?{campos:$('hbP').checked?CAMPOS_PESO:null}:{})});closeHab();refresh()}catch(err){$('status').textContent='Não consegui salvar o hábito.'}});
 function openAjuda(){$('ovj').classList.add('open')}function closeAjuda(){$('ovj').classList.remove('open')}
 $('ajuda').onclick=openAjuda;$('ajudaM').onclick=openAjuda;$('ajFechar').onclick=closeAjuda;$('ovj').addEventListener('click',e=>{if(e.target===$('ovj'))closeAjuda()});
 function habitCard(hs){
@@ -551,6 +609,9 @@ function habitCard(hs){
     if(x.ml){const key='h-'+x.id;const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
       del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
       const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,aguaBox(x),ed,del);c.appendChild(r);return}
+    if(x.campos){const key='h-'+x.id;const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
+      del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
+      const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,medidaBox(x),ed,del);c.appendChild(r);return}
     const ds=el('div','days');
     for(let i=6;i>=0;i--){const dd=today();dd.setDate(dd.getDate()-i);const k=isoOf(dd);const on=!!(x.days||{})[k];
       const b=el('button','day'+(on?' on':'')+(i===0?' today':''));b.type='button';b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',x.title+' em '+dd.toLocaleDateString('pt-BR'));
