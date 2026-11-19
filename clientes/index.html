@@ -2397,6 +2397,105 @@ function cartaoFaseFinalDaAgenda(){
     tipo:document.getElementById('ag-tipo').value, link:document.getElementById('ag-link').value.trim(), local:document.getElementById('ag-local').value.trim() }));
 }
 
+// ── REMARCAÇÃO (19/11/2026) ─────────────────────────────────────────────────
+// Pedido da Chrys: quando uma Entrevista La Vie ou Entrevista Final é remarcada,
+// não sai a arte de parabéns; sai a mensagem de reagendamento com a data antiga
+// e a nova. O parabéns fica só para a primeira marcação depois da aprovação.
+function _agTipoRemarcavel(a){ if(!a) return ''; if(_agEhFinal(a)) return 'final'; if(a.titulo==='Entrevista La Vie') return 'lavie'; return ''; }
+// Devolve o compromisso antigo quando o salvamento é uma remarcação, ou null.
+// Editando: o próprio compromisso, antes da mudança de dia ou horário.
+// Criando um novo: outro compromisso ativo do mesmo candidato e da mesma etapa.
+function _agRemarcacaoDe(a, antes){
+  const tipo=_agTipoRemarcavel(a);
+  if(!tipo || !a.candidatoId || a.status!=='agendada' || isClienteExterno()) return null;
+  const mudou=x=>x.data!==a.data || (x.horaIni||'').slice(0,5)!==(a.horaIni||'').slice(0,5);
+  if(antes && antes.id){
+    if(['agendada','nao_compareceu'].includes(antes.status) && _agTipoRemarcavel(antes)===tipo && antes.data && mudou(antes)) return {antigo:antes, novo:false};
+    return null;
+  }
+  const outro=(_agenda||[]).filter(x=>x.id!==a.id && x.candidatoId===a.candidatoId && x.status==='agendada' && _agTipoRemarcavel(x)===tipo && x.data && mudou(x))
+    .sort((x,y)=>(y.data+(y.horaIni||'')).localeCompare(x.data+(x.horaIni||'')))[0];
+  return outro ? {antigo:outro, novo:true} : null;
+}
+function _agDiaMes(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return d+'/'+m; }
+function _agDiaSemana(iso){ try{ return new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'}); }catch(e){ return ''; } }
+function _agHoraTxt(h){ return h ? String(h).slice(0,5) : '[HORÁRIO]'; }
+function _textoReagendamento(a, antigo){
+  const c=getCands().find(x=>x.id===a.candidatoId)||{};
+  const prim=_cartaoPrimeiroNome(c.nome||a.candidato||'');
+  const v=getVagas().find(x=>x.id===c.vagaId); const vaga=(v&&v.titulo)||a.vaga||'';
+  const emp=c.empresaId||a.empresaId||currentEmpresa;
+  const final=_agTipoRemarcavel(a)==='final';
+  let onde;
+  if(final){
+    const pad=FASE_FINAL_PADRAO[emp]||{}; const cfg=_cartaoFinalCfg(emp)||{};
+    const local=(a.local||'').trim() || pad.local || (cfg.endereco||[]).join(', ') || '[ENDEREÇO]';
+    const resp=REF_PRESENCIAL_PADRAO[emp] || pad.ref || '';
+    onde='Local: '+local+'.'+(resp?' Você vai falar com '+resp+'.':'');
+  } else if(a.tipo==='presencial'){
+    onde='Local: '+((a.local||'').trim()||'[ENDEREÇO]')+'. Você vai falar comigo.';
+  } else {
+    onde='Link: '+((a.link||'').trim()||_salaPadrao||'[LINK]');
+  }
+  return `Olá, ${prim}! Aqui é a Chrys, da La Vie Consultoria.\n\n`+
+    `Sua entrevista${final?' final':''} para a vaga de ${vaga}, que estava marcada para ${_agDiaMes(antigo.data)} às ${_agHoraTxt(antigo.horaIni)}, foi reagendada para ${_agDiaSemana(a.data)}, ${_agDiaMes(a.data)}, às ${_agHoraTxt(a.horaIni)}.\n\n`+
+    `${onde}\n\nPode me confirmar se fica tudo certo?`;
+}
+// Grava a remarcação: cancela o compromisso antigo (só quando foi criado um novo)
+// e deixa a mudança registrada no histórico do candidato.
+async function _registrarRemarcacao(a, rem){
+  const antigo=rem.antigo;
+  if(rem.novo){
+    const velho=Object.assign({}, antigo, {status:'cancelada', obs:((antigo.obs||'')+(antigo.obs?' ':'')+'Remarcada para '+_dataBR(a.data)+(a.horaIni?' às '+a.horaIni:'')+'.').trim()});
+    try{ if(velho.googleEventId){ await gcalExcluirEvento(velho); velho.googleEventId=null; } }catch(e){}
+    await upsertAgenda(velho); _localUpsert(_agenda,velho);
+  }
+  const idx=_cands.findIndex(x=>x.id===a.candidatoId);
+  if(idx>=0){
+    const txt=`${a.titulo||'Entrevista'} remarcada: de ${_dataBR(antigo.data)}${antigo.horaIni?' às '+antigo.horaIni:''} para ${_dataBR(a.data)}${a.horaIni?' às '+a.horaIni:''}.`;
+    _cands[idx]={..._cands[idx], historico:[...(_cands[idx].historico||[]), {tipo:'observacao', remarcacao:true, data:new Date().toISOString(), obs:txt, usuario:getUserName()}]};
+    try{ await upsertCand(_cands[idx]); }catch(e){}
+  }
+  try{ renderAgenda(); }catch(e){}
+}
+// Janela com a mensagem de reagendamento pronta (dá para ajustar antes de enviar).
+function abrirReagendamento(a, antigo){
+  const c=getCands().find(x=>x.id===a.candidatoId); if(!c) return;
+  let o=document.getElementById('reag-ov'); if(o) o.remove();
+  o=document.createElement('div'); o.id='reag-ov';
+  o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(58,58,58,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+  o.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:540px;width:100%;max-height:94vh;overflow:auto;box-shadow:var(--shadow-md)">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:4px">Mensagem de reagendamento</div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:10px">Para: <strong></strong>. Confira e ajuste o texto se precisar.</div>
+    <textarea style="width:100%;min-height:210px;font-size:13px;line-height:1.45;padding:10px;border:1px solid var(--bege);border-radius:10px;font-family:inherit"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button>
+      <button class="btn btn-ghost btn-sm" data-a="copiar">📋 Copiar</button>
+      <button class="btn btn-ghost btn-sm" data-a="email">✉ E-mail</button>
+      <button class="btn btn-sm" data-a="whats" style="background:#25D366;border-color:#25D366;color:#fff">💬 WhatsApp</button>
+    </div></div>`;
+  o.querySelector('strong').textContent=c.nome+(c.tel?' · '+c.tel:' (sem telefone)');
+  const ta=o.querySelector('textarea'); ta.value=_textoReagendamento(a, antigo);
+  o.addEventListener('click', ev=>{
+    const b=ev.target.closest('button[data-a]');
+    if(!b){ if(ev.target===o) o.remove(); return; }
+    const txt=ta.value;
+    if(b.dataset.a==='fechar') return o.remove();
+    if(b.dataset.a==='copiar'){ navigator.clipboard.writeText(txt).then(()=>showToast('📋 Mensagem copiada')).catch(()=>alert('Não foi possível copiar.')); return; }
+    if(b.dataset.a==='whats'){ if(!c.tel){ alert('Este candidato não tem telefone cadastrado.'); return; } window.open('https://wa.me/'+_fmtTel(c.tel)+'?text='+encodeURIComponent(txt),'_blank'); o.remove(); showToast('💬 WhatsApp aberto com a mensagem pronta'); return; }
+    if(b.dataset.a==='email'){ if(!c.email){ alert('Este candidato não tem e-mail cadastrado.'); return; } const v=getVagas().find(x=>x.id===c.vagaId);
+      window.open('mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent('Entrevista reagendada'+(v?' | '+v.titulo:'')+' | La Vie Consultoria')+'&body='+encodeURIComponent(txt),'_blank'); o.remove(); showToast('✉ E-mail aberto com a mensagem pronta'); }
+  });
+  document.body.appendChild(o);
+}
+// Confirma com a Chrys quando ela criou um compromisso novo e já existia outro ativo.
+function _agConfirmaRemarcacao(rem){
+  if(!rem) return null;
+  if(!rem.novo) return rem;
+  const x=rem.antigo;
+  return confirm(`${x.candidato||'Este candidato'} já tem ${x.titulo||'entrevista'} marcada para ${_dataBR(x.data)}${x.horaIni?' às '+x.horaIni:''}.\n\nÉ uma remarcação?\n\nOK: sim. A antiga fica cancelada e abre a mensagem de reagendamento.\nCancelar: é outra entrevista. As duas continuam na agenda.`) ? rem : null;
+}
+
 function agAvisoInfoVaga(){
   try{ agAvisoCartao(); }catch(e){}
   const el=document.getElementById('ag-msg-extra'); if(!el) return;
@@ -2528,7 +2627,12 @@ async function salvarAgenda(){
     const eventId = await gcalSincronizarEvento(a);
     if(eventId && eventId !== a.googleEventId){ a.googleEventId = eventId; await upsertAgenda(a); _localUpsert(_agenda,a); }
     closeModal('modal-agenda'); renderAgenda(); showToast(eventId ? '✅ Entrevista agendada e sincronizada com o Google Calendar!' : '✅ Entrevista agendada!');
-    try{
+    let _rem=null;
+    try{ _rem=_agConfirmaRemarcacao(_agRemarcacaoDe(a, _agCartaoAntes)); }catch(e){ _rem=null; }
+    if(_rem){
+      try{ await _registrarRemarcacao(a, _rem); }catch(e){}
+      setTimeout(()=>abrirReagendamento(a, _rem.antigo), 350);
+    } else try{
       if(!isClienteExterno() && _cartaoFinalCfg(a.empresaId) && _agEhFinal(a) && a.candidatoId && a.status==='agendada' && (!_agCartaoAntes || _agCartaoAntes.data!==a.data || _agCartaoAntes.horaIni!==a.horaIni)) setTimeout(()=>abrirCartaoFaseFinal(_cartaoDadosDoCompromisso(a)), 350);
     }catch(e){}
   }
@@ -3335,6 +3439,9 @@ async function aprovarEtapaCom(modo){ // 'online' | 'presencial' — vale pra Tr
       };
       try{ await upsertAgenda(ag); _localUpsert(_agenda,ag); showToast('📅 '+(ETAPA_LABEL[prox]||prox)+' agendada na Agenda'); }
       catch(e){ console.warn('Falha ao criar evento na agenda:',e); }
+      // Já tinha a mesma entrevista marcada: é remarcação, sai o reagendamento no lugar do convite ou do parabéns.
+      let rem=null; try{ rem=_agConfirmaRemarcacao(_agRemarcacaoDe(ag, null)); }catch(e){}
+      if(rem){ try{ await _registrarRemarcacao(ag, rem); }catch(e){} abrirReagendamento(ag, rem.antigo); return; }
     }
     if(origem==='triagem'){
       showToast('✅ '+c.nome.split(' ')[0]+' → Formulários e Testes');
