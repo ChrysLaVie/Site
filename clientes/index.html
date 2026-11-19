@@ -2157,7 +2157,7 @@ function agToggleTipo(){
   const tipo=document.getElementById('ag-tipo').value;
   document.getElementById('ag-link-wrap').style.display=tipo==='online'?'block':'none';
   document.getElementById('ag-local-wrap').style.display=tipo==='presencial'?'block':'none';
-  const rw=document.getElementById('ag-ref-wrap'); if(rw) rw.style.display=tipo==='presencial'?'block':'none';
+  const rw=document.getElementById('ag-ref-wrap'); if(rw) rw.style.display=tipo==='presencial'?'block':'none'; const ri=document.getElementById('ag-ref'); if(ri) ri.placeholder='Se ficar vazio: '+_refPresencial();
 }
 
 function agPreencheVaga(){ /* vaga é derivada do candidato no salvar */ agAvisoInfoVaga(); }
@@ -2426,7 +2426,7 @@ function _montaTextoAgenda(){
     const local=document.getElementById('ag-local').value.trim();
     if(!local){ alert('Informe o local da entrevista.'); return null; }
     valores={'DATA':_dataBR(data),'HORÁRIO':hora,'ENDEREÇO':local,
-             'NOME DE REFERÊNCIA':(document.getElementById('ag-ref').value.trim()||getUserName())};
+             'NOME DE REFERÊNCIA':(document.getElementById('ag-ref').value.trim()||_refPresencial())};
   }
 
   let txt=_aplicaVars(tpl.texto,c);
@@ -3091,7 +3091,7 @@ function _dadosDaAgendaDoCand(candId){
     const cand=getCands().find(x=>x.id===candId);
     if(!lista.some(a=>a.data>=hoje) && cand && cand.etapa==='vivencia'){
       const f=_faseFinalConfig(); const dia=(f.dia&&f.dia>=hoje)?f.dia:hoje;
-      return { valores:{'DATA':dia?_dataBR(dia):'','HORÁRIO':f.hora,'ENDEREÇO':f.local,'NOME DE REFERÊNCIA':f.ref||getUserName(),'LINK':''}, rotulo:`fase final${dia?' em '+_dataBR(dia):''} às ${f.hora} (padrão da Confirmação de presenças)` };
+      return { valores:{'DATA':dia?_dataBR(dia):'','HORÁRIO':f.hora,'ENDEREÇO':f.local,'NOME DE REFERÊNCIA':f.ref||_refPresencial(),'LINK':''}, rotulo:`fase final${dia?' em '+_dataBR(dia):''} às ${f.hora} (padrão da Confirmação de presenças)` };
     }
     if(!lista.length) return null;
     const futuras=lista.filter(a=>a.data>=hoje).sort((x,y)=>x.data.localeCompare(y.data));
@@ -3099,7 +3099,7 @@ function _dadosDaAgendaDoCand(candId){
     if(!a) return null;
     const d=_dataBR(a.data);
     const valores={'DATA':d,'HORÁRIO':a.horaIni||''};
-    if(a.tipo==='presencial'){ valores['ENDEREÇO']=a.local||''; valores['NOME DE REFERÊNCIA']=getUserName(); }
+    if(a.tipo==='presencial'){ valores['ENDEREÇO']=a.local||''; valores['NOME DE REFERÊNCIA']=_refPresencial(); }
     else { valores['LINK']=a.link||''; }
     return {valores, rotulo:`${d}${a.horaIni?' às '+a.horaIni:''} · ${a.titulo||'Entrevista'}`};
   }catch(e){ return null; }
@@ -3122,6 +3122,9 @@ function _confTexto(it){
 const FASE_FINAL_PADRAO = {
   autoclub:{ hora:'14:00', local:'R. Belo Horizonte, Qd. 109, Lt. 05, Jardim Guanabara, Goiânia/GO, CEP 74675-080 (perto do aeroporto)', ref:'Letícia Feliciano ou Helen Feliciano' }
 };
+// Quem o candidato procura na entrevista presencial, por cliente (sem cadastro, usa o nome de quem está logado).
+const REF_PRESENCIAL_PADRAO = { autoclub:'Letícia Feliciano' };
+function _refPresencial(){ return REF_PRESENCIAL_PADRAO[currentEmpresa]||getUserName(); }
 function _faseFinalConfig(){
   const pad=FASE_FINAL_PADRAO[currentEmpresa]||{};
   let f=null; try{ f=JSON.parse(localStorage.getItem('lv_conf_final_'+currentEmpresa)||'null'); }catch(e){}
@@ -3195,7 +3198,7 @@ function renderConfirmacoes(){
   const evs=getAgendaVisivel().filter(a=>a.data===dia && a.status!=='cancelada' && a.candidatoId).sort((a,b)=>(a.horaIni||'').localeCompare(b.horaIni||''));
   _confItensCache=[];
   const comAgenda=new Set();
-  evs.forEach(a=>{ const c=cands.find(x=>x.id===a.candidatoId); if(!c) return; comAgenda.add(c.id); _confItensCache.push({c, data:dia, hora:a.horaIni||'', tipo:a.tipo==='presencial'?'presencial':'online', link:a.link||'', local:a.local||'', ref:'', vaga:a.vaga||'', fase:_agEhFinal(a)}); });
+  evs.forEach(a=>{ const c=cands.find(x=>x.id===a.candidatoId); if(!c) return; comAgenda.add(c.id); _confItensCache.push({c, data:dia, hora:a.horaIni||'', tipo:a.tipo==='presencial'?'presencial':'online', link:a.link||'', local:a.local||'', ref:(a.tipo==='presencial'?(REF_PRESENCIAL_PADRAO[currentEmpresa]||''):''), vaga:a.vaga||'', fase:_agEhFinal(a)}); });
   const nAg=_confItensCache.length;
   document.getElementById('conf-lista').innerHTML = nAg ? _confItensCache.map((it,i)=>_confLinha(it,i)).join('') : '<div style="color:var(--light);font-style:italic;font-size:13px">Nenhuma entrevista na agenda deste dia.</div>';
   const hora=document.getElementById('conf-final-hora').value, local=document.getElementById('conf-final-local').value.trim(), ref=document.getElementById('conf-final-ref').value.trim();
