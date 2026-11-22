@@ -676,7 +676,6 @@ header {
       <div class="chart-card-sub" id="dash-destino-sub">Para onde foram os candidatos avaliados</div>
       <div class="chart-wrap" style="height:160px"><canvas id="chart-destino"></canvas></div>
       <div id="dash-destino-legend" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:12px"></div>
-      <div id="dash-origem" style="margin-top:14px"></div>
     </div>
     <div class="card">
       <div class="chart-card-title" id="dash-metricas-titulo">Métricas de Tempo</div>
@@ -684,16 +683,25 @@ header {
       <div id="dash-metricas-tempo"></div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;align-items:start">
-    <div class="card chart-card" id="dash-card-cand-vaga">
-      <div class="chart-card-title">Candidatos por Vaga</div>
-      <div class="chart-card-sub">Total avaliado em cada posição, do maior para o menor volume</div>
-      <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
+  <!-- 22/11/2026: a tabela de origem saiu do card Destino (deixava Funil e Métricas com espaço vazio)
+       e ganhou card próprio ao lado do Tempo Médio; Candidatos por Vaga ficou em linha própria. -->
+  <div id="dash-linha-origem" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:stretch">
+    <div class="card chart-card" id="dash-card-origem">
+      <div class="chart-card-title">Origem dos Candidatos</div>
+      <div class="chart-card-sub">De onde vieram, quantos chegaram à fase final e quantos foram contratados</div>
+      <div id="dash-origem" style="margin-top:6px"></div>
     </div>
     <div class="card chart-card">
       <div class="chart-card-title">Tempo Médio por Etapa</div>
       <div class="chart-card-sub">Média de dias úteis em cada etapa do processo</div>
       <div class="chart-wrap" style="height:260px"><canvas id="chart-tempo-etapa"></canvas></div>
+    </div>
+  </div>
+  <div id="dash-linha-cand-vaga" style="margin-bottom:24px">
+    <div class="card chart-card" id="dash-card-cand-vaga">
+      <div class="chart-card-title">Candidatos por Vaga</div>
+      <div class="chart-card-sub">Total avaliado em cada posição, do maior para o menor volume</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-candidatos-vaga"></canvas></div>
     </div>
   </div>
   <div class="section-label" style="margin-top:40px;padding-top:24px;border-top:1px solid var(--bege-lt);margin-bottom:12px">Detalhamento por Setor</div>
@@ -5947,13 +5955,16 @@ function _blocoInativosPendentes(itens){
       <input type="checkbox" class="inativo-chk" data-i="${i}" checked>
       <span style="flex:1;min-width:0"><strong>${it.c.nome}</strong> <span style="color:var(--mid)">· ${it.vaga?it.vaga.titulo:''}</span><br>
       <span style="font-size:11.5px;color:var(--mid)">${it.sub} · ${it.cobTxt}</span></span>
-    </label>`).join('');
+    </label>`);
+  // 22/11/2026: mostra os 5 primeiros; o resto abre em "Ver todos" (todos continuam marcados).
+  const _linhasVisiveis=linhas.slice(0,5).join(''), _linhasResto=linhas.slice(5).join('');
   return `<div class="card" style="padding:14px 18px;margin-bottom:10px;border-left:4px solid var(--red)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
       <div><strong>Sem resposta há ${_COBRANCA_SLA} dias úteis ou mais</strong><div style="font-size:12px;color:var(--mid)">Cobrados ou convidados pelo painel que não voltaram. Desmarque quem quiser manter.</div></div>
-      <button class="btn" style="background:var(--red);color:#fff" onclick="reprovarInativosSelecionados()">✗ Reprovar selecionados</button>
+      <button class="btn" style="background:var(--red);color:#fff" onclick="reprovarInativosSelecionados()">✗ Reprovar selecionados (${_inativosPendentes.length})</button>
     </div>
-    <div style="margin-top:8px">${linhas}</div>
+    <div style="margin-top:8px">${_linhasVisiveis}${_linhasResto?`<div class="inativos-resto" style="display:none">${_linhasResto}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="const r=this.previousElementSibling;const ab=r.style.display==='none';r.style.display=ab?'':'none';this.textContent=ab?'Mostrar menos':'Ver todos (${_inativosPendentes.length})'">Ver todos (${_inativosPendentes.length})</button>`:''}</div>
   </div>`;
 }
 async function reprovarInativosSelecionados(){
@@ -6603,8 +6614,9 @@ function renderIndicadoresFunil(){
     // colados e a tabela amontoada no card estreito.
     const _th = (t,al='center') => `<th style="text-align:${al};font-weight:600;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--mid);padding:4px 6px;line-height:1.25;vertical-align:bottom">${t}</th>`;
     const _td = (t,extra='') => `<td style="text-align:center;padding:7px 6px;font-variant-numeric:tabular-nums;${extra}">${t}</td>`;
-    if(el) el.innerHTML = linhas.length ? `<div class="chart-card-sub" style="margin:4px 0 8px">Origem dos candidatos</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">
+    const _cardOr=document.getElementById('dash-card-origem');
+    if(_cardOr){ _cardOr.style.display=linhas.length?'':'none'; _cardOr.parentElement.style.gridTemplateColumns=linhas.length?'1fr 1fr':'1fr'; }
+    if(el) el.innerHTML = linhas.length ? `<table style="width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed">
         <colgroup><col><col style="width:21%"><col style="width:21%"><col style="width:21%"></colgroup>
         <tr>${_th('Canal','left')}${_th('Total')}${_th('Fase final')}${_th('Contratados')}</tr>
         ${linhas.map(([k,o])=>`<tr style="border-top:1px solid var(--bege)"><td style="padding:7px 6px 7px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${CANAL_LABEL[k]||k}</td>${_td(o.n)}${_td(o.fin)}${_td(o.con, o.con?'font-weight:700;color:var(--green)':'color:var(--light)')}</tr>`).join('')}
@@ -6715,6 +6727,24 @@ function renderDashboardMentoria(){
     </div>`;
 }
 
+// ── Grade sem quadro sozinho (22/11/2026) ──────────────────────────────────
+// Escolhe quantas colunas usar para que nenhuma fileira termine com um quadro
+// isolado e sobre o mínimo de espaço vazio. Vale para os indicadores do topo e
+// para o Detalhamento por Setor, com qualquer quantidade de quadros e largura.
+function _gradeSemSobra(el, minW){
+  if(!el) return;
+  const n=el.children.length; if(!n){ el.style.gridTemplateColumns=''; return; }
+  const gap=14, w=el.clientWidth||el.parentElement.clientWidth||0;
+  if(!w){ el.style.gridTemplateColumns=''; return; } // tela escondida: mantém o padrão do CSS
+  const max=Math.max(1, Math.floor((w+gap)/(minW+gap)));
+  let cols=max;
+  if(n<=max) cols=n;
+  else { let melhor=1e9; for(let c=max;c>=Math.max(1,Math.ceil(max/2));c--){ const vazio=(c-n%c)%c; if(vazio<melhor){ melhor=vazio; cols=c; } } }
+  el.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
+}
+function _dashGrades(){ _gradeSemSobra(document.getElementById('dash-kpis'),150); _gradeSemSobra(document.getElementById('dash-setores'),260); }
+window.addEventListener('resize', ()=>{ clearTimeout(_dashGrades._t); _dashGrades._t=setTimeout(_dashGrades,120); });
+
 function renderDashboard(){
   // Empresa de mentoria (sem R&S) tem um dashboard próprio: nada de vagas,
   // funil ou candidatos, que não existem nesse produto.
@@ -6737,7 +6767,8 @@ function renderDashboard(){
   _popularFiltroDash();
   const vagas=_dashVagas();
   const _cardCandVaga=document.getElementById('dash-card-cand-vaga');
-  if(_cardCandVaga){ _cardCandVaga.style.display=_dashVagaFiltroId()?'none':''; _cardCandVaga.parentElement.style.gridTemplateColumns=_dashVagaFiltroId()?'1fr':'1fr 1fr'; }
+  // Some com vaga filtrada e na Auto Club (processo único: o gráfico vira uma barra só).
+  if(_cardCandVaga){ const _ocultaCV=!!_dashVagaFiltroId() || currentEmpresa==='autoclub'; _cardCandVaga.parentElement.style.display=_ocultaCV?'none':''; }
   const _vagaSel = _dashVagaFiltroId() ? vagas[0] : null;
   const _btnRel = document.getElementById('dash-btn-relatorio');
   // Com uma vaga fechada filtrada: relatório dela. Em "Todas as vagas": um PDF
@@ -6753,8 +6784,10 @@ function renderDashboard(){
   // 22/11/2026: sem o nome da empresa nem "Dados em tempo real" (já estão no menu de cima).
   // Só aparece a vaga filtrada, quando houver.
   if(subEl) {
-    subEl.textContent = _vagaSel ? _vagaSel.titulo : '';
-    subEl.style.display = _vagaSel ? '' : 'none';
+    const _setG = (currentUser && currentUser.role==='gestor' && Array.isArray(currentUser.setores)) ? currentUser.setores.join(' + ') : '';
+    const _txt = [_setG, _vagaSel ? _vagaSel.titulo : ''].filter(Boolean).join(' · ');
+    subEl.textContent = _txt;
+    subEl.style.display = _txt ? '' : 'none';
   }
   const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
   const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
@@ -7077,6 +7110,7 @@ function renderDashboard(){
   document.getElementById('dash-setores').innerHTML=smSorted.map(([setor,d])=>{const p=(d.qtd+d.repos-d.canc)>0?Math.round(d.fech/(d.qtd+d.repos-d.canc)*100):0,done=d.aberto===0&&d.canc===0;return `<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between;min-height:130px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:700;margin-bottom:2px">${setor}</div><div style="font-size:11px;color:var(--mid)">Inicial: ${d.qtd} vaga${d.qtd!==1?'s':''}</div></div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:${done?'var(--green)':'var(--charcoal)'}">${p}%</div></div><div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap;margin-bottom:10px"><span style="color:var(--green)">Fechadas: ${d.fech}${d.repos?` (${d.repos} reposta${d.repos===1?'':'s'})`:''}</span>
         ${d.aberto>0?`<span style="color:var(--amber)">Em Aberto: ${d.aberto}</span>`:''}
         ${d.canc>0?`<span style="color:var(--red)">Canceladas: ${d.canc}</span>`:''}</div><div class="prog-track" style="height:6px;margin-bottom:0"><div class="prog-fill" style="width:${p}%"></div></div></div>`;}).join('');
+  try{ _dashGrades(); requestAnimationFrame(_dashGrades); }catch(e){}
   const tabEl=document.getElementById('dash-tabelas');tabEl.innerHTML='';
   smSorted.forEach(([setor,totals])=>{const vs=vagas.filter(v=>v.setor===setor),div=document.createElement('div');div.style.marginBottom='20px';div.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><div style="font-weight:700;font-size:14px">${setor.toUpperCase()}</div><span class="tag" style="background:var(--bege-lt);color:var(--mid)">Qtd: ${totals.qtd}</span><span class="tag" style="background:var(--green-lt);color:var(--green)">Fech: ${totals.fech}</span>${totals.aberto>0?`<span class="tag" style="background:var(--amber-lt);color:var(--amber)">Saldo: ${totals.aberto}</span>`:''}</div><div class="cand-table-wrap"><table class="cand-table"><thead><tr><th>Cargo</th><th>Data</th><th style="text-align:center">Qtd</th><th style="text-align:center">Fech.</th><th style="text-align:center">Saldo</th><th>Status</th></tr></thead><tbody>${(()=>{
       // Posições iguais (mesmo cargo, mesma OS, mesma data de abertura) viram
@@ -8199,7 +8233,7 @@ async function initApp(){
     if(currentUser&&currentUser.role==='gestor'&&empresaTemProduto('rs')){
       const sub=document.getElementById('dash-subtitle');
       const setores=Array.isArray(currentUser.setores)?currentUser.setores:[];
-      void sub; void setores; // subtítulo do dashboard fica só com a vaga filtrada (22/11/2026)
+      if(sub&&setores.length){ sub.textContent=setores.join(' + '); sub.style.display=''; }
       const btnC=document.getElementById('btn-novo-cand');
       if(btnC)btnC.style.display='none';
     }
