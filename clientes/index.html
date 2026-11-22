@@ -802,6 +802,7 @@ header {
       <input type="text" id="sala-padrao-input" placeholder="Cole aqui o link fixo do seu Meet ou Zoom (uma vez só)" style="width:100%">
     </div>
     <button class="btn btn-primary btn-sm" onclick="salvarSalaPadrao()">Salvar sala</button>
+    <button class="btn btn-ghost btn-sm" onclick="abrirDisponibilidade()" title="Dias e horários que o candidato pode escolher no link de agendamento">🕒 Minha disponibilidade</button>
     <button class="btn btn-ghost btn-sm" id="btn-meet-auto" onclick="meetTranscricaoAutomatica()" title="Liga, na sala fixa do Meet, a transcrição completa e as anotações do Gemini em toda reunião, sem precisar clicar em nada na hora">🎙 Transcrição automática na sala</button>
     <div id="meet-auto-status" style="flex-basis:100%;font-size:11.5px;color:var(--mid)"></div>
   </div>
@@ -2496,6 +2497,113 @@ function _agConfirmaRemarcacao(rem){
   return confirm(`${x.candidato||'Este candidato'} já tem ${x.titulo||'entrevista'} marcada para ${_dataBR(x.data)}${x.horaIni?' às '+x.horaIni:''}.\n\nÉ uma remarcação?\n\nOK: sim. A antiga fica cancelada e abre a mensagem de reagendamento.\nCancelar: é outra entrevista. As duas continuam na agenda.`) ? rem : null;
 }
 
+// ── LINK DE AGENDAMENTO (22/11/2026) ────────────────────────────────────────
+// O candidato recebe um link único (lavieconsultoria.com/agendar/?t=...), vê só os
+// horários livres da disponibilidade da Chrys e, ao escolher, a Entrevista La Vie
+// entra sozinha na agenda (banco: lv_agendamento_marcar). O convite do Google sai
+// quando o painel abre (ver _agSincronizarMarcadosPeloLink).
+const AGENDAR_URL='https://lavieconsultoria.com/agendar/?t=';
+function _textoLinkAgendamento(c, link){
+  const v=getVagas().find(x=>x.id===c.vagaId);
+  const prim=_cartaoPrimeiroNome(c.nome||'');
+  return `Olá, ${prim}! Aqui é a Chrys, da La Vie Consultoria.\n\nQuero marcar um bate-papo online com você sobre a vaga de ${(v&&v.titulo)||'[VAGA]'}, de uns 30 minutos. Escolha o melhor horário aqui:\n${link}\n\nSe nenhum horário der certo, me avisa por aqui.`;
+}
+async function abrirLinkAgendamento(candId){
+  const c=getCands().find(x=>x.id===candId); if(!c){ alert('Candidato não encontrado.'); return; }
+  if(isClienteExterno()) return;
+  let tok='';
+  try{ const {data,error}=await sb.rpc('lv_agendamento_criar_link',{p_candidato_id:candId}); if(error) throw error; tok=data; }
+  catch(e){ alert('Não consegui criar o link de agendamento: '+((e&&e.message)||e)); return; }
+  const link=AGENDAR_URL+tok;
+  let o=document.getElementById('linkag-ov'); if(o) o.remove();
+  o=document.createElement('div'); o.id='linkag-ov';
+  o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(58,58,58,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+  o.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:540px;width:100%;max-height:94vh;overflow:auto;box-shadow:var(--shadow-md)">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:4px">Convite com link de agendamento</div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:10px">Para: <strong></strong>. O candidato escolhe o horário e a Entrevista La Vie entra sozinha na agenda.</div>
+    <textarea style="width:100%;min-height:190px;font-size:13px;line-height:1.45;padding:10px;border:1px solid var(--bege);border-radius:10px;font-family:inherit"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button>
+      <button class="btn btn-ghost btn-sm" data-a="copiar">📋 Copiar</button>
+      <button class="btn btn-ghost btn-sm" data-a="email">✉ E-mail</button>
+      <button class="btn btn-sm" data-a="whats" style="background:#25D366;border-color:#25D366;color:#fff">💬 WhatsApp</button>
+    </div></div>`;
+  o.querySelector('strong').textContent=c.nome+(c.tel?' · '+c.tel:' (sem telefone)');
+  const ta=o.querySelector('textarea'); ta.value=_textoLinkAgendamento(c, link);
+  o.addEventListener('click', ev=>{
+    const b=ev.target.closest('button[data-a]');
+    if(!b){ if(ev.target===o) o.remove(); return; }
+    const txt=ta.value;
+    if(b.dataset.a==='fechar') return o.remove();
+    if(b.dataset.a==='copiar'){ navigator.clipboard.writeText(txt).then(()=>{ showToast('📋 Mensagem copiada'); _registrarCobranca(candId,'linkAgendamento','mensagem copiada'); }).catch(()=>alert('Não foi possível copiar.')); return; }
+    if(b.dataset.a==='whats'){ if(!c.tel){ alert('Este candidato não tem telefone cadastrado.'); return; } window.open('https://wa.me/'+_fmtTel(c.tel)+'?text='+encodeURIComponent(txt),'_blank'); o.remove(); showToast('💬 WhatsApp aberto com a mensagem pronta'); _registrarCobranca(candId,'linkAgendamento','WhatsApp'); return; }
+    if(b.dataset.a==='email'){ if(!c.email){ alert('Este candidato não tem e-mail cadastrado.'); return; } const v=getVagas().find(x=>x.id===c.vagaId);
+      window.open('mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent('Vamos marcar sua entrevista'+(v?' | '+v.titulo:'')+' | La Vie Consultoria')+'&body='+encodeURIComponent(txt),'_blank'); o.remove(); showToast('✉ E-mail aberto com a mensagem pronta'); _registrarCobranca(candId,'linkAgendamento','e-mail'); }
+  });
+  document.body.appendChild(o);
+}
+// Entrevistas marcadas pelo candidato entram sem evento no Google (o acesso ao Google
+// fica no navegador da Chrys). Quando o painel abre conectado, cria o evento uma vez só.
+let _agSincLinkRodando=false;
+async function _agSincronizarMarcadosPeloLink(){
+  if(_agSincLinkRodando || isClienteExterno() || !gcalConectado()) return;
+  const hoje=new Date().toISOString().slice(0,10);
+  const pend=(_agenda||[]).filter(a=>a && /^Candidato/.test(a.criadoPor||'') && !a.googleEventId && a.status==='agendada' && a.data>=hoje);
+  if(!pend.length) return;
+  _agSincLinkRodando=true;
+  try{
+    let n=0;
+    for(const a of pend){
+      const {data:atual}=await sb.from('agenda').select('google_event_id').eq('id',a.id).maybeSingle();
+      if(atual && atual.google_event_id){ a.googleEventId=atual.google_event_id; continue; }
+      const ev=await gcalSincronizarEvento(a);
+      if(ev){ a.googleEventId=ev; await sb.from('agenda').update({google_event_id:ev}).eq('id',a.id).is('google_event_id',null); n++; }
+    }
+    if(n) showToast('📅 '+n+' entrevista(s) marcada(s) pelo link enviada(s) ao Google Agenda');
+  } catch(e){ console.warn('Sincronização dos agendamentos pelo link:', e); }
+  finally{ _agSincLinkRodando=false; }
+}
+// Disponibilidade da Chrys para o link (dias da semana e faixas de horário).
+const _DISP_DIAS=[['1','Segunda'],['2','Terça'],['3','Quarta'],['4','Quinta'],['5','Sexta'],['6','Sábado'],['7','Domingo']];
+async function abrirDisponibilidade(){
+  let cfg=null;
+  try{ const {data,error}=await sb.from('lv_agendamento_config').select('valor').eq('chave','disponibilidade').maybeSingle(); if(error) throw error; cfg=data&&data.valor; }
+  catch(e){ alert('Não consegui ler a disponibilidade: '+((e&&e.message)||e)); return; }
+  cfg=cfg||{slot_min:30,dias_a_frente:10,antecedencia_min:120,dias:{}};
+  let o=document.getElementById('disp-ov'); if(o) o.remove();
+  o=document.createElement('div'); o.id='disp-ov';
+  o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(58,58,58,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+  const linhas=_DISP_DIAS.map(([k,n])=>{ const fx=((cfg.dias||{})[k]||[])[0]||['','']; return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:80px;font-size:13px">${n}</span><input type="time" data-d="${k}" data-p="0" value="${fx[0]||''}" class="filter-input"><span style="font-size:12px;color:var(--mid)">às</span><input type="time" data-d="${k}" data-p="1" value="${fx[1]||''}" class="filter-input"></div>`; }).join('');
+  o.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:440px;width:100%;max-height:94vh;overflow:auto;box-shadow:var(--shadow-md)">
+    <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:4px">Minha disponibilidade</div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:12px">Faixas em que o candidato pode marcar a Entrevista La Vie pelo link. Dia em branco não aparece. Compromissos da Agenda (de qualquer empresa) saem da lista sozinhos; para bloquear um horário avulso, crie um compromisso "Outro" nele.</div>
+    ${linhas}
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mid)">
+      <label>Duração (min)<br><input type="number" min="15" step="5" data-c="slot" value="${cfg.slot_min||30}" class="filter-input" style="width:80px;margin-top:3px"></label>
+      <label>Mostrar quantos dias à frente<br><input type="number" min="1" max="30" data-c="dias" value="${cfg.dias_a_frente||10}" class="filter-input" style="width:80px;margin-top:3px"></label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button>
+      <button class="btn btn-primary btn-sm" data-a="salvar">Salvar</button>
+    </div></div>`;
+  o.addEventListener('click', async ev=>{
+    const b=ev.target.closest('button[data-a]');
+    if(!b){ if(ev.target===o) o.remove(); return; }
+    if(b.dataset.a==='fechar') return o.remove();
+    const dias={};
+    for(const [k,n] of _DISP_DIAS){
+      const i=o.querySelector(`input[data-d="${k}"][data-p="0"]`).value, f=o.querySelector(`input[data-d="${k}"][data-p="1"]`).value;
+      if(!i && !f) continue;
+      if(!i || !f || f<=i){ alert(n+': preencha início e fim, com o fim depois do início.'); return; }
+      dias[k]=[[i,f]];
+    }
+    const novo=Object.assign({}, cfg, { slot_min:Math.max(15,parseInt(o.querySelector('[data-c="slot"]').value,10)||30), dias_a_frente:Math.min(30,Math.max(1,parseInt(o.querySelector('[data-c="dias"]').value,10)||10)), dias });
+    try{ const {error}=await sb.from('lv_agendamento_config').upsert({chave:'disponibilidade', valor:novo, atualizado_em:new Date().toISOString()}); if(error) throw error; o.remove(); showToast('✅ Disponibilidade salva'); }
+    catch(e){ alert('Não consegui salvar: '+((e&&e.message)||e)); }
+  });
+  document.body.appendChild(o);
+}
+
 function agAvisoInfoVaga(){
   try{ agAvisoCartao(); }catch(e){}
   const el=document.getElementById('ag-msg-extra'); if(!el) return;
@@ -2781,6 +2889,7 @@ async function loadAll() {
     _vagasCarregouOk=true; _dadosCarregouOk=true;
     _agendaOutras=[];
     carregarAgendaOutras().then(()=>{ try{ if(_page==='agenda') renderAgenda(); }catch(e){} });
+    setTimeout(()=>{ try{ _agSincronizarMarcadosPeloLink(); }catch(e){} }, 2500);
     setTimeout(()=>lvPdfsAutomaticos(empresa), 1500);
     return true;
   } catch(err) {
@@ -2850,7 +2959,7 @@ function setupRealtime() {
     .on('postgres_changes',{event:'*',schema:'public',table:'vagas'},     async ()=>{ const r=await sb.from('vagas').select(VAGAS_COLUNAS).eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_vagas=_canceladasNoFim(r.data.map(dbToVaga)); refreshPage(); showToast('🔄 Vagas atualizadas');} })
     .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'}, async ()=>{ const r=await sb.from('candidatos').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_cands=r.data.map(dbToCand); refreshPage(); if(!window._lvPdfEmLote){ showToast('🔄 Candidatos atualizados'); lvPdfsAutomaticos(currentEmpresa); }} })
     .on('postgres_changes',{event:'*',schema:'public',table:'entrevistas'},async ()=>{ const r=await sb.from('entrevistas').select('*').eq('empresa_id',currentEmpresa).order('criado_em',{ascending:false}); if(r.data){_entrevistas=r.data.map(dbToEntrev); refreshPage(); showToast('🔄 Entrevistas atualizadas');} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ await carregarAgendaOutras(); const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada');} })
+    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async ()=>{ await carregarAgendaOutras(); const r=await sb.from('agenda').select('*').eq('empresa_id',currentEmpresa).order('data',{ascending:true}); if(r.data){_agenda=r.data.map(dbToAgenda); if(_page==='agenda')renderAgenda(); showToast('🔄 Agenda atualizada'); setTimeout(()=>{ try{ _agSincronizarMarcadosPeloLink(); }catch(e){} }, 800);} })
     .subscribe(s => setSyncOk(s==='SUBSCRIBED'));
 }
 
@@ -3445,13 +3554,15 @@ async function aprovarEtapaCom(modo){ // 'online' | 'presencial' — vale pra Tr
     }
     if(origem==='triagem'){
       showToast('✅ '+c.nome.split(' ')[0]+' → Formulários e Testes');
-      abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');
+      if(modo==='online' && !data && !isClienteExterno()) abrirLinkAgendamento(id);
+      else abrirMensagem(id, modo==='online'?'conviteOnline':'convitePresencial');
     } else {
       const tplPorEtapa={entrevista_rh:'feedbackPositivoRH',entrevista_gestor:'conviteGestor'};
       const tpl=tplPorEtapa[origem]||'feedbackPositivoRH';
       showToast('✅ '+c.nome.split(' ')[0]+' → '+(ETAPA_LABEL[prox]||prox));
       // Cliente que usa a imagem da fase final: abre a imagem (o texto segue no menu 💬).
-      if(!(prox==='vivencia' && abrirCartaoDoCandidato(id, data?{data,hora}:null))) abrirMensagem(id, tpl);
+      if(prox==='entrevista_gestor' && modo==='online' && !data && !isClienteExterno()) abrirLinkAgendamento(id);
+      else if(!(prox==='vivencia' && abrirCartaoDoCandidato(id, data?{data,hora}:null))) abrirMensagem(id, tpl);
     }
   }
 }
@@ -3473,7 +3584,7 @@ function desistiuCard(id){
 function menuMensagens(id){
   const c=getCands().find(x=>x.id===id);if(!c)return;
   document.getElementById('menu-msg-nome').textContent=c.nome;
-  document.getElementById('menu-msg-list').innerHTML=MSG_MENU.map(k=>`<button class="btn btn-ghost" style="width:100%;justify-content:flex-start;margin-bottom:6px" onclick="closeModal('modal-menu-msg');abrirMensagem('${id}','${k}')">💬 ${MSG_TEMPLATES[k].nome}</button>`).join('')
+  document.getElementById('menu-msg-list').innerHTML=(isClienteExterno()?'':`<button class="btn btn-primary" style="width:100%;justify-content:flex-start;margin-bottom:10px" onclick="closeModal('modal-menu-msg');abrirLinkAgendamento('${id}')">📅 Convite com link de agendamento</button>`)+MSG_MENU.map(k=>`<button class="btn btn-ghost" style="width:100%;justify-content:flex-start;margin-bottom:6px" onclick="closeModal('modal-menu-msg');abrirMensagem('${id}','${k}')">💬 ${MSG_TEMPLATES[k].nome}</button>`).join('')
    +`<div style="border-top:1px solid var(--bege);margin:8px 0"></div>`
    +`<button class="btn btn-ghost" style="width:100%;justify-content:flex-start;color:var(--red)" onclick="closeModal('modal-menu-msg');abrirMensagem('${id}','feedbackNegTriagem')">✗ Feedback negativo (triagem)</button>`
    +`<button class="btn btn-ghost" style="width:100%;justify-content:flex-start;color:var(--red);margin-top:6px" onclick="closeModal('modal-menu-msg');abrirMensagem('${id}','feedbackNegEntrevista')">✗ Feedback negativo (após entrevista)</button>`;
@@ -5786,7 +5897,7 @@ function _pendenciaDocs(c, vaga){
 // Candidato que recebeu convite de entrevista pelo painel (registro
 // tipo:'convite' no histórico) e não tem nenhuma entrevista na Agenda depois
 // do convite. Regra da La Vie: convidado que não responde sai do processo.
-const _CONVITE_TPLS = { conviteOnline:'entrevista online', convitePresencial:'entrevista presencial', feedbackPositivoRH:'Entrevista La Vie', conviteGestor:'entrevista final' };
+const _CONVITE_TPLS = { linkAgendamento:'Entrevista La Vie (link de agendamento)', conviteOnline:'entrevista online', convitePresencial:'entrevista presencial', feedbackPositivoRH:'Entrevista La Vie', conviteGestor:'entrevista final' };
 function _pendenciaConvite(c, vaga){
   if(!vaga || vaga.status!=='aberta') return null;
   if(!['entrevista_rh','entrevista_gestor','vivencia'].includes(c.etapa)) return null;
