@@ -2583,7 +2583,7 @@ async function abrirDisponibilidade(){
   let cfg=null;
   try{ const {data,error}=await sb.from('lv_agendamento_config').select('valor').eq('chave','disponibilidade').maybeSingle(); if(error) throw error; cfg=data&&data.valor; }
   catch(e){ alert('Não consegui ler a disponibilidade: '+((e&&e.message)||e)); return; }
-  cfg=cfg||{slot_min:30,dias_a_frente:10,antecedencia_min:120,dias:{}};
+  cfg=cfg||{slot_min:30,dias_a_frente:10,dias_com_horario:2,antecedencia_min:120,dias:{}};
   let o=document.getElementById('disp-ov'); if(o) o.remove();
   o=document.createElement('div'); o.id='disp-ov';
   o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(58,58,58,.55);display:flex;align-items:center;justify-content:center;padding:18px';
@@ -2594,7 +2594,7 @@ async function abrirDisponibilidade(){
     ${linhas}
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mid)">
       <label>Duração (min)<br><input type="number" min="15" step="5" data-c="slot" value="${cfg.slot_min||30}" class="filter-input" style="width:80px;margin-top:3px"></label>
-      <label>Mostrar quantos dias à frente<br><input type="number" min="1" max="30" data-c="dias" value="${cfg.dias_a_frente||10}" class="filter-input" style="width:80px;margin-top:3px"></label>
+      <label>Dias com horário que o candidato vê<br><input type="number" min="1" max="10" data-c="dias" value="${cfg.dias_com_horario||2}" class="filter-input" style="width:80px;margin-top:3px"></label>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn btn-ghost btn-sm" data-a="fechar">Fechar</button>
@@ -2611,7 +2611,7 @@ async function abrirDisponibilidade(){
       if(!i || !f || f<=i){ alert(n+': preencha início e fim, com o fim depois do início.'); return; }
       dias[k]=[[i,f]];
     }
-    const novo=Object.assign({}, cfg, { slot_min:Math.max(15,parseInt(o.querySelector('[data-c="slot"]').value,10)||30), dias_a_frente:Math.min(30,Math.max(1,parseInt(o.querySelector('[data-c="dias"]').value,10)||10)), dias });
+    const novo=Object.assign({}, cfg, { slot_min:Math.max(15,parseInt(o.querySelector('[data-c="slot"]').value,10)||30), dias_com_horario:Math.min(10,Math.max(1,parseInt(o.querySelector('[data-c="dias"]').value,10)||2)), dias });
     try{ const {error}=await sb.from('lv_agendamento_config').upsert({chave:'disponibilidade', valor:novo, atualizado_em:new Date().toISOString()}); if(error) throw error; o.remove(); showToast('✅ Disponibilidade salva'); }
     catch(e){ alert('Não consegui salvar: '+((e&&e.message)||e)); }
   });
