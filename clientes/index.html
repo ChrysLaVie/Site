@@ -3455,6 +3455,8 @@ function abrirMensagem(candId,tplKey){
   const c=getCands().find(x=>x.id===candId);if(!c){alert('Candidato não encontrado.');return;}
   const tpl=MSG_TEMPLATES[tplKey];if(!tpl)return;
   _msgCtx={candId,tplKey};
+  // Último aviso (24h): registra no histórico já ao escolher a mensagem (pedido da Chrys, 22/11/2026).
+  if(tplKey==='avisoFinal24h'){ _msgCtx.registrado=true; _registrarCobranca(candId,'avisoFinal24h','mensagem pronta do painel'); }
   let corpo=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${tpl.nome}</div><div style="font-size:12px;color:var(--mid);margin-bottom:14px">Para: <strong>${c.nome}</strong>${c.tel?` · ${c.tel}`:' · (sem telefone)'}</div>`;
   if(tpl.campos.length){
     // Se já existe entrevista agendada para este candidato, puxa os dados de lá
@@ -3489,7 +3491,7 @@ function enviarWhats(){
   if(!c.tel){alert('Este candidato não tem telefone cadastrado.');return;}
   window.open('https://wa.me/'+_fmtTel(c.tel)+'?text='+encodeURIComponent(txt),'_blank');
   closeModal('modal-msg');showToast('💬 WhatsApp aberto com a mensagem pronta');
-  _registrarCobranca(c.id, _msgCtx.tplKey, 'WhatsApp');
+  if(!_msgCtx.registrado) _registrarCobranca(c.id, _msgCtx.tplKey, 'WhatsApp');
 }
 function enviarEmailMsg(){
   const {c,txt}=_montaTexto();const tpl=MSG_TEMPLATES[_msgCtx.tplKey];
@@ -3497,7 +3499,7 @@ function enviarEmailMsg(){
   const v=getVagas().find(x=>x.id===c.vagaId);const assunto='Processo seletivo'+(v?' — '+v.titulo:'')+' | La Vie Consultoria';
   window.open('mailto:'+encodeURIComponent(c.email)+'?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(txt),'_blank');
   closeModal('modal-msg');showToast('✉ E-mail aberto com a mensagem pronta');
-  _registrarCobranca(c.id, _msgCtx.tplKey, 'e-mail');
+  if(!_msgCtx.registrado) _registrarCobranca(c.id, _msgCtx.tplKey, 'e-mail');
 }
 function copiarMsg(){const {txt}=_montaTexto();navigator.clipboard.writeText(txt).then(()=>showToast('📋 Mensagem copiada')).catch(()=>alert('Não foi possível copiar.'));}
 
@@ -4141,7 +4143,7 @@ const NOTAS_RAPIDAS = [
   { grupo:'Entrevista', rotulo:'Pediu para remarcar', tipo:'observacao', obs:'Candidato pediu para remarcar.' },
   { grupo:'Resposta do candidato', rotulo:'Sem resposta no WhatsApp', tipo:'observacao', obs:'Sem resposta no WhatsApp.' },
   { grupo:'Resposta do candidato', rotulo:'Enviou documentos', tipo:'observacao', obs:'Candidato enviou os documentos pelo WhatsApp.' },
-  { grupo:'Mensagem pronta', rotulo:'Último aviso (24 horas)', mensagem:'avisoFinal24h', obs:'Abre a mensagem educada de último aviso; registra ao enviar.' },
+  { grupo:'Mensagem pronta', rotulo:'Último aviso (24 horas)', mensagem:'avisoFinal24h', obs:'Abre a mensagem educada de último aviso; registra no histórico ao escolher.' },
   { grupo:'Entrevista', rotulo:'Não compareceu', acao:'noshow', obs:'Candidato faltou à Entrevista La Vie ou à Entrevista Final.' }
 ];
 function renderNotasRapidas(){
