@@ -151,6 +151,13 @@ header {
 .agenda-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
 .ag-cell{ min-width:0; min-height:96px; background:#fff; border:1.5px solid var(--bege-lt); border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:4px; transition:border-color .15s; }
 .ag-cell.empty{ background:transparent; border:none; }
+/* Vista Semana (22/11/2026): os mesmos quadros do mês, maiores, com todos os compromissos do dia. */
+.agenda-grid.semana .ag-cell{ min-height:340px; padding:8px; gap:6px; }
+.agenda-grid.semana .ag-cell .ag-day{ font-size:13px; display:flex; justify-content:space-between; align-items:baseline; }
+.agenda-grid.semana .ag-ev{ white-space:normal; font-size:11.5px; padding:5px 6px; }
+.agenda-grid.semana .ag-ev .h{ display:block; font-weight:700; }
+.agenda-grid.semana .ag-ev .t{ display:block; opacity:.75; font-size:10.5px; }
+.agenda-grid.semana .ag-cell.fds{ background:#FBFAF7; }
 .ag-cell.today{ border-color:var(--charcoal); }
 .ag-cell:hover:not(.empty){ border-color:var(--bege); cursor:pointer; }
 .ag-cell .ag-day{ font-size:12px; font-weight:600; color:var(--mid); }
@@ -824,6 +831,7 @@ header {
     </div>
     <div style="display:flex;gap:6px">
       <button class="btn btn-ghost btn-sm" id="agenda-view-mes" onclick="agendaSetView('mes')">Mês</button>
+      <button class="btn btn-ghost btn-sm" id="agenda-view-semana" onclick="agendaSetView('semana')">Semana</button>
       <button class="btn btn-ghost btn-sm" id="agenda-view-lista" onclick="agendaSetView('lista')">Lista</button>
       <button class="btn btn-primary btn-sm" onclick="abrirConfirmacoes()" title="Mensagens prontas para confirmar as entrevistas do dia">📲 Confirmar presenças</button>
     </div>
@@ -1604,9 +1612,20 @@ let _agendaView = 'mes';
 const AG_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const AG_MES_ABREV=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 
-function agendaNavMes(d){ _agendaRef.setMonth(_agendaRef.getMonth()+d); renderAgenda(); }
-function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); renderAgenda(); }
-function agendaSetView(v){ _agendaView=v; renderAgenda(); }
+function _agDomingoDe(dt){ const x=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); x.setDate(x.getDate()-x.getDay()); return x; }
+let _agendaSemana = _agDomingoDe(new Date());
+function agendaNavMes(d){
+  if(_agendaView==='semana'){ _agendaSemana.setDate(_agendaSemana.getDate()+7*d); _agendaRef=new Date(_agendaSemana.getFullYear(),_agendaSemana.getMonth(),1); }
+  else { _agendaRef.setMonth(_agendaRef.getMonth()+d); }
+  renderAgenda();
+}
+function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); _agendaSemana=_agDomingoDe(new Date()); renderAgenda(); }
+function agendaSetView(v){
+  // Ao trocar do mês para a semana, abre a semana de hoje se ela estiver no mês aberto; senão, a 1ª semana do mês.
+  if(v==='semana' && _agendaView!=='semana'){ const h=new Date(); _agendaSemana=(h.getMonth()===_agendaRef.getMonth() && h.getFullYear()===_agendaRef.getFullYear()) ? _agDomingoDe(h) : _agDomingoDe(new Date(_agendaRef)); }
+  if(v==='mes' && _agendaView==='semana'){ _agendaRef=new Date(_agendaSemana.getFullYear(),_agendaSemana.getMonth(),1); }
+  _agendaView=v; renderAgenda();
+}
 
 // ── Agenda das outras empresas (16/11/2026) ─────────────────────────────────
 // A Chrys entrevista para vários clientes e cada painel só mostrava a agenda
@@ -1680,9 +1699,12 @@ function renderAgenda(){
   const bMes=document.getElementById('agenda-view-mes'), bLista=document.getElementById('agenda-view-lista');
   bMes.classList.toggle('btn-primary',_agendaView==='mes'); bMes.classList.toggle('btn-ghost',_agendaView!=='mes');
   bLista.classList.toggle('btn-primary',_agendaView==='lista'); bLista.classList.toggle('btn-ghost',_agendaView!=='lista');
+  const bSem=document.getElementById('agenda-view-semana'); if(bSem){ bSem.classList.toggle('btn-primary',_agendaView==='semana'); bSem.classList.toggle('btn-ghost',_agendaView!=='semana'); }
+  document.getElementById('agenda-grid').classList.toggle('semana',_agendaView==='semana');
 
   if(_agendaView==='lista'){ calWrap.style.display='none'; listaWrap.style.display='block'; renderAgendaLista(); return; }
   calWrap.style.display='block'; listaWrap.style.display='none';
+  if(_agendaView==='semana'){ renderAgendaSemana(); return; }
 
   const eventos=getAgendaVisivel();
   const outras=_agOutrasVisiveis();
@@ -1747,6 +1769,42 @@ function _agResultado(e){
     if(pos(c.etapa)>pos(fase) && e.data<=hoje) return 'aprovado';
   }catch(err){}
   return '';
+}
+
+// Vista Semana em quadros (22/11/2026): domingo a sábado, todos os compromissos
+// de cada dia, com horário, nome e etapa. Mesmas cores e cliques do mês.
+function _agEvHtml(e, outras, detalhe){
+  const hora=e.horaIni?e.horaIni+(e.horaFim?'–'+e.horaFim:''):'';
+  if(e.outra){
+    const emp=_agNomeEmpresa(e.empresaId);
+    return `<div class="ag-ev outra" onclick="event.stopPropagation();agOcupadoInfo('${e.id}')" title="${escapeHtmlAg('Ocupado: '+emp+' · '+(e.candidato||e.titulo||'')).replace(/"/g,'')}"><span class="h">${hora}</span>🔒 ${escapeHtmlAg(_agNomeCurto(e.empresaId))}</div>`;
+  }
+  const cls=e.status==='cancelada'?'cancelada':(e.status==='realizada'?'realizada':(e.status==='nao_compareceu'?'nao_compareceu':''));
+  const choque=_agAtivo(e) && outras.some(o=>_agSobrepoe(e,o));
+  const res=_agResultado(e);
+  const tit=(e.titulo||'').replace(/"/g,'')+(res?' · '+AG_RES_LABEL[res]:'')+(choque?' (choque de horário com outra empresa)':'');
+  return `<div class="ag-ev ${e.tipo||'online'} ${cls}${res?' res-'+res:''}${choque?' choque':''}" onclick="event.stopPropagation();abrirAgendaModal('${e.id}')" title="${tit}"><span class="h">${hora||'sem horário'}</span>${escapeHtmlAg(e.candidato||e.titulo||'')}<span class="t">${escapeHtmlAg(e.titulo||'')}${e.tipo==='presencial'?' · presencial':''}</span></div>`;
+}
+function renderAgendaSemana(){
+  const ini=new Date(_agendaSemana), fim=new Date(ini); fim.setDate(fim.getDate()+6);
+  const lbl = ini.getMonth()===fim.getMonth()
+    ? `${ini.getDate()} a ${fim.getDate()} de ${AG_MESES[fim.getMonth()]} ${fim.getFullYear()}`
+    : `${ini.getDate()} ${AG_MES_ABREV[ini.getMonth()].toLowerCase()} a ${fim.getDate()} ${AG_MES_ABREV[fim.getMonth()].toLowerCase()} ${fim.getFullYear()}`;
+  document.getElementById('agenda-mes-label').textContent=lbl;
+  const eventos=getAgendaVisivel(), outras=_agOutrasVisiveis();
+  const hojeStr=new Date().toISOString().slice(0,10);
+  let cells='';
+  for(let i=0;i<7;i++){
+    const d=new Date(ini); d.setDate(ini.getDate()+i);
+    const dStr=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const evs=eventos.filter(e=>e.data===dStr).concat(outras.filter(e=>e.data===dStr)).sort((a,b)=>(a.horaIni||'99').localeCompare(b.horaIni||'99'));
+    const ativos=evs.filter(e=>!e.outra && _agAtivo(e)).length;
+    cells+=`<div class="ag-cell ${dStr===hojeStr?'today':''} ${(i===0||i===6)?'fds':''}" onclick="abrirAgendaModal(null,'${dStr}')">
+      <div class="ag-day"><span>${d.getDate()}/${String(d.getMonth()+1).padStart(2,'0')}</span>${ativos?`<span style="font-weight:400;font-size:11px">${ativos} compromisso${ativos>1?'s':''}</span>`:''}</div>
+      ${evs.map(e=>_agEvHtml(e,outras,true)).join('')}
+    </div>`;
+  }
+  document.getElementById('agenda-grid').innerHTML=cells;
 }
 
 function renderAgendaLista(){
