@@ -818,7 +818,7 @@ header {
     </div>
     <button class="btn btn-primary btn-sm" onclick="salvarSalaPadrao()">Salvar sala</button>
     <button class="btn btn-ghost btn-sm" onclick="abrirDisponibilidade()" title="Dias e horários que o candidato pode escolher no link de agendamento">🕒 Minha disponibilidade</button>
-    <button class="btn btn-ghost btn-sm" id="btn-meet-auto" onclick="meetTranscricaoAutomatica()" title="Liga, na sala fixa do Meet, a transcrição completa e as anotações do Gemini em toda reunião, sem precisar clicar em nada na hora">🎙 Transcrição automática na sala</button>
+    <button class="btn btn-ghost btn-sm" id="btn-meet-auto" onclick="meetTranscricaoAutomatica()" title="Liga, na sala fixa do Meet, a transcrição completa e as anotações do Gemini em toda reunião, sem precisar clicar em nada na hora">🎙 Transcrição automática</button>
     <div id="meet-auto-status" style="flex-basis:100%;font-size:11.5px;color:var(--mid)"></div>
   </div>
 
@@ -2133,6 +2133,23 @@ async function carregarSalaPadrao(){
   }
   const inp=document.getElementById('sala-padrao-input');
   if(inp) inp.value=_salaPadrao;
+  _meetStatusSalvo();
+}
+// 22/11/2026: a opção fica gravada na sala do Meet (Google), mas o painel não
+// mostrava isso e a Chrys clicava de novo toda vez. Agora o painel guarda quando
+// foi ligada e mostra "ligada" ao abrir a Agenda; o botão vira só "conferir".
+async function _meetStatusSalvo(){
+  if(DEMO_MODE || isClienteExterno()) return;
+  const btn=document.getElementById('btn-meet-auto'), el=document.getElementById('meet-auto-status');
+  const m=/meet\.google\.com\/([a-z]{3}-[a-z]{4}-[a-z]{3})/i.exec(_salaPadrao||''); const code=m?m[1].toLowerCase():'';
+  let st=null;
+  try{ const {data}=await sb.from('lv_agendamento_config').select('valor').eq('chave','meet_transcricao').maybeSingle(); st=data&&data.valor; }catch(e){}
+  const ligada = st && st.sala===code && st.transcricao==='ON';
+  if(btn){ btn.textContent = ligada ? '🎙 Transcrição: ligada ✓' : '🎙 Ligar transcrição automática'; btn.title = ligada ? 'Já está gravada na sala do Meet. Clique só se quiser conferir de novo.' : 'Clique uma vez: a sala do Meet passa a transcrever sozinha em toda reunião.'; }
+  if(el){
+    if(ligada){ const d=new Date(st.em); el.innerHTML=`Sala ${code}: transcrição automática <b style="color:var(--green)">ligada</b>${st.notas==='ON'?' · anotações do Gemini <b style="color:var(--green)">ligadas</b>':''} · gravada na sala em ${d.toLocaleDateString('pt-BR')}. Não precisa ligar de novo.`; }
+    else if(code){ el.innerHTML='Transcrição automática ainda não confirmada para a sala '+code+'. Clique uma vez em "Ligar transcrição automática".'; }
+  }
 }
 
 // ── Transcrição automática na sala fixa do Meet ──────────────────────────────
@@ -2182,12 +2199,13 @@ async function meetTranscricaoAutomatica(){
     const r=await p.json(); const ac=(r.config&&r.config.artifactConfig)||{};
     _renderMeetAutoStatus(ac, code);
     const ok = ac.transcriptionConfig && ac.transcriptionConfig.autoTranscriptionGeneration==='ON';
+    try{ await sb.from('lv_agendamento_config').upsert({chave:'meet_transcricao', valor:{ sala:code, transcricao: ok?'ON':'OFF', notas:(ac.smartNotesConfig&&ac.smartNotesConfig.autoSmartNotesGeneration)||'', em:new Date().toISOString() }, atualizado_em:new Date().toISOString()}); }catch(e){ console.warn('status da transcrição', e); }
     showToast(ok ? '✅ Transcrição automática ligada na sala '+code : '⚠️ A API respondeu, mas a transcrição não ficou ligada');
   }catch(e){
     const msg=String(e.message||e);
     const apiOff=/has not been used|is disabled|403/.test(msg);
     alert('Não deu para ligar a transcrição automática: '+msg+(apiOff?'\n\nA Google Meet API precisa estar ativada no projeto do Google Cloud da La Vie (o mesmo do Google Calendar).':''));
-  }finally{ if(btn){ btn.disabled=false; btn.textContent='🎙 Transcrição automática na sala'; } }
+  }finally{ if(btn){ btn.disabled=false; } _meetStatusSalvo(); }
 }
 
 async function salvarSalaPadrao(){
