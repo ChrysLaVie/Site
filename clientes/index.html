@@ -1867,6 +1867,7 @@ function _gcalGuardar(resp){
     localStorage.setItem(_GCAL_LS, JSON.stringify({ token: _gcalToken, ate: _gcalTokenAte }));
     localStorage.setItem('gcal_autorizado', '1');
   }catch(e){}
+  setTimeout(()=>{ try{ _agSincronizarMarcadosPeloLink(); }catch(e){} }, 1500);
 }
 
 function gcalInitTokenClient(){
@@ -1939,7 +1940,8 @@ function _gcalEventoPayload(a){
   const location = a.tipo === 'presencial' ? (a.local || '') : (a.link || 'Online');
   const attendees = [];
   const c = getCands().find(x => x.id === a.candidatoId);
-  if(c?.email) attendees.push({ email: c.email });
+  const _emailConv = c?.email || a._emailCand;
+  if(_emailConv) attendees.push({ email: _emailConv });
 
   let start, end;
   if(a.horaIni){
@@ -2513,7 +2515,7 @@ async function abrirLinkAgendamento(candId){
   if(isClienteExterno()) return;
   let tok='';
   try{ const {data,error}=await sb.rpc('lv_agendamento_criar_link',{p_candidato_id:candId}); if(error) throw error; tok=data; }
-  catch(e){ alert('Não consegui criar o link de agendamento: '+((e&&e.message)||e)); return; }
+  catch(e){ console.warn('Link de agendamento:', e); showToast('⚠ Não consegui criar o link agora. Abri o convite com horários para você preencher.'); abrirMensagem(candId,'conviteOnline'); return; }
   const link=AGENDAR_URL+tok;
   let o=document.getElementById('linkag-ov'); if(o) o.remove();
   o=document.createElement('div'); o.id='linkag-ov';
@@ -2546,18 +2548,22 @@ async function abrirLinkAgendamento(candId){
 // fica no navegador da Chrys). Quando o painel abre conectado, cria o evento uma vez só.
 let _agSincLinkRodando=false;
 async function _agSincronizarMarcadosPeloLink(){
-  if(_agSincLinkRodando || isClienteExterno() || !gcalConectado()) return;
-  const hoje=new Date().toISOString().slice(0,10);
-  const pend=(_agenda||[]).filter(a=>a && /^Candidato/.test(a.criadoPor||'') && !a.googleEventId && a.status==='agendada' && a.data>=hoje);
-  if(!pend.length) return;
+  if(_agSincLinkRodando || DEMO_MODE || isClienteExterno() || !gcalConectado()) return;
   _agSincLinkRodando=true;
   try{
+    // Todas as empresas: a marcação pode ser de um cliente que não está aberto agora.
+    const hoje=new Date().toISOString().slice(0,10);
+    const {data:rows,error}=await sb.from('agenda').select('*').like('criado_por','Candidato%').is('google_event_id',null).eq('status','agendada').gte('data',hoje);
+    if(error || !rows || !rows.length) return;
     let n=0;
-    for(const a of pend){
-      const {data:atual}=await sb.from('agenda').select('google_event_id').eq('id',a.id).maybeSingle();
-      if(atual && atual.google_event_id){ a.googleEventId=atual.google_event_id; continue; }
+    for(const row of rows){
+      const a=dbToAgenda(row);
+      try{ const {data:cd}=await sb.from('candidatos').select('email').eq('id',a.candidatoId).maybeSingle(); a._emailCand=(cd&&cd.email)||''; }catch(e){}
       const ev=await gcalSincronizarEvento(a);
-      if(ev){ a.googleEventId=ev; await sb.from('agenda').update({google_event_id:ev}).eq('id',a.id).is('google_event_id',null); n++; }
+      if(!ev) break; // sem token do Google agora: tenta na próxima abertura
+      await sb.from('agenda').update({google_event_id:ev}).eq('id',a.id).is('google_event_id',null);
+      const loc=(_agenda||[]).find(x=>x.id===a.id); if(loc) loc.googleEventId=ev;
+      n++;
     }
     if(n) showToast('📅 '+n+' entrevista(s) marcada(s) pelo link enviada(s) ao Google Agenda');
   } catch(e){ console.warn('Sincronização dos agendamentos pelo link:', e); }
