@@ -624,7 +624,7 @@ header {
 </div>
 <div id="page-dashboard" class="page">
   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-    <div style="flex:1 1 260px;min-width:0"><h1 class="page-title" id="dash-title">Dashboard</h1><p class="page-sub" id="dash-subtitle">Dados em tempo real</p></div>
+    <div style="flex:1 1 260px;min-width:0"><h1 class="page-title" id="dash-title">Dashboard</h1><p class="page-sub" id="dash-subtitle" style="display:none"></p></div>
     <div id="dash-filtro-wrap" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:flex-end;margin-left:auto;flex:0 0 auto">
       <label for="dash-vaga-filtro" style="font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--light)">Mostrar</label>
       <div style="display:flex;gap:8px;align-items:center">
@@ -6750,12 +6750,11 @@ function renderDashboard(){
   }
   // Show sector context for gestores
   const subEl = document.getElementById('dash-subtitle');
+  // 22/11/2026: sem o nome da empresa nem "Dados em tempo real" (já estão no menu de cima).
+  // Só aparece a vaga filtrada, quando houver.
   if(subEl) {
-    if(currentUser && currentUser.role==='gestor') {
-      subEl.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · ${currentUser.setores.join(' + ')} · Dados em tempo real`;
-    } else {
-      subEl.textContent = `${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · ${_vagaSel ? _vagaSel.titulo : 'Dados em tempo real'}`;
-    }
+    subEl.textContent = _vagaSel ? _vagaSel.titulo : '';
+    subEl.style.display = _vagaSel ? '' : 'none';
   }
   const canceladas=vagas.filter(v=>v.status==='cancelada').reduce((s,v)=>s+(v.qtd||0),0);
   const totalQtd=vagas.reduce((s,v)=>s+(v.qtd||0),0);
@@ -8200,7 +8199,7 @@ async function initApp(){
     if(currentUser&&currentUser.role==='gestor'&&empresaTemProduto('rs')){
       const sub=document.getElementById('dash-subtitle');
       const setores=Array.isArray(currentUser.setores)?currentUser.setores:[];
-      if(sub&&setores.length)sub.textContent=`${EMPRESAS[currentEmpresa]?EMPRESAS[currentEmpresa].nome:''} · ${setores.join(' + ')}`;
+      void sub; void setores; // subtítulo do dashboard fica só com a vaga filtrada (22/11/2026)
       const btnC=document.getElementById('btn-novo-cand');
       if(btnC)btnC.style.display='none';
     }
