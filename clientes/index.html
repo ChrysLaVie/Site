@@ -6728,8 +6728,8 @@ function renderDashboardMentoria(){
 }
 
 // ── Grade sem quadro sozinho (22/11/2026) ──────────────────────────────────
-// Escolhe quantas colunas usar para que nenhuma fileira termine com um quadro
-// isolado e sobre o mínimo de espaço vazio. Vale para os indicadores do topo e
+// Escolhe o maior número de colunas que cabe sem que a última fileira fique com
+// um quadro isolado. Vale para os indicadores do topo e
 // para o Detalhamento por Setor, com qualquer quantidade de quadros e largura.
 function _gradeSemSobra(el, minW){
   if(!el) return;
@@ -6739,10 +6739,10 @@ function _gradeSemSobra(el, minW){
   const max=Math.max(1, Math.floor((w+gap)/(minW+gap)));
   let cols=max;
   if(n<=max) cols=n;
-  else { let melhor=1e9; for(let c=max;c>=Math.max(1,Math.ceil(max/2));c--){ const vazio=(c-n%c)%c; if(vazio<melhor){ melhor=vazio; cols=c; } } }
+  else { for(let c=max;c>=2;c--){ if(n%c!==1){ cols=c; break; } } } // maior número de colunas sem deixar 1 quadro sozinho na última fileira
   el.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
 }
-function _dashGrades(){ _gradeSemSobra(document.getElementById('dash-kpis'),150); _gradeSemSobra(document.getElementById('dash-setores'),260); }
+function _dashGrades(){ _gradeSemSobra(document.getElementById('dash-kpis'),150); _gradeSemSobra(document.getElementById('dash-setores'),240); }
 window.addEventListener('resize', ()=>{ clearTimeout(_dashGrades._t); _dashGrades._t=setTimeout(_dashGrades,120); });
 
 function renderDashboard(){
