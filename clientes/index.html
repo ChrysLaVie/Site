@@ -830,6 +830,7 @@ header {
       <button class="btn btn-ghost btn-sm" onclick="agendaHoje()">Hoje</button>
     </div>
     <div style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" id="agenda-view-dia" onclick="agendaSetView('dia')">Dia</button>
       <button class="btn btn-ghost btn-sm" id="agenda-view-mes" onclick="agendaSetView('mes')">Mês</button>
       <button class="btn btn-ghost btn-sm" id="agenda-view-semana" onclick="agendaSetView('semana')">Semana</button>
       <button class="btn btn-ghost btn-sm" id="agenda-view-lista" onclick="agendaSetView('lista')">Lista</button>
@@ -845,6 +846,7 @@ header {
     <div id="agenda-legenda" class="ag-legenda" style="display:none"></div>
   </div>
   <div id="agenda-lista-wrap" style="display:none"></div>
+  <div id="agenda-dia-wrap" style="display:none"></div>
 </div>
 
 <!-- Modal: agendar/editar entrevista -->
@@ -1614,16 +1616,21 @@ const AG_MES_ABREV=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT',
 
 function _agDomingoDe(dt){ const x=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); x.setDate(x.getDate()-x.getDay()); return x; }
 let _agendaSemana = _agDomingoDe(new Date());
+let _agendaDia = new Date(); _agendaDia.setHours(12,0,0,0);
 function agendaNavMes(d){
-  if(_agendaView==='semana'){ _agendaSemana.setDate(_agendaSemana.getDate()+7*d); _agendaRef=new Date(_agendaSemana.getFullYear(),_agendaSemana.getMonth(),1); }
+  if(_agendaView==='dia'){ _agendaDia.setDate(_agendaDia.getDate()+d); _agendaSemana=_agDomingoDe(_agendaDia); _agendaRef=new Date(_agendaDia.getFullYear(),_agendaDia.getMonth(),1); }
+  else if(_agendaView==='semana'){ _agendaSemana.setDate(_agendaSemana.getDate()+7*d); _agendaRef=new Date(_agendaSemana.getFullYear(),_agendaSemana.getMonth(),1); }
   else { _agendaRef.setMonth(_agendaRef.getMonth()+d); }
   renderAgenda();
 }
-function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); _agendaSemana=_agDomingoDe(new Date()); renderAgenda(); }
+function agendaHoje(){ _agendaRef=new Date(); _agendaRef.setDate(1); _agendaSemana=_agDomingoDe(new Date()); _agendaDia=new Date(); _agendaDia.setHours(12,0,0,0); _agendaView='dia'; renderAgenda(); }
 function agendaSetView(v){
   // Ao trocar do mês para a semana, abre a semana de hoje se ela estiver no mês aberto; senão, a 1ª semana do mês.
   if(v==='semana' && _agendaView!=='semana'){ const h=new Date(); _agendaSemana=(h.getMonth()===_agendaRef.getMonth() && h.getFullYear()===_agendaRef.getFullYear()) ? _agDomingoDe(h) : _agDomingoDe(new Date(_agendaRef)); }
   if(v==='mes' && _agendaView==='semana'){ _agendaRef=new Date(_agendaSemana.getFullYear(),_agendaSemana.getMonth(),1); }
+  if(v==='mes' && _agendaView==='dia'){ _agendaRef=new Date(_agendaDia.getFullYear(),_agendaDia.getMonth(),1); }
+  if(v==='semana' && _agendaView==='dia'){ _agendaSemana=_agDomingoDe(_agendaDia); }
+  if(v==='dia' && _agendaView!=='dia'){ const h=new Date(); h.setHours(12,0,0,0); const base=_agendaView==='semana'?_agendaSemana:_agendaRef; _agendaDia=(h.getMonth()===base.getMonth()||_agendaView==='semana'&&h>=_agendaSemana&&h<new Date(_agendaSemana.getTime()+7*864e5))?h:new Date(base); _agendaDia.setHours(12,0,0,0); }
   _agendaView=v; renderAgenda();
 }
 
@@ -1699,6 +1706,9 @@ function renderAgenda(){
   const bMes=document.getElementById('agenda-view-mes'), bLista=document.getElementById('agenda-view-lista');
   bMes.classList.toggle('btn-primary',_agendaView==='mes'); bMes.classList.toggle('btn-ghost',_agendaView!=='mes');
   bLista.classList.toggle('btn-primary',_agendaView==='lista'); bLista.classList.toggle('btn-ghost',_agendaView!=='lista');
+  const bDia=document.getElementById('agenda-view-dia'); if(bDia){ bDia.classList.toggle('btn-primary',_agendaView==='dia'); bDia.classList.toggle('btn-ghost',_agendaView!=='dia'); }
+  const diaWrap=document.getElementById('agenda-dia-wrap'); if(diaWrap) diaWrap.style.display=_agendaView==='dia'?'block':'none';
+  if(_agendaView==='dia'){ calWrap.style.display='none'; listaWrap.style.display='none'; renderAgendaDia(); return; }
   const bSem=document.getElementById('agenda-view-semana'); if(bSem){ bSem.classList.toggle('btn-primary',_agendaView==='semana'); bSem.classList.toggle('btn-ghost',_agendaView!=='semana'); }
   document.getElementById('agenda-grid').classList.toggle('semana',_agendaView==='semana');
 
@@ -1807,13 +1817,8 @@ function renderAgendaSemana(){
   document.getElementById('agenda-grid').innerHTML=cells;
 }
 
-function renderAgendaLista(){
-  const eventos=getAgendaVisivel().concat(_agOutrasVisiveis()).sort((a,b)=>(a.data+(a.horaIni||'')).localeCompare(b.data+(b.horaIni||'')));
-  const hojeStr=new Date().toISOString().slice(0,10);
-  const futuros=eventos.filter(e=>e.data>=hojeStr);
-  const lista=(futuros.length?futuros:eventos);
-  if(!lista.length){ document.getElementById('agenda-lista-wrap').innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhuma entrevista agendada.</p></div>'; return; }
-  document.getElementById('agenda-lista-wrap').innerHTML=lista.map(e=>{
+// Item da Lista (e da vista Dia): data, nome, etapa, vaga, horário, contato e botões.
+function _agListaItemHtml(e){
     const [y,m,d]=e.data.split('-');
     const horario=e.horaIni?`${e.horaIni}${e.horaFim?'–'+e.horaFim:''}`:'';
     if(e.outra) return `<div class="ag-lista-item" style="background:#EAE6F3;cursor:help" onclick="agOcupadoInfo('${e.id}')">
@@ -1843,7 +1848,29 @@ function renderAgendaLista(){
       ${linkBtn}
       ${gcalBtn}
     </div>`;
-  }).join('');
+}
+
+// Vista Dia (22/11/2026): os compromissos de um dia, no formato da Lista.
+// O botão "Hoje" abre esta vista no dia de hoje.
+function renderAgendaDia(){
+  const d=_agendaDia;
+  const dStr=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const sem=d.toLocaleDateString('pt-BR',{weekday:'long'}); 
+  document.getElementById('agenda-mes-label').textContent=`${sem.charAt(0).toUpperCase()+sem.slice(1)}, ${d.getDate()} de ${AG_MESES[d.getMonth()]}`;
+  const evs=getAgendaVisivel().concat(_agOutrasVisiveis()).filter(e=>e.data===dStr).sort((a,b)=>(a.horaIni||'99').localeCompare(b.horaIni||'99'));
+  const ativos=evs.filter(e=>!e.outra && _agAtivo(e)).length;
+  const wrap=document.getElementById('agenda-dia-wrap');
+  const topo=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12.5px;color:var(--mid)"><span>${ativos?ativos+' compromisso'+(ativos>1?'s':''):'Nenhum compromisso'}${dStr===new Date().toISOString().slice(0,10)?' · hoje':''}</span><button class="btn btn-ghost btn-sm" onclick="abrirAgendaModal(null,'${dStr}')">+ Marcar neste dia</button></div>`;
+  wrap.innerHTML = topo + (evs.length ? evs.map(_agListaItemHtml).join('') : '<div class="empty-state"><div class="empty-icon">📅</div><p>Nada marcado para este dia.</p></div>');
+}
+
+function renderAgendaLista(){
+  const eventos=getAgendaVisivel().concat(_agOutrasVisiveis()).sort((a,b)=>(a.data+(a.horaIni||'')).localeCompare(b.data+(b.horaIni||'')));
+  const hojeStr=new Date().toISOString().slice(0,10);
+  const futuros=eventos.filter(e=>e.data>=hojeStr);
+  const lista=(futuros.length?futuros:eventos);
+  if(!lista.length){ document.getElementById('agenda-lista-wrap').innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhuma entrevista agendada.</p></div>'; return; }
+  document.getElementById('agenda-lista-wrap').innerHTML=lista.map(_agListaItemHtml).join('');
 }
 
 function abrirLinkedin(){
