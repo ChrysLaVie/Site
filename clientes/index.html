@@ -170,6 +170,9 @@ header {
 .agd-ev .ag-ev .h{ display:inline; font-weight:700; margin-right:6px; }
 .agd-ev .ag-ev .t{ display:inline; opacity:.75; font-size:11px; margin-left:6px; }
 .agd-agora{ position:absolute; left:58px; right:0; border-top:2px solid #C4614E; z-index:2; }
+.agd-entrar{ position:absolute; right:6px; top:50%; transform:translateY(-50%); font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:999px; background:#fff; border:1px solid var(--bege); color:var(--escuro,#3A3A3A); text-decoration:none; z-index:1; }
+.agd-entrar:hover{ border-color:var(--escuro,#3A3A3A); }
+.agd-ev .ag-ev{ padding-right:84px; }
 .agd-agora::before{ content:''; position:absolute; left:-5px; top:-6px; width:10px; height:10px; border-radius:50%; background:#C4614E; }
 .agd-semhora{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px; font-size:12px; color:var(--mid); }
 .agd-semhora .ag-ev{ white-space:nowrap; }
@@ -1902,7 +1905,9 @@ function renderAgendaDia(){
   const blocos=ord.map(e=>{
     const [a,b]=_agIntervalo(e); const p=pos.get(e);
     const w=100/p.n, l=p.col*w;
-    return `<div class="agd-ev" style="top:${top(a)}px;height:${Math.max(22,(b-a)*PX-2)}px;left:calc(${l}% + 2px);width:calc(${w}% - 4px)">${_agEvHtml(e,outras,true)}</div>`;
+    // 23/11/2026: botão "Entrar" na sala, igual ao da Lista (só para quem tem link e não está cancelado).
+    const entrar=(!e.outra && e.link && e.status!=='cancelada')?`<a href="${e.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="agd-entrar" title="Entrar na sala">🔗 Entrar</a>`:'';
+    return `<div class="agd-ev" style="top:${top(a)}px;height:${Math.max(22,(b-a)*PX-2)}px;left:calc(${l}% + 2px);width:calc(${w}% - 4px)">${_agEvHtml(e,outras,true)}${entrar}</div>`;
   }).join('');
   const agora=new Date(); const ehHoje=dStr===`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`;
   const mAgora=agora.getHours()*60+agora.getMinutes();
