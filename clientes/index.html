@@ -158,6 +158,21 @@ header {
 .agenda-grid.semana .ag-ev .h{ display:block; font-weight:700; }
 .agenda-grid.semana .ag-ev .t{ display:block; opacity:.75; font-size:10.5px; }
 .agenda-grid.semana .ag-cell.fds{ background:#FBFAF7; }
+/* Vista Dia em grade de horários (23/11/2026) */
+.agd-grade{ position:relative; background:#fff; border:1.5px solid var(--bege-lt); border-radius:12px; cursor:pointer; overflow:hidden; }
+.agd-hora{ position:absolute; left:0; right:0; border-top:1px solid var(--bege-lt); }
+.agd-hora span{ position:absolute; left:8px; top:2px; font-size:11px; color:var(--mid); }
+.agd-meia{ position:absolute; left:64px; right:0; border-top:1px dashed #EFEAE3; }
+.agd-disp{ position:absolute; left:64px; right:0; background:rgba(46,107,79,.06); border-left:3px solid rgba(46,107,79,.35); }
+.agd-evs{ position:absolute; top:0; bottom:0; left:66px; right:8px; }
+.agd-ev{ position:absolute; }
+.agd-ev .ag-ev{ height:100%; box-sizing:border-box; white-space:normal; font-size:12px; padding:4px 8px; overflow:hidden; }
+.agd-ev .ag-ev .h{ display:inline; font-weight:700; margin-right:6px; }
+.agd-ev .ag-ev .t{ display:inline; opacity:.75; font-size:11px; margin-left:6px; }
+.agd-agora{ position:absolute; left:58px; right:0; border-top:2px solid #C4614E; z-index:2; }
+.agd-agora::before{ content:''; position:absolute; left:-5px; top:-6px; width:10px; height:10px; border-radius:50%; background:#C4614E; }
+.agd-semhora{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px; font-size:12px; color:var(--mid); }
+.agd-semhora .ag-ev{ white-space:nowrap; }
 .ag-cell.today{ border-color:var(--charcoal); }
 .ag-cell:hover:not(.empty){ border-color:var(--bege); cursor:pointer; }
 .ag-cell .ag-day{ font-size:12px; font-weight:600; color:var(--mid); }
@@ -1853,15 +1868,67 @@ function _agListaItemHtml(e){
 // Vista Dia (22/11/2026): os compromissos de um dia, no formato da Lista.
 // O botão "Hoje" abre esta vista no dia de hoje.
 function renderAgendaDia(){
+  // 23/11/2026: o Dia virou agenda de verdade (grade de horários, como no Google
+  // Agenda), com os compromissos no horário certo e a faixa de "Minha
+  // disponibilidade" em verde-claro. "Amanhã" e as setas mudam de dia.
   const d=_agendaDia;
   const dStr=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const sem=d.toLocaleDateString('pt-BR',{weekday:'long'}); 
+  const sem=d.toLocaleDateString('pt-BR',{weekday:'long'});
   document.getElementById('agenda-mes-label').textContent=`${sem.charAt(0).toUpperCase()+sem.slice(1)}, ${d.getDate()} de ${AG_MESES[d.getMonth()]}`;
-  const evs=getAgendaVisivel().concat(_agOutrasVisiveis()).filter(e=>e.data===dStr).sort((a,b)=>(a.horaIni||'99').localeCompare(b.horaIni||'99'));
+  const outras=_agOutrasVisiveis();
+  const evs=getAgendaVisivel().concat(outras).filter(e=>e.data===dStr);
+  const comHora=evs.filter(e=>_agIntervalo(e)), semHora=evs.filter(e=>!_agIntervalo(e));
   const ativos=evs.filter(e=>!e.outra && _agAtivo(e)).length;
+  // faixa de horas: 07h às 19h, abrindo mais se houver compromisso fora disso
+  let h0=7, h1=19;
+  comHora.forEach(e=>{ const [a,b]=_agIntervalo(e); h0=Math.min(h0,Math.floor(a/60)); h1=Math.max(h1,Math.ceil(b/60)); });
+  const PX=1.2; // pixels por minuto (1 hora = 72px)
+  const top=m=>(m-h0*60)*PX;
+  // compromissos que se sobrepõem ficam lado a lado
+  const ord=comHora.slice().sort((a,b)=>_agIntervalo(a)[0]-_agIntervalo(b)[0]);
+  const cols=[]; const pos=new Map(); let grupo=[], fimGrupo=-1;
+  const fechaGrupo=()=>{ const n=Math.max(1,...grupo.map(e=>pos.get(e).col+1)); grupo.forEach(e=>pos.get(e).n=n); grupo=[]; };
+  ord.forEach(e=>{
+    const [a,b]=_agIntervalo(e);
+    if(a>=fimGrupo && grupo.length){ fechaGrupo(); cols.length=0; }
+    let c=cols.findIndex(f=>f<=a); if(c<0){ c=cols.length; cols.push(b); } else cols[c]=b;
+    pos.set(e,{col:c,n:1}); grupo.push(e); fimGrupo=Math.max(fimGrupo,b);
+  });
+  if(grupo.length) fechaGrupo();
+  let linhas='';
+  for(let h=h0;h<h1;h++) linhas+=`<div class="agd-hora" style="top:${top(h*60)}px"><span>${String(h).padStart(2,'0')}:00</span></div><div class="agd-meia" style="top:${top(h*60+30)}px"></div>`;
+  const disp=(_agDispCache&&_agDispCache.dias&&_agDispCache.dias[String(d.getDay()||7)])||[];
+  const faixas=disp.map(([i,f])=>{ const a=_agMin(i), b=_agMin(f); return (a==null||b==null)?'':`<div class="agd-disp" style="top:${top(a)}px;height:${(b-a)*PX}px" title="Minha disponibilidade (link de agendamento)"></div>`; }).join('');
+  const blocos=ord.map(e=>{
+    const [a,b]=_agIntervalo(e); const p=pos.get(e);
+    const w=100/p.n, l=p.col*w;
+    return `<div class="agd-ev" style="top:${top(a)}px;height:${Math.max(22,(b-a)*PX-2)}px;left:calc(${l}% + 2px);width:calc(${w}% - 4px)">${_agEvHtml(e,outras,true)}</div>`;
+  }).join('');
+  const agora=new Date(); const ehHoje=dStr===`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`;
+  const mAgora=agora.getHours()*60+agora.getMinutes();
+  const linhaAgora=(ehHoje && mAgora>=h0*60 && mAgora<=h1*60)?`<div class="agd-agora" style="top:${top(mAgora)}px"></div>`:'';
   const wrap=document.getElementById('agenda-dia-wrap');
-  const topo=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12.5px;color:var(--mid)"><span>${ativos?ativos+' compromisso'+(ativos>1?'s':''):'Nenhum compromisso'}${dStr===new Date().toISOString().slice(0,10)?' · hoje':''}</span><button class="btn btn-ghost btn-sm" onclick="abrirAgendaModal(null,'${dStr}')">+ Marcar neste dia</button></div>`;
-  wrap.innerHTML = topo + (evs.length ? evs.map(_agListaItemHtml).join('') : '<div class="empty-state"><div class="empty-icon">📅</div><p>Nada marcado para este dia.</p></div>');
+  wrap.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mid)">
+      <span>${ativos?ativos+' compromisso'+(ativos>1?'s':''):'Nenhum compromisso'}${ehHoje?' · hoje':''}</span>
+      <span style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="agendaNavMes(-1)">‹ Dia anterior</button><button class="btn btn-ghost btn-sm" onclick="agendaNavMes(1)">Dia seguinte ›</button><button class="btn btn-ghost btn-sm" onclick="abrirAgendaModal(null,'${dStr}')">+ Marcar</button></span>
+    </div>
+    ${semHora.length?`<div class="agd-semhora"><span>Sem horário</span>${semHora.map(e=>_agEvHtml(e,outras,true)).join('')}</div>`:''}
+    <div class="agd-grade" style="height:${(h1-h0)*60*PX}px" onclick="agDiaClique(event,'${dStr}',${h0},${PX})">${faixas}${linhas}${linhaAgora}<div class="agd-evs">${blocos}</div></div>`;
+  if(!_agDispCache) _agCarregarDisp().then(()=>{ if(_agendaView==='dia') renderAgendaDia(); });
+}
+let _agDispCache=null;
+async function _agCarregarDisp(){
+  if(DEMO_MODE || isClienteExterno()){ _agDispCache={dias:{}}; return; }
+  try{ const {data}=await sb.from('lv_agendamento_config').select('valor').eq('chave','disponibilidade').maybeSingle(); _agDispCache=(data&&data.valor)||{dias:{}}; }catch(e){ _agDispCache={dias:{}}; }
+}
+// Clique num horário vazio do Dia: abre "Nova entrevista" já com o dia e a hora (de 30 em 30 min).
+function agDiaClique(ev, dStr, h0, PX){
+  if(ev.target.closest('.ag-ev')) return;
+  const g=ev.currentTarget.getBoundingClientRect();
+  const min=Math.max(0, Math.floor(((ev.clientY-g.top)/PX)/30)*30) + h0*60;
+  const hh=String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+  abrirAgendaModal(null, dStr);
+  setTimeout(()=>{ const i=document.getElementById('ag-ini'); if(i && !i.value){ i.value=hh; try{ agAvisoOcupado(); }catch(e){} } }, 60);
 }
 
 function renderAgendaLista(){
@@ -2715,7 +2782,7 @@ async function abrirDisponibilidade(){
       dias[k]=[[i,f]];
     }
     const novo=Object.assign({}, cfg, { slot_min:Math.max(15,parseInt(o.querySelector('[data-c="slot"]').value,10)||30), dias_com_horario:Math.min(10,Math.max(1,parseInt(o.querySelector('[data-c="dias"]').value,10)||2)), dias });
-    try{ const {error}=await sb.from('lv_agendamento_config').upsert({chave:'disponibilidade', valor:novo, atualizado_em:new Date().toISOString()}); if(error) throw error; o.remove(); showToast('✅ Disponibilidade salva'); }
+    try{ const {error}=await sb.from('lv_agendamento_config').upsert({chave:'disponibilidade', valor:novo, atualizado_em:new Date().toISOString()}); if(error) throw error; o.remove(); _agDispCache=null; showToast('✅ Disponibilidade salva'); if(_page==='agenda') renderAgenda(); }
     catch(e){ alert('Não consegui salvar: '+((e&&e.message)||e)); }
   });
   document.body.appendChild(o);
