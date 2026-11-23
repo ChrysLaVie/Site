@@ -166,6 +166,7 @@ body.chatting .mets,body.chatting #list,body.chatting .fab{display:none}
 .hrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border);flex-wrap:wrap}
 .hrow:first-of-type{border-top:none}
 .htitle{flex:1;min-width:150px;font-size:14.5px}
+.hbtns{display:flex;align-items:center;flex:none;margin-left:auto}
 .hstreak{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .days{display:flex;gap:6px}
 .agua{flex:2 1 300px;display:flex;flex-direction:column;gap:8px}
@@ -597,6 +598,8 @@ $('habForm').addEventListener('submit',async e=>{e.preventDefault();const t=$('h
   try{await rpc('lv_todo_habito_salvar',{p_habito:Object.assign({id:habId,titulo:t,meta_semana:$('hbM').value?'':($('hbF').value||''),meta_ml:$('hbM').value||'',obs:$('hbO').value.trim()},$('hbP').checked!==habCampos?{campos:$('hbP').checked?CAMPOS_PESO:null}:{})});closeHab();refresh()}catch(err){$('status').textContent='Não consegui salvar o hábito.'}});
 function openAjuda(){$('ovj').classList.add('open')}function closeAjuda(){$('ovj').classList.remove('open')}
 $('ajuda').onclick=openAjuda;$('ajudaM').onclick=openAjuda;$('ajFechar').onclick=closeAjuda;$('ovj').addEventListener('click',e=>{if(e.target===$('ovj'))closeAjuda()});
+/* Editar e Apagar andam juntos quando a linha quebra */
+const btns=(...bs)=>{const w=el('span','hbtns');w.append(...bs);return w};
 function habitCard(hs){
   const c=el('section','card');const h=el('div','ct');const d=el('span','dot');d.style.setProperty('--c','var(--pink)');h.append(d,'Hábitos e rotinas');
   const daily=hs.filter(x=>!x.goal);const doneToday=daily.filter(x=>(x.days||{})[isoOf(today())]).length;if(daily.length)h.appendChild(el('span','badge '+(doneToday===daily.length?'bg':'bk'),doneToday+'/'+daily.length+' diários hoje'));c.appendChild(h);
@@ -608,10 +611,10 @@ function habitCard(hs){
     if(x.notes)t.appendChild(el('span','hstreak',x.notes));
     if(x.ml){const key='h-'+x.id;const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
       del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
-      const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,aguaBox(x),ed,del);c.appendChild(r);return}
+      const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,aguaBox(x),btns(ed,del));c.appendChild(r);return}
     if(x.campos){const key='h-'+x.id;const del=el('button','del'+(armed===key?' arm':''),armed===key?'Apagar?':'Apagar');del.type='button';
       del.onclick=()=>{if(armed===key){armed=null;removeHabit(x)}else{armed=key;render();setTimeout(()=>{if(armed===key){armed=null;render()}},4000)}};
-      const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,medidaBox(x),ed,del);c.appendChild(r);return}
+      const ed=el('button','del','Editar');ed.type='button';ed.onclick=()=>openHab(x);r.append(t,medidaBox(x),btns(ed,del));c.appendChild(r);return}
     const ds=el('div','days');
     for(let i=6;i>=0;i--){const dd=today();dd.setDate(dd.getDate()-i);const k=isoOf(dd);const on=!!(x.days||{})[k];
       const b=el('button','day'+(on?' on':'')+(i===0?' today':''));b.type='button';b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',x.title+' em '+dd.toLocaleDateString('pt-BR'));
