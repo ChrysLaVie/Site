@@ -121,6 +121,7 @@ button,input,select{font-family:inherit}
 .urg.on{filter:none;opacity:1}
 .del.arm{color:#fff;background:var(--red)}
 .empty{color:var(--muted);font-size:14px;padding:1.5rem 0 1rem;text-align:center}
+.cnote{color:var(--muted);font-size:12.5px;padding:8px 2px 0}
 .fab{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom,0px));right:max(1.5rem,env(safe-area-inset-right,0px));background:var(--accent);color:var(--accent-ink);border:none;border-radius:4px;padding:12px 22px;letter-spacing:.02em;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(26,25,23,.18);display:flex;align-items:center;gap:8px;z-index:20;transition:transform .2s}
 .fab:hover{transform:translateY(-1px)}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-end;justify-content:center;z-index:30;padding:16px}
@@ -311,6 +312,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none}
       <p><b>Frentes.</b> São as áreas da sua vida. Crie uma em "＋ Nova frente". O lápis ✎ renomeia e também apaga, desde que a frente esteja vazia. Arraste pela alça ⠿ para mudar a ordem.</p>
       <p><b>Ordem das tarefas.</b> Dentro de cada frente, arraste a tarefa pela alça ⠿ e deixe o mais urgente em cima. A ordem fica salva.</p>
       <p><b>Urgência.</b> Clique no 🔥 de qualquer tarefa para colocar na Urgência. Ela aparece no topo da Visão geral e na visão "Urgência". Clique de novo para tirar. Ao concluir, ela sai sozinha.</p>
+      <p><b>Sem repetição.</b> Na Visão geral cada tarefa aparece uma vez só. Se ela está na Urgência ou nos Prazos dos próximos 7 dias, a frente mostra um aviso no lugar dela. Dentro da frente (menu ao lado) aparecem todas.</p>
       <p><b>Visões.</b> "Visão geral" mostra os hábitos, os prazos da semana e cada frente. "Próximos 7 dias" e "Atrasadas" juntam o que tem data. "Concluídas" guarda o que já foi feito.</p>
       <p><b>Agenda do Google.</b> Toque em "Conectar Google Agenda" e autorize uma vez. A partir daí, toda tarefa sua com prazo vira um evento de dia inteiro na sua agenda, com lembrete na véspera. Se você mudar o prazo, concluir ou apagar a tarefa, o evento acompanha. A atualização acontece enquanto o To Do List está aberto. O Google só deixa a página usar a agenda por 1 hora a cada autorização; depois disso a página nunca abre o login sozinha: quando houver mudança para levar, o botão mostra "📅 Atualizar agenda (número)" e um toque resolve. Sem conectar, o botão "＋ Agenda" de cada tarefa abre o evento pronto para salvar à mão.</p>
       <p><b>Pergunte à Duda.</b> É um chat que responde sobre a sua lista e cria ou conclui tarefas quando você pede. É opcional e usa a sua própria chave da API do Claude.</p>
@@ -456,7 +458,10 @@ async function saveSettings(){if(!HOME)return;const areas=orderedAreas().map(a=>
   try{await rpc('lv_todo_salvar_config',{p_valor:{espaco_id:HOME.id,areas,names:areaNames,ordem:taskOrder,extras,ocultas,urgentes,copos,ordemHab,agenda:agendaServ}})}catch(e){$('status').textContent='Não consegui salvar.'}}
 async function saveOrder(keys){areaOrder=keys.concat(orderedAreas().map(a=>a[0]).filter(k=>!keys.includes(k)));await saveSettings()}
 async function saveTaskOrder(k,ids){const vivos=new Set(tasks.filter(t=>!t.done).map(t=>t.id));
-  taskOrder[k]=ids.concat((taskOrder[k]||[]).filter(id=>!ids.includes(id)&&vivos.has(id)));await saveSettings()}
+  /* as tarefas que não estavam na tela (Urgência, Prazos ou de outra pessoa) ficam no mesmo lugar; só as visíveis trocam entre si */
+  const atual=ordTasks(k,tasks.filter(t=>!t.done&&t.area===k)).map(t=>t.id),vis=new Set(ids);let i=0;
+  const nova=atual.map(id=>vis.has(id)?ids[i++]:id);ids.forEach(id=>{if(!nova.includes(id))nova.push(id)});
+  taskOrder[k]=nova.filter(id=>vivos.has(id));await saveSettings()}
 let renKey=null;
 function renBtn(k){const b=el('button','ren','✎');b.type='button';b.title='Renomear';b.setAttribute('aria-label','Renomear '+(AMAP[k]?AMAP[k][1]:''));b.onclick=e=>{e.stopPropagation();openRename(k)};return b}
 const podeFrentes=()=>!!HOME&&HOME.tipo==='pessoal';
@@ -591,9 +596,14 @@ function render(){
   if(view==='all'){
     if(habits.length)list.appendChild(habitCard(habits));
     if(urg.length)list.appendChild(card('🔥 Urgência','--red',urg,true,urg.length+'','br','-u'));
-    if(week.length)list.appendChild(card('Prazos dos próximos 7 dias',null,week,true,week.length+'','ba','-w'));
-    orderedAreas().forEach(([k,l,c])=>{let it=ordTasks(k,open.filter(t=>t.area===k));if(k[0]==='@')it=it.filter(eMeu);if(!it.length)return;
-      const cd=card(l,c,it,false,it.length+' em aberto',null,null,k);cd.classList.add('acard');cd.dataset.area=k;cd.querySelector('.ct').prepend(grip());cd.querySelector('.ct').appendChild(renBtn(k));list.appendChild(cd)});
+    /* cada tarefa aparece uma vez só: o que já está na Urgência não repete em Prazos, e o que está em um dos dois não repete na frente */
+    const acima=new Set(urg.map(t=>t.id));const weekV=week.filter(t=>!acima.has(t.id));weekV.forEach(t=>acima.add(t.id));
+    if(weekV.length)list.appendChild(card('Prazos dos próximos 7 dias',null,weekV,true,weekV.length+'','ba','-w'));
+    orderedAreas().forEach(([k,l,c])=>{let tudo=ordTasks(k,open.filter(t=>t.area===k));if(k[0]==='@')tudo=tudo.filter(eMeu);if(!tudo.length)return;
+      const it=tudo.filter(t=>!acima.has(t.id)),fora=tudo.length-it.length;
+      const cd=card(l,c,it,false,tudo.length+' em aberto',null,null,k);cd.classList.add('acard');cd.dataset.area=k;cd.querySelector('.ct').prepend(grip());cd.querySelector('.ct').appendChild(renBtn(k));
+      if(fora){const vz=cd.querySelector('.empty');if(vz)vz.remove();cd.appendChild(el('div','cnote',fora===1?'1 tarefa desta frente está lá em cima, em Urgência ou Prazos.':fora+' tarefas desta frente estão lá em cima, em Urgência ou Prazos.'))}
+      list.appendChild(cd)});
     makeSortable(list,'.acard');
     if(!tasks.length&&!habits.length)list.appendChild(card('Sua lista',null,[],false));
   }else if(view==='urg'){if(urg.length)list.appendChild(card('🔥 Urgência','--red',urg,true));else list.appendChild(el('div','empty','Clique no 🔥 de qualquer tarefa para trazer ela para cá.'))}
