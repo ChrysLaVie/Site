@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#101512">
+<title>ConraTech · Guia do piloto automático no trator</title>
+<meta name="description" content="Monte o piloto automático no trator que você já tem. O guia completo do Conrado: peças, base RTK, montagem, programas, calibração e os 27 erros que ele cometeu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#101512; --night-2:#18201B; --night-3:#222C25; --night-line:rgba(255,255,255,.10);
+  --sand:#F3EFE6; --sand-2:#E9E3D6; --paper:#FFFFFF; --line:#DDD6C7;
+  --ink:#151A16; --ink-2:#4A524C; --ink-3:#7A817B;
+  --on-dark:#F3EFE6; --on-dark-2:#B9C1B9; --on-dark-3:#87918A;
+  --terra:#C65A2E; --terra-2:#A9471F; --terra-glow:rgba(198,90,46,.35);
+  --signal:#A9D46F; --signal-2:#7FB04A;
+  --display:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--sand);color:var(--ink);font:400 1.0625rem/1.65 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,video{max-width:100%;display:block}
+h1,h2,h3{font-family:var(--display);margin:0;font-stretch:112%;letter-spacing:-.02em}
+p{margin:0 0 1em}
+a{color:inherit}
+.wrap{max-width:1200px;margin-inline:auto;padding-inline:22px}
+@media (min-width:900px){.wrap{padding-inline:40px}}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font:600 .75rem/1 var(--body);letter-spacing:.16em;text-transform:uppercase;margin:0 0 20px}
+.eyebrow::before{content:"";width:22px;height:2px;background:currentColor;opacity:.8}
+.dark{background:var(--night);color:var(--on-dark)}
+.dark .eyebrow{color:var(--signal)}
+.light .eyebrow{color:var(--terra-2)}
+.h2{font-weight:800;font-size:clamp(2rem,5.2vw,3.6rem);line-height:1.02}
+.lede{font-size:clamp(1.0625rem,1.6vw,1.25rem);line-height:1.6}
+.dark .lede{color:var(--on-dark-2)}
+.light .lede{color:var(--ink-2)}
+.sec{padding-block:88px}
+@media (min-width:900px){.sec{padding-block:140px}}
+.tbc{display:inline-block;font:600 .72rem/1.3 var(--body);background:#FFF1C2;color:#5F4700;border-radius:6px;padding:3px 8px;vertical-align:middle}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:58px;padding:16px 30px;border-radius:999px;font:700 1.0625rem/1 var(--body);text-decoration:none;white-space:nowrap;transition:transform .2s,box-shadow .2s,background-color .2s;cursor:pointer;border:0}
+.btn-terra{background:var(--terra);color:#fff;box-shadow:0 10px 30px var(--terra-glow)}
+.btn-terra:hover{background:var(--terra-2);transform:translateY(-2px);box-shadow:0 14px 36px var(--terra-glow)}
+.btn-terra .arr{transition:transform .2s}
+.btn-terra:hover .arr{transform:translateX(3px)}
+.btn-glass{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.btn-glass:hover{background:rgba(255,255,255,.14)}
+a:focus-visible,.btn:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--signal);outline-offset:3px}
+
+/* topo */
+.top{position:fixed;inset:0 0 auto 0;z-index:60;transition:background-color .3s,border-color .3s,backdrop-filter .3s;border-bottom:1px solid transparent}
+.top.solid{background:rgba(16,21,18,.86);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);border-bottom-color:var(--night-line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:72px;gap:16px}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:#fff}
+.brand .wm{font:800 1.4rem/1 var(--display);font-stretch:118%;letter-spacing:-.03em;white-space:nowrap}
+.brand .wm b{font-weight:500}
+.brand .tl{font:600 .625rem/1.3 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--on-dark-2);white-space:nowrap}
+@media (max-width:599px){.brand{flex-direction:column;align-items:flex-start;gap:5px}.brand .wm{font-size:1.25rem}}
+@media (min-width:600px){.brand .tl{border-left:1px solid rgba(255,255,255,.25);padding-left:14px}}
+.top nav{display:none;gap:30px}
+.top nav a{color:var(--on-dark-2);text-decoration:none;font-weight:500;font-size:.9375rem}
+.top nav a:hover{color:#fff}
+@media (min-width:980px){.top nav{display:flex}}
+.top .btn{min-height:44px;padding:12px 20px;font-size:.9375rem;box-shadow:none}
+
+/* herói */
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;color:#fff;overflow:hidden;background:var(--night)}
+.hero video,.hero .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%}
+.hero::after{content:"";position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(16,21,18,.55) 0%,rgba(16,21,18,.05) 28%,rgba(16,21,18,.25) 55%,rgba(16,21,18,.94) 100%),
+  linear-gradient(90deg,rgba(16,21,18,.65) 0%,rgba(16,21,18,0) 70%)}
+.hero .wrap{position:relative;z-index:2;width:100%;padding-top:120px;padding-bottom:32px}
+.hero h1{font-weight:900;font-size:clamp(2.6rem,8.6vw,6.4rem);line-height:.94;letter-spacing:-.035em;max-width:13ch;margin-bottom:24px;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--signal)}
+.hero .lede{color:#E6E9E3;max-width:36em;margin-bottom:30px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+@media (max-width:519px){.hero-cta .btn{width:100%}}
+.hero-meta{margin-top:18px;font-size:.875rem;color:var(--on-dark-2)}
+.hud{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:44px;border-top:1px solid rgba(255,255,255,.18)}
+.hud div{padding:18px 16px 4px 0}
+.hud b{display:block;font:800 clamp(1.4rem,3.6vw,2.4rem)/1 var(--display);font-stretch:118%;color:var(--signal);letter-spacing:-.02em}
+.hud span{display:block;margin-top:8px;font-size:.8125rem;line-height:1.35;color:var(--on-dark-2)}
+.live-dot{display:inline-flex;align-items:center;gap:8px;font:600 .75rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:#fff;background:rgba(16,21,18,.55);border:1px solid rgba(255,255,255,.18);padding:8px 12px;border-radius:999px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);margin-bottom:22px}
+.live-dot i{width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 0 rgba(169,212,111,.7);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(169,212,111,0)}100%{box-shadow:0 0 0 0 rgba(169,212,111,0)}}
+
+/* a conta: gráfico */
+.conta-head{display:grid;gap:28px;margin-bottom:56px}
+@media (min-width:900px){.conta-head{grid-template-columns:1.1fr .9fr;align-items:end;gap:64px}}
+.bars{display:grid;gap:26px}
+.bar .row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:10px}
+.bar .lbl{font-size:.9375rem;color:var(--on-dark-2);line-height:1.35}
+.bar .val{font:800 clamp(1.25rem,2.6vw,1.9rem)/1 var(--display);font-stretch:112%;white-space:nowrap;letter-spacing:-.02em}
+.bar .track{height:14px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar .fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#5E6A61,#8A968D);transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.bar.range .fill{background:linear-gradient(90deg,#6F7D73 0%,#6F7D73 75%,rgba(111,125,115,.35) 75%)}
+.bar.guia .lbl{color:#fff;font-weight:600}
+.bar.guia .val{color:var(--signal);font-size:clamp(1.8rem,4vw,2.8rem)}
+.bar.guia .fill{background:var(--signal);min-width:10px;box-shadow:0 0 18px rgba(169,212,111,.6)}
+.in .bar .fill{width:var(--w)}
+.conta-note{margin-top:44px;padding-top:28px;border-top:1px solid var(--night-line);display:grid;gap:18px;color:var(--on-dark-2)}
+@media (min-width:900px){.conta-note{grid-template-columns:1fr 1fr;gap:64px}}
+.conta-note p{margin:0}
+.conta-note strong{color:#fff}
+
+/* por que vale */
+.why-head{max-width:900px;margin-bottom:64px}
+.why-head .h2{margin-bottom:20px}
+.why{display:grid;gap:0;border-top:1px solid var(--line)}
+@media (min-width:860px){.why{grid-template-columns:1fr 1fr}}
+.why .w{padding:36px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:64px 1fr;gap:8px 20px}
+@media (min-width:860px){.why .w:nth-child(odd){padding-right:48px;border-right:1px solid var(--line)}.why .w:nth-child(even){padding-left:48px}}
+.why .n{font:900 2.4rem/1 var(--display);font-stretch:120%;color:var(--terra)}
+.why h3{font-weight:800;font-size:1.5rem;line-height:1.1;margin-bottom:10px}
+.why p{grid-column:2;margin:0;color:var(--ink-2)}
+.why .w>div{grid-column:2;grid-row:1/3}
+
+/* produto */
+.prod{background:var(--night-2)}
+.prod-top{display:grid;gap:56px;align-items:center}
+@media (min-width:960px){.prod-top{grid-template-columns:1fr 1fr;gap:80px}}
+.fan{position:relative;height:340px;max-width:520px;margin:0 auto;width:100%}
+@media (min-width:520px){.fan{height:420px}}
+@media (min-width:960px){.fan{height:520px}}
+.fan img{position:absolute;bottom:0;width:46%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;box-shadow:0 30px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08);transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.fan img:nth-child(1){left:2%;transform:rotate(-16deg) translateY(18px);z-index:1}
+.fan img:nth-child(2){left:13%;transform:rotate(-8deg) translateY(4px);z-index:2}
+.fan img:nth-child(4){right:13%;transform:rotate(8deg) translateY(4px);z-index:2}
+.fan img:nth-child(5){right:2%;transform:rotate(16deg) translateY(18px);z-index:1}
+.fan img:nth-child(3){left:27%;width:46%;z-index:3;transform:translateY(-20px)}
+.fan .badge{position:absolute;top:0;right:0;z-index:5;background:var(--signal);color:var(--night);font:800 .875rem/1.1 var(--display);font-stretch:112%;padding:14px 16px;border-radius:14px;transform:rotate(4deg);box-shadow:0 12px 30px rgba(0,0,0,.35);text-align:center}
+.fan .badge big{display:block;font-size:1.9rem;line-height:1}
+.prod-list{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:0;border-top:1px solid var(--night-line)}
+.prod-list li{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:18px 0;border-bottom:1px solid var(--night-line)}
+.prod-list b{font:700 1.125rem/1.25 var(--display);font-stretch:106%;color:#fff}
+.prod-list span{grid-column:1;font-size:.9375rem;color:var(--on-dark-3);line-height:1.5}
+.prod-list em{grid-row:1/3;grid-column:2;align-self:center;font:600 .6875rem/1 var(--body);letter-spacing:.1em;text-transform:uppercase;font-style:normal;padding:8px 10px;border-radius:999px;white-space:nowrap}
+.prod-list em.now{background:rgba(169,212,111,.14);color:var(--signal)}
+.prod-list em.d8{background:rgba(255,255,255,.07);color:var(--on-dark-2)}
+.plus{display:grid;gap:14px;margin-top:72px}
+@media (min-width:760px){.plus{grid-template-columns:repeat(3,1fr)}}
+.plus .p{background:var(--night-3);border:1px solid var(--night-line);border-radius:20px;padding:28px}
+.plus .big{font:900 3.4rem/.9 var(--display);font-stretch:120%;color:var(--signal);letter-spacing:-.03em}
+.plus .big small{font-size:1rem;font-weight:700;margin-left:6px;color:#fff;letter-spacing:0}
+.plus h3{font-weight:700;font-size:1.125rem;font-stretch:106%;margin:16px 0 8px;color:#fff}
+.plus p{margin:0;color:var(--on-dark-3);font-size:.9375rem}
+details.parts{margin-top:28px;border:1px solid var(--night-line);border-radius:16px;background:rgba(255,255,255,.02)}
+details.parts summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 22px;font:700 1rem/1.3 var(--display);font-stretch:106%;color:#fff}
+details.parts summary::-webkit-details-marker{display:none}
+details.parts summary::after{content:"+";font:400 1.6rem/1 var(--body);color:var(--signal)}
+details.parts[open] summary::after{content:"−"}
+details.parts ol{margin:0;padding:0 22px 20px;list-style:none;display:grid;gap:12px;color:var(--on-dark-2);font-size:.9375rem}
+details.parts li b{color:#fff;font-weight:600}
+.nao-vem{margin-top:20px;font-size:.9375rem;color:var(--on-dark-3)}
+.nao-vem b{color:var(--on-dark-2)}
+
+/* galeria / quem fez */
+.who{display:grid;gap:48px;align-items:center}
+@media (min-width:960px){.who{grid-template-columns:1fr 1fr;gap:88px}}
+.who .h2{margin-bottom:24px}
+.who p{color:var(--ink-2)}
+.quote{margin:36px 0 0;padding:32px;background:var(--night);color:#fff;border-radius:24px;position:relative}
+.quote p{font:700 clamp(1.125rem,2vw,1.375rem)/1.45 var(--display);font-stretch:104%;color:#fff;margin:0 0 16px;letter-spacing:-.01em}
+.quote span{font-size:.875rem;color:var(--on-dark-3)}
+.quote::before{content:"“";position:absolute;top:-34px;left:24px;font:900 6rem/1 var(--display);color:var(--terra)}
+.mosaic{display:grid;grid-template-columns:1.2fr 1fr;grid-template-rows:auto auto;gap:14px}
+.mosaic figure{margin:0;position:relative;overflow:hidden;border-radius:18px;background:#ccc}
+.mosaic img{width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.mosaic figure:hover img{transform:scale(1.04)}
+.mosaic .m1{grid-row:1/3}
+.mosaic .m1 img{aspect-ratio:3/5}
+.mosaic .m2 img,.mosaic .m3 img{aspect-ratio:1/1}
+.mosaic figcaption{position:absolute;left:12px;bottom:12px;right:12px;font:600 .8125rem/1.3 var(--body);color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+
+/* como chega */
+.timeline{display:grid;gap:0;margin-top:56px;position:relative}
+@media (min-width:860px){.timeline{grid-template-columns:repeat(3,1fr)}}
+.t{position:relative;padding:0 0 40px 40px;border-left:2px solid var(--line)}
+.t::before{content:"";position:absolute;left:-8px;top:2px;width:14px;height:14px;border-radius:50%;background:var(--terra);box-shadow:0 0 0 6px var(--sand)}
+.t:last-child{padding-bottom:0}
+@media (min-width:860px){.t{padding:44px 32px 0 0;border-left:0;border-top:2px solid var(--line)}.t::before{left:0;top:-8px}}
+.t .when{font:800 1.5rem/1.1 var(--display);font-stretch:112%;margin-bottom:12px;display:block}
+.t p{margin:0;color:var(--ink-2);font-size:.9688rem}
+
+/* para quem */
+.fit{display:grid;gap:16px;margin-top:48px}
+@media (min-width:860px){.fit{grid-template-columns:1.5fr 1fr}}
+.fit .f{border-radius:24px;padding:34px 30px}
+.fit .yes{background:var(--paper);border:1px solid var(--line)}
+.fit .no{background:var(--sand-2)}
+.fit h3{font-weight:800;font-size:1.375rem;margin-bottom:20px}
+.fit ul{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.fit li{position:relative;padding-left:32px;color:var(--ink-2)}
+.fit .yes li::before{content:"";position:absolute;left:0;top:.35em;width:18px;height:18px;border-radius:6px;background:var(--signal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.5l3 3 7-7' fill='none' stroke='%23101512' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat}
+.fit .no li::before{content:"";position:absolute;left:3px;top:.62em;width:12px;height:2px;background:var(--ink-3)}
+
+/* lead */
+.lead{background:linear-gradient(135deg,#1B2520,#101512 60%);position:relative;overflow:hidden}
+.lead::before{content:"";position:absolute;width:620px;height:620px;right:-160px;top:-200px;border-radius:50%;background:radial-gradient(circle,rgba(169,212,111,.16),transparent 65%)}
+.lead .grid{position:relative;display:grid;gap:44px;align-items:center}
+@media (min-width:960px){.lead .grid{grid-template-columns:1fr 1fr;gap:80px}}
+.lead .h2{margin-bottom:20px}
+.form{background:rgba(255,255,255,.04);border:1px solid var(--night-line);border-radius:24px;padding:26px;display:grid;gap:14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+@media (min-width:600px){.form{padding:34px}}
+.form label{display:block;font-size:.8125rem;font-weight:600;color:var(--on-dark-2);margin-bottom:6px}
+.form input,.form select{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;font:400 1rem/1.3 var(--body);background:rgba(16,21,18,.6);color:#fff}
+.form select{appearance:auto}
+.form select option{color:#111}
+.form input::placeholder{color:#7F8A82}
+.form input:focus,.form select:focus{border-color:var(--signal);outline:none}
+.form .two{display:grid;gap:14px}
+@media (min-width:480px){.form .two{grid-template-columns:1fr 1fr}}
+.form .btn{width:100%;margin-top:6px}
+.form .ok{display:none;background:rgba(169,212,111,.14);color:var(--signal);border-radius:12px;padding:12px 14px;font-weight:600;font-size:.9375rem;margin:0}
+.form.sent .ok{display:block}
+.form .fine{font-size:.8125rem;color:var(--on-dark-3);margin:0}
+.interest{display:grid;gap:10px;margin:28px 0 0;padding:0;list-style:none}
+.interest li{display:flex;gap:12px;align-items:flex-start;color:var(--on-dark-2);font-size:.9688rem}
+.interest li::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--signal);margin-top:.55em}
+
+/* preço */
+.price{position:relative;overflow:hidden}
+.price-grid{display:grid;gap:28px;align-items:stretch}
+@media (min-width:960px){.price-grid{grid-template-columns:1.15fr .85fr;gap:28px}}
+.pcard{position:relative;background:var(--night);color:#fff;border-radius:28px;padding:36px 28px;overflow:hidden}
+@media (min-width:600px){.pcard{padding:52px}}
+.pcard::before{content:"";position:absolute;inset:auto -120px -180px auto;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,var(--terra-glow),transparent 65%)}
+.pcard>*{position:relative}
+.pcard .lim{display:inline-flex;align-items:center;gap:8px;background:rgba(169,212,111,.14);color:var(--signal);font:700 .75rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;padding:9px 13px;border-radius:999px;margin-bottom:24px}
+.pcard .val{font:900 clamp(4.4rem,13vw,7rem)/.85 var(--display);font-stretch:118%;letter-spacing:-.04em;margin:0}
+.pcard .val small{font-size:.3em;vertical-align:1.6em;margin-right:8px;letter-spacing:0;font-weight:700}
+.pcard .pay{color:var(--on-dark-2);margin:14px 0 30px}
+.pcard ul{list-style:none;margin:0 0 34px;padding:24px 0 0;border-top:1px solid var(--night-line);display:grid;gap:12px}
+@media (min-width:600px){.pcard ul{grid-template-columns:1fr 1fr;gap:12px 24px}}
+.pcard li{position:relative;padding-left:28px;font-size:.9688rem;color:#E4E8E2}
+.pcard li::before{content:"";position:absolute;left:0;top:.3em;width:16px;height:16px;border-radius:5px;background:var(--signal) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.5l3 3 7-7' fill='none' stroke='%23101512' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat}
+.pcard .btn{width:100%;font-size:1.125rem;min-height:64px}
+.pcard .tip{margin:18px 0 0;font-size:.875rem;color:var(--on-dark-3)}
+.pcard .tip b{color:#fff}
+.side{display:grid;gap:16px}
+.side .s{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:30px}
+.side .s .big{font:900 3rem/.9 var(--display);font-stretch:120%;color:var(--terra);letter-spacing:-.03em;margin-bottom:14px;display:block}
+.side h3{font-weight:800;font-size:1.25rem;margin-bottom:10px}
+.side p{margin:0 0 .7em;color:var(--ink-2);font-size:.9375rem}
+.side p:last-child{margin:0}
+
+/* faq */
+.faq-grid{display:grid;gap:40px}
+@media (min-width:960px){.faq-grid{grid-template-columns:.8fr 1.2fr;gap:80px}}
+.faq{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:20px;align-items:center;padding:24px 0;font:700 1.125rem/1.35 var(--display);font-stretch:104%}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--sand-2);font:400 1.3rem/1 var(--body);color:var(--ink);transition:transform .2s,background-color .2s}
+.faq details[open] summary::after{content:"−";background:var(--terra);color:#fff}
+.faq .resp{padding:0 0 24px;color:var(--ink-2)}
+.faq .resp p:last-child{margin-bottom:0}
+
+/* fecho */
+.final{position:relative;color:#fff;overflow:hidden;text-align:center;padding-block:120px}
+@media (min-width:900px){.final{padding-block:180px}}
+.final img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+.final::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(16,21,18,.78),rgba(16,21,18,.9))}
+.final .wrap{position:relative;z-index:2}
+.final h2{font-weight:900;font-size:clamp(2.4rem,7vw,5rem);line-height:.95;letter-spacing:-.035em;margin:0 auto 22px;max-width:14ch}
+.final p{color:#DDE3DB;max-width:520px;margin:0 auto 34px;font-size:1.125rem}
+
+/* rodapé */
+footer{background:var(--night);color:var(--on-dark-3);padding-block:56px 130px;font-size:.9375rem;border-top:1px solid var(--night-line)}
+@media (min-width:900px){footer{padding-bottom:56px}}
+footer .wrap{display:grid;gap:28px}
+@media (min-width:860px){footer .wrap{grid-template-columns:1fr auto;align-items:end}}
+footer p{margin:0}
+footer a{color:var(--on-dark-2)}
+.foot-brand .wm{font-size:1.6rem}
+.foot-line{margin-top:14px;color:var(--on-dark-2)}
+
+/* barra fixa celular */
+.sticky{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;border-radius:999px;background:rgba(16,21,18,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 40px rgba(0,0,0,.35);transform:translateY(140%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.sticky.show{transform:none}
+.sticky .p{font:800 1.3rem/1 var(--display);font-stretch:112%;color:#fff;flex:none}
+.sticky .p small{display:block;font:500 .6875rem/1.2 var(--body);color:var(--on-dark-3);margin-top:3px}
+.sticky .btn{flex:1;min-height:48px;padding:10px 16px;font-size:1rem;box-shadow:none}
+@media (min-width:900px){.sticky{display:none}}
+
+/* revelar ao rolar */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+.rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.bar .fill{transition:none}.live-dot i{animation:none}html{scroll-behavior:auto}}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="#inicio" aria-label="ConraTech, início"><span class="wm">Conra<b>Tech</b></span><span class="tl">Pé no barro e olho no dado</span></a>
+    <nav aria-label="Seções">
+      <a href="#conta">A conta</a>
+      <a href="#guia">O guia</a>
+      <a href="#quem">Quem fez</a>
+      <a href="#perguntas">Perguntas</a>
+    </nav>
+    <a class="btn btn-terra" href="#comprar">Quero o guia</a>
+  </div>
+</header>
+
+<main id="inicio">
+
+<!-- HERÓI -->
+<section class="hero">
+  <img class="poster" src="assets/asset01.jpg" alt="" aria-hidden="true">
+  <video autoplay muted loop playsinline preload="metadata" poster="assets/asset01.jpg" aria-label="Vídeo curto, sem som: os pés do Conrado apoiados no trator andando sozinho na linha, no campo plantado."><source src="assets/asset02.mp4" type="video/mp4"></video>
+  <div class="wrap">
+    <span class="live-dot"><i></i>O piloto dirige, eu só supervisiono</span>
+    <h1>Monte o piloto automático no trator que <em>você já tem</em></h1>
+    <p class="lede">O caminho inteiro, do jeito que eu faria hoje: as peças, a base RTK, a montagem, os programas e a calibração. Com fotos, prints e os 27 erros que eu cometi.</p>
+    <div class="hero-cta" id="hero-cta">
+      <a class="btn btn-terra" href="#comprar">Quero o guia por R$ 297 <span class="arr" aria-hidden="true">→</span></a>
+      <a class="btn btn-glass" href="#guia">Ver o que vem</a>
+    </div>
+    <p class="hero-meta">Pix ou cartão em até 3× · 7 dias para desistir · preço das 20 primeiras vendas</p>
+    <div class="hud">
+      <div><b>4,3 cm</b><span>desvio médio nas retas, no meu melhor dia</span></div>
+      <div><b>~340</b><span>páginas com fotos e prints</span></div>
+      <div><b>27</b><span>erros que eu cometi, com a solução</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- A CONTA -->
+<section class="sec dark" id="conta">
+  <div class="wrap">
+    <div class="conta-head">
+      <div class="rv">
+        <p class="eyebrow">A conta</p>
+        <h2 class="h2">Pagar 40, 50 mil num piloto de marca era fora da minha realidade</h2>
+      </div>
+      <p class="lede rv d1">Eu montei o meu com o AgOpenGPS, que é um projeto aberto e gratuito, e plantei com ele nesta safra. Olha o tamanho da diferença, com preços de novembro de 2026:</p>
+    </div>
+    <div class="bars rv" id="bars">
+      <div class="bar"><div class="row"><span class="lbl">Piloto de outra marca, no Pix</span><span class="val">R$ 47.810</span></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+      <div class="bar"><div class="row"><span class="lbl">Piloto de marca com volante elétrico, à vista, numa revenda</span><span class="val">R$ 42.150</span></div><div class="track"><div class="fill" style="--w:88.2%"></div></div></div>
+      <div class="bar range"><div class="row"><span class="lbl">As peças do kit que eu uso, sem tablet e sem base</span><span class="val">R$ 7.800 a 10.300</span></div><div class="track"><div class="fill" style="--w:21.5%"></div></div></div>
+      <div class="bar guia"><div class="row"><span class="lbl">Este guia, com tudo que vem junto</span><span class="val">R$ 297</span></div><div class="track"><div class="fill" style="--w:.62%"></div></div></div>
+    </div>
+    <div class="conta-note rv">
+      <p><strong>O de marca vem pronto, instalado, com garantia e suporte.</strong> O que você monta não vem com nada disso: a diferença paga o seu tempo e o seu risco.</p>
+      <p>Para quem vai montar, os R$ 297 são pouco perto disso. A conta inteira das peças está nas perguntas, lá embaixo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- POR QUE VALE -->
+<section class="sec light" id="vale">
+  <div class="wrap">
+    <div class="why-head rv">
+      <p class="eyebrow">Por que vale</p>
+      <h2 class="h2">É para tirar as pedras do caminho e dar a coisa bem mastigada</h2>
+    </div>
+    <div class="why">
+      <div class="w rv"><span class="n">01</span><div><h3>Economiza dinheiro</h3><p>Na primeira vez eu quis fazer do jeito mais barato, e comprei peça que não serviu. O guia ajuda a cortar esses gastos pequenos que a gente faz querendo economizar e que, no fim das contas, não adiantam.</p></div></div>
+      <div class="w rv d1"><span class="n">02</span><div><h3>Economiza nos erros</h3><p>Eu perdi dois sensores da roda, achei na placa um regulador entregando 10,2 V no lugar de 5 V, e por um batente que faltava perdi horas de qualidade de plantio. Você lê antes de passar por isso.</p></div></div>
+      <div class="w rv"><span class="n">03</span><div><h3>Economiza tempo de pesquisa</h3><p>Que peça, que fornecedor, como monta, como calibra, o que fazer quando dá errado: eu gastei horas e horas atrás disso. No guia está na ordem, para você não quebrar a cabeça procurando.</p></div></div>
+      <div class="w rv d1"><span class="n">04</span><div><h3>Tem muita coisa nova</h3><p>Tem conta que eu não vi explicada em lugar nenhum, como quanto o motor precisa girar para virar o volante, e a do imposto de quem importa peça. Serve até para quem já manja.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- O GUIA -->
+<section class="sec dark prod" id="guia">
+  <div class="wrap">
+    <div class="prod-top">
+      <div class="fan rv" aria-label="As capas dos cinco materiais">
+        <img src="assets/asset06.jpg" alt="Capa azul de Outros Caminhos." loading="lazy">
+        <img src="assets/asset04.jpg" alt="Capa marrom do Guia de Compras." loading="lazy">
+        <img src="assets/asset03.jpg" alt="Capa verde do guia principal, O piloto automático no trator." loading="lazy">
+        <img src="assets/asset05.jpg" alt="Capa amarela do Kit da Cabine." loading="lazy">
+        <img src="assets/asset07.jpg" alt="Capa roxa de Prompts de IA." loading="lazy">
+        <span class="badge"><big>5</big>materiais</span>
+      </div>
+      <div class="rv d1">
+        <p class="eyebrow">O que você recebe</p>
+        <h2 class="h2">Um produto só. Você paga uma vez e recebe tudo isto.</h2>
+        <ul class="prod-list">
+          <li><b>Guia do Piloto, o principal</b><span>As 8 partes na ordem em que você vai precisar, umas 340 páginas com fotos e prints.</span><em class="now">Na hora</em></li>
+          <li><b>Guia de Compras</b><span>Onde comprar, quanto custa, a placa na JLCPCB, a conta do imposto e a lista com os links.</span><em class="now">Na hora</em></li>
+          <li><b>Kit da Cabine</b><span>Cartão da cabine, checklist do dia, “Aconteceu isso? Olhe aqui”, fichas, chicote e pinagem.</span><em class="d8">8º dia</em></li>
+          <li><b>Outros Caminhos</b><span>O que eu não testei, mas é pra funcionar: UM982, rádio LoRa, motor direto no volante.</span><em class="d8">8º dia</em></li>
+          <li><b>Prompts de IA</b><span>Cinco prompts para pedir ajuda à IA com o print da tela.</span><em class="d8">8º dia</em></li>
+        </ul>
+        <details class="parts">
+          <summary>As 8 partes do Guia do Piloto</summary>
+          <ol>
+            <li><b>Parte 0, antes de começar:</b> para quem é, quanto custa, quanto tempo leva, a precisão que eu medi e a segurança.</li>
+            <li><b>Parte 1, as peças:</b> o que é cada uma e por que eu uso.</li>
+            <li><b>Parte 2, a base RTK:</b> quando você nem precisa de base, como montar a sua e como levar o sinal ao trator.</li>
+            <li><b>Parte 3, o piloto no trator:</b> a placa, o chicote, o motor no volante, o sensor da roda, a antena e a tela.</li>
+            <li><b>Parte 4, os programas:</b> o AgOpenWeb no tablet, o firmware, o GPS, a correção e como eu usei IA para configurar.</li>
+            <li><b>Parte 5, a calibração:</b> o assistente, a primeira reta, o ajuste fino, as cinco provas e a ficha.</li>
+            <li><b>Parte 6, usar no campo:</b> ligar na ordem, o talhão, as linhas, a manobra, o fim do dia e o treino de quem opera.</li>
+            <li><b>Parte 7, quando dá errado:</b> as mensagens da tela, o que fazer, e os 27 erros que eu cometi, com o que eu fiz.</li>
+            <li><b>Seis apêndices:</b> glossário, checklist do dia, cartão da cabine, licenças e créditos, onde aprender mais, solda e multímetro do zero.</li>
+          </ol>
+        </details>
+      </div>
+    </div>
+    <div class="plus">
+      <div class="p rv"><div class="big">3<small>lives</small></div><h3>Dúvidas ao vivo aos 30, 60 e 90 dias</h3><p>Ao vivo e gravadas, só para quem comprou. Os dias contam do lançamento do guia; quem comprar depois recebe a gravação.</p></div>
+      <div class="p rv d1"><div class="big">6<small>meses</small></div><h3>Grupo dos compradores</h3><p>Um grupo de WhatsApp só de quem comprou o guia. Quem acompanha sou eu.</p></div>
+      <div class="p rv d2"><div class="big">6<small>meses</small></div><h3>De atualização</h3><p>Toda atualização do guia e dos extras é sua, sem pagar de novo. No 8º dia, o PDF dos cinco materiais para baixar.</p></div>
+    </div>
+    <p class="nao-vem rv"><b>O que não vem:</b> suporte individual, a montagem no seu trator, a garantia de que vai funcionar no seu e as peças. O guia mostra o que comprar e onde.</p>
+  </div>
+</section>
+
+<!-- QUEM FEZ -->
+<section class="sec light" id="quem">
+  <div class="wrap who">
+    <div class="rv">
+      <p class="eyebrow">Quem fez</p>
+      <h2 class="h2">Eu sou o Conrado, produtor rural</h2>
+      <p>Mecânica, elétrica e hidráulica eu aprendi na fazenda, para não depender de mecânico. Eletrônica e solda eu não sabia. Aprendi seguindo fórum, fazendo pergunta e errando. Com vídeo você pega: não é coisa de outro mundo.</p>
+      <p>O que deu para verificar eu verifiquei. O que eu não testei, o guia diz que eu não testei.</p>
+      <div class="quote">
+        <p>Pra quem a vida inteira é contando rua e medindo a distância, facilitou demais com o piloto. Você tem mais tempo de olhar outras coisas, acompanhar a plantadeira ou a bomba de pulverização.</p>
+        <span>O meu pai, que usou o piloto no trator menor</span>
+      </div>
+    </div>
+    <div class="mosaic rv d1">
+      <figure class="m1"><img src="assets/asset10.jpg" alt="Volante de um trator azul com uma engrenagem grande presa nele e o painel aberto com fios." loading="lazy"><figcaption>A engrenagem no volante</figcaption></figure>
+      <figure class="m2"><img src="assets/asset08.jpg" alt="Tela do tablet de noite, no plantio, com as linhas e a curva em volta de um poste." loading="lazy"><figcaption>Plantando de noite</figcaption></figure>
+      <figure class="m3"><img src="assets/asset09.jpg" alt="Placa de circuito dentro de uma caixa cinza, com o Teensy, o driver do motor e o módulo de GPS." loading="lazy"><figcaption>A placa montada</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- COMO CHEGA -->
+<section class="sec light" id="entrega" style="padding-top:0">
+  <div class="wrap">
+    <div class="rv" style="max-width:760px">
+      <p class="eyebrow">Como chega</p>
+      <h2 class="h2">Uma parte na hora, o resto no 8º dia</h2>
+    </div>
+    <div class="timeline">
+      <div class="t rv"><span class="when">Na hora</span><p>Pagou, chega o e-mail de acesso pela Cakto. No meu teste, chegou em segundos. Você já lê o Guia do Piloto e o Guia de Compras no celular ou no computador.</p></div>
+      <div class="t rv d1"><span class="when">No 8º dia</span><p>Liberam o Kit da Cabine, Outros Caminhos e Prompts de IA, e o PDF dos cinco materiais, para baixar e guardar.</p></div>
+      <div class="t rv d2"><span class="when">30, 60 e 90 dias</span><p>As três lives de dúvidas, contadas do lançamento do guia.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PARA QUEM -->
+<section class="sec light" id="para-quem" style="padding-top:0">
+  <div class="wrap">
+    <div class="rv" style="max-width:760px">
+      <p class="eyebrow">É para você?</p>
+      <h2 class="h2">Para quem é o guia</h2>
+    </div>
+    <div class="fit">
+      <div class="f yes rv">
+        <h3>É para quem</h3>
+        <ul>
+          <li>quer melhorar a qualidade do plantio e da pulverização, sem precisar ficar descendo do trator</li>
+          <li>quer o piloto no volante para poder olhar para trás, olhar o maquinário e ver o que está acontecendo</li>
+          <li>quer fazer o serviço com menos erro e mais precisão</li>
+          <li>tem um trator mais velho e quer montar o próprio piloto, sozinho ou com alguém de confiança</li>
+          <li>quer começar e não sabe por onde</li>
+          <li>já manja e quer conferir: tem muita coisa nova, que eu verifiquei e juntei</li>
+        </ul>
+      </div>
+      <div class="f no rv d1">
+        <h3>Não é para quem</h3>
+        <ul>
+          <li>está com muita pressa: montar leva um tempo, e peça importada demora a chegar. O bom é montar com calma, antes da safra</li>
+          <li>quer produto pronto, com garantia de fábrica e técnico na porta: para isso existe o piloto de marca</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEAD -->
+<section class="sec dark lead" id="lista">
+  <div class="wrap grid">
+    <div class="rv">
+      <p class="eyebrow">Ainda pensando?</p>
+      <h2 class="h2">Pegue a lista de peças grátis</h2>
+      <p class="lede">A lista das peças que eu uso no meu piloto, com os links. Você recebe agora e eu aviso quando tiver novidade. <span class="tbc">a confirmar: ligar ao mesmo envio da página atual do Conrado</span></p>
+      <ul class="interest">
+        <li>Quer montar o seu? A lista é o primeiro passo.</li>
+        <li>Quer o piloto pronto no seu trator? Me conta a cidade e o trator, para eu entender a logística.</li>
+        <li>Quer aprender com acompanhamento? Quando abrir uma turma, você fica sabendo primeiro.</li>
+      </ul>
+    </div>
+    <form class="form rv d1" id="lead-form" novalidate>
+      <div><label for="nome">Seu nome</label><input id="nome" name="nome" autocomplete="name" placeholder="Como você se chama" required></div>
+      <div><label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="seuemail@exemplo.com" required></div>
+      <div class="two">
+        <div><label for="cidade">Cidade</label><input id="cidade" name="cidade" autocomplete="address-level2" placeholder="Sua cidade"></div>
+        <div><label for="trator">Trator</label><input id="trator" name="trator" placeholder="Marca e modelo"></div>
+      </div>
+      <div><label for="interesse">O que você quer?</label>
+        <select id="interesse" name="interesse">
+          <option>Montar o meu piloto</option>
+          <option>O piloto pronto no meu trator</option>
+          <option>Aprender a montar, com acompanhamento</option>
+        </select>
+      </div>
+      <button class="btn btn-terra" type="submit">Quero a lista de peças <span class="arr" aria-hidden="true">→</span></button>
+      <p class="ok" role="status">Recebido. Assim que o envio estiver ligado, a lista aparece aqui.</p>
+      <p class="fine">Os links das peças são de afiliado: você não paga nada a mais por isso.</p>
+    </form>
+  </div>
+</section>
+
+<!-- PREÇO -->
+<section class="sec light price" id="comprar">
+  <div class="wrap">
+    <div class="rv" style="max-width:760px;margin-bottom:48px">
+      <p class="eyebrow">Preço</p>
+      <h2 class="h2">R$ 297 e o guia é seu</h2>
+    </div>
+    <div class="price-grid">
+      <div class="pcard rv">
+        <span class="lim">20 primeiras vendas</span>
+        <p class="val"><small>R$</small>297</p>
+        <p class="pay">Pix ou cartão em até 3×</p>
+        <ul>
+          <li>Guia do Piloto, com as 8 partes</li>
+          <li>Guia de Compras</li>
+          <li>Kit da Cabine</li>
+          <li>Outros Caminhos</li>
+          <li>Prompts de IA</li>
+          <li>PDF dos cinco no 8º dia</li>
+          <li>3 lives de dúvidas</li>
+          <li>Grupo e atualização por 6 meses</li>
+        </ul>
+        <a class="btn btn-terra" id="btn-comprar" href="#comprar-cakto">Comprar o guia <span class="arr" aria-hidden="true">→</span></a>
+        <p class="tip"><b>Confira o seu e-mail antes de pagar.</b> É por ele que chega o acesso.</p>
+      </div>
+      <div class="side">
+        <div class="s rv d1">
+          <span class="big">7 dias</span>
+          <h3>Se desistir, o dinheiro volta</h3>
+          <p>Você tem 7 dias depois da compra para desistir e ter o dinheiro de volta, sem dar motivo. É um direito seu pelo Código de Defesa do Consumidor (art. 49).</p>
+          <p>O pedido se faz em reembolso.cakto.com.br, com o e-mail da compra. <span class="tbc">a confirmar: teste do reembolso</span></p>
+        </div>
+        <div class="s rv d2">
+          <h3>Sobre o preço</h3>
+          <p>R$ 297 é o preço das 20 primeiras vendas, e são 20 mesmo. No cartão, o parcelamento tem acréscimo, que aparece na hora de escolher as parcelas.</p>
+          <p>As peças você compra por fora, e o Guia de Compras mostra onde. Quase todos os links são de afiliado: você não paga nada a mais.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERGUNTAS -->
+<section class="sec light" id="perguntas" style="padding-top:0">
+  <div class="wrap faq-grid">
+    <div class="rv">
+      <p class="eyebrow">Dúvidas</p>
+      <h2 class="h2">Perguntas que a galera faz</h2>
+    </div>
+    <div class="faq rv d1">
+      <details><summary>Vai funcionar no meu trator?</summary><div class="resp"><p>Não sei, e não prometo. O guia é o caminho que eu segui, nos meus tratores. O seu pode pedir adaptação, como o suporte do motor e a engrenagem, e isso fica por sua conta. A parte 5 tem uma seção só sobre trocar o kit de um trator para outro.</p></div></details>
+      <details><summary>O AgOpenGPS é gratuito. Por que pagar pelo guia?</summary><div class="resp"><p>O programa é gratuito, e o guia não vende o programa. O que você paga é o meu trabalho de estudar, testar e juntar tudo num lugar só: que peça comprar, de qual fornecedor, como monta, como calibra e o que fazer quando dá errado. Está na ordem e em português.</p></div></details>
+      <details><summary>Qual é o caminho que o guia ensina?</summary><div class="resp"><p>O que eu segui, e com o qual eu plantei: a placa AiO com o Teensy, o GPS F9P encaixado nela, o motor com engrenagem no volante, a minha base RTK e o AgOpenWeb no tablet. Os caminhos que eu não testei estão no extra Outros Caminhos. Montagem com Arduino o guia não ensina.</p></div></details>
+      <details><summary>Quanto custam as peças?</summary><div class="resp"><p>Só peças, com preços de 22 de novembro de 2026. O kit do trator, com as peças que eu uso, sai por cerca de R$ 7.800. Pelo caminho mais barato, cerca de R$ 5.800: nele entram peças que eu não testei, mas é pra funcionar, e a caixa impressa, que eu não recomendo em trator sem cabine. Essa conta é para quem já tem tablet, internet e uma base mandando a correção.</p><p>A placa só se compra em lote de 5, e o sensor da roda vem em kit de 4. Quem monta um trator só, sem dividir com ninguém, paga perto de R$ 10.300, ou R$ 7.800 pelo mais barato. Quem não tem nada, nem tablet nem base, soma um tablet novo e a base completa: fica na faixa de R$ 10 mil dividindo o lote (de R$ 9.200 a R$ 11.100), e de R$ 11.100 a R$ 13.600 num trator só.</p><p>Frete, ferramenta e o seu tempo ficam de fora. Preço muda: use a conta como régua, não como orçamento.</p></div></details>
+      <details><summary>Quantos centímetros de precisão?</summary><div class="resp"><p>Eu dou os números que tenho e digo como medi. No meu plantio, a média do desvio nas retas ficou entre 4,3 e 6,7 cm por dia. É leitura da tela, não trena. Na calibração, a minha meta era 80% das medidas dentro de 5 cm, e deu 56%. É a medida de um trator, em poucos dias, pelo meu método. Não é promessa para o seu.</p></div></details>
+      <details><summary>O que eu preciso saber fazer?</summary><div class="resp"><p>Não precisa ser engenheiro. Precisa medir com o multímetro antes de ligar cada peça, e o apêndice F ensina do zero. Precisa configurar no computador e no tablet: muita coisa eu configurei com ajuda de IA, e o guia mostra como. E precisa de paciência: tem dia que dá problema, e às vezes você demora um pouco para entender. A parte 7 é para esses dias.</p><p>Solda tem um pouquinho, como os pontos de força do driver do motor. Se você não solda, pode pedir para alguém. Inglês não precisa: na versão do programa que o guia indica, a maior parte da tela já vem em português, e as telas que continuam em inglês o guia explica uma por uma.</p></div></details>
+      <details><summary>Quanto tempo leva para montar?</summary><div class="resp"><p>Com as peças certinhas na mão, eu acredito que em um mês, pegando firme, a pessoa monta. Um mês, dois meses. Fora isso, conte o tempo de as peças chegarem.</p></div></details>
+      <details><summary>Preciso de base RTK e de internet no trator?</summary><div class="resp"><p>Base, nem sempre. A parte 2 mostra como ver se já existe uma base perto de você mandando a correção. Se não existir, ela mostra como eu montei a minha.</p><p>No trator, precisa de rede na cabine: o tablet no Wi-Fi de um roteador, e a placa no cabo do mesmo roteador. No meu, é o da Starlink. A correção é leve: onde pega celular, um chip 4G serve; onde não pega, eu uso Starlink. O rádio LoRa, no lugar da internet, está no extra Outros Caminhos: não testei, mas é pra funcionar.</p></div></details>
+      <details><summary>Serve para pulverizador ou colheitadeira?</summary><div class="resp"><p>Pode usar. Eu pulverizei com ele em outubro e plantei em novembro, com o piloto no trator. Em colheitadeira, em pulverizador autopropelido, na grade e no lanço eu não testei, mas é pra funcionar: o que muda é a correção que cada operação pede, que a parte 2 mostra. O guia mostra a montagem no trator.</p></div></details>
+      <details><summary>Tem suporte?</summary><div class="resp"><p>Suporte individual, não. Para quando você travar, tem a parte 7, com as mensagens da tela e os 27 erros que eu cometi, tem os prompts para pedir ajuda à IA com o print da tela, e tem as 3 lives de dúvidas, só para quem comprou. E, por 6 meses, o grupo de WhatsApp dos compradores, que eu acompanho, e as atualizações do guia.</p></div></details>
+      <details><summary>Você monta para mim ou vende o kit?</summary><div class="resp"><p>Ainda não vendo montado. O guia é para você montar o seu. Se você quer o piloto pronto no seu trator, deixe seu contato na lista de peças: assim eu entendo a procura e vejo como ajudar.</p></div></details>
+      <details><summary>Como eu leio o guia e baixo o PDF?</summary><div class="resp"><p>Na hora, você lê no leitor da Cakto, no celular ou no computador, sem baixar nada. No leitor, os links não abrem e o texto não se copia. No PDF do 8º dia, sim. Até lá, os links das peças estão na minha lista, que vai junto na área de membros.</p></div></details>
+      <details><summary>O guia leva o meu nome?</summary><div class="resp"><p>Sim. Cada página, no leitor e no PDF, sai com o seu nome, o seu e-mail e parte do seu CPF, em diagonal, clarinho, e de novo no rodapé. A cópia é só sua: por favor, não repasse. O que eu guardo dos seus dados está na <a href="#politica">política de privacidade</a>.</p></div></details>
+      <details><summary>Quais são os cuidados antes de comprar?</summary><div class="resp"><p><strong>Ainda está em teste.</strong> O meu piloto funciona no meu trator, e eu ainda estou ajustando. Não é um produto pronto.</p><p><strong>Não é material oficial.</strong> O AgOpenGPS é feito por uma comunidade. Eu não falo em nome dela, e ela não revisou este guia. Também não é manual de fabricante.</p><p><strong>O piloto gira o volante sozinho.</strong> Ele não enxerga gente, bicho, buraco nem estrada. Quem responde pelo trator é quem está no assento. A parte 0 do guia fala de segurança antes de qualquer peça.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- FECHO -->
+<section class="final">
+  <img src="assets/asset01.jpg" alt="" aria-hidden="true" loading="lazy">
+  <div class="wrap rv">
+    <h2>Quer o guia?</h2>
+    <p>É o caminho que eu segui, com os erros que eu cometi, para você não precisar cometer os mesmos.</p>
+    <a class="btn btn-terra" href="#comprar">Quero o guia por R$ 297 <span class="arr" aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+</main>
+
+<footer id="politica">
+  <div class="wrap">
+    <div>
+      <a class="brand foot-brand" href="#inicio" aria-label="ConraTech, início"><span class="wm">Conra<b>Tech</b></span><span class="tl">Pé no barro e olho no dado</span></a>
+      <p class="foot-line">Tech, projetos e soluções que funcionam</p>
+      <p style="margin-top:20px">Contato: conrastech@gmail.com · Quem vende: [nome completo] · CPF [a preencher] <span class="tbc">a confirmar</span></p>
+    </div>
+    <p><a href="#politica">Política de privacidade</a> <span class="tbc">a confirmar: o link</span></p>
+  </div>
+</footer>
+
+<div class="sticky" id="sticky" role="region" aria-label="Comprar o guia">
+  <div class="p">R$ 297<small>20 primeiras vendas</small></div>
+  <a class="btn btn-terra" href="#comprar">Quero o guia</a>
+</div>
+
+<script>
+(function(){
+  var top=document.getElementById('top'), sticky=document.getElementById('sticky');
+  function onScroll(){ top.classList.toggle('solid', window.scrollY>40); }
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  var els=document.querySelectorAll('.rv');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    els.forEach(function(el){ io.observe(el); });
+    var heroVis=true, priceVis=false;
+    function upd(){ sticky.classList.toggle('show', !heroVis && !priceVis); }
+    new IntersectionObserver(function(e){ heroVis=e[0].isIntersecting; upd(); }).observe(document.getElementById('hero-cta'));
+    new IntersectionObserver(function(e){ priceVis=e[0].isIntersecting; upd(); },{threshold:.1}).observe(document.querySelector('.pcard'));
+  } else { els.forEach(function(el){ el.classList.add('in'); }); }
+  var form=document.getElementById('lead-form');
+  form.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    if(!form.nome.value.trim()){ form.nome.focus(); return; }
+    if(!form.email.value.trim()){ form.email.focus(); return; }
+    form.classList.add('sent');
+  });
+})();
+</script>
+</body>
+</html>
