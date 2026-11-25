@@ -4574,7 +4574,17 @@ function sbSite(){
 // Documento veio do site? Path sem barra ou origem marcada explicitamente.
 function _docDoSite(d){ return d.origem==='vagas' || (!!d.path && d.path.indexOf('/')===-1); }
 
-async function _urlDoSite(path){
+async function _urlDoSite(path, candId){
+  // 25/11/2026: primeiro pela função cv-do-site do R&S, que usa só o login do painel
+  // (antes dependia de um login no projeto do site guardado no navegador e dava
+  // "Failed to fetch" quando ele vencia). O caminho antigo fica como reserva.
+  if(candId){
+    try{
+      const { data, error } = await sb.functions.invoke('cv-do-site', { body:{ candidato_id:candId, path } });
+      if(!error && data && data.url) return data.url;
+      console.warn('cv-do-site:', error||data);
+    }catch(e){ console.warn('cv-do-site:', e); }
+  }
   if(SITE_BUCKET_PUBLICO){
     return SITE_SUPABASE_URL+'/storage/v1/object/public/'+SITE_DOCS_BUCKET+'/'+encodeURIComponent(path);
   }
@@ -4615,9 +4625,9 @@ async function abrirDocumento(i){
       // quebra de linha no mesmo campo. Abre todos, um por aba.
       const paths = String(d.path).split(/[\r\n]+/).map(x=>x.trim()).filter(Boolean);
       for(const p of paths.slice(1)){
-        try{ window.open(await _urlDoSite(p),'_blank','noopener'); }catch(e){}
+        try{ window.open(await _urlDoSite(p,id),'_blank','noopener'); }catch(e){}
       }
-      const url = await _urlDoSite(paths[0]);
+      const url = await _urlDoSite(paths[0], id);
       _logAcessoDoc(d.path, nome, id);
       window.open(url,'_blank','noopener'); return;
     }catch(e){
